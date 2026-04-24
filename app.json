@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "AWAN",
+    "slug": "awan-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#07070D",
+    "android": {
+      "package": "com.awan.planning",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.VIBRATE",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.SCHEDULE_EXACT_ALARM"
+      ]
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-notifications"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "REMPLACER_APRES_EAS_INIT"
+      }
+    }
+  }
+}
