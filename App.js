@@ -187,15 +187,18 @@ export default function App() {
     }
     init();
   }, []);
-
+  
   async function handleUnlock() {
-    try {
-      if (!db) {
-        const loadedDb = await loadDB();
-        setDb(loadedDb);
-      }
-    } catch(e) {}
-    setTimeout(() => setLocked(false), 500);
+  try {
+    const loadedDb = await loadDB();
+    const loadedCfg = await loadCfg();
+    setDb(loadedDb);
+    setCfg(loadedCfg);
+  } catch(e) {
+    setDb({ events:[], tasks:[], routines:[], meals:[], sport:[], mesures:[], pantry:[], pLog:[], obj:{}, cfg:{} });
+    setCfg({ dev:true, pinOn:false, pinHash:null, modules:[] });
+  }
+  setTimeout(() => setLocked(false), 800);
   }
 
   if (!ready) {
