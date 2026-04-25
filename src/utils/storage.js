@@ -48,6 +48,32 @@ const EMPTY_DB = {
   cfg: { lat: 48.8566, lon: 2.3522 },
 };
 
+/**
+ * Validates and sanitizes DB structure to prevent corruption
+ * @param {Object} data - Potentially corrupted data
+ * @returns {Object} Validated DB structure
+ */
+export function validateDB(data) {
+  if (!data || typeof data !== 'object') return { ...EMPTY_DB };
+  
+  return {
+    events: Array.isArray(data.events) ? data.events.filter(e => e && typeof e === 'object') : [],
+    tasks: Array.isArray(data.tasks) ? data.tasks.filter(t => t && typeof t === 'object') : [],
+    routines: Array.isArray(data.routines) ? data.routines.filter(r => r && typeof r === 'object') : [],
+    meals: Array.isArray(data.meals) ? data.meals.filter(m => m && typeof m === 'object') : [],
+    sport: Array.isArray(data.sport) ? data.sport.filter(s => s && typeof s === 'object') : [],
+    mesures: Array.isArray(data.mesures) ? data.mesures.filter(m => m && typeof m === 'object') : [],
+    pantry: Array.isArray(data.pantry) ? data.pantry.filter(p => p && typeof p === 'object') : [],
+    pLog: Array.isArray(data.pLog) ? data.pLog.filter(p => p && typeof p === 'object') : [],
+    obj: data.obj && typeof data.obj === 'object' ? data.obj : { kc: 0, pr: 0, gl: 0, li: 0 },
+    cfg: data.cfg && typeof data.cfg === 'object' ? data.cfg : { lat: 48.8566, lon: 2.3522 },
+  };
+}
+
+/**
+ * Persists DB to storage. MUST be called before setDb to prevent data loss.
+ * @param {Object} db - Database object to save
+ */
 export async function saveDB(db) {
   const pkg = {
     awan_format: 'backup',
@@ -66,22 +92,25 @@ export async function loadDB() {
   if (!raw) return { ...EMPTY_DB };
   try {
     const pkg = JSON.parse(raw);
+    if (!pkg.payload) throw new Error('Payload missing');
     const loaded = JSON.parse(pkg.payload);
-    return { ...EMPTY_DB, ...loaded };
+    const validated = validateDB(loaded);
+    return validated;
   } catch (e) {
+    console.warn('DB load failed, using defaults:', e.message);
     return { ...EMPTY_DB };
   }
 }
 
 export function buildIntegrity(db) {
-  const dates = db.events.map(e => e.date).sort();
+  const dates = (db.events || []).map(e => e.date).filter(Boolean).sort();
   return {
-    event_count: db.events.length,
-    task_count: db.tasks.length,
-    routine_count: db.routines.length,
-    meal_count: db.meals.length,
-    sport_count: db.sport.length,
-    pantry_count: db.pantry.length,
+    event_count: (db.events || []).length,
+    task_count: (db.tasks || []).length,
+    routine_count: (db.routines || []).length,
+    meal_count: (db.meals || []).length,
+    sport_count: (db.sport || []).length,
+    pantry_count: (db.pantry || []).length,
     from: dates[0] || null,
     to: dates[dates.length - 1] || null,
   };
@@ -95,8 +124,15 @@ export function parseAwanFile(content) {
   return pkg;
 }
 
+/**
+ * Generates a collision-resistant unique ID
+ * Combines timestamp + random + entropy
+ */
 export function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).slice(2, 9);
+  const entropy = Math.random().toString(36).slice(2, 5);
+  return `${timestamp}_${random}_${entropy}`;
 }
 
 export function ds(d) {
