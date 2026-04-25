@@ -9,7 +9,9 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
 import { T, AV } from './src/constants/theme';
-import { loadDB, saveDB, loadCfg, saveCfg, parseAwanFile, buildIntegrity, uid, ds } from './src/utils/storage';
+import { parseAwanFile, buildIntegrity, uid, ds } from './src/utils/storage';
+import { clearEventCache } from './src/utils/recurrence';
+import { AppStateProvider, useAppState } from './src/context/AppStateContext';
 import LockScreen from './src/screens/LockScreen';
 import PlanningScreen from './src/screens/PlanningScreen';
 
@@ -24,8 +26,9 @@ function StubScreen({ title, desc }) {
   );
 }
 
-function ParamsScreen({ db, setDb, cfg, setCfg }) {
+function ParamsScreen() {
   const insets = useSafeAreaInsets();
+  const { db, cfg, updateDb, updateCfg } = useAppState();
 
   async function handleExportData() {
     try {
@@ -50,12 +53,14 @@ function ParamsScreen({ db, setDb, cfg, setCfg }) {
       if (pkg.awan_format === 'backup') {
         const loaded = JSON.parse(pkg.payload);
         const newDb = { ...db, ...loaded };
-        setDb(newDb); await saveDB(newDb);
+        await updateDb(newDb);
+        clearEventCache();
         Alert.alert('Import réussi', '\u2713 ' + pkg.integrity.event_count + ' événements\n\u2713 ' + pkg.integrity.routine_count + ' routines');
       } else if (pkg.awan_format === 'routine') {
         const r = { id:uid(), ...pkg, source:'claude', frequency:pkg.frequency||'daily', imported_at:new Date().toISOString() };
         const newDb = { ...db, routines:[...db.routines, r] };
-        setDb(newDb); await saveDB(newDb);
+        await updateDb(newDb);
+        clearEventCache();
         Alert.alert('Routine importée', '"' + r.name + '" ajoutée \u2713');
       } else {
         Alert.alert('Format non supporté', 'Format "' + pkg.awan_format + '" non reconnu.');
@@ -104,8 +109,8 @@ const ps = StyleSheet.create({
   infoCard: { marginHorizontal:18, backgroundColor:T.bg2, borderWidth:1, borderColor:T.gdim, borderRadius:12, padding:13, marginBottom:4 },
 });
 
-function AnalyseScreen({ db }) {
-  const insets = useSafeAreaInsets();
+function AnalyseScreen() {
+  const { db } = useAppState();
   const [period, setPeriod] = useState('jour');
   const PERIODS = [['jour','Jour'],['semaine','Semaine'],['mois','Mois'],['annee','Année'],['decennie','10 ans']];
   const DAYS_MAP = { jour:0, semaine:7, mois:30, annee:365, decennie:3650 };
@@ -122,7 +127,7 @@ function AnalyseScreen({ db }) {
   const days = Math.max(1, daysBack || 1);
 
   return (
-    <View style={{ flex:1, backgroundColor:T.bg, paddingBottom:insets.bottom }}>
+    <View style={{ flex:1, backgroundColor:T.bg }}>
       <View style={{ flexDirection:'row', paddingHorizontal:10, borderBottomWidth:1, borderBottomColor:T.bo }}>
         {PERIODS.map(([k,l]) => (
           <TouchableOpacity key={k} style={{ paddingVertical:9, paddingHorizontal:10, borderBottomWidth:2, borderBottomColor:period===k?T.gold:'transparent' }} onPress={() => setPeriod(k)}>
@@ -166,39 +171,17 @@ function TabIcon({ name, focused }) {
   return <Text style={{ fontSize:15, opacity:focused?1:0.4 }}>{icons[name]}</Text>;
 }
 
-export default function App() {
+function AppContent() {
   const [locked, setLocked] = useState(true);
-  const [db, setDb] = useState(null);
-  const [cfg, setCfg] = useState(null);
-  const [ready, setReady] = useState(false);
+  const { ready, initializeApp } = useAppState();
 
   useEffect(() => {
-    async function init() {
-      try {
-        const [loadedDb, loadedCfg] = await Promise.all([loadDB(), loadCfg()]);
-        setDb(loadedDb);
-        setCfg(loadedCfg);
-      } catch(e) {
-        setDb({ events:[], tasks:[], routines:[], meals:[], sport:[], mesures:[], pantry:[], pLog:[], obj:{}, cfg:{} });
-        setCfg({ dev:true, pinOn:false, pinHash:null, modules:[] });
-      } finally {
-        setReady(true);
-      }
-    }
-    init();
-  }, []);
-  
+    initializeApp();
+  }, [initializeApp]);
+
   async function handleUnlock() {
-  try {
-    const loadedDb = await loadDB();
-    const loadedCfg = await loadCfg();
-    setDb(loadedDb);
-    setCfg(loadedCfg);
-  } catch(e) {
-    setDb({ events:[], tasks:[], routines:[], meals:[], sport:[], mesures:[], pantry:[], pLog:[], obj:{}, cfg:{} });
-    setCfg({ dev:true, pinOn:false, pinHash:null, modules:[] });
-  }
-  setTimeout(() => setLocked(false), 800);
+    await initializeApp();
+    setTimeout(() => setLocked(false), 800);
   }
 
   if (!ready) {
@@ -257,10 +240,10 @@ export default function App() {
             })}
           >
             <Tab.Screen name="Planning">
-              {() => <PlanningScreen db={db} setDb={setDb}/>}
+              {() => <PlanningScreen/>}
             </Tab.Screen>
             <Tab.Screen name="Analyse">
-              {() => <AnalyseScreen db={db}/>}
+              {() => <AnalyseScreen/>}
             </Tab.Screen>
             <Tab.Screen name="Sport">
               {() => <StubScreen title="Sport" desc="Séances, programme, mensurations — Sprint 2"/>}
@@ -269,12 +252,20 @@ export default function App() {
               {() => <StubScreen title="Nutrition" desc="Journal alimentaire, macros — Sprint 2"/>}
             </Tab.Screen>
             <Tab.Screen name="Params">
-              {() => <ParamsScreen db={db} setDb={setDb} cfg={cfg} setCfg={setCfg}/>}
+              {() => <ParamsScreen/>}
             </Tab.Screen>
           </Tab.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>
     </SafeAreaProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <AppStateProvider>
+      <AppContent/>
+    </AppStateProvider>
   );
 }
 
