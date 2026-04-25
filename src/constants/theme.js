@@ -9,7 +9,7 @@ export const T = {
   bo:    '#E5E1DA', 
   bo2:   '#D1CDC7',
   
-  // Couleurs d'accentuation (Remplacement de l'Or par l'Anthracite)
+  // Couleurs d'accentuation (Anthracite chaud)
   gold:  '#4A443F', 
   gdim:  'rgba(74, 68, 63, 0.1)',
   gglow: 'transparent', 
@@ -28,12 +28,12 @@ export const T = {
   te:    '#8DB5AF', 
   is:    '#A39684', 
 
-  // --- AJOUT DES POLICES ---
+  // Configuration "Sans échec" pour mobile
   fonts: {
-    light: 'PlusJakartaSans-Light',
-    regular: 'PlusJakartaSans-Regular',
-    medium: 'PlusJakartaSans-Medium',
-    bold: 'PlusJakartaSans-Bold',
+    light: 'System',
+    regular: 'System',
+    medium: 'System',
+    bold: 'System',
   }
 };
 
@@ -56,6 +56,8 @@ export const MONTHS = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
 ];
+
+export const MONTHS_S = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
 
 export const DAYS_S = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
 
