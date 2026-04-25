@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, Alert, StatusBar } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -16,6 +16,23 @@ import LockScreen from './src/screens/LockScreen';
 import PlanningScreen from './src/screens/PlanningScreen';
 
 const Tab = createBottomTabNavigator();
+
+// --- DESIGN ZEN : ICONES FILAIRES MINIMALISTES ---
+function TabIcon({ focused }) {
+  return (
+    <View style={{
+      width: 44, height: 44, borderRadius: 14,
+      backgroundColor: focused ? '#FFFFFF' : 'transparent',
+      alignItems: 'center', justifyContent: 'center',
+      borderWidth: focused ? 1 : 0, borderColor: T.bo
+    }}>
+      <View style={{ 
+        width: 18, height: 18, borderRadius: 5, 
+        borderWidth: 2, borderColor: focused ? T.gold : T.tx3 
+      }} />
+    </View>
+  );
+}
 
 function StubScreen({ title, desc }) {
   return (
@@ -106,7 +123,7 @@ const ps = StyleSheet.create({
   modCard: { marginHorizontal:18, marginBottom:7, backgroundColor:T.bg2, borderWidth:1, borderColor:T.bo, borderRadius:12, padding:12, flexDirection:'row', justifyContent:'space-between' },
   modName: { fontSize:13, fontWeight:'500', color:T.tx },
   modSub: { fontSize:10, color:T.tx3 },
-  infoCard: { marginHorizontal:18, backgroundColor:T.bg2, borderWidth:1, borderColor:T.gdim, borderRadius:12, padding:13, marginBottom:4 },
+  infoCard: { marginHorizontal:18, backgroundColor:T.bg2, borderWidth:1, borderColor:T.bo, borderRadius:12, padding:13, marginBottom:4 },
 });
 
 function AnalyseScreen() {
@@ -114,7 +131,7 @@ function AnalyseScreen() {
   const [period, setPeriod] = useState('jour');
   const PERIODS = [['jour','Jour'],['semaine','Semaine'],['mois','Mois'],['annee','Année'],['decennie','10 ans']];
   const DAYS_MAP = { jour:0, semaine:7, mois:30, annee:365, decennie:3650 };
-  const CATS_C = { travail:'#C8940F', perso:'#3aaa6a', sante:'#4a7fc4', famille:'#8b4ac4', sport:'#c44a4a', routine:'#4ab8a4', islam:'#d4a017' };
+  const CATS_C = { travail:'#4A443F', perso:'#8DA399', sante:'#7492B1', famille:'#9B8DA3', sport:'#B58787', routine:'#8DB5AF', islam:'#A39684' };
   const CATS_T = { travail:'Travail', perso:'Perso', sante:'Santé', famille:'Famille', sport:'Sport', routine:'Routine', islam:'Islam' };
 
   const today = ds(new Date());
@@ -148,27 +165,8 @@ function AnalyseScreen() {
         ))}
         {Object.keys(byCat).length === 0 && <Text style={{ padding:14, fontSize:11, color:T.tx3 }}>Aucune donnée sur cette période</Text>}
       </View>
-      <View style={{ marginHorizontal:18, backgroundColor:T.bg2, borderWidth:1, borderColor:T.bo, borderRadius:12, overflow:'hidden' }}>
-        <Text style={{ padding:12, paddingBottom:6, fontSize:9, letterSpacing:3, color:T.tx3, textTransform:'uppercase' }}>Statistiques</Text>
-        {[
-          ['Événements', evs.length],
-          ['Moy./jour', (evs.length/days).toFixed(1)],
-          ['Routines actives', (db.routines||[]).length],
-          ['Temps total', (totalMin/60).toFixed(1)+'h'],
-        ].map(([l,v],i) => (
-          <View key={i} style={{ flexDirection:'row', justifyContent:'space-between', padding:9, paddingHorizontal:14, borderTopWidth:1, borderTopColor:T.bo }}>
-            <Text style={{ fontSize:12, color:T.tx2 }}>{l}</Text>
-            <Text style={{ fontSize:14, color:T.gold }}>{v}</Text>
-          </View>
-        ))}
-      </View>
     </View>
   );
-}
-
-function TabIcon({ name, focused }) {
-  const icons = { Planning:'📅', Analyse:'📊', Sport:'💪', Repas:'🍽', Params:'⚙️' };
-  return <Text style={{ fontSize:15, opacity:focused?1:0.4 }}>{icons[name]}</Text>;
 }
 
 function AppContent() {
@@ -184,10 +182,22 @@ function AppContent() {
     setTimeout(() => setLocked(false), 800);
   }
 
+  const ZenTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: T.bg,
+      card: T.bg,
+      border: 'transparent',
+      text: T.tx,
+      primary: T.gold,
+    },
+  };
+
   if (!ready) {
     return (
       <View style={{ flex:1, backgroundColor:T.bg, alignItems:'center', justifyContent:'center' }}>
-        <StatusBar barStyle="light-content" backgroundColor={T.bg}/>
+        <StatusBar barStyle="dark-content" backgroundColor={T.bg}/>
         <Text style={{ color:T.gold, fontSize:20, letterSpacing:8 }}>AWAN</Text>
       </View>
     );
@@ -196,7 +206,7 @@ function AppContent() {
   if (locked) {
     return (
       <SafeAreaProvider>
-        <StatusBar barStyle="light-content" backgroundColor={T.bg}/>
+        <StatusBar barStyle="dark-content" backgroundColor={T.bg}/>
         <GestureHandlerRootView style={{ flex:1 }}>
           <LockScreen onUnlock={handleUnlock}/>
         </GestureHandlerRootView>
@@ -206,72 +216,36 @@ function AppContent() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="light-content" backgroundColor={T.bg}/>
+      <StatusBar barStyle="dark-content" backgroundColor={T.bg}/>
       <GestureHandlerRootView style={{ flex:1 }}>
-        <NavigationContainer
-          theme={{
-            dark: true,
-            colors: {
-              background: T.bg,
-              card: T.bg,
-              border: T.bo,
-              text: T.tx,
-              primary: T.gold,
-              notification: T.gold,
-            }
-          }}
-        >
+        <NavigationContainer theme={ZenTheme}>
           <Tab.Navigator
             screenOptions={({ route }) => ({
-              tabBarIcon: ({ focused }) => <TabIcon name={route.name} focused={focused}/>,
+              tabBarIcon: ({ focused }) => <TabIcon focused={focused}/>,
               tabBarActiveTintColor: T.gold,
               tabBarInactiveTintColor: T.tx3,
-              tabBarStyle: { backgroundColor:T.bg, borderTopColor:T.bo, paddingBottom:4, height:56 },
-              tabBarLabelStyle: { fontSize:8, letterSpacing:0.5 },
+              tabBarShowLabel: false,
+              tabBarStyle: { 
+                backgroundColor:'#FFFFFF', 
+                borderTopColor:T.bo, 
+                height:85, 
+                paddingBottom:20,
+                elevation:0,
+                shadowOpacity:0
+              },
               header: () => (
                 <View style={hdr.bar}>
-                  <Text style={hdr.ar} onPress={() => Alert.alert('\u0623\u0648\u0627\u0646', 'Module Islam \u2014 Sprint 3')}>أوان</Text>
-                  <Text style={hdr.lat}>AWAN</Text>
-                  <TouchableOpacity style={hdr.lk} onPress={() => setLocked(true)}>
-                    <Text style={{ color:T.tx3, fontSize:14 }}>🔒</Text>
+                  <View style={hdr.menuBtn}>
+                    <View style={hdr.lineLong} />
+                    <View style={hdr.lineShort} />
+                  </View>
+                  <Text style={hdr.title}>{route.name.toUpperCase()}</Text>
+                  <TouchableOpacity style={hdr.avatar} onPress={() => setLocked(true)}>
+                    <View style={hdr.avatarInner} />
                   </TouchableOpacity>
                 </View>
               ),
             })}
           >
-            <Tab.Screen name="Planning">
-              {() => <PlanningScreen/>}
-            </Tab.Screen>
-            <Tab.Screen name="Analyse">
-              {() => <AnalyseScreen/>}
-            </Tab.Screen>
-            <Tab.Screen name="Sport">
-              {() => <StubScreen title="Sport" desc="Séances, programme, mensurations — Sprint 2"/>}
-            </Tab.Screen>
-            <Tab.Screen name="Repas">
-              {() => <StubScreen title="Nutrition" desc="Journal alimentaire, macros — Sprint 2"/>}
-            </Tab.Screen>
-            <Tab.Screen name="Params">
-              {() => <ParamsScreen/>}
-            </Tab.Screen>
-          </Tab.Navigator>
-        </NavigationContainer>
-      </GestureHandlerRootView>
-    </SafeAreaProvider>
-  );
-}
-
-export default function App() {
-  return (
-    <AppStateProvider>
-      <AppContent/>
-    </AppStateProvider>
-  );
-}
-
-const hdr = StyleSheet.create({
-  bar: { flexDirection:'row', justifyContent:'space-between', alignItems:'center', paddingHorizontal:18, paddingTop:14, paddingBottom:10, backgroundColor:T.bg, borderBottomWidth:1, borderBottomColor:T.bo },
-  ar: { fontSize:13, letterSpacing:4, color:T.gold, opacity:0.5, fontWeight:'300' },
-  lat: { fontSize:11, letterSpacing:8, color:T.gold, opacity:0.42, fontWeight:'300' },
-  lk: { width:30, height:30, backgroundColor:T.bg2, borderWidth:1, borderColor:T.bo, borderRadius:8, alignItems:'center', justifyContent:'center' },
-});
+            <Tab.Screen name="Planning" component={PlanningScreen} />
+            <Tab.Screen name="Analyse
