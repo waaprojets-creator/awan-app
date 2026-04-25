@@ -10,7 +10,6 @@
     "android": {
       "package": "com.awan.planning",
       "versionCode": 1,
-      "kotlinVersion": "1.9.25",
       "permissions": [
         "android.permission.VIBRATE",
         "android.permission.POST_NOTIFICATIONS",
@@ -18,10 +17,10 @@
       ]
     },
     "plugins": [
-  "expo-secure-store",
-  "expo-notifications",
-  ["expo-build-properties", {"android": {"kotlinVersion": "1.9.25"}}]
-],
+      "expo-secure-store",
+      "expo-notifications",
+      ["expo-build-properties", {"android": {"kotlinVersion": "1.9.25"}}]
+    ],
     "extra": {
       "eas": {
         "projectId": "777de75b-e2b3-460f-be23-ce01017fa328"
