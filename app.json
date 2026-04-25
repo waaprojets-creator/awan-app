@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#07070D",
-    "owner": "waaprojets",
+    "owner": "waaproject",
     "android": {
       "package": "com.awan.planning",
       "versionCode": 1,
