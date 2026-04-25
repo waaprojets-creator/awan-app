@@ -75,7 +75,6 @@ export default function LockScreen({ onUnlock }) {
   return (
     <View style={[s.container, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 18 }]}>
       <Svg width={66} height={66} viewBox="0 0 66 66">
-        {/* Couleur Or appliquée via T.gold */}
         <Polygon points="33,3 59,18 59,48 33,63 7,48 7,18" stroke={T.gold} strokeWidth="1.2" fill="none"/>
         <Animated.View style={{ opacity: hexPulse }}>
           <Polygon points="33,11 51,22 51,44 33,55 15,44 15,22" stroke={T.gold} strokeWidth=".5" fill="none" opacity=".4"/>
@@ -135,15 +134,15 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: T.bg, alignItems: 'center', justifyContent: 'center' },
   morphBox: { height: 44, justifyContent: 'center', alignItems: 'center', marginTop: 20, marginBottom: 5 },
   arText: { position: 'absolute', fontSize: 28, letterSpacing: 6, color: T.gold, fontWeight: '300' },
-  latText: { position: 'absolute', fontSize: 20, letterSpacing: 8, color: T.gold, fontWeight: '300' },
-  tag: { fontSize: 8, color: T.tx3, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 36 },
+  latText: { position: 'absolute', fontSize: 20, letterSpacing: 8, color: T.gold, fontWeight: '300', fontFamily: T.fonts.light },
+  tag: { fontSize: 8, color: T.tx3, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 36, fontFamily: T.fonts.medium },
   dotsRow: { flexDirection: 'row', gap: 12, marginBottom: 8, height: 14, alignItems: 'center' },
   dot: { width: 10, height: 10, borderRadius: 5, borderWidth: 1.5, borderColor: T.tx3, backgroundColor: 'transparent' },
   dotOn: { backgroundColor: T.gold, borderColor: T.gold, transform: [{ scale: 1.1 }] },
   hiddenInput: { position: 'absolute', width: 1, height: 1, opacity: 0 },
   tapZone: { borderWidth: 1, borderColor: T.bo, borderRadius: 8, paddingVertical: 12, paddingHorizontal: 40, marginBottom: 6 },
-  tapText: { fontSize: 10, color: T.tx3, letterSpacing: 2 },
+  tapText: { fontSize: 10, color: T.tx3, letterSpacing: 2, fontFamily: T.fonts.regular },
   submitBtn: { backgroundColor: T.gold, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 60, marginTop: 10 },
-  submitTxt: { color: T.bg, fontSize: 14, fontWeight: '700', letterSpacing: 1 },
-  errTxt: { fontSize: 11, color: T.rd, marginTop: 8, height: 16 },
+  submitTxt: { color: T.bg, fontSize: 14, fontWeight: '700', letterSpacing: 1, fontFamily: T.fonts.bold },
+  errTxt: { fontSize: 11, color: T.rd, marginTop: 8, height: 16, fontFamily: T.fonts.regular },
 });
