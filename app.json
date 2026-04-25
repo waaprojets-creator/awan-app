@@ -10,6 +10,7 @@
     "android": {
       "package": "com.awan.planning",
       "versionCode": 1,
+      "kotlinVersion": "1.9.25",
       "permissions": [
         "android.permission.VIBRATE",
         "android.permission.POST_NOTIFICATIONS",
