@@ -75,19 +75,20 @@ export default function LockScreen({ onUnlock }) {
   return (
     <View style={[s.container, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 18 }]}>
       <Svg width={66} height={66} viewBox="0 0 66 66">
-        <Polygon points="33,3 59,18 59,48 33,63 7,48 7,18" stroke="#C8940F" strokeWidth="1.2" fill="none"/>
+        {/* Couleur Or appliquée via T.gold */}
+        <Polygon points="33,3 59,18 59,48 33,63 7,48 7,18" stroke={T.gold} strokeWidth="1.2" fill="none"/>
         <Animated.View style={{ opacity: hexPulse }}>
-          <Polygon points="33,11 51,22 51,44 33,55 15,44 15,22" stroke="#C8940F" strokeWidth=".5" fill="none" opacity=".4"/>
+          <Polygon points="33,11 51,22 51,44 33,55 15,44 15,22" stroke={T.gold} strokeWidth=".5" fill="none" opacity=".4"/>
         </Animated.View>
         {[
           ["33,3","33,11"],["59,18","51,22"],["59,48","51,44"],
           ["33,63","33,55"],["7,48","15,44"],["7,18","15,22"],
         ].map(([p1,p2],i) => {
           const [x1,y1]=p1.split(','); const [x2,y2]=p2.split(',');
-          return <Line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#C8940F" strokeWidth=".5" opacity=".28"/>;
+          return <Line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={T.gold} strokeWidth=".5" opacity=".28"/>;
         })}
-        <Circle cx="33" cy="33" r="3.5" fill="#C8940F"/>
-        <Circle cx="33" cy="33" r="7.5" stroke="#C8940F" strokeWidth=".5" fill="none" opacity=".22"/>
+        <Circle cx="33" cy="33" r="3.5" fill={T.gold}/>
+        <Circle cx="33" cy="33" r="7.5" stroke={T.gold} strokeWidth=".5" fill="none" opacity=".22"/>
       </Svg>
       <View style={s.morphBox}>
         <Animated.Text style={[s.arText, { opacity: arOpacity }]}>أوان</Animated.Text>
@@ -143,6 +144,6 @@ const s = StyleSheet.create({
   tapZone: { borderWidth: 1, borderColor: T.bo, borderRadius: 8, paddingVertical: 12, paddingHorizontal: 40, marginBottom: 6 },
   tapText: { fontSize: 10, color: T.tx3, letterSpacing: 2 },
   submitBtn: { backgroundColor: T.gold, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 60, marginTop: 10 },
-  submitTxt: { color: '#000', fontSize: 14, fontWeight: '700', letterSpacing: 1 },
+  submitTxt: { color: T.bg, fontSize: 14, fontWeight: '700', letterSpacing: 1 },
   errTxt: { fontSize: 11, color: T.rd, marginTop: 8, height: 16 },
 });
