@@ -29,7 +29,20 @@ export function appliesToDate(rt, dateStr) {
   }
 }
 
+/**
+ * Get events for a specific date (both regular and from routines)
+ * Memoized to avoid recalculating on every render
+ */
+const eventCache = new Map();
+const CACHE_SIZE = 50;
+
 export function eventsForDate(db, dateStr) {
+  // Check cache first
+  const cacheKey = `${dateStr}:${db.events?.length || 0}:${db.routines?.length || 0}`;
+  if (eventCache.has(cacheKey)) {
+    return eventCache.get(cacheKey);
+  }
+
   const regular = (db.events || []).filter(e => e.date === dateStr);
 
   const rtEvents = [];
@@ -50,9 +63,18 @@ export function eventsForDate(db, dateStr) {
     });
   });
 
-  return [...regular, ...rtEvents].sort((a, b) =>
+  const result = [...regular, ...rtEvents].sort((a, b) =>
     (a.time || '99:99').localeCompare(b.time || '99:99')
   );
+
+  // Simple LRU cache
+  if (eventCache.size >= CACHE_SIZE) {
+    const firstKey = eventCache.keys().next().value;
+    eventCache.delete(firstKey);
+  }
+  eventCache.set(cacheKey, result);
+
+  return result;
 }
 
 export function daysWithEvents(db, year, month) {
@@ -63,4 +85,11 @@ export function daysWithEvents(db, year, month) {
     if (eventsForDate(db, dateStr).length > 0) set.add(day);
   }
   return set;
+}
+
+/**
+ * Clear event cache when DB changes significantly
+ */
+export function clearEventCache() {
+  eventCache.clear();
 }
