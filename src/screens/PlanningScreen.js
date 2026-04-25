@@ -84,7 +84,7 @@ export default function PlanningScreen() {
                   {cell.day}
                 </Text>
                 {cell.hasBullet && !isSel && <View style={s.bullet}/>}
-                {cell.hasBullet && isSel && <View style={[s.bullet, { backgroundColor: 'rgba(0,0,0,.4)' }]}/>}
+                {cell.hasBullet && isSel && <View style={[s.bullet, { backgroundColor: 'rgba(255,255,255,.6)' }]}/>}
               </TouchableOpacity>
             );
           })}
@@ -128,8 +128,8 @@ export default function PlanningScreen() {
                     onPress={() => { setSelDate(parseDate(dstr)); selectDate(dstr); }}
                     activeOpacity={0.7}
                   >
-                    <Text style={[s.wkDn, (isToday||isSel) && { color: isToday&&!isSel?T.gold:'#000' }]}>{DAYS_S[i]}</Text>
-                    <Text style={[s.wkDt, (isToday||isSel) && { color: isToday&&!isSel?T.gold:'#000' }]}>{day.getDate()}</Text>
+                    <Text style={[s.wkDn, (isToday||isSel) && { color: isToday&&!isSel?T.gold:T.tx }]}>{DAYS_S[i]}</Text>
+                    <Text style={[s.wkDt, (isToday||isSel) && { color: isToday&&!isSel?T.gold:T.tx }]}>{day.getDate()}</Text>
                   </TouchableOpacity>
                   {evs.slice(0, 4).map(ev => (
                     <View key={ev.id} style={[s.wkEv, { borderLeftColor: ev.color || CATS[ev.category]?.c || T.gold }]}>
@@ -179,7 +179,7 @@ export default function PlanningScreen() {
                     const isT = dstr === today, hasEv = daysSet.has(day);
                     return (
                       <TouchableOpacity key={i} style={[s.annCell, isT && s.annToday]} onPress={() => selectDate(dstr)} activeOpacity={0.7}>
-                        <Text style={[s.annDayTx, isT && { color: '#000' }]}>{day}</Text>
+                        <Text style={[s.annDayTx, isT && { color: T.tx }]}>{day}</Text>
                         {hasEv && !isT && <View style={s.annBullet}/>}
                       </TouchableOpacity>
                     );
@@ -332,8 +332,11 @@ function EvCard({ ev, onPress }) {
   return (
     <TouchableOpacity style={s.evCard} onPress={onPress} activeOpacity={0.7}>
       <View style={[s.evBar, { backgroundColor: col }]}/>
-      <Text style={s.evTime}>{ev.time || '—'}</Text>
       <View style={{ flex: 1 }}>
+        <View style={{flexDirection:'row', justifyContent:'space-between'}}>
+           <Text style={s.evTime}>{ev.time || '—'}</Text>
+           <Text style={s.evSrcTx}>{srcLabel}</Text>
+        </View>
         <Text style={s.evTitle} numberOfLines={1}>{ev.title}</Text>
         <Text style={s.evSub}>{cat.l}{ev.duration ? ' · ' + ev.duration + 'min' : ''}</Text>
         {ev.steps?.length > 0 && (
@@ -341,12 +344,6 @@ function EvCard({ ev, onPress }) {
             ↳ {ev.steps.slice(0,2).map(st => st.name || st).join(' → ')}{ev.steps.length > 2 ? '…' : ''}
           </Text>
         )}
-      </View>
-      <View style={{ alignItems: 'flex-end', gap: 4 }}>
-        <View style={[s.evCat, { backgroundColor: col + '18' }]}>
-          <Text style={[s.evCatTx, { color: col }]}>{ev.isRt ? 'Routine' : cat.l}</Text>
-        </View>
-        <Text style={s.evSrcTx}>{srcLabel}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -370,7 +367,6 @@ function EventModal({ visible, ev, defaultDate, onClose, onSave, onDelete }) {
   const [notes, setNotes] = useState('');
   const [src, setSrc] = useState('manual');
 
-  // Only init when modal opens, not on every render
   React.useEffect(() => {
     if (!visible) return;
     if (ev) {
@@ -446,200 +442,7 @@ function RoutineModal({ visible, rt, onClose, onSave, onDelete }) {
   const FREQS = ['daily','weekdays','weekend','custom','weekly','monthly','once'];
   const FREQ_LBL = { daily:'Quotidien', weekdays:'Lun-Ven', weekend:'Week-end', custom:'Spécifique', weekly:'Hebdo', monthly:'Mensuel', once:'Unique' };
 
-  // Only init when modal opens, not on every render
   React.useEffect(() => {
     if (!visible) return;
     if (rt) {
-      setName(rt.name||''); setColor(rt.color||RCOLS[0]); setTime(rt.time||'');
-      setDuration(String(rt.duration||30)); setFreq(rt.frequency||'daily');
-      setDays(rt.days||[]); setStartDate(rt.startDate||ds(new Date())); setEndDate(rt.endDate||'');
-      setDesc(rt.description||''); setSteps(rt.steps||[]); setSrc(rt.source||'manual');
-    } else {
-      setName(''); setColor(RCOLS[0]); setTime(''); setDuration('30');
-      setFreq('daily'); setDays([]); setStartDate(ds(new Date())); setEndDate('');
-      setDesc(''); setSteps([]); setSrc('manual');
-    }
-  }, [rt, visible]);
-
-  function togDay(i) { setDays(prev => prev.includes(i) ? prev.filter(d => d!==i) : [...prev, i]); }
-
-  function handleSave() {
-    if (!name.trim()) return;
-    onSave({ id: rt?.id || uid(), name: name.trim(), color, time: time||null,
-      duration: parseInt(duration)||30, frequency: freq,
-      days: freq==='custom' ? days : null, startDate, endDate: endDate||null,
-      description: desc.trim()||null, source: src,
-      steps: steps.filter(s => (s.name||s).trim()).map((s,i) => ({order:i+1, name: s.name||s})),
-      created_at: rt?.created_at || new Date().toISOString(), updated_at: new Date().toISOString() });
-  }
-
-  return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={m.container}>
-        <View style={m.handle}/>
-        <View style={m.hdr}>
-          <Text style={m.title}>{rt ? 'Modifier la routine' : 'Nouvelle routine'}</Text>
-          <TouchableOpacity style={m.closeBtn} onPress={onClose}><Text style={m.closeTx}>×</Text></TouchableOpacity>
-        </View>
-        <ScrollView style={{ flex: 1 }}>
-          <Field label="Nom"><TextInput style={m.input} value={name} onChangeText={setName} placeholder="Ex : Soin visage…" placeholderTextColor={T.tx3}/></Field>
-          <Text style={m.lbl}>Couleur</Text>
-          <View style={{ flexDirection:'row', gap:8, paddingHorizontal:18, marginBottom:11, flexWrap:'wrap' }}>
-            {RCOLS.map(c => (
-              <TouchableOpacity key={c} style={[m.csw, { backgroundColor:c }, color===c && m.cswOn]} onPress={() => setColor(c)} activeOpacity={0.7}/>
-            ))}
-          </View>
-          <View style={m.row}>
-            <Field label="Heure" style={{flex:1}}><TextInput style={m.input} value={time} onChangeText={setTime} placeholder="HH:MM" placeholderTextColor={T.tx3}/></Field>
-            <Field label="Durée (min)" style={{flex:1}}><TextInput style={m.input} value={duration} onChangeText={setDuration} keyboardType="numeric" placeholderTextColor={T.tx3}/></Field>
-          </View>
-          <Text style={m.lbl}>Fréquence</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom:11 }}>
-            <View style={{ flexDirection:'row', gap:6, paddingHorizontal:18 }}>
-              {FREQS.map(f => (
-                <TouchableOpacity key={f} style={[m.freqBtn, freq===f && m.freqOn]} onPress={() => setFreq(f)} activeOpacity={0.7}>
-                  <Text style={[m.freqTx, freq===f && { color:T.gold }]}>{FREQ_LBL[f]}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
-          {freq==='custom' && (
-            <View style={{ flexDirection:'row', gap:4, paddingHorizontal:18, marginBottom:11 }}>
-              {['Lu','Ma','Me','Je','Ve','Sa','Di'].map((d,i) => (
-                <TouchableOpacity key={i} style={[m.dayBtn, days.includes(i) && m.dayOn]} onPress={() => togDay(i)} activeOpacity={0.7}>
-                  <Text style={[m.dayTx, days.includes(i) && { color:T.gold }]}>{d}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-          <View style={m.row}>
-            <Field label="Début" style={{flex:1}}><TextInput style={m.input} value={startDate} onChangeText={setStartDate} placeholder="AAAA-MM-JJ" placeholderTextColor={T.tx3}/></Field>
-            <Field label="Fin (opt.)" style={{flex:1}}><TextInput style={m.input} value={endDate} onChangeText={setEndDate} placeholder="AAAA-MM-JJ" placeholderTextColor={T.tx3}/></Field>
-          </View>
-          <Field label="Description"><TextInput style={[m.input,{minHeight:60}]} value={desc} onChangeText={setDesc} multiline placeholder="Optionnel…" placeholderTextColor={T.tx3}/></Field>
-          <View style={{ flexDirection:'row', justifyContent:'space-between', alignItems:'center', paddingHorizontal:18, marginBottom:8 }}>
-            <Text style={m.lbl}>Étapes</Text>
-            <TouchableOpacity onPress={() => setSteps(prev => [...prev, {order:prev.length+1, name:''}])}>
-              <Text style={{ color:T.gold, fontSize:12 }}>+ Ajouter</Text>
-            </TouchableOpacity>
-          </View>
-          {steps.map((st, i) => (
-            <View key={i} style={{ flexDirection:'row', gap:8, paddingHorizontal:18, marginBottom:6, alignItems:'center' }}>
-              <View style={m.snum}><Text style={{ color:T.gold, fontSize:9 }}>{i+1}</Text></View>
-              <TextInput style={[m.input,{flex:1,marginBottom:0}]} value={st.name||st} onChangeText={v => setSteps(prev => prev.map((x,j) => j===i ? {...x, name:v} : x))} placeholder={`Étape ${i+1}`} placeholderTextColor={T.tx3}/>
-              <TouchableOpacity onPress={() => setSteps(prev => prev.filter((_,j) => j!==i))}>
-                <Text style={{ color:T.rd, fontSize:18 }}>×</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-          <TouchableOpacity style={[m.saveBtn,{marginTop:14}]} onPress={handleSave} activeOpacity={0.85}>
-            <Text style={m.saveTx}>Enregistrer la routine</Text>
-          </TouchableOpacity>
-          {rt && <TouchableOpacity style={m.delBtn} onPress={() => onDelete(rt.id)} activeOpacity={0.85}>
-            <Text style={m.delTx}>Supprimer</Text>
-          </TouchableOpacity>}
-          <View style={{ height: 24 }}/>
-        </ScrollView>
-      </View>
-    </Modal>
-  );
-}
-
-function Field({ label, children, style }) {
-  return (
-    <View style={[{ paddingHorizontal:18, marginBottom:11 }, style]}>
-      <Text style={m.lbl}>{label}</Text>
-      {children}
-    </View>
-  );
-}
-
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: T.bg },
-  stabs: { flexDirection:'row', borderBottomWidth:1, borderBottomColor:T.bo, paddingHorizontal:10 },
-  stab: { paddingVertical:9, paddingHorizontal:14, borderBottomWidth:2, borderBottomColor:'transparent' },
-  stabOn: { borderBottomColor:T.gold },
-  stabTx: { fontSize:11, color:T.tx3, letterSpacing:.5 },
-  stabTxOn: { color:T.gold },
-  sumRow: { flexDirection:'row', gap:8, padding:10, paddingBottom:4 },
-  sumCard: { flex:1, backgroundColor:T.bg2, borderWidth:1, borderColor:T.bo, borderRadius:12, padding:11, alignItems:'center' },
-  sumN: { fontSize:22, fontWeight:'300', color:T.gold },
-  sumL: { fontSize:9, color:T.tx3, marginTop:4 },
-  calNav: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingHorizontal:18, paddingVertical:10 },
-  calLbl: { fontSize:13, fontWeight:'500', color:T.tx },
-  cab: { width:28, height:28, backgroundColor:T.bg2, borderWidth:1, borderColor:T.bo, borderRadius:8, alignItems:'center', justifyContent:'center' },
-  cabTx: { fontSize:14, color:T.tx2 },
-  dayNames: { flexDirection:'row', paddingHorizontal:18, marginBottom:3 },
-  dayName: { flex:1, textAlign:'center', fontSize:10, color:T.tx3 },
-  grid: { flexDirection:'row', flexWrap:'wrap', paddingHorizontal:14 },
-  cell: { width:'14.28%', aspectRatio:1, alignItems:'center', justifyContent:'center', borderRadius:999 },
-  cellToday: { backgroundColor:T.bg3, borderWidth:1, borderColor:T.gdim },
-  cellSel: { backgroundColor:T.gold },
-  cellTx: { fontSize:12, color:T.tx3 },
-  cellOther: { opacity:.4 },
-  cellTodayTx: { color:T.gold, fontWeight:'500' },
-  cellSelTx: { color:'#000', fontWeight:'600' },
-  bullet: { position:'absolute', bottom:2, width:3, height:3, borderRadius:2, backgroundColor:T.gold },
-  secLbl: { fontSize:9, letterSpacing:4, color:T.tx3, paddingHorizontal:18, paddingTop:12, paddingBottom:7, textTransform:'uppercase' },
-  actBar: { flexDirection:'row', gap:7, paddingHorizontal:18, paddingBottom:12, flexWrap:'wrap' },
-  abt: { backgroundColor:T.bg2, borderWidth:1, borderColor:T.bo, borderRadius:12, paddingVertical:9, paddingHorizontal:10 },
-  abtTx: { fontSize:11, color:T.tx2 },
-  evCard: { backgroundColor:T.bg2, borderWidth:1, borderColor:T.bo, borderRadius:12, padding:11, marginHorizontal:18, marginBottom:6, flexDirection:'row', gap:10, alignItems:'flex-start' },
-  evBar: { width:3, borderRadius:2, alignSelf:'stretch', flexShrink:0, minHeight:28 },
-  evTime: { fontSize:11, color:T.tx3, minWidth:36, paddingTop:2 },
-  evTitle: { fontSize:13, fontWeight:'500', color:T.tx },
-  evSub: { fontSize:10, color:T.tx3, marginTop:2 },
-  evSteps: { fontSize:10, color:T.tx3, marginTop:2, opacity:.8 },
-  evCat: { paddingHorizontal:7, paddingVertical:2, borderRadius:4 },
-  evCatTx: { fontSize:9 },
-  evSrcTx: { fontSize:9, color:T.tx3 },
-  dailyHdr: { flexDirection:'row', alignItems:'center', gap:10, padding:12, paddingHorizontal:18 },
-  backBtn: { width:30, height:30, backgroundColor:T.bg2, borderWidth:1, borderColor:T.bo, borderRadius:8, alignItems:'center', justifyContent:'center' },
-  backTx: { fontSize:16, color:T.tx2 },
-  dailyTitle: { fontSize:15, fontWeight:'500', color:T.tx },
-  dailySub: { fontSize:10, color:T.tx3, marginTop:2 },
-  wkHeader: { padding:5, borderRadius:8, alignItems:'center' },
-  wkToday: { backgroundColor:T.gdim, borderWidth:1, borderColor:T.gold },
-  wkSel: { backgroundColor:T.gold },
-  wkDn: { fontSize:9, color:T.tx3 },
-  wkDt: { fontSize:13, fontWeight:'500', color:T.tx },
-  wkEv: { backgroundColor:T.bg2, borderRadius:4, padding:3, borderLeftWidth:2.5, marginBottom:2 },
-  wkEvTx: { fontSize:9, color:T.tx },
-  annMonth: { width:'47%', backgroundColor:T.bg2, borderWidth:1, borderColor:T.bo, borderRadius:12, padding:9 },
-  annMlbl: { fontSize:10, fontWeight:'500', color:T.tx2, marginBottom:6 },
-  annGrid: { flexDirection:'row', flexWrap:'wrap' },
-  annCell: { width:'14.28%', aspectRatio:1, alignItems:'center', justifyContent:'center', borderRadius:999, position:'relative' },
-  annToday: { backgroundColor:T.gold },
-  annDayTx: { fontSize:8, color:T.tx3 },
-  annBullet: { position:'absolute', bottom:0, width:2, height:2, borderRadius:1, backgroundColor:T.gold },
-});
-
-const m = StyleSheet.create({
-  container: { flex:1, backgroundColor:T.bg3 },
-  handle: { width:36, height:3, backgroundColor:T.bo, borderRadius:2, marginTop:12, marginBottom:4, alignSelf:'center' },
-  hdr: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', padding:12, paddingHorizontal:18, paddingBottom:14 },
-  title: { fontSize:15, fontWeight:'500', color:T.tx },
-  closeBtn: { width:28, height:28, backgroundColor:T.bg2, borderRadius:14, alignItems:'center', justifyContent:'center' },
-  closeTx: { fontSize:17, color:T.tx3, lineHeight:20 },
-  lbl: { fontSize:10, letterSpacing:2, color:T.tx3, textTransform:'uppercase', marginBottom:5, paddingHorizontal:18 },
-  input: { backgroundColor:T.bg2, borderWidth:1, borderColor:T.bo, borderRadius:8, padding:10, color:T.tx, fontSize:14 },
-  row: { flexDirection:'row', gap:10, paddingHorizontal:18, marginBottom:11 },
-  catGrid: { flexDirection:'row', flexWrap:'wrap', gap:6, paddingHorizontal:18, marginBottom:11 },
-  catOpt: { backgroundColor:T.bg2, borderWidth:1, borderColor:T.bo, borderRadius:8, padding:7, alignItems:'center', minWidth:70 },
-  catOn: { borderColor:T.gold },
-  catDot: { width:7, height:7, borderRadius:4, marginBottom:3 },
-  catTx: { fontSize:9, color:T.tx3 },
-  saveBtn: { backgroundColor:T.gold, borderRadius:12, padding:13, marginHorizontal:18, marginTop:8, alignItems:'center' },
-  saveTx: { color:'#000', fontSize:14, fontWeight:'700', letterSpacing:.5 },
-  delBtn: { borderWidth:1, borderColor:'rgba(196,74,74,.28)', borderRadius:12, padding:12, marginHorizontal:18, marginTop:5, alignItems:'center' },
-  delTx: { color:T.rd, fontSize:13 },
-  csw: { width:26, height:26, borderRadius:13, borderWidth:2, borderColor:'transparent' },
-  cswOn: { borderColor:'#fff', transform:[{scale:1.2}] },
-  freqBtn: { backgroundColor:T.bg2, borderWidth:1, borderColor:T.bo, borderRadius:8, paddingVertical:8, paddingHorizontal:12 },
-  freqOn: { borderColor:T.gold, backgroundColor:T.gdim },
-  freqTx: { fontSize:11, color:T.tx3 },
-  dayBtn: { flex:1, backgroundColor:T.bg2, borderWidth:1, borderColor:T.bo, borderRadius:8, paddingVertical:7, alignItems:'center' },
-  dayOn: { backgroundColor:T.gdim, borderColor:T.gold },
-  dayTx: { fontSize:10, color:T.tx3 },
-  snum: { width:18, height:18, borderRadius:9, backgroundColor:T.gdim, alignItems:'center', justifyContent:'center' },
-});
+      setName(rt.name||''); setColor(rt.color||RCOLS[0]); setTime
