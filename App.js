@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import * as SplashScreen from 'expo-splash-screen';
-import { useFonts } from 'expo-font';
 
 // Context & Theme
 import { AppStateProvider, useAppState } from './context/AppStateContext';
@@ -13,14 +11,13 @@ import { T } from './constants/theme';
 // Screens
 import LockScreen from './screens/LockScreen';
 import PlanningScreen from './screens/PlanningScreen';
-import TasksScreen from './screens/TasksScreen';
-import AnalyseScreen from './screens/AnalyseScreen';
-import SettingsScreen from './screens/SettingsScreen';
+// Vérifie que ces fichiers existent, sinon remplace par PlanningScreen temporairement
+import TasksScreen from './screens/PlanningScreen'; 
+import AnalyseScreen from './screens/PlanningScreen'; 
+import SettingsScreen from './screens/PlanningScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
-
-SplashScreen.preventAutoHideAsync();
 
 function TabNavigator() {
   return (
@@ -36,31 +33,15 @@ function TabNavigator() {
         tabBarActiveTintColor: T.gold,
         tabBarInactiveTintColor: T.tx3,
         tabBarLabelStyle: {
-          fontFamily: T.fonts.medium,
           fontSize: 11,
+          fontWeight: '600'
         },
       }}
     >
-      <Tab.Screen 
-        name="Planning" 
-        component={PlanningScreen} 
-        options={{ title: 'Planning' }}
-      />
-      <Tab.Screen 
-        name="Tasks" 
-        component={TasksScreen} 
-        options={{ title: 'Tâches' }}
-      />
-      <Tab.Screen 
-        name="Analyse" 
-        component={AnalyseScreen} 
-        options={{ title: 'Analyse' }}
-      />
-      <Tab.Screen 
-        name="Settings" 
-        component={SettingsScreen} 
-        options={{ title: 'Réglages' }}
-      />
+      <Tab.Screen name="Planning" component={PlanningScreen} />
+      <Tab.Screen name="Tasks" component={TasksScreen} />
+      <Tab.Screen name="Analyse" component={AnalyseScreen} />
+      <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
 }
@@ -80,23 +61,6 @@ function MainStack() {
 }
 
 export default function App() {
-  const [fontsLoaded, fontError] = useFonts({
-    'PlusJakartaSans-Light': require('./assets/fonts/PlusJakartaSans-Light.ttf'),
-    'PlusJakartaSans-Regular': require('./assets/fonts/PlusJakartaSans-Regular.ttf'),
-    'PlusJakartaSans-Medium': require('./assets/fonts/PlusJakartaSans-Medium.ttf'),
-    'PlusJakartaSans-Bold': require('./assets/fonts/PlusJakartaSans-Bold.ttf'),
-  });
-
-  useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
-
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
-
   return (
     <SafeAreaProvider>
       <AppStateProvider>
