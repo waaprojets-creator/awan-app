@@ -1,17 +1,20 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   FlatList, Modal, TextInput, Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { T, CATS, RCOLS, MONTHS, MONTHS_S, DAYS_S } from '../constants/theme';
-import { ds, parseDate, uid, saveDB } from '../utils/storage';
-import { eventsForDate, daysWithEvents, appliesToDate } from '../utils/recurrence';
+import { ds, parseDate, uid } from '../utils/storage';
+import { eventsForDate, daysWithEvents, appliesToDate, clearEventCache } from '../utils/recurrence';
+import { useAppState } from '../context/AppStateContext';
 
 const STABS = ['Mensuel', 'Hebdo', 'Annuel'];
 
-export default function PlanningScreen({ db, setDb }) {
+export default function PlanningScreen() {
   const insets = useSafeAreaInsets();
+  const { db, updateDb } = useAppState();
+  
   const [subTab, setSubTab] = useState(0);
   const [prevTab, setPrevTab] = useState(0);
   const [calDate, setCalDate] = useState(new Date());
@@ -86,7 +89,7 @@ export default function PlanningScreen({ db, setDb }) {
             );
           })}
         </View>
-        <EvListSection db={db} dateStr={ds(selDate)} onAdd={() => setShowEvModal(true)} onAddRt={() => setShowRtModal(true)} onEdit={ev => { setEditEv(ev); setShowEvModal(true); }}/>
+        <EvListSection dateStr={ds(selDate)} onAdd={() => setShowEvModal(true)} onAddRt={() => setShowRtModal(true)} onEdit={ev => { setEditEv(ev); setShowEvModal(true); }}/>
       </ScrollView>
     );
   }
@@ -224,7 +227,7 @@ export default function PlanningScreen({ db, setDb }) {
           ))}
         </View>
       )}
-      {subTab < 3 && <SummaryRow db={db}/>}
+      {subTab < 3 && <SummaryRow/>}
       {subTab === 0 && renderMonthly()}
       {subTab === 1 && renderWeekly()}
       {subTab === 2 && renderAnnual()}
@@ -238,12 +241,14 @@ export default function PlanningScreen({ db, setDb }) {
           const newDb = { ...db };
           if (editEv) { newDb.events = db.events.map(e => e.id === ev.id ? ev : e); }
           else { newDb.events = [...db.events, ev]; }
-          setDb(newDb); await saveDB(newDb);
+          await updateDb(newDb);
+          clearEventCache();
           setShowEvModal(false); setEditEv(null);
         }}
         onDelete={async id => {
           const newDb = { ...db, events: db.events.filter(e => e.id !== id) };
-          setDb(newDb); await saveDB(newDb);
+          await updateDb(newDb);
+          clearEventCache();
           setShowEvModal(false); setEditEv(null);
         }}
       />
@@ -255,12 +260,14 @@ export default function PlanningScreen({ db, setDb }) {
           const newDb = { ...db };
           if (editRt) { newDb.routines = db.routines.map(r => r.id === rt.id ? rt : r); }
           else { newDb.routines = [...db.routines, rt]; }
-          setDb(newDb); await saveDB(newDb);
+          await updateDb(newDb);
+          clearEventCache();
           setShowRtModal(false); setEditRt(null);
         }}
         onDelete={async id => {
           const newDb = { ...db, routines: db.routines.filter(r => r.id !== id) };
-          setDb(newDb); await saveDB(newDb);
+          await updateDb(newDb);
+          clearEventCache();
           setShowRtModal(false); setEditRt(null);
         }}
       />
@@ -268,7 +275,8 @@ export default function PlanningScreen({ db, setDb }) {
   );
 }
 
-function SummaryRow({ db }) {
+function SummaryRow() {
+  const { db } = useAppState();
   const t = ds(new Date());
   const evCount = eventsForDate(db, t).filter(e => !e.isRt).length;
   return (
@@ -300,7 +308,8 @@ function ActBar({ onAdd, onAddRt }) {
   );
 }
 
-function EvListSection({ db, dateStr, onAdd, onAddRt, onEdit }) {
+function EvListSection({ dateStr, onAdd, onAddRt, onEdit }) {
+  const { db } = useAppState();
   const evs = eventsForDate(db, dateStr);
   const d = parseDate(dateStr);
   const lbl = dateStr === ds(new Date())
@@ -361,7 +370,9 @@ function EventModal({ visible, ev, defaultDate, onClose, onSave, onDelete }) {
   const [notes, setNotes] = useState('');
   const [src, setSrc] = useState('manual');
 
-  useEffect(() => {
+  // Only init when modal opens, not on every render
+  React.useEffect(() => {
+    if (!visible) return;
     if (ev) {
       setTitle(ev.title || ''); setDate(ev.date || defaultDate);
       setTime(ev.time || ''); setDuration(String(ev.duration || 60));
@@ -371,7 +382,7 @@ function EventModal({ visible, ev, defaultDate, onClose, onSave, onDelete }) {
       setTitle(''); setDate(defaultDate || ds(new Date())); setTime('');
       setDuration('60'); setCat('perso'); setNotes(''); setSrc('manual');
     }
-  }, [ev, visible]);
+  }, [ev, visible, defaultDate]);
 
   function handleSave() {
     if (!title.trim()) return;
@@ -435,7 +446,9 @@ function RoutineModal({ visible, rt, onClose, onSave, onDelete }) {
   const FREQS = ['daily','weekdays','weekend','custom','weekly','monthly','once'];
   const FREQ_LBL = { daily:'Quotidien', weekdays:'Lun-Ven', weekend:'Week-end', custom:'Spécifique', weekly:'Hebdo', monthly:'Mensuel', once:'Unique' };
 
-  useEffect(() => {
+  // Only init when modal opens, not on every render
+  React.useEffect(() => {
+    if (!visible) return;
     if (rt) {
       setName(rt.name||''); setColor(rt.color||RCOLS[0]); setTime(rt.time||'');
       setDuration(String(rt.duration||30)); setFreq(rt.frequency||'daily');
@@ -513,7 +526,7 @@ function RoutineModal({ visible, rt, onClose, onSave, onDelete }) {
           {steps.map((st, i) => (
             <View key={i} style={{ flexDirection:'row', gap:8, paddingHorizontal:18, marginBottom:6, alignItems:'center' }}>
               <View style={m.snum}><Text style={{ color:T.gold, fontSize:9 }}>{i+1}</Text></View>
-              <TextInput style={[m.input,{flex:1,marginBottom:0}]} value={st.name||st} onChangeText={v => setSteps(prev => prev.map((x,j) => j===i ? {...x, name:v} : x))} placeholder={`Étape ${i+1}…`} placeholderTextColor={T.tx3}/>
+              <TextInput style={[m.input,{flex:1,marginBottom:0}]} value={st.name||st} onChangeText={v => setSteps(prev => prev.map((x,j) => j===i ? {...x, name:v} : x))} placeholder={`Étape ${i+1}`} placeholderTextColor={T.tx3}/>
               <TouchableOpacity onPress={() => setSteps(prev => prev.filter((_,j) => j!==i))}>
                 <Text style={{ color:T.rd, fontSize:18 }}>×</Text>
               </TouchableOpacity>
