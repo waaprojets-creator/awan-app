@@ -1,32 +1,40 @@
 export const T = {
   // Fond et surfaces (Beige Zen)
-  bg:    '#F8F5F2', // Fond principal de la capture
-  bg2:   '#FFFFFF', // Blanc pour les cartes et modules
-  bg3:   '#F0EDE8', // Beige légèrement plus prononcé
-  bg4:   '#E5E1DA', 
+  bg:    '#F8F5F2', 
+  bg2:   '#FFFFFF', 
+  bg3:   '#F0EDE8', 
+  bg4:   '#E5E1DA',  
   
   // Bordures et séparateurs
-  bo:    '#E5E1DA', // Bordure fine grise/sable
+  bo:    '#E5E1DA', 
   bo2:   '#D1CDC7',
   
   // Couleurs d'accentuation (Remplacement de l'Or par l'Anthracite)
-  gold:  '#4A443F', // Couleur principale pour les titres et boutons actifs
+  gold:  '#4A443F', 
   gdim:  'rgba(74, 68, 63, 0.1)',
-  gglow: 'transparent', // On supprime l'effet de lueur pour le style épuré
+  gglow: 'transparent', 
   
   // Typographie
-  tx:    '#4A443F', // Texte principal (Anthracite chaud)
-  tx2:   '#8C7E6E', // Texte secondaire (Taupe)
-  tx3:   '#C2B9B0', // Texte tertiaire / désactivé
+  tx:    '#4A443F', 
+  tx2:   '#8C7E6E', 
+  tx3:   '#C2B9B0', 
   
-  // Couleurs d'état (Adoucies pour le thème clair)
-  bl:    '#7492B1', // Bleu
-  gr:    '#8DA399', // Vert
-  rd:    '#B58787', // Rouge
-  pu:    '#9B8DA3', // Violet
-  or:    '#B59B87', // Orange
-  te:    '#8DB5AF', // Sarcelle
-  is:    '#A39684', // Islam (Ton pierre/sable)
+  // Couleurs d'état
+  bl:    '#7492B1', 
+  gr:    '#8DA399', 
+  rd:    '#B58787', 
+  pu:    '#9B8DA3', 
+  or:    '#B59B87', 
+  te:    '#8DB5AF', 
+  is:    '#A39684', 
+
+  // --- AJOUT DES POLICES ---
+  fonts: {
+    light: 'PlusJakartaSans-Light',
+    regular: 'PlusJakartaSans-Regular',
+    medium: 'PlusJakartaSans-Medium',
+    bold: 'PlusJakartaSans-Bold',
+  }
 };
 
 export const CATS = {
