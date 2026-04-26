@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useReducer, useCallback } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
 import { saveDB, loadDB, saveCfg, loadCfg } from '../utils/storage';
+import { clearEventCache } from '../utils/recurrence';
 
 const AppStateContext = createContext();
 
@@ -8,6 +9,7 @@ const initialState = {
   cfg: null,
   ready: false,
   loading: false,
+  isUnlocked: false,
 };
 
 function appReducer(state, action) {
@@ -15,12 +17,12 @@ function appReducer(state, action) {
     case 'SET_INITIAL':
       return { ...state, db: action.db, cfg: action.cfg, ready: true, loading: false };
     case 'SET_ERROR':
-      return { 
-        ...state, 
-        db: action.defaultDb, 
-        cfg: action.defaultCfg, 
-        ready: true, 
-        loading: false 
+      return {
+        ...state,
+        db: action.defaultDb,
+        cfg: action.defaultCfg,
+        ready: true,
+        loading: false,
       };
     case 'UPDATE_DB':
       return { ...state, db: action.db };
@@ -28,6 +30,10 @@ function appReducer(state, action) {
       return { ...state, cfg: action.cfg };
     case 'SET_LOADING':
       return { ...state, loading: true };
+    case 'UNLOCK':
+      return { ...state, isUnlocked: true };
+    case 'LOCK':
+      return { ...state, isUnlocked: false };
     default:
       return state;
   }
@@ -45,16 +51,24 @@ export function AppStateProvider({ children }) {
       console.error('App initialization failed:', e);
       dispatch({
         type: 'SET_ERROR',
-        defaultDb: { events: [], tasks: [], routines: [], meals: [], sport: [], mesures: [], pantry: [], pLog: [], obj: {}, cfg: {} },
+        defaultDb: {
+          events: [], tasks: [], routines: [], meals: [], sport: [],
+          mesures: [], pantry: [], pLog: [], obj: {}, cfg: {},
+        },
         defaultCfg: { dev: true, pinOn: false, pinHash: null, modules: [] },
       });
     }
   }, []);
 
+  // Auto-initialize on mount
+  useEffect(() => {
+    initializeApp();
+  }, [initializeApp]);
+
   const updateDb = useCallback(async (newDb) => {
-    // CRITICAL: Persist BEFORE updating UI to prevent data loss
     try {
       await saveDB(newDb);
+      clearEventCache();
       dispatch({ type: 'UPDATE_DB', db: newDb });
     } catch (e) {
       console.error('Failed to save DB:', e);
@@ -72,11 +86,21 @@ export function AppStateProvider({ children }) {
     }
   }, []);
 
+  const unlock = useCallback(() => {
+    dispatch({ type: 'UNLOCK' });
+  }, []);
+
+  const lock = useCallback(() => {
+    dispatch({ type: 'LOCK' });
+  }, []);
+
   const value = {
     ...state,
     initializeApp,
     updateDb,
     updateCfg,
+    unlock,
+    lock,
   };
 
   return (
