@@ -4,8 +4,8 @@
     "slug": "waaprojets-creator",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "dark",
-    "backgroundColor": "#07070D",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F8F5F2",
     "owner": "waaproject",
     "android": {
       "package": "com.awan.planning",
