@@ -1,12 +1,47 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Switch, Alert, Share,
+  Switch, Alert, Share, Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { T, AV } from '../constants/theme';
 import { buildIntegrity, parseAwanFile, validateDB } from '../utils/storage';
 import { useAppState } from '../context/AppStateContext';
+
+// Helpers cross-platform : Alert et Share natifs ne fonctionnent pas sur web
+function showAlert(title, message, buttons) {
+  if (Platform.OS === 'web') {
+    if (!buttons || buttons.length <= 1) {
+      window.alert(`${title}\n\n${message}`);
+      if (buttons && buttons[0]?.onPress) buttons[0].onPress();
+    } else {
+      const ok = window.confirm(`${title}\n\n${message}`);
+      if (ok) {
+        const action = buttons.find(b => b.style === 'destructive' || b.style !== 'cancel');
+        if (action?.onPress) action.onPress();
+      }
+    }
+  } else {
+    Alert.alert(title, message, buttons);
+  }
+}
+
+async function shareData(content, title) {
+  if (Platform.OS === 'web') {
+    if (navigator.share) {
+      try { await navigator.share({ text: content, title }); return; } catch (e) {}
+    }
+    // Fallback : copier dans le presse-papiers
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(content);
+      window.alert('Données copiées dans le presse-papiers.');
+      return;
+    }
+    window.alert('Partage non supporté par ce navigateur.');
+  } else {
+    await Share.share({ message: content, title });
+  }
+}
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -19,7 +54,7 @@ export default function SettingsScreen() {
 
   async function togglePin() {
     if (!cfg.pinOn) {
-      Alert.alert(
+      showAlert(
         'PIN non disponible',
         'La configuration du code PIN sera disponible dans le Sprint 2.'
       );
@@ -42,19 +77,16 @@ export default function SettingsScreen() {
         payload: JSON.stringify(db),
       };
       const json = JSON.stringify(pkg, null, 2);
-      await Share.share({
-        message: json,
-        title: `AWAN_export_${new Date().toISOString().slice(0, 10)}.json`,
-      });
+      await shareData(json, `AWAN_export_${new Date().toISOString().slice(0, 10)}.json`);
     } catch (e) {
-      Alert.alert('Erreur export', e.message || 'Impossible d\'exporter');
+      showAlert('Erreur export', e.message || 'Impossible d\'exporter');
     } finally {
       setBusy(false);
     }
   }
 
   async function importData() {
-    Alert.alert(
+    showAlert(
       'Import',
       'L\'import depuis un fichier sera disponible dans une prochaine version. Pour l\'instant, l\'export fonctionne.',
       [{ text: 'OK' }]
@@ -62,7 +94,7 @@ export default function SettingsScreen() {
   }
 
   function confirmReset() {
-    Alert.alert(
+    showAlert(
       'Réinitialiser',
       'Effacer toutes les données ? Cette action est irréversible.',
       [
@@ -78,7 +110,7 @@ export default function SettingsScreen() {
               cfg: { lat: 48.8566, lon: 2.3522 },
             };
             await updateDb(empty);
-            Alert.alert('Fait', 'Données réinitialisées.');
+            showAlert('Fait', 'Données réinitialisées.');
           },
         },
       ]
