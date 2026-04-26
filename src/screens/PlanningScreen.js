@@ -28,7 +28,8 @@ export default function PlanningScreen() {
   const [showRtModal, setShowRtModal] = useState(false);
   const [editEv, setEditEv] = useState(null);
   const [editRt, setEditRt] = useState(null);
-
+// Garde anti-crash : attendre que la DB soit chargée
+  if (!db) return null;
   const today = ds(new Date());
 
   function selectDate(dateStr) {
