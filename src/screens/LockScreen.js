@@ -6,13 +6,15 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polygon, Circle, Line } from 'react-native-svg';
 import { T } from '../constants/theme';
-import { hashPin, loadCfg } from '../utils/storage';
+import { hashPin } from '../utils/storage';
+import { useAppState } from '../context/AppStateContext';
 
 const LOCK_DELAYS = [30000, 120000, 300000, 3600000];
 
-export default function LockScreen({ onUnlock }) {
+export default function LockScreen() {
   const insets = useSafeAreaInsets();
-  const [cfg, setCfg] = useState(null);
+  const { cfg, ready, unlock } = useAppState();
+
   const [pin, setPin] = useState('');
   const [attempts, setAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState(0);
@@ -26,10 +28,6 @@ export default function LockScreen({ onUnlock }) {
   const hexPulse = useRef(new Animated.Value(0.25)).current;
 
   useEffect(() => {
-    loadCfg().then(c => {
-      setCfg(c);
-      if (c.dev) setTimeout(onUnlock, 2200);
-    });
     Animated.loop(
       Animated.sequence([
         Animated.timing(hexPulse, { toValue: 0.6, duration: 1250, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
@@ -43,18 +41,25 @@ export default function LockScreen({ onUnlock }) {
     ]).start();
   }, []);
 
+  useEffect(() => {
+    if (ready && cfg && cfg.dev) {
+      const timer = setTimeout(() => unlock(), 2200);
+      return () => clearTimeout(timer);
+    }
+  }, [ready, cfg, unlock]);
+
   async function tryUnlock() {
     if (!cfg) return;
-    if (!cfg.pinOn) { onUnlock(); return; }
+    if (!cfg.pinOn) { unlock(); return; }
     const now = Date.now();
     if (lockedUntil > now) {
-      const s = Math.ceil((lockedUntil - now) / 1000);
-      setErrorMsg(`Réessayez dans ${s < 60 ? s + 's' : Math.ceil(s / 60) + 'min'}`);
+      const sec = Math.ceil((lockedUntil - now) / 1000);
+      setErrorMsg(`Réessayez dans ${sec < 60 ? sec + 's' : Math.ceil(sec / 60) + 'min'}`);
       return;
     }
     const h = await hashPin(pin);
     if (h === cfg.pinHash) {
-      setAttempts(0); setErrorMsg(''); onUnlock();
+      setAttempts(0); setErrorMsg(''); unlock();
     } else {
       const na = attempts + 1;
       setAttempts(na);
@@ -63,8 +68,8 @@ export default function LockScreen({ onUnlock }) {
         const step = Math.min(na - 4, LOCK_DELAYS.length - 1);
         const until = Date.now() + LOCK_DELAYS[step];
         setLockedUntil(until);
-        const s = LOCK_DELAYS[step] / 1000;
-        setErrorMsg(`Incorrect — ${s < 60 ? s + 's' : s < 3600 ? (s / 60) + 'min' : '1h'}`);
+        const sec = LOCK_DELAYS[step] / 1000;
+        setErrorMsg(`Incorrect — ${sec < 60 ? sec + 's' : sec < 3600 ? (sec / 60) + 'min' : '1h'}`);
       } else {
         setErrorMsg('Code incorrect');
       }
@@ -76,9 +81,7 @@ export default function LockScreen({ onUnlock }) {
     <View style={[s.container, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 18 }]}>
       <Svg width={66} height={66} viewBox="0 0 66 66">
         <Polygon points="33,3 59,18 59,48 33,63 7,48 7,18" stroke={T.gold} strokeWidth="1.2" fill="none"/>
-        <Animated.View style={{ opacity: hexPulse }}>
-          <Polygon points="33,11 51,22 51,44 33,55 15,44 15,22" stroke={T.gold} strokeWidth=".5" fill="none" opacity=".4"/>
-        </Animated.View>
+        <Polygon points="33,11 51,22 51,44 33,55 15,44 15,22" stroke={T.gold} strokeWidth=".5" fill="none" opacity=".4"/>
         {[
           ["33,3","33,11"],["59,18","51,22"],["59,48","51,44"],
           ["33,63","33,55"],["7,48","15,44"],["7,18","15,22"],
@@ -89,16 +92,19 @@ export default function LockScreen({ onUnlock }) {
         <Circle cx="33" cy="33" r="3.5" fill={T.gold}/>
         <Circle cx="33" cy="33" r="7.5" stroke={T.gold} strokeWidth=".5" fill="none" opacity=".22"/>
       </Svg>
+
       <View style={s.morphBox}>
         <Animated.Text style={[s.arText, { opacity: arOpacity }]}>أوان</Animated.Text>
         <Animated.Text style={[s.latText, { opacity: latOpacity, transform: [{ translateY: latTransY }] }]}>AWAN</Animated.Text>
       </View>
       <Text style={s.tag}>planning personnel</Text>
+
       <View style={s.dotsRow}>
         {Array.from({ length: 8 }).map((_, i) => (
           <View key={i} style={[s.dot, i < pin.length && s.dotOn]} />
         ))}
       </View>
+
       {showInput ? (
         <TextInput
           ref={inputRef}
@@ -111,6 +117,7 @@ export default function LockScreen({ onUnlock }) {
           maxLength={20}
         />
       ) : null}
+
       <TouchableOpacity
         style={s.tapZone}
         onPress={() => { setShowInput(true); setTimeout(() => inputRef.current?.focus(), 100); }}
@@ -120,6 +127,7 @@ export default function LockScreen({ onUnlock }) {
           {cfg?.dev ? 'Mode développeur — ouverture auto' : 'Appuyez pour saisir'}
         </Text>
       </TouchableOpacity>
+
       {pin.length >= 6 && (
         <TouchableOpacity style={s.submitBtn} onPress={tryUnlock} activeOpacity={0.85}>
           <Text style={s.submitTxt}>Valider</Text>
@@ -134,15 +142,15 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: T.bg, alignItems: 'center', justifyContent: 'center' },
   morphBox: { height: 44, justifyContent: 'center', alignItems: 'center', marginTop: 20, marginBottom: 5 },
   arText: { position: 'absolute', fontSize: 28, letterSpacing: 6, color: T.gold, fontWeight: '300' },
-  latText: { position: 'absolute', fontSize: 20, letterSpacing: 8, color: T.gold, fontWeight: '300', fontFamily: T.fonts.light },
-  tag: { fontSize: 8, color: T.tx3, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 36, fontFamily: T.fonts.medium },
+  latText: { position: 'absolute', fontSize: 20, letterSpacing: 8, color: T.gold, fontWeight: '300' },
+  tag: { fontSize: 8, color: T.tx3, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 36 },
   dotsRow: { flexDirection: 'row', gap: 12, marginBottom: 8, height: 14, alignItems: 'center' },
   dot: { width: 10, height: 10, borderRadius: 5, borderWidth: 1.5, borderColor: T.tx3, backgroundColor: 'transparent' },
   dotOn: { backgroundColor: T.gold, borderColor: T.gold, transform: [{ scale: 1.1 }] },
   hiddenInput: { position: 'absolute', width: 1, height: 1, opacity: 0 },
   tapZone: { borderWidth: 1, borderColor: T.bo, borderRadius: 8, paddingVertical: 12, paddingHorizontal: 40, marginBottom: 6 },
-  tapText: { fontSize: 10, color: T.tx3, letterSpacing: 2, fontFamily: T.fonts.regular },
+  tapText: { fontSize: 10, color: T.tx3, letterSpacing: 2 },
   submitBtn: { backgroundColor: T.gold, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 60, marginTop: 10 },
-  submitTxt: { color: T.bg, fontSize: 14, fontWeight: '700', letterSpacing: 1, fontFamily: T.fonts.bold },
-  errTxt: { fontSize: 11, color: T.rd, marginTop: 8, height: 16, fontFamily: T.fonts.regular },
+  submitTxt: { color: T.bg, fontSize: 14, fontWeight: '700', letterSpacing: 1 },
+  errTxt: { fontSize: 11, color: T.rd, marginTop: 8, height: 16 },
 });
