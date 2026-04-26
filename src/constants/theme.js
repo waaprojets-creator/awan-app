@@ -1,40 +1,41 @@
 export const T = {
   // Fond et surfaces (Beige Zen)
-  bg:    '#F8F5F2', 
-  bg2:   '#FFFFFF', 
-  bg3:   '#F0EDE8', 
-  bg4:   '#E5E1DA',  
-  
-  // Bordures et séparateurs
-  bo:    '#E5E1DA', 
-  bo2:   '#D1CDC7',
-  
-  // Couleurs d'accentuation (Anthracite chaud)
-  gold:  '#4A443F', 
-  gdim:  'rgba(74, 68, 63, 0.1)',
-  gglow: 'transparent', 
-  
-  // Typographie
-  tx:    '#4A443F', 
-  tx2:   '#8C7E6E', 
-  tx3:   '#C2B9B0', 
-  
-  // Couleurs d'état
-  bl:    '#7492B1', 
-  gr:    '#8DA399', 
-  rd:    '#B58787', 
-  pu:    '#9B8DA3', 
-  or:    '#B59B87', 
-  te:    '#8DB5AF', 
-  is:    '#A39684', 
+  bg:    '#F8F5F2',
+  bg2:   '#FFFFFF',
+  bg3:   '#F0EDE8',
+  bg4:   '#E5E1DA',
 
-  // Configuration "Sans échec" pour mobile
+  // Bordures et séparateurs
+  bo:    '#E5E1DA',
+  bo2:   '#D1CDC7',
+
+  // Couleurs d'accentuation (Anthracite chaud)
+  gold:  '#4A443F',
+  gdim:  'rgba(74, 68, 63, 0.1)',
+  gglow: 'transparent',
+
+  // Typographie
+  tx:    '#4A443F',
+  tx2:   '#8C7E6E',
+  tx3:   '#C2B9B0',
+
+  // Couleurs d'état
+  bl:    '#7492B1',
+  gr:    '#8DA399',
+  rd:    '#B58787',
+  pu:    '#9B8DA3',
+  or:    '#B59B87',
+  te:    '#8DB5AF',
+  is:    '#A39684',
+
+  // Polices — non définies pour l'instant (police système par défaut)
+  // Sera remplacé par Plus Jakarta Sans dans une session dédiée
   fonts: {
-    light: 'System',
-    regular: 'System',
-    medium: 'System',
-    bold: 'System',
-  }
+    light:   undefined,
+    regular: undefined,
+    medium:  undefined,
+    bold:    undefined,
+  },
 };
 
 export const CATS = {
