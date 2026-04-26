@@ -33,7 +33,7 @@ export default function TasksScreen() {
   const [showModal, setShowModal] = useState(false);
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(ds(new Date()));
-
+if (!db) return null;
   const tasks = db?.tasks || [];
 
   async function addTask() {
