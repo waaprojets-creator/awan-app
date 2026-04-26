@@ -37,6 +37,7 @@ const eventCache = new Map();
 const CACHE_SIZE = 50;
 
 export function eventsForDate(db, dateStr) {
+  if (!db) return [];
   // Check cache first
   const cacheKey = `${dateStr}:${db.events?.length || 0}:${db.routines?.length || 0}`;
   if (eventCache.has(cacheKey)) {
