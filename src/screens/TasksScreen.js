@@ -1,12 +1,30 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  Modal, TextInput, Alert,
+  Modal, TextInput, Alert, Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { T } from '../constants/theme';
 import { uid, ds } from '../utils/storage';
 import { useAppState } from '../context/AppStateContext';
+
+// Helper Alert cross-platform (Alert.alert ne s'affiche pas sur web)
+function showAlert(title, message, buttons) {
+  if (Platform.OS === 'web') {
+    if (!buttons || buttons.length <= 1) {
+      window.alert(`${title}\n\n${message}`);
+      if (buttons && buttons[0]?.onPress) buttons[0].onPress();
+    } else {
+      const ok = window.confirm(`${title}\n\n${message}`);
+      if (ok) {
+        const action = buttons.find(b => b.style === 'destructive' || (b.style !== 'cancel' && b.onPress));
+        if (action?.onPress) action.onPress();
+      }
+    }
+  } else {
+    Alert.alert(title, message, buttons);
+  }
+}
 
 export default function TasksScreen() {
   const insets = useSafeAreaInsets();
@@ -20,7 +38,7 @@ export default function TasksScreen() {
 
   async function addTask() {
     if (!title.trim()) {
-      Alert.alert('Titre requis', 'Saisis un titre pour la tâche.');
+      showAlert('Titre requis', 'Saisis un titre pour la tâche.');
       return;
     }
     const newTask = {
@@ -43,7 +61,7 @@ export default function TasksScreen() {
   }
 
   async function deleteTask(id) {
-    Alert.alert('Supprimer', 'Supprimer cette tâche ?', [
+    showAlert('Supprimer', 'Supprimer cette tâche ?', [
       { text: 'Annuler', style: 'cancel' },
       {
         text: 'Supprimer',
