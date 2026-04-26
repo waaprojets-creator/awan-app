@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  Animated, Easing, Vibration, TextInput,
+  Animated, Easing, Vibration, TextInput, Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Polygon, Circle, Line } from 'react-native-svg';
@@ -63,7 +63,7 @@ export default function LockScreen() {
     } else {
       const na = attempts + 1;
       setAttempts(na);
-      Vibration.vibrate([0, 50, 50, 50]);
+      if (Platform.OS !== 'web') Vibration.vibrate([0, 50, 50, 50]);
       if (na > 3) {
         const step = Math.min(na - 4, LOCK_DELAYS.length - 1);
         const until = Date.now() + LOCK_DELAYS[step];
