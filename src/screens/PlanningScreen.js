@@ -14,10 +14,7 @@ const STABS = ['Mensuel', 'Hebdo', 'Annuel'];
 export default function PlanningScreen() {
   const insets = useSafeAreaInsets();
   const { db, updateDb } = useAppState();
-  // Garde anti-crash : attendre que la DB soit chargée
-  if (!db) {
-    return null;
-  }
+  
   const [subTab, setSubTab] = useState(0);
   const [prevTab, setPrevTab] = useState(0);
   const [calDate, setCalDate] = useState(new Date());
