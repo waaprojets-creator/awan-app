@@ -1,23 +1,29 @@
 import React from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-// Context & Theme
-import { AppStateProvider, useAppState } from './context/AppStateContext';
-import { T } from './constants/theme';
+import { AppStateProvider, useAppState } from './src/context/AppStateContext';
+import { T } from './src/constants/theme';
 
-// Screens
-import LockScreen from './screens/LockScreen';
-import PlanningScreen from './screens/PlanningScreen';
-// Vérifie que ces fichiers existent, sinon remplace par PlanningScreen temporairement
-import TasksScreen from './screens/PlanningScreen'; 
-import AnalyseScreen from './screens/PlanningScreen'; 
-import SettingsScreen from './screens/PlanningScreen';
+import LockScreen from './src/screens/LockScreen';
+import PlanningScreen from './src/screens/PlanningScreen';
+import TasksScreen from './src/screens/TasksScreen';
+import AnalyseScreen from './src/screens/AnalyseScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
+
+function SplashLoader() {
+  return (
+    <View style={{ flex: 1, backgroundColor: T.bg, alignItems: 'center', justifyContent: 'center' }}>
+      <ActivityIndicator size="large" color={T.gold} />
+    </View>
+  );
+}
 
 function TabNavigator() {
   return (
@@ -34,20 +40,24 @@ function TabNavigator() {
         tabBarInactiveTintColor: T.tx3,
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '600'
+          fontWeight: '600',
         },
       }}
     >
       <Tab.Screen name="Planning" component={PlanningScreen} />
-      <Tab.Screen name="Tasks" component={TasksScreen} />
+      <Tab.Screen name="Tasks" component={TasksScreen} options={{ title: 'Tâches' }} />
       <Tab.Screen name="Analyse" component={AnalyseScreen} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+      <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: 'Réglages' }} />
     </Tab.Navigator>
   );
 }
 
 function MainStack() {
-  const { isUnlocked } = useAppState();
+  const { isUnlocked, ready } = useAppState();
+
+  if (!ready) {
+    return <SplashLoader />;
+  }
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
