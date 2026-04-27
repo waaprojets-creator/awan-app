@@ -1,44 +1,44 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
 import { T } from '../constants/theme';
 import { HexagonLogo, ICON_SIZE } from '../constants/icons';
 import { L } from '../constants/labels';
 
 /**
- * Header universel d'AWAN, présent sur toutes les screens (sauf LockScreen).
+ * Header universel d'AWAN, immuable au-dessus de toutes les screens
+ * (sauf LockScreen).
  *
  * Trois zones cliquables :
  *  - Gauche  AWAN  → écran Analyse & statistiques
  *  - Centre  ⬡     → Dashboard (home)
  *  - Droite  أوان  → écran Islam
  *
- * Quand on est déjà sur la destination, la zone passe en opacité réduite
- * (visuellement "inactive") et le tap est ignoré.
+ * Convention couleur :
+ *  - Inactif : gris clair (T.tx3)
+ *  - Actif (zone = écran actuel) : doré (T.gold)
+ *
+ * Reçoit `currentRoute` et `onNavigate` en props depuis MainLayout
+ * pour éviter d'utiliser useNavigation/useRoute hors du Navigator.
  */
-export default function AppHeader() {
+export default function AppHeader({ currentRoute, onNavigate }) {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
-  const route = useRoute();
 
-  const isOn = (name) => route.name === name;
+  const isOn = (name) => currentRoute === name;
 
-  const goAnalyse = () => { if (!isOn('Analyse'))   navigation.navigate('Analyse'); };
-  const goDash    = () => { if (!isOn('Dashboard')) navigation.navigate('Dashboard'); };
-  const goIslam   = () => { if (!isOn('Islam'))     navigation.navigate('Islam'); };
+  const colorFor = (name) => isOn(name) ? T.gold : T.tx3;
 
   return (
     <View style={[s.wrap, { paddingTop: insets.top + 8 }]}>
       {/* AWAN — gauche → Analyse */}
       <TouchableOpacity
         style={s.side}
-        onPress={goAnalyse}
+        onPress={() => onNavigate('Analyse')}
         activeOpacity={0.6}
         accessibilityLabel={L.a11y.open_analyse}
         disabled={isOn('Analyse')}
       >
-        <Text style={[s.txLatin, isOn('Analyse') && s.txInactive]}>
+        <Text style={[s.txLatin, { color: colorFor('Analyse') }]}>
           {L.header.latin}
         </Text>
       </TouchableOpacity>
@@ -46,7 +46,7 @@ export default function AppHeader() {
       {/* Hexagone — centre → Dashboard */}
       <TouchableOpacity
         style={s.center}
-        onPress={goDash}
+        onPress={() => onNavigate('Dashboard')}
         activeOpacity={0.6}
         accessibilityLabel={L.a11y.home}
         disabled={isOn('Dashboard')}
@@ -54,19 +54,19 @@ export default function AppHeader() {
         <HexagonLogo
           size={ICON_SIZE.header}
           variant="simple"
-          opacity={isOn('Dashboard') ? 0.4 : 1}
+          color={colorFor('Dashboard')}
         />
       </TouchableOpacity>
 
       {/* أوان — droite → Islam */}
       <TouchableOpacity
         style={s.side}
-        onPress={goIslam}
+        onPress={() => onNavigate('Islam')}
         activeOpacity={0.6}
         accessibilityLabel={L.a11y.open_islam}
         disabled={isOn('Islam')}
       >
-        <Text style={[s.txArabic, isOn('Islam') && s.txInactive]}>
+        <Text style={[s.txArabic, { color: colorFor('Islam') }]}>
           {L.header.arabic}
         </Text>
       </TouchableOpacity>
@@ -96,18 +96,13 @@ const s = StyleSheet.create({
   },
   txLatin: {
     fontSize: 16,
-    color: T.gold,
     letterSpacing: 4,
     fontWeight: '400',
     textAlign: 'left',
   },
   txArabic: {
     fontSize: 18,
-    color: T.gold,
     fontWeight: '400',
     textAlign: 'right',
-  },
-  txInactive: {
-    opacity: 0.35,
   },
 });
