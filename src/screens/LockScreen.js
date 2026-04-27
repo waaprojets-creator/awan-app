@@ -4,8 +4,9 @@ import {
   Animated, Easing, Vibration, TextInput, Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Polygon, Circle, Line } from 'react-native-svg';
 import { T } from '../constants/theme';
+import { HexagonLogo, ICON_SIZE } from '../constants/icons';
+import { L } from '../constants/labels';
 import { hashPin } from '../utils/storage';
 import { useAppState } from '../context/AppStateContext';
 
@@ -22,10 +23,10 @@ export default function LockScreen() {
   const [showInput, setShowInput] = useState(false);
   const inputRef = useRef(null);
 
-  const arOpacity = useRef(new Animated.Value(1)).current;
-  const latOpacity = useRef(new Animated.Value(0)).current;
-  const latTransY = useRef(new Animated.Value(9)).current;
-  const hexPulse = useRef(new Animated.Value(0.25)).current;
+  const arOpacity   = useRef(new Animated.Value(1)).current;
+  const latOpacity  = useRef(new Animated.Value(0)).current;
+  const latTransY   = useRef(new Animated.Value(9)).current;
+  const hexPulse    = useRef(new Animated.Value(0.25)).current;
 
   useEffect(() => {
     Animated.loop(
@@ -35,9 +36,9 @@ export default function LockScreen() {
       ])
     ).start();
     Animated.parallel([
-      Animated.timing(arOpacity, { toValue: 0, duration: 550, delay: 1100, useNativeDriver: true }),
+      Animated.timing(arOpacity,  { toValue: 0, duration: 550, delay: 1100, useNativeDriver: true }),
       Animated.timing(latOpacity, { toValue: 1, duration: 550, delay: 1550, useNativeDriver: true }),
-      Animated.timing(latTransY, { toValue: 0, duration: 550, delay: 1550, useNativeDriver: true }),
+      Animated.timing(latTransY,  { toValue: 0, duration: 550, delay: 1550, useNativeDriver: true }),
     ]).start();
   }, []);
 
@@ -79,23 +80,15 @@ export default function LockScreen() {
 
   return (
     <View style={[s.container, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 18 }]}>
-      <Svg width={66} height={66} viewBox="0 0 66 66">
-        <Polygon points="33,3 59,18 59,48 33,63 7,48 7,18" stroke={T.gold} strokeWidth="1.2" fill="none"/>
-        <Polygon points="33,11 51,22 51,44 33,55 15,44 15,22" stroke={T.gold} strokeWidth=".5" fill="none" opacity=".4"/>
-        {[
-          ["33,3","33,11"],["59,18","51,22"],["59,48","51,44"],
-          ["33,63","33,55"],["7,48","15,44"],["7,18","15,22"],
-        ].map(([p1,p2],i) => {
-          const [x1,y1]=p1.split(','); const [x2,y2]=p2.split(',');
-          return <Line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={T.gold} strokeWidth=".5" opacity=".28"/>;
-        })}
-        <Circle cx="33" cy="33" r="3.5" fill={T.gold}/>
-        <Circle cx="33" cy="33" r="7.5" stroke={T.gold} strokeWidth=".5" fill="none" opacity=".22"/>
-      </Svg>
+      <HexagonLogo size={ICON_SIZE.hero - 14} variant="rich" />
 
       <View style={s.morphBox}>
-        <Animated.Text style={[s.arText, { opacity: arOpacity }]}>أوان</Animated.Text>
-        <Animated.Text style={[s.latText, { opacity: latOpacity, transform: [{ translateY: latTransY }] }]}>AWAN</Animated.Text>
+        <Animated.Text style={[s.arText, { opacity: arOpacity }]}>
+          {L.header.arabic}
+        </Animated.Text>
+        <Animated.Text style={[s.latText, { opacity: latOpacity, transform: [{ translateY: latTransY }] }]}>
+          {L.header.latin}
+        </Animated.Text>
       </View>
       <Text style={s.tag}>planning personnel</Text>
 
@@ -141,7 +134,7 @@ export default function LockScreen() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: T.bg, alignItems: 'center', justifyContent: 'center' },
   morphBox: { height: 44, justifyContent: 'center', alignItems: 'center', marginTop: 20, marginBottom: 5 },
-  arText: { position: 'absolute', fontSize: 28, letterSpacing: 6, color: T.gold, fontWeight: '300' },
+  arText:  { position: 'absolute', fontSize: 28, letterSpacing: 6, color: T.gold, fontWeight: '300' },
   latText: { position: 'absolute', fontSize: 20, letterSpacing: 8, color: T.gold, fontWeight: '300' },
   tag: { fontSize: 8, color: T.tx3, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 36 },
   dotsRow: { flexDirection: 'row', gap: 12, marginBottom: 8, height: 14, alignItems: 'center' },
