@@ -54,7 +54,7 @@ export default function DashboardScreen() {
 
         <Widget
           title={L.dash.widgets.planning}
-          onPress={() => navigation.navigate('PlanningTab')}
+          onPress={() => navigation.navigate('Tabs', { screen: 'PlanningTab' })}
           status="wip"
         />
 
@@ -67,21 +67,21 @@ export default function DashboardScreen() {
 
         <Widget
           title={L.dash.widgets.sport}
-          onPress={() => navigation.navigate('SanteTab')}
+          onPress={() => navigation.navigate('Tabs', { screen: 'SanteTab' })}
           status="wip"
           subtitle={L.state.sprint2}
         />
 
         <Widget
           title={L.dash.widgets.courses}
-          onPress={() => navigation.navigate('SanteTab')}
+          onPress={() => navigation.navigate('Tabs', { screen: 'SanteTab' })}
           status="wip"
           subtitle={L.state.sprint2}
         />
 
         <Widget
           title={L.dash.widgets.macros}
-          onPress={() => navigation.navigate('SanteTab')}
+          onPress={() => navigation.navigate('Tabs', { screen: 'SanteTab' })}
           status="wip"
           subtitle={L.state.sprint2}
         />
