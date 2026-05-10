@@ -1,0 +1,10 @@
+[
+  { "id": 1, "fr": "Bonjour", "ar": "صباح الخير", "phonetic": "Sabah al-khair", "category": "General" },
+  { "id": 2, "fr": "Merci", "ar": "شكرا", "phonetic": "Shukran", "category": "General" },
+  { "id": 3, "fr": "Au nom d'Allah", "ar": "بسم الله", "phonetic": "Bismillah", "category": "Religious" },
+  { "id": 4, "fr": "Louange à Allah", "ar": "الحمد لله", "phonetic": "Alhamdulillah", "category": "Religious" },
+  { "id": 5, "fr": "Pardon d'Allah", "ar": "استغفر الله", "phonetic": "Astaghfirullah", "category": "Religious" },
+  { "id": 6, "fr": "Fondation", "ar": "أساس", "phonetic": "Asas", "category": "Technical" },
+  { "id": 7, "fr": "Plan", "ar": "مخطط", "phonetic": "Mukhattat", "category": "Technical" },
+  { "id": 8, "fr": "Sécurité", "ar": "أمان", "phonetic": "Aman", "category": "Technical" }
+]

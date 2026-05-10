@@ -1,0 +1,32 @@
+[
+  {"id": "bench_press", "name": "Développé couché", "muscle": "Pectoraux", "equipment": "Barre"},
+  {"id": "incline_db_press", "name": "Développé incliné haltères", "muscle": "Pectoraux", "equipment": "Haltères"},
+  {"id": "chest_fly", "name": "Écartés couchés", "muscle": "Pectoraux", "equipment": "Haltères"},
+  {"id": "push_ups", "name": "Pompes", "muscle": "Pectoraux", "equipment": "Poids du corps"},
+  
+  {"id": "deadlift", "name": "Soulevé de terre", "muscle": "Dos", "equipment": "Barre"},
+  {"id": "pull_ups", "name": "Tractions", "muscle": "Dos", "equipment": "Poids du corps"},
+  {"id": "bent_over_row", "name": "Rowing barre", "muscle": "Dos", "equipment": "Barre"},
+  {"id": "lat_pulldown", "name": "Tirage vertical", "muscle": "Dos", "equipment": "Machine"},
+  {"id": "seated_row", "name": "Tirage horizontal", "muscle": "Dos", "equipment": "Machine"},
+
+  {"id": "squat", "name": "Squat", "muscle": "Jambes", "equipment": "Barre"},
+  {"id": "leg_press", "name": "Presse à cuisses", "muscle": "Jambes", "equipment": "Machine"},
+  {"id": "lunges", "name": "Fentes", "muscle": "Jambes", "equipment": "Haltères"},
+  {"id": "leg_extension", "name": "Leg Extension", "muscle": "Jambes", "equipment": "Machine"},
+  {"id": "leg_curl", "name": "Leg Curl", "muscle": "Jambes", "equipment": "Machine"},
+
+  {"id": "overhead_press", "name": "Développé militaire", "muscle": "Épaules", "equipment": "Barre"},
+  {"id": "lateral_raise", "name": "Élévations latérales", "muscle": "Épaules", "equipment": "Haltères"},
+  {"id": "front_raise", "name": "Élévations frontales", "muscle": "Épaules", "equipment": "Haltères"},
+  {"id": "face_pull", "name": "Face Pull", "muscle": "Épaules", "equipment": "Poulie"},
+
+  {"id": "bicep_curl", "name": "Curl biceps", "muscle": "Bras", "equipment": "Haltères"},
+  {"id": "hammer_curl", "name": "Curl marteau", "muscle": "Bras", "equipment": "Haltères"},
+  {"id": "tricep_pushdown", "name": "Extensions triceps poulie", "muscle": "Bras", "equipment": "Poulie"},
+  {"id": "dips", "name": "Dips", "muscle": "Bras", "equipment": "Poids du corps"},
+
+  {"id": "plank", "name": "Planche", "muscle": "Abdominaux", "equipment": "Poids du corps"},
+  {"id": "crunch", "name": "Crunch", "muscle": "Abdominaux", "equipment": "Poids du corps"},
+  {"id": "leg_raise", "name": "Relevé de jambes", "muscle": "Abdominaux", "equipment": "Poids du corps"}
+]
