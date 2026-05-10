@@ -3,6 +3,8 @@ import { migrateRule } from '../schemas/coach/rule';
 import { migrateAssessment } from '../schemas/coach/assessment';
 import { migrateScheduleTask } from '../schemas/planning/scheduleTask';
 import { migrateDaySchedule } from '../schemas/planning/daySchedule';
+import { migrateActivityRecord } from '../schemas/activity/activityRecord';
+import { migrateDailySummary } from '../schemas/activity/dailySummary';
 
 /**
  * Central registry mapping storage keys (or domain identifiers) to their
@@ -15,6 +17,8 @@ export const migrators = {
   'coach.assessment': migrateAssessment,
   'planning.task': migrateScheduleTask,
   'planning.schedule': migrateDaySchedule,
+  'activity.record': migrateActivityRecord,
+  'activity.summary': migrateDailySummary,
 } as const;
 
 export type MigratorKey = keyof typeof migrators;
