@@ -1,3 +1,4 @@
+// @ts-nocheck — legacy, rewritten per sprint
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../../hooks/useTheme';

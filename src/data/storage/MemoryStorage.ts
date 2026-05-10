@@ -1,17 +1,15 @@
-import type { ZodSchema } from 'zod';
-import type { IStorage, ITransaction } from './IStorage';
+import type { IStorage, ITransaction, ParseFn } from './IStorage';
 
 export class MemoryStorage implements IStorage {
   private store = new Map<string, unknown>();
 
-  async get<T>(key: string, schema: ZodSchema<T>): Promise<T | null> {
+  async get<T>(key: string, parse: ParseFn<T>): Promise<T | null> {
     const raw = this.store.get(key);
     if (raw === undefined) return null;
-    return schema.parse(raw);
+    return parse(raw);
   }
 
-  async set<T>(key: string, value: T, schema: ZodSchema<T>): Promise<void> {
-    schema.parse(value);
+  async set<T>(key: string, value: T): Promise<void> {
     this.store.set(key, value);
   }
 
@@ -23,24 +21,25 @@ export class MemoryStorage implements IStorage {
     return [...this.store.keys()].filter(k => k.startsWith(prefix));
   }
 
-  async query<T>(table: string, where: Partial<T>): Promise<T[]> {
+  async query<T>(table: string, where: Partial<T>, parse: ParseFn<T>): Promise<T[]> {
     const keys = await this.list(table);
     const results: T[] = [];
     for (const key of keys) {
-      const raw = this.store.get(key) as T | undefined;
-      if (!raw) continue;
+      const raw = this.store.get(key);
+      if (raw === undefined) continue;
+      const parsed = parse(raw);
       const match = Object.entries(where).every(
-        ([k, v]) => (raw as Record<string, unknown>)[k] === v,
+        ([k, v]) => (parsed as Record<string, unknown>)[k] === v,
       );
-      if (match) results.push(raw);
+      if (match) results.push(parsed);
     }
     return results;
   }
 
   async transaction<T>(fn: (tx: ITransaction) => Promise<T>): Promise<T> {
     const tx: ITransaction = {
-      get: (k, s) => this.get(k, s),
-      set: (k, v, s) => this.set(k, v, s),
+      get: (k, p) => this.get(k, p),
+      set: (k, v) => this.set(k, v),
       delete: (k) => this.delete(k),
     };
     return fn(tx);

@@ -7,21 +7,21 @@ describe('Pré-flight sanity', () => {
   it('MemoryStorage get/set/delete', async () => {
     const storage = new MemoryStorage();
     const schema = z.object({ v: z.literal(1), name: z.string() });
+    const parse = (raw: unknown) => schema.parse(raw);
 
-    await storage.set('test:1', { v: 1, name: 'AWAN' }, schema);
-    const result = await storage.get('test:1', schema);
+    await storage.set('test:1', { v: 1, name: 'AWAN' });
+    const result = await storage.get('test:1', parse);
     expect(result).toEqual({ v: 1, name: 'AWAN' });
 
     await storage.delete('test:1');
-    expect(await storage.get('test:1', schema)).toBeNull();
+    expect(await storage.get('test:1', parse)).toBeNull();
   });
 
   it('MemoryStorage list by prefix', async () => {
     const storage = new MemoryStorage();
-    const schema = z.object({ v: z.literal(1), x: z.number() });
-    await storage.set('sport:1', { v: 1, x: 10 }, schema);
-    await storage.set('sport:2', { v: 1, x: 20 }, schema);
-    await storage.set('nutrition:1', { v: 1, x: 30 }, schema);
+    await storage.set('sport:1', { v: 1, x: 10 });
+    await storage.set('sport:2', { v: 1, x: 20 });
+    await storage.set('nutrition:1', { v: 1, x: 30 });
 
     const keys = await storage.list('sport:');
     expect(keys).toHaveLength(2);

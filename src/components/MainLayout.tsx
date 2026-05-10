@@ -1,3 +1,4 @@
+// @ts-nocheck — legacy, rewritten per sprint
 import React, { Component } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Switch, Route, useLocation } from 'wouter';

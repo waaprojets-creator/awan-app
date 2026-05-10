@@ -1,0 +1,30 @@
+{
+  "v": 1,
+  "id": "550e8400-e29b-41d4-a716-446655440001",
+  "date": "2026-05-10",
+  "startedAt": 1746864000000,
+  "endedAt": 1746867600000,
+  "sets": [
+    {
+      "v": 1,
+      "exerciseId": "squat",
+      "reps": 8,
+      "weightKg": 100,
+      "rpe": 8
+    },
+    {
+      "v": 1,
+      "exerciseId": "squat",
+      "reps": 8,
+      "weightKg": 100,
+      "rpe": 9
+    },
+    {
+      "v": 1,
+      "exerciseId": "bench-press",
+      "reps": 10,
+      "weightKg": 80
+    }
+  ],
+  "note": "Bonne séance"
+}
