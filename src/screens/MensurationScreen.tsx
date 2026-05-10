@@ -6,8 +6,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
 import { ds, uid } from '../utils/storage';
-import { LocalDbService } from '../services/localDbService';
 import { BiometricsService } from '../services/biometricsService';
+import { useMeasurementStore } from '../hooks/useMeasurementStore';
 import { HumanAnatomySvg } from '../HumanAnatomySvg';
 import { ChevronLeft, Save, Activity, Ruler, MoreVertical, TrendingUp, Info, Zap, Shield, Target, Plus, X, Fingerprint, Database } from 'lucide-react';
 import { PageWrapper } from '../components/Animated';
@@ -17,10 +17,11 @@ import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
 
 export default function MensurationScreen() {
-  const { db, updateDb, navigate } = useAppState() as any;
+  const { navigate } = useAppState() as any;
   const { getEntriesByDate, addEntry, removeEntry, moveEntry } = useDaily();
-  
-  const [metrics, setMetrics] = useState<{ history: Array<Record<string, unknown>> }>({ history: [] });
+
+  const measureStore = useMeasurementStore();
+
   const [selectedPart, setSelectedPart] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [gender, setGender] = useState('man');
@@ -32,20 +33,24 @@ export default function MensurationScreen() {
   const mensurationEntries = allEntries.filter((e: any) => e.module === 'mesure');
   const [inputText, setInputText] = useState('');
 
-  const [currentEntry, setCurrentEntry] = useState<{
-    date: string; weight: number; bpm_rest: number; body_fat_pct: number;
-    measurements: Record<string, number>; skinfolds: Record<string, number>;
-  }>({
-    date: todayStr, weight: 0, bpm_rest: 0, body_fat_pct: 0, measurements: {}, skinfolds: {},
-  });
+  const blankEntry = {
+    date: todayStr, weight: 0, bpm_rest: 0, body_fat_pct: 0,
+    measurements: {} as Record<string, number>, skinfolds: {} as Record<string, number>,
+  };
 
+  const [currentEntry, setCurrentEntry] = useState(blankEntry);
+
+  // load today's entry from store once store is ready
   useEffect(() => {
-    BiometricsService.sync().then((data) => {
-      setMetrics(data as any);
-      const today = data.history.find((h: any) => h.date === todayStr);
-      if (today) setCurrentEntry(today as any);
-    });
-  }, []);
+    if (!measureStore.loading) {
+      const todayEntry = measureStore.getByDate(todayStr);
+      if (todayEntry) setCurrentEntry(todayEntry);
+    }
+  }, [measureStore.loading]);
+
+  const persistEntry = (entry: typeof blankEntry) => {
+    measureStore.save({ v: 1, id: uid(), savedAt: Date.now(), ...entry });
+  };
 
   const handleAddEntry = () => {
     if (!inputText.trim()) return;
@@ -71,7 +76,7 @@ export default function MensurationScreen() {
     const newEntry = { ...currentEntry };
     newEntry.measurements = { ...newEntry.measurements, [selectedPart]: val };
     setCurrentEntry(newEntry);
-    LocalDbService.saveMetricEntry(newEntry);
+    persistEntry(newEntry);
     setSelectedPart(null);
     setIsScanning(true);
     setTimeout(() => setIsScanning(false), 1500);
@@ -81,14 +86,14 @@ export default function MensurationScreen() {
     const w = parseFloat(val);
     const newEntry = { ...currentEntry, weight: isNaN(w) ? 0 : w };
     setCurrentEntry(newEntry);
-    LocalDbService.saveMetricEntry(newEntry);
+    persistEntry(newEntry);
   };
 
   const updateBpm = (val: string) => {
     const b = parseInt(val);
     const newEntry = { ...currentEntry, bpm_rest: isNaN(b) ? 0 : b };
     setCurrentEntry(newEntry);
-    LocalDbService.saveMetricEntry(newEntry);
+    persistEntry(newEntry);
   };
 
   const updateSkinfold = (site: string, val: string) => {
@@ -102,7 +107,7 @@ export default function MensurationScreen() {
       : BiometricsService.jacksonPollock3Women(s['triceps'] ?? 0, s['suprailiac'] ?? 0, s['thigh'] ?? 0, a);
     newEntry.body_fat_pct = parseFloat(bf.toFixed(2));
     setCurrentEntry(newEntry);
-    LocalDbService.saveMetricEntry(newEntry);
+    persistEntry(newEntry);
   };
 
   const updatedParts = Object.keys(currentEntry.measurements);
@@ -257,10 +262,10 @@ export default function MensurationScreen() {
           <div className="mb-10">
             <Heading level={4} mono subtitle="Récupération Chrono" className="mb-6">HISTORIQUE DES CAPTURES</Heading>
             <div className="space-y-3">
-              {metrics.history.slice(-5).reverse().map((h: any) => (
+              {measureStore.history.slice(-5).reverse().map((h) => (
                 <Card key={h.date} className="flex-row items-center gap-6 p-5 bg-white/3 border-white/5" variant="flat">
                    <div className="w-10 h-10 rounded-full border border-white/10 items-center justify-center">
-                      <span className="text-[8px] font-mono text-awan-tx-mute">{(h.date as string).split('-').slice(1).join('/')}</span>
+                      <span className="text-[8px] font-mono text-awan-tx-mute">{h.date.split('-').slice(1).join('/')}</span>
                    </div>
                    <div className="flex-1">
                       <div className="flex flex-row items-baseline gap-1">

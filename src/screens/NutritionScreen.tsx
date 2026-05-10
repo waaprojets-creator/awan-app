@@ -7,11 +7,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { PageWrapper } from '../components/Animated';
 import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
-import { ds } from '../utils/storage';
+import { ds, uid } from '../utils/storage';
 import { DailyCanvas } from '../components/DailyCanvas';
 import { NUTRITION_DB } from '../data/nutrition_db';
 import { NutritionService } from '../services/nutritionService';
 import { LocalAIService } from '../services/localAIService';
+import { useMealStore } from '../hooks/useMealStore';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
@@ -19,14 +20,13 @@ import { Touch } from '../components/ui/Touch';
 export default function NutritionScreen() {
   const { navigate } = useAppState() as any;
   const { getEntriesByDate, addEntry, moveEntry } = useDaily();
-  
+
   const [inputText, setInputText] = useState('');
   const [auditText, setAuditText] = useState('');
   const [auditResult, setAuditResult] = useState<any>(null);
   const today = ds(new Date());
 
-  const allEntries = getEntriesByDate(today);
-  const nutritionEntries = allEntries.filter((e: any) => e.module === 'nutrition');
+  const mealStore = useMealStore(today);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFood, setSelectedFood] = useState<any>(null);
@@ -43,10 +43,38 @@ export default function NutritionScreen() {
     setAuditResult(res);
   };
 
+  const handleAddFromDb = (item: any) => {
+    const now = Date.now();
+    const entryId = uid();
+    mealStore.add({
+      v: 1,
+      id: entryId,
+      date: today,
+      name: item.name,
+      kcal: item.calories ?? 0,
+      p: item.macros?.p ?? 0,
+      c: item.macros?.c ?? 0,
+      f: item.macros?.f ?? 0,
+      timestamp: now,
+      source: 'db',
+    });
+    addEntry(today, {
+      id: entryId,
+      timestamp: now,
+      module: 'nutrition',
+      rawText: `${item.name} ${item.calories}kcal`,
+      tokens: [
+        { label: 'Aliment', value: item.name, icon: '🍗' },
+        { label: 'Énergie', value: `${item.calories}kcal`, icon: '🔥' },
+      ],
+    });
+    setSearchQuery('');
+  };
+
   const handleAddEntry = () => {
     if (!inputText.trim()) return;
-    
-    const entryId = Date.now().toString();
+    const now = Date.now();
+    const entryId = uid();
     const parts = inputText.split(' ');
     const tokens = parts.map((part) => {
       let icon = '🍗';
@@ -56,19 +84,32 @@ export default function NutritionScreen() {
       return { label, value: part, icon };
     });
 
-    const newEntry = {
+    // parse macros from free text for IStorage
+    const parsed = NutritionService.calculateDailyTotal([{ rawText: inputText }]);
+    mealStore.add({
+      v: 1,
       id: entryId,
-      timestamp: Date.now(),
+      date: today,
+      name: parts[0] ?? inputText,
+      kcal: parsed.kcal,
+      p: parsed.p,
+      c: parsed.c,
+      f: parsed.f,
+      timestamp: now,
+      source: 'quick',
+    });
+
+    addEntry(today, {
+      id: entryId,
+      timestamp: now,
       module: 'nutrition',
       rawText: inputText,
-      tokens
-    };
-
-    addEntry(today, newEntry);
+      tokens,
+    });
     setInputText('');
   };
 
-  const nutritionTotals = useMemo(() => NutritionService.calculateDailyTotal(nutritionEntries), [nutritionEntries]);
+  const nutritionTotals = mealStore.totals;
 
   return (
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
@@ -145,7 +186,7 @@ export default function NutritionScreen() {
                         <Touch onPress={() => setSelectedFood(item)} className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center border border-white/10">
                           <Info size={16} className="text-awan-tx-mute" />
                         </Touch>
-                        <Touch onPress={() => { setInputText(`${item.name} `); setSearchQuery(''); }} className="w-9 h-9 rounded-xl bg-awan-gold/20 flex items-center justify-center border border-awan-gold/30">
+                        <Touch onPress={() => handleAddFromDb(item)} className="w-9 h-9 rounded-xl bg-awan-gold/20 flex items-center justify-center border border-awan-gold/30">
                           <Plus size={18} className="text-awan-gold" />
                         </Touch>
                       </div>
