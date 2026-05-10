@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "id": "nutrition.protein_low",
+  "domain": "nutrition",
+  "name": "Apport protéique journalier insuffisant (< 90 g)",
+  "signals": [
+    { "type": "sum", "source": "nutrition.meal", "field": "proteinG", "window": { "days": 1 } }
+  ],
+  "condition": { "op": "lt", "value": 90 },
+  "signalIndex": 0,
+  "severity": "warn",
+  "adviceKey": "coach.nutrition.protein_low",
+  "enabled": true
+}

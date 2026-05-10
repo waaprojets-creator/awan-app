@@ -1,0 +1,15 @@
+{
+  "v": 1,
+  "id": "cross.sleep_workout",
+  "domain": "cross",
+  "name": "Corrélation sommeil ↔ intensité d'entraînement",
+  "signals": [
+    { "type": "avg", "source": "sleep.entry", "field": "durationH", "window": { "days": 14 } },
+    { "type": "avg", "source": "sport.workoutLog", "field": "intensity", "window": { "days": 14 } }
+  ],
+  "condition": { "op": "gt", "value": 0.6 },
+  "signalIndex": 0,
+  "severity": "info",
+  "adviceKey": "coach.cross.sleep_workout",
+  "enabled": true
+}

@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "id": "sport.no_workout_7d",
+  "domain": "sport",
+  "name": "Aucun entraînement depuis 7 jours",
+  "signals": [
+    { "type": "count", "source": "sport.workoutLog", "window": { "days": 7 } }
+  ],
+  "condition": { "op": "lt", "value": 1 },
+  "signalIndex": 0,
+  "severity": "warn",
+  "adviceKey": "coach.sport.no_workout_7d",
+  "enabled": true
+}

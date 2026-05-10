@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "id": "sleep.short_avg",
+  "domain": "sleep",
+  "name": "Sommeil moyen < 6h sur 7 jours",
+  "signals": [
+    { "type": "avg", "source": "sleep.entry", "field": "durationH", "window": { "days": 7 } }
+  ],
+  "condition": { "op": "lt", "value": 6 },
+  "signalIndex": 0,
+  "severity": "alert",
+  "adviceKey": "coach.sleep.short_avg",
+  "enabled": true
+}

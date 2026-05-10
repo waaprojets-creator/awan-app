@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "id": "anthropo.weight_gain_trend",
+  "domain": "anthropo",
+  "name": "Tendance haussière du poids sur 14 jours",
+  "signals": [
+    { "type": "trend", "source": "anthropo.measurement", "field": "weightKg", "window": { "days": 14 } }
+  ],
+  "condition": { "op": "gt", "value": 0.05 },
+  "signalIndex": 0,
+  "severity": "info",
+  "adviceKey": "coach.anthropo.weight_gain_trend",
+  "enabled": true
+}
