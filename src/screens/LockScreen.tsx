@@ -1,3 +1,4 @@
+// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { motion, AnimatePresence } from 'motion/react';

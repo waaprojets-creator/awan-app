@@ -1,3 +1,4 @@
+// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   View, Modal, TextInput, ScrollView

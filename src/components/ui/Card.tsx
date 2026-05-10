@@ -64,12 +64,11 @@ export function Card({
     </div>
   );
 
-  if (onPress || onLongPress) {
-    return (
-      <Touch onPress={onPress} onLongPress={onLongPress} className="w-full text-left">
-        {CardBase}
-      </Touch>
-    );
+  if (onPress !== undefined || onLongPress !== undefined) {
+    const touchProps: Record<string, unknown> = { className: 'w-full text-left' };
+    if (onPress !== undefined) touchProps['onPress'] = onPress;
+    if (onLongPress !== undefined) touchProps['onLongPress'] = onLongPress;
+    return <Touch {...touchProps}>{CardBase}</Touch>;
   }
 
   return CardBase;

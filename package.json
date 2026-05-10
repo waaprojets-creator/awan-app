@@ -43,12 +43,16 @@
     "vite": "^6.2.3",
     "vite-plugin-react-native-web": "^3.1.2",
     "wouter": "^3.9.0",
+    "zod": "^3.25.76",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.4.21",
+    "happy-dom": "^20.9.0",
     "puppeteer": "^24.42.0",
     "style-dictionary": "^5.4.0",
     "tailwindcss": "^4.1.14",

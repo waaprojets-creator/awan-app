@@ -1,31 +1,11 @@
-import React, { Component } from 'react';
-import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import React from 'react';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { AppStateProvider, useAppState } from './context/AppStateContext';
-import { DailyProvider } from './context/DailyContext';
-import { useTheme } from './hooks/useTheme';
-import LockScreen from './screens/LockScreen';
-import MainLayout from './components/MainLayout';
-
-class GlobalErrorBoundary extends Component<any, any> {
-  constructor(props: any) {
-    super(props);
-    (this as any).state = { error: null };
-  }
-  static getDerivedStateFromError(error: any) { return { error }; }
-  render() {
-    const { error } = (this as any).state;
-    if (error) {
-      return (
-        <View style={s.errorScreen}>
-          <Text style={s.errorTitle}>Application Error</Text>
-          <Text style={s.errorText}>{(error as any)?.message || String(error)}</Text>
-        </View>
-      );
-    }
-    return (this as any).props.children;
-  }
-}
+import { useAppStore } from '@/data/store/appStore';
+import { useTheme } from '@/hooks/useTheme';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import LockScreen from '@/screens/LockScreen';
+import MainLayout from '@/components/MainLayout';
 
 function SplashLoader() {
   const theme = useTheme();
@@ -37,7 +17,7 @@ function SplashLoader() {
 }
 
 function Root() {
-  const { isUnlocked, ready } = useAppState();
+  const { isUnlocked, ready } = useAppStore();
   if (!ready) return <SplashLoader />;
   if (!isUnlocked) return <LockScreen />;
   return <MainLayout />;
@@ -45,21 +25,14 @@ function Root() {
 
 export default function App() {
   return (
-    <GlobalErrorBoundary>
+    <ErrorBoundary>
       <SafeAreaProvider>
-        <AppStateProvider>
-          <DailyProvider>
-            <Root />
-          </DailyProvider>
-        </AppStateProvider>
+        <Root />
       </SafeAreaProvider>
-    </GlobalErrorBoundary>
+    </ErrorBoundary>
   );
 }
 
 const s = StyleSheet.create({
   splash: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  errorScreen: { flex: 1, backgroundColor: '#111', alignItems: 'center', justifyContent: 'center', padding: 20 },
-  errorTitle: { color: '#EF4444', fontSize: 20, fontWeight: '700', marginBottom: 10 },
-  errorText: { color: '#AAA', fontSize: 14, textAlign: 'center' },
 });

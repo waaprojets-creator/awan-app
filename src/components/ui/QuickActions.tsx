@@ -19,7 +19,7 @@ export function QuickActions({ onNavigate }: QuickActionsProps) {
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
-  const handleAction = (route) => {
+  const handleAction = (route: string) => {
     setIsOpen(false);
     onNavigate(route);
   };

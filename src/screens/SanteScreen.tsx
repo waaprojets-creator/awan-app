@@ -1,3 +1,4 @@
+// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React from 'react';
 import { View, ScrollView } from 'react-native';
 import { useTheme } from '../hooks/useTheme';

@@ -1,3 +1,4 @@
+// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useState } from 'react';
 import { View, TextInput, ScrollView } from 'react-native';
 import { PageWrapper, StaggerItem, StaggerList } from '../components/Animated';

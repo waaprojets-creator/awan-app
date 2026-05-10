@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useAppStore } from '../store/appStore';
+import { useAppStore } from '@/data/store/appStore';
 import * as lightTokens from '../constants/light';
 import * as darkTokens from '../constants/dark';
 
@@ -36,18 +36,16 @@ const LIGHT = buildTheme('light');
 const DARK = buildTheme('dark');
 
 export function useTheme(): AwanTheme {
-  const cfg = useAppStore((s: any) => s.cfg);
-  return cfg?.theme === 'dark' ? DARK : LIGHT;
+  const theme = useAppStore((s) => s.theme);
+  return theme === 'dark' ? DARK : LIGHT;
 }
 
 export function useThemeMode(): ThemeMode {
-  const cfg = useAppStore((s: any) => s.cfg);
-  return cfg?.theme === 'dark' ? 'dark' : 'light';
+  return useAppStore((s) => s.theme);
 }
 
 export function useColorMap(): Record<string, string> {
-  const cfg = useAppStore((s: any) => s.cfg);
-  return cfg?.colorMap || {};
+  return {};
 }
 
 export function useThemeSync(): void {

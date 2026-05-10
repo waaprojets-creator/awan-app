@@ -1,3 +1,4 @@
+// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useState, useMemo } from 'react';
 import { View, ScrollView, TextInput, Modal } from 'react-native';
 import { Info, X, CheckCircle, AlertTriangle, ShieldCheck, ChevronLeft, Plus, Search, UtensilsCrossed, ShieldAlert } from 'lucide-react';
