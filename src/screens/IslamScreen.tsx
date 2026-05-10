@@ -1,6 +1,8 @@
-// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, TextInput } from 'react-native';
+import { View, ScrollView, TextInput as RNTextInput } from 'react-native';
+
+// react-native-web TextInput doesn't declare className in TS types
+const TextInput = RNTextInput as React.ComponentType<any>;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Compass, BookOpen, RefreshCcw, Clock, CheckCircle2, ChevronRight, ChevronLeft, Plus, Target, Shield, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -20,7 +22,7 @@ export default function IslamScreen() {
   const { navigate } = useAppState() as any;
   const { addEntry } = useDaily();
   
-  const [prayerTimes, setPrayerTimes] = useState(SpiritualService.getPrayerTimes());
+  const [prayerTimes, setPrayerTimes] = useState<any>(SpiritualService.getPrayerTimes());
   const [showQibla, setShowQibla] = useState(false);
   const [qiblaAngle, setQiblaAngle] = useState(0);
   const [currentWord, setCurrentWord] = useState<any>(null);

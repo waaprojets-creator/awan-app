@@ -1,6 +1,7 @@
-// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React from 'react';
-import { View, ScrollView, TextInput, Alert, Switch } from 'react-native';
+import { View, ScrollView, TextInput as RNTextInput, Alert, Switch } from 'react-native';
+
+const TextInput = RNTextInput as React.ComponentType<any>;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AV } from '../constants/theme';
 import { useTheme, useThemeMode } from '../hooks/useTheme';
@@ -34,7 +35,7 @@ export default function SettingsScreen() {
   const addCat = () => {
     Alert.prompt('Nouvelle Catégorie', 'Nom de la classification', [
       { text: 'Abandonner', style: 'cancel' },
-      { text: 'Confirmer', onPress: (name) => {
+      { text: 'Confirmer', onPress: (name: string | undefined) => {
         if (!name) return;
         const key = name.toLowerCase().replace(/\s/g, '');
         const newCats = [...(db.categories || []), { key, label: name, color: theme.title }];
@@ -154,7 +155,7 @@ export default function SettingsScreen() {
                   placeholder="API_KEY_ORS..."
                   placeholderTextColor="rgba(255,255,255,0.1)"
                   value={config.corsApiKey}
-                  onChangeText={(t) => updateCfg('corsApiKey', t)}
+                  onChangeText={(t: string) => updateCfg('corsApiKey', t)}
                   secureTextEntry
                 />
               </div>

@@ -1,6 +1,7 @@
-// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, TextInput, Modal, Alert, Switch } from 'react-native';
+import { View, ScrollView, TextInput as RNTextInput, Modal, Alert, Switch } from 'react-native';
+
+const TextInput = RNTextInput as React.ComponentType<any>;
 import { motion, AnimatePresence } from 'motion/react';
 import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
@@ -19,8 +20,8 @@ export default function MensurationScreen() {
   const { db, updateDb, navigate } = useAppState() as any;
   const { getEntriesByDate, addEntry, removeEntry, moveEntry } = useDaily();
   
-  const [metrics, setMetrics] = useState({ history: [] });
-  const [selectedPart, setSelectedPart] = useState(null);
+  const [metrics, setMetrics] = useState<{ history: Array<Record<string, unknown>> }>({ history: [] });
+  const [selectedPart, setSelectedPart] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [gender, setGender] = useState('man');
   const [age, setAge] = useState('30');
@@ -28,23 +29,21 @@ export default function MensurationScreen() {
 
   const todayStr = ds(new Date());
   const allEntries = getEntriesByDate(todayStr);
-  const mensurationEntries = allEntries.filter(e => e.module === 'mesure');
+  const mensurationEntries = allEntries.filter((e: any) => e.module === 'mesure');
   const [inputText, setInputText] = useState('');
 
-  const [currentEntry, setCurrentEntry] = useState({
-    date: todayStr,
-    weight: 0,
-    bpm_rest: 0,
-    body_fat_pct: 0,
-    measurements: {},
-    skinfolds: {}
+  const [currentEntry, setCurrentEntry] = useState<{
+    date: string; weight: number; bpm_rest: number; body_fat_pct: number;
+    measurements: Record<string, number>; skinfolds: Record<string, number>;
+  }>({
+    date: todayStr, weight: 0, bpm_rest: 0, body_fat_pct: 0, measurements: {}, skinfolds: {},
   });
 
   useEffect(() => {
-    BiometricsService.sync().then(data => {
+    BiometricsService.sync().then((data) => {
       setMetrics(data);
-      const today = data.history.find(h => h.date === todayStr);
-      if (today) setCurrentEntry(today);
+      const today = data.history.find((h: any) => h.date === todayStr);
+      if (today) setCurrentEntry(today as any);
     });
   }, []);
 
@@ -60,7 +59,7 @@ export default function MensurationScreen() {
     setInputText('');
   };
 
-  const handlePartPress = (partId) => {
+  const handlePartPress = (partId: string) => {
     setSelectedPart(partId);
     setInputValue(currentEntry.measurements[partId]?.toString() || '');
   };
@@ -78,27 +77,29 @@ export default function MensurationScreen() {
     setTimeout(() => setIsScanning(false), 1500);
   };
 
-  const updateWeight = (val) => {
+  const updateWeight = (val: string) => {
     const w = parseFloat(val);
     const newEntry = { ...currentEntry, weight: isNaN(w) ? 0 : w };
     setCurrentEntry(newEntry);
     LocalDbService.saveMetricEntry(newEntry);
   };
 
-  const updateBpm = (val) => {
+  const updateBpm = (val: string) => {
     const b = parseInt(val);
     const newEntry = { ...currentEntry, bpm_rest: isNaN(b) ? 0 : b };
     setCurrentEntry(newEntry);
     LocalDbService.saveMetricEntry(newEntry);
   };
 
-  const updateSkinfold = (site, val) => {
+  const updateSkinfold = (site: string, val: string) => {
     const v = parseFloat(val);
     const newEntry = { ...currentEntry };
     newEntry.skinfolds = { ...newEntry.skinfolds, [site]: isNaN(v) ? 0 : v };
     const s = newEntry.skinfolds;
     const a = parseInt(age);
-    let bf = gender === 'man' ? BiometricsService.jacksonPollock3Men(s.chest, s.abdomen, s.thigh, a) : BiometricsService.jacksonPollock3Women(s.triceps, s.suprailiac, s.thigh, a);
+    const bf = gender === 'man'
+      ? BiometricsService.jacksonPollock3Men(s['chest'] ?? 0, s['abdomen'] ?? 0, s['thigh'] ?? 0, a)
+      : BiometricsService.jacksonPollock3Women(s['triceps'] ?? 0, s['suprailiac'] ?? 0, s['thigh'] ?? 0, a);
     newEntry.body_fat_pct = parseFloat(bf.toFixed(2));
     setCurrentEntry(newEntry);
     LocalDbService.saveMetricEntry(newEntry);
@@ -191,7 +192,7 @@ export default function MensurationScreen() {
                         className="absolute left-0 right-0 h-0.5 bg-awan-gold shadow-[0_0_15px_#D4AF37] z-10 pointer-events-none"
                       />
                    )}
-                   <HumanAnatomySvg onPartPress={handlePartPress} updatedParts={updatedParts} />
+                   <HumanAnatomySvg onPartPress={handlePartPress} updatedParts={updatedParts as any} />
                    <div className="mt-6 p-3 bg-black/40 rounded-xl border border-white/5 flex flex-row items-center gap-3">
                       <Target size={14} className="text-awan-gold" />
                       <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest leading-tight">Toucher une zone pour injection biométrique</span>
@@ -236,11 +237,11 @@ export default function MensurationScreen() {
                       <Card key={site} className="p-4 bg-white/5 border-white/5" variant="flat">
                         <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest mb-1.5 block">{site}</span>
                         <div className="flex flex-row items-baseline gap-2">
-                          <TextInput 
+                          <TextInput
                              className="text-xl font-black text-awan-tx font-mono flex-1 outline-none"
-                             keyboardType="numeric" 
+                             keyboardType="numeric"
                              value={currentEntry.skinfolds[site]?.toString() || ''}
-                             onChangeText={(v) => updateSkinfold(site, v)}
+                             onChangeText={(v: string) => updateSkinfold(site, v)}
                              placeholder="00.0"
                              placeholderTextColor="rgba(255,255,255,0.1)"
                           />
@@ -256,10 +257,10 @@ export default function MensurationScreen() {
           <div className="mb-10">
             <Heading level={4} mono subtitle="Récupération Chrono" className="mb-6">HISTORIQUE DES CAPTURES</Heading>
             <div className="space-y-3">
-              {metrics.history.slice(-5).reverse().map(h => (
+              {metrics.history.slice(-5).reverse().map((h: any) => (
                 <Card key={h.date} className="flex-row items-center gap-6 p-5 bg-white/3 border-white/5" variant="flat">
                    <div className="w-10 h-10 rounded-full border border-white/10 items-center justify-center">
-                      <span className="text-[8px] font-mono text-awan-tx-mute">{h.date.split('-').slice(1).join('/')}</span>
+                      <span className="text-[8px] font-mono text-awan-tx-mute">{(h.date as string).split('-').slice(1).join('/')}</span>
                    </div>
                    <div className="flex-1">
                       <div className="flex flex-row items-baseline gap-1">

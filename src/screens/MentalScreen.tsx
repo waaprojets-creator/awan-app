@@ -1,4 +1,3 @@
-// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

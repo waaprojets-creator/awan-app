@@ -1,6 +1,7 @@
-// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useState } from 'react';
-import { View, TextInput, ScrollView } from 'react-native';
+import { View, TextInput as RNTextInput, ScrollView } from 'react-native';
+
+const TextInput = RNTextInput as React.ComponentType<any>;
 import { PageWrapper, StaggerItem, StaggerList } from '../components/Animated';
 import { useDaily } from '../context/DailyContext';
 import { DailyCanvas } from '../components/DailyCanvas';

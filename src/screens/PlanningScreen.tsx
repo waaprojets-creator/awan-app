@@ -1,9 +1,10 @@
-// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useState, useCallback, useMemo, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  Modal, TextInput, Alert,
+  Modal, TextInput as RNTextInput, Alert,
 } from 'react-native';
+
+const TextInput = RNTextInput as React.ComponentType<any>;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { motion, useDragControls } from 'motion/react';
 import { CATS, MONTHS, MONTHS_S, DAYS_S } from '../constants/theme';

@@ -1,4 +1,3 @@
-// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useMemo, useState, useEffect } from 'react';
 import { View, Dimensions, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -57,10 +56,10 @@ export default function AnalyseScreen() {
   const [aiLoading, setAiLoading] = useState(false);
 
   // ... (useMemos remain correct logic-wise, just need UI refinement)
-  const categories = useMemo(() => {
-    const base = { ...CATS };
+  const categories = useMemo((): Record<string, { l: string; c: string }> => {
+    const base: Record<string, { l: string; c: string }> = { ...CATS };
     if (db?.categories) {
-      db.categories.forEach((c: any) => { base[c.key] = { l: c.label, c: c.color }; });
+      (db.categories as any[]).forEach((c: any) => { base[c.key] = { l: c.label, c: c.color }; });
     }
     return base;
   }, [db?.categories]);
@@ -85,9 +84,9 @@ export default function AnalyseScreen() {
     days.forEach(day => {
       const dateStr = ds(day);
       const evs = eventsForDate(db, dateStr);
-      evs.forEach(ev => {
+      evs.forEach((ev: any) => {
         if (!ev.time) return;
-        totals[ev.category || 'perso'] = (totals[ev.category || 'perso'] || 0) + (ev.duration || 30);
+        totals[ev.category || 'perso'] = (totals[ev.category || 'perso'] ?? 0) + (ev.duration || 30);
         totalMinutes += (ev.duration || 30);
       });
     });
@@ -116,7 +115,7 @@ export default function AnalyseScreen() {
     const days = eachDayOfInterval(interval);
     let avgKcal = 0; let avgP = 0; let count = 0;
     const data = days.map(day => {
-      const tot = NutritionService.calculateDailyTotal(getEntriesByDate(ds(day)).filter(e => e.module === 'nutrition'));
+      const tot = NutritionService.calculateDailyTotal(getEntriesByDate(ds(day)).filter((e: any) => e.module === 'nutrition'));
       if (tot.kcal > 0) { avgKcal += tot.kcal; avgP += tot.p; count++; }
       return { label: format(day, 'dd/MM'), kcal: tot.kcal, p: tot.p };
     });
@@ -198,7 +197,7 @@ export default function AnalyseScreen() {
                     </Card>
                     <Card className="border-white/5 bg-white/5 p-6" variant="flat">
                        <span className="text-[10px] font-black text-awan-tx-mute tracking-widest mb-2 block uppercase">Veille System</span>
-                       <span className="text-3xl font-black text-awan-tx font-mono">{Math.round(activityData.find(d => d.key === FREE_KEY)?.value / 60 || 0)}<span className="text-sm ml-1 opacity-50">H</span></span>
+                       <span className="text-3xl font-black text-awan-tx font-mono">{Math.round((activityData.find(d => d.key === FREE_KEY)?.value ?? 0) / 60)}<span className="text-sm ml-1 opacity-50">H</span></span>
                     </Card>
                   </div>
                 </div>

@@ -1,8 +1,9 @@
-// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useState, useMemo, useEffect } from 'react';
 import {
-  View, Modal, TextInput, ScrollView
+  View, Modal, TextInput as RNTextInput, ScrollView
 } from 'react-native';
+
+const TextInput = RNTextInput as React.ComponentType<any>;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { motion } from 'motion/react';
 import { CATS } from '../constants/theme';

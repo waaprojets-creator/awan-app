@@ -1,4 +1,3 @@
-// @ts-nocheck — legacy, rewritten per sprint
 import React, { Component } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Switch, Route, useLocation } from 'wouter';
@@ -8,7 +7,6 @@ import AppHeader from './AppHeader';
 import BottomNav from './BottomNav';
 import { useAndroidBack } from '../hooks/useAndroidBack';
 
-// Screens
 import DashboardScreen   from '../screens/DashboardScreen';
 import PlanningScreen    from '../screens/PlanningScreen';
 import TrajetScreen      from '../screens/TrajetScreen';
@@ -23,39 +21,50 @@ import NutritionScreen   from '../screens/NutritionScreen';
 import MentalScreen      from '../screens/MentalScreen';
 import JournalScreen     from '../screens/JournalScreen';
 
-class ErrorBoundary extends Component<any, any> {
-  constructor(props: any) {
-    super(props);
-    (this as any).state = { error: null };
+type ErrorState = { error: Error | null };
+
+class ScreenErrorBoundary extends Component<{ children: React.ReactNode }, ErrorState> {
+  override state: ErrorState = { error: null };
+
+  static getDerivedStateFromError(error: Error): ErrorState {
+    return { error };
   }
-  static getDerivedStateFromError(error: any) { return { error }; }
-  render() {
-    const { error } = (this as any).state;
-    if (error) {
+
+  override render() {
+    if (this.state.error) {
       return (
         <div className="flex-1 p-6">
           <div className="awan-card p-4 border-awan-status-error/50">
             <div className="awan-label mb-2 text-awan-status-error">SYSTEM ERROR</div>
-            <div className="awan-value">{error?.message || String(error)}</div>
+            <div className="awan-value">{this.state.error.message}</div>
           </div>
         </div>
       );
     }
-    return (this as any).props.children;
+    return this.props.children;
   }
 }
 
-const PageTransition = ({ children }: any) => (
-  <motion.div
-    initial={{ opacity: 0, y: 15, filter: 'blur(10px)' }}
-    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-    exit={{ opacity: 0, y: -15, filter: 'blur(10px)' }}
-    transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-    className="flex-1 flex flex-col h-full w-full min-h-0 overflow-hidden"
-  >
-    {children}
-  </motion.div>
-);
+function PageTransition({ children }: { children: React.ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 15, filter: 'blur(10px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      exit={{ opacity: 0, y: -15, filter: 'blur(10px)' }}
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      className="flex-1 flex flex-col h-full w-full min-h-0 overflow-hidden"
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function routeToName(location: string): string {
+  if (location.length <= 1) return 'Dashboard';
+  const segment = location.substring(1).split('/')[0] ?? '';
+  const name = segment.charAt(0).toUpperCase() + segment.slice(1);
+  return name === 'Reglages' ? 'Settings' : name;
+}
 
 export default function MainLayout() {
   const [location, setLocation] = useLocation();
@@ -63,59 +72,63 @@ export default function MainLayout() {
   useThemeSync();
 
   useAndroidBack(() => {
-    // Stratégie de sortie : confirmation puis quit
     if (confirm('Quitter Awan ?')) {
       import('@capacitor/app').then(({ App }) => App.exitApp()).catch(() => {});
     }
   });
 
-  const navigate = (route) => {
+  const navigate = (route: string) => {
     const path = route === 'Dashboard' ? '/' : `/${route.toLowerCase()}`;
     setLocation(path);
   };
 
-  let currentRoute = 'Dashboard';
-  if (location.length > 1) {
-    const segment = location.substring(1).split('/')[0];
-    currentRoute = segment.charAt(0).toUpperCase() + segment.slice(1);
-    if (currentRoute === 'Reglages') currentRoute = 'Settings';
-  }
+  const currentRoute = routeToName(location);
+
+  const wrap = (Screen: React.ComponentType<{ navigate: (r: string) => void }>) => () => (
+    <PageTransition>
+      <Screen navigate={navigate} />
+    </PageTransition>
+  );
 
   return (
     <View style={[s.root, { backgroundColor: theme.bg }]}>
-      {/* Tactical Grid Overlay */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.03] z-0" 
-           style={{ backgroundImage: 'radial-gradient(circle, var(--color-awan-gold) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
-      
-      {/* Scanline Effect */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.03] z-0"
+        style={{
+          backgroundImage: 'radial-gradient(circle, var(--color-awan-gold) 1px, transparent 1px)',
+          backgroundSize: '32px 32px',
+        }}
+      />
       <div className="absolute inset-0 pointer-events-none z-50 opacity-[0.015] awan-scan-line" />
 
       <AppHeader currentRoute={currentRoute} onNavigate={navigate} />
       <View style={s.body}>
-        <ErrorBoundary key={location}>
+        <ScreenErrorBoundary key={location}>
           <AnimatePresence mode="wait">
             <Switch key={location}>
-              <Route path="/">{() => <PageTransition><DashboardScreen navigate={navigate} /></PageTransition>}</Route>
-              <Route path="/dashboard">{() => <PageTransition><DashboardScreen navigate={navigate} /></PageTransition>}</Route>
-              <Route path="/planning">{() => <PageTransition><PlanningScreen navigate={navigate} /></PageTransition>}</Route>
-              <Route path="/trajet">{() => <PageTransition><TrajetScreen navigate={navigate} /></PageTransition>}</Route>
-              <Route path="/sante">{() => <PageTransition><SanteScreen navigate={navigate} /></PageTransition>}</Route>
-              <Route path="/settings">{() => <PageTransition><SettingsScreen navigate={navigate} /></PageTransition>}</Route>
-              <Route path="/reglages">{() => <PageTransition><SettingsScreen navigate={navigate} /></PageTransition>}</Route>
-              <Route path="/tasks">{() => <PageTransition><TasksScreen navigate={navigate} /></PageTransition>}</Route>
-              <Route path="/analyse">{() => <PageTransition><AnalyseScreen navigate={navigate} /></PageTransition>}</Route>
-              <Route path="/islam">{() => <PageTransition><IslamScreen navigate={navigate} /></PageTransition>}</Route>
-              <Route path="/sport">{() => <PageTransition><SportScreen navigate={navigate} /></PageTransition>}</Route>
-              <Route path="/mensuration">{() => <PageTransition><MensurationScreen navigate={navigate} /></PageTransition>}</Route>
-              <Route path="/nutrition">{() => <PageTransition><NutritionScreen navigate={navigate} /></PageTransition>}</Route>
-              <Route path="/mental">{() => <PageTransition><MentalScreen navigate={navigate} /></PageTransition>}</Route>
-              <Route path="/journal">{() => <PageTransition><JournalScreen navigate={navigate} /></PageTransition>}</Route>
-              <Route>{() => <PageTransition><DashboardScreen navigate={navigate} /></PageTransition>}</Route>
+              <Route path="/">{wrap(DashboardScreen)}</Route>
+              <Route path="/dashboard">{wrap(DashboardScreen)}</Route>
+              <Route path="/planning">{wrap(PlanningScreen)}</Route>
+              <Route path="/trajet">{wrap(TrajetScreen)}</Route>
+              <Route path="/sante">{wrap(SanteScreen)}</Route>
+              <Route path="/settings">{wrap(SettingsScreen)}</Route>
+              <Route path="/reglages">{wrap(SettingsScreen)}</Route>
+              <Route path="/tasks">{wrap(TasksScreen)}</Route>
+              <Route path="/analyse">{wrap(AnalyseScreen)}</Route>
+              <Route path="/islam">{wrap(IslamScreen)}</Route>
+              <Route path="/sport">{wrap(SportScreen)}</Route>
+              <Route path="/mensuration">{wrap(MensurationScreen)}</Route>
+              <Route path="/nutrition">{wrap(NutritionScreen)}</Route>
+              <Route path="/mental">{wrap(MentalScreen)}</Route>
+              <Route path="/journal">{wrap(JournalScreen)}</Route>
+              <Route>{wrap(DashboardScreen)}</Route>
             </Switch>
           </AnimatePresence>
-        </ErrorBoundary>
+        </ScreenErrorBoundary>
       </View>
-      <ErrorBoundary><BottomNav currentRoute={currentRoute} onNavigate={navigate} /></ErrorBoundary>
+      <ScreenErrorBoundary>
+        <BottomNav currentRoute={currentRoute} onNavigate={navigate} />
+      </ScreenErrorBoundary>
     </View>
   );
 }

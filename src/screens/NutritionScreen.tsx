@@ -1,6 +1,7 @@
-// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useState, useMemo } from 'react';
-import { View, ScrollView, TextInput, Modal } from 'react-native';
+import { View, ScrollView, TextInput as RNTextInput, Modal } from 'react-native';
+
+const TextInput = RNTextInput as React.ComponentType<any>;
 import { Info, X, CheckCircle, AlertTriangle, ShieldCheck, ChevronLeft, Plus, Search, UtensilsCrossed, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PageWrapper } from '../components/Animated';
@@ -25,7 +26,7 @@ export default function NutritionScreen() {
   const today = ds(new Date());
 
   const allEntries = getEntriesByDate(today);
-  const nutritionEntries = allEntries.filter(e => e.module === 'nutrition');
+  const nutritionEntries = allEntries.filter((e: any) => e.module === 'nutrition');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFood, setSelectedFood] = useState<any>(null);
@@ -33,7 +34,7 @@ export default function NutritionScreen() {
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
-    return NUTRITION_DB.filter(f => f.name.toLowerCase().includes(q) || f.category.toLowerCase().includes(q));
+    return (NUTRITION_DB as any[]).filter((f: any) => f.name?.toLowerCase().includes(q) || f.category?.toLowerCase().includes(q));
   }, [searchQuery]);
 
   const handleAudit = () => {
@@ -132,7 +133,7 @@ export default function NutritionScreen() {
                   exit={{ opacity: 0, scale: 0.98 }}
                   className="gap-3 mt-4"
                 >
-                  {searchResults.map(item => (
+                  {(searchResults as any[]).map((item: any) => (
                     <Card key={item.id} className="flex-row items-center gap-4 py-4 px-5 bg-white/10" variant="flat">
                       <div className="flex-1">
                         <span className="text-sm font-bold text-awan-tx uppercase tracking-tight">{item.name}</span>

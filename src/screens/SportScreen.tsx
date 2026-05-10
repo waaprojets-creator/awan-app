@@ -1,6 +1,9 @@
-// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { View, ScrollView, TextInput, Modal, Alert, Image, FlatList } from 'react-native';
+import { View, ScrollView, TextInput as RNTextInput, Modal, Alert, Image as RNImage, FlatList as RNFlatList } from 'react-native';
+
+const TextInput = RNTextInput as React.ComponentType<any>;
+const Image = RNImage as React.ComponentType<any>;
+const FlatList = RNFlatList as React.ComponentType<any>;
 import { motion, AnimatePresence } from 'motion/react';
 import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
@@ -28,7 +31,7 @@ export default function SportScreen() {
   const today = ds(new Date());
 
   const allEntries = getEntriesByDate(today);
-  const sportEntries = allEntries.filter(e => e.module === 'sport');
+  const sportEntries = allEntries.filter((e: any) => e.module === 'sport');
 
   const handleAddEntry = () => {
     if (!inputText.trim()) return;
@@ -243,7 +246,7 @@ function ExerciseDetail({ exercise, visible, onClose }: any) {
           className="w-full max-w-md bg-awan-bg-highlight rounded-awan-3xl border border-white/10 shadow-2xl overflow-hidden"
         >
           <div className="p-8 border-b border-white/10 bg-white/5 relative">
-            <span className="awan-label mb-2 text-awan-gold">{MUSCLES[exercise.m]?.l.toUpperCase()}</span>
+            <span className="awan-label mb-2 text-awan-gold">{MUSCLES[exercise.m]?.l?.toUpperCase()}</span>
             <Heading level={2} className="mb-0">{exercise.n}</Heading>
             <Touch onPress={onClose} className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
               <X size={20} className="text-awan-tx-mute" />
@@ -417,10 +420,10 @@ function CreateRoutine({ onSave, onCancel }: any) {
 
           <FlatList
             data={filteredExercises}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item: any) => item.id.toString()}
             className="flex-1"
             contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
-            renderItem={({ item: ex }) => (
+            renderItem={({ item: ex }: { item: any }) => (
               <Card className="flex-row items-center gap-4 py-4 px-5 bg-white/5 mb-3" variant="flat" onPress={() => addEx(ex)}>
                 <div className="w-12 h-12 rounded-xl bg-black/40 items-center justify-center border border-white/10">
                   {ex.img ? <Image source={{ uri: ex.img }} className="w-full h-full" resizeMode="cover" /> : <span className="text-xl">{ex.icon}</span>}
@@ -511,7 +514,7 @@ function ActiveWorkout({ workout, timer, formatTime, onUpdate, onFinish, onAbort
                   className="flex-1 bg-black/40 border border-white/5 rounded-xl h-12 text-center text-awan-gold font-mono font-bold text-lg"
                   keyboardType="numeric" 
                   value={set.weight} 
-                  onChangeText={v => updateSet(exIdx, setIdx, 'weight', v)} 
+                  onChangeText={(v: string) => updateSet(exIdx, setIdx, 'weight', v)}
                   placeholder="0"
                   placeholderTextColor="#252525"
                 />
@@ -519,7 +522,7 @@ function ActiveWorkout({ workout, timer, formatTime, onUpdate, onFinish, onAbort
                   className="flex-1 bg-black/40 border border-white/5 rounded-xl h-12 text-center text-awan-tx font-mono font-bold text-lg"
                   keyboardType="numeric" 
                   value={set.reps} 
-                  onChangeText={v => updateSet(exIdx, setIdx, 'reps', v)} 
+                  onChangeText={(v: string) => updateSet(exIdx, setIdx, 'reps', v)}
                   placeholder="0"
                   placeholderTextColor="#252525"
                 />

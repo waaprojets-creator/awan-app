@@ -1,9 +1,10 @@
-// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { 
-  View, Text, StyleSheet, ScrollView, TextInput, 
-  Switch, ActivityIndicator, Platform 
+import {
+  View, Text, StyleSheet, ScrollView, TextInput as RNTextInput,
+  Switch, ActivityIndicator, Platform
 } from 'react-native';
+
+const TextInput = RNTextInput as React.ComponentType<any>;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
   MapContainer, TileLayer, Marker, Popup, Polyline, 
@@ -57,10 +58,10 @@ export default function TrajetScreen() {
   const [mapType, setMapType] = useState('light');
   const [selPoi, setSelPoi] = useState<any>(null);
 
-  const travelEntries = useMemo(() => entries.filter(e => e.module === 'trajet'), [entries]);
+  const travelEntries = useMemo(() => entries.filter((e: any) => e.module === 'trajet'), [entries]);
 
   const mapEntries = useMemo(() => {
-    return travelEntries.filter(e => e.data && e.data.coords);
+    return travelEntries.filter((e: any) => e.data && e.data.coords);
   }, [travelEntries]);
 
   const config = db?.config || {};
@@ -99,7 +100,7 @@ export default function TrajetScreen() {
     if (mapEntries.length < 2) return;
     setLoading(true);
     try {
-      const coords = mapEntries.map(e => e.data.coords);
+      const coords = mapEntries.map((e: any) => e.data.coords);
       const res = await ORSService.getRoute(coords, orsKey, mode);
       setRoute(res);
     } catch (e) {
@@ -110,7 +111,7 @@ export default function TrajetScreen() {
   };
 
   const clearTrajets = () => {
-    travelEntries.forEach(e => removeEntry(e.id));
+    travelEntries.forEach((e: any) => removeEntry(e.id));
     setRoute(null);
   };
 
@@ -209,7 +210,7 @@ export default function TrajetScreen() {
                   <div className="flex-1">
                     <span className="text-[10px] font-black text-awan-gold tracking-widest uppercase mb-1 block">Point de Passage</span>
                     <span className="text-sm font-bold text-awan-tx uppercase tracking-tight mb-0.5">{item.title}</span>
-                    <span className="text-[9px] font-medium text-awan-tx-mute uppercase tracking-[0.2em]" numberOfLines={1}>{item.data.address}</span>
+                    <span className="text-[9px] font-medium text-awan-tx-mute uppercase tracking-[0.2em]">{item.data.address}</span>
                   </div>
                   <Touch onPress={() => removeEntry(item.id)} className="p-3">
                     <X size={16} className="text-white/20" />
