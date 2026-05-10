@@ -31,14 +31,59 @@ function normalize(text: string): string {
     .replace(/[̀-ͯ]/g, '');
 }
 
+export interface ZenSummaryData {
+  kcalToday?: number | undefined;
+  kcalTarget?: number | undefined;
+  prayersDone?: number | undefined;
+  prayersTotal?: number | undefined;
+  lastWorkoutName?: string | null | undefined;
+  weightKg?: number | null | undefined;
+  weightTrend?: 'up' | 'down' | 'stable' | null | undefined;
+}
+
 export const LocalAIService = {
   auditPhase: (_entries?: unknown[], _kcal?: number, _tdee?: number): string =>
     'Coach en initialisation...',
 
   predictCollation: (_hours?: number): string => 'Données insuffisantes',
 
-  generateZenSummary: (_data?: unknown, _kcal?: number, _tdee?: number): Promise<string> =>
-    Promise.resolve('Analyse disponible après 7 jours de données.'),
+  generateZenSummary(data: ZenSummaryData = {}): Promise<string> {
+    const lines: string[] = [];
+
+    if (data.prayersDone !== undefined && data.prayersTotal !== undefined) {
+      if (data.prayersDone === data.prayersTotal && data.prayersTotal > 0) {
+        lines.push('Toutes les prières accomplies — alignement maximal.');
+      } else if (data.prayersDone > 0) {
+        lines.push(`${data.prayersDone}/${data.prayersTotal} prières complétées.`);
+      }
+    }
+
+    if (data.kcalToday !== undefined && data.kcalToday > 0) {
+      if (data.kcalTarget && data.kcalTarget > 0) {
+        const ratio = Math.round((data.kcalToday / data.kcalTarget) * 100);
+        if (ratio < 80) lines.push(`Apport énergétique à ${ratio}% de l'objectif — surveillance requise.`);
+        else if (ratio > 115) lines.push(`Excédent calorique à ${ratio}% — ajustement recommandé.`);
+        else lines.push(`Bilan calorique optimal (${ratio}% de l'objectif).`);
+      } else {
+        lines.push(`${data.kcalToday} kcal ingérés aujourd'hui.`);
+      }
+    }
+
+    if (data.lastWorkoutName) {
+      lines.push(`Dernière séance : ${data.lastWorkoutName}.`);
+    }
+
+    if (data.weightKg != null) {
+      const arrow = data.weightTrend === 'down' ? '↓' : data.weightTrend === 'up' ? '↑' : '→';
+      lines.push(`Masse corporelle : ${data.weightKg} kg ${arrow}`);
+    }
+
+    return Promise.resolve(
+      lines.length > 0
+        ? lines.join(' ')
+        : 'Analyse disponible après 7 jours de données.',
+    );
+  },
 
   auditHalalIngredients(text?: string): HalalAuditResult {
     if (!text?.trim()) {

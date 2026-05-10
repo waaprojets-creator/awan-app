@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { ScrollView } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
 import { TRANSPORT_ICONS } from '../constants/icons';
-import { AlertCircle, Zap, Shield } from 'lucide-react';
+import { AlertCircle, Zap, Shield, CheckCircle2 } from 'lucide-react';
 import { L, TRANSPORT_OPTIONS } from '../constants/labels';
 import { ds } from '../utils/storage';
 import { Card } from '../components/ui/Card';
@@ -11,6 +11,11 @@ import { Touch } from '../components/ui/Touch';
 import { QuickActions } from '../components/ui/QuickActions';
 import { BilanZen } from '../components/BilanZen';
 import { SpiritualService } from '../utils/spiritualService';
+import { LocalAIService } from '../services/localAIService';
+import { useMealStore } from '../hooks/useMealStore';
+import { useMeasurementStore } from '../hooks/useMeasurementStore';
+import { useWorkoutStore } from '../hooks/useWorkoutStore';
+import { usePrayerStore } from '../hooks/usePrayerStore';
 import { motion } from 'motion/react';
 import type { NavProps } from '../types/nav';
 import arabicData from '../assets/data/1.json';
@@ -88,6 +93,12 @@ export default function DashboardScreen({ navigate }: NavProps) {
   const theme = useTheme();
   const today = ds(new Date());
   const [transportMode, setTransportMode] = useState<string>('car');
+  const [aiSummary, setAiSummary] = useState('');
+
+  const mealStore = useMealStore(today);
+  const measureStore = useMeasurementStore();
+  const workoutStore = useWorkoutStore();
+  const prayerStore = usePrayerStore(today);
 
   const prayerInfo = useMemo<PrayerInfo>(() => {
     const pt = SpiritualService.getPrayerTimes() as { next: string; timeForNext: Date | null };
@@ -101,6 +112,17 @@ export default function DashboardScreen({ navigate }: NavProps) {
     : 0;
   const prayerH = Math.floor(timeDiff / 60);
   const prayerM = timeDiff % 60;
+
+  useEffect(() => {
+    const latestMeasure = measureStore.history.slice().sort((a, b) => a.date.localeCompare(b.date)).at(-1) ?? null;
+    LocalAIService.generateZenSummary({
+      kcalToday: mealStore.totals.kcal,
+      prayersDone: prayerStore.doneCount,
+      prayersTotal: prayerStore.total,
+      lastWorkoutName: workoutStore.sessions.at(-1)?.name ?? null,
+      weightKg: latestMeasure?.weight ?? null,
+    }).then(setAiSummary);
+  }, [mealStore.totals.kcal, prayerStore.doneCount, workoutStore.sessions.length, measureStore.history.length]);
 
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86_400_000);
   const word = (arabicData as Array<{ ar: string; fr: string }>)[dayOfYear % arabicData.length] ?? { ar: '', fr: '' };
@@ -157,41 +179,84 @@ export default function DashboardScreen({ navigate }: NavProps) {
           </Card>
         );
 
-      case 'sport':
+      case 'sport': {
+        const lastSession = workoutStore.sessions.at(-1);
         return (
           <Card
             title={(L as { dash: { widgets: { sport: string } } }).dash.widgets.sport}
-            subtitle={(L as { sport: { noSess: string } }).sport?.noSess ?? 'Aucune séance'}
+            subtitle={lastSession ? `${lastSession.name} — ${lastSession.date}` : ((L as { sport: { noSess: string } }).sport?.noSess ?? 'Aucune séance')}
             onPress={() => navigate('Sport')}
           />
         );
+      }
 
       case 'mental':
         return (
           <Card title="ANALYSE COGNITIVE" value="—" subtitle="NON DISPONIBLE" onPress={() => navigate('Mental')} />
         );
 
-      case 'mensuration':
+      case 'mensuration': {
+        const latestM = measureStore.history.slice().sort((a, b) => a.date.localeCompare(b.date)).at(-1);
         return (
           <Card title="MESURES" onPress={() => navigate('Mensuration')}>
-            <span className="awan-value text-xs italic opacity-50">Aucune mesure</span>
+            {latestM ? (
+              <div className="flex flex-row items-end gap-4 mt-1">
+                <div>
+                  <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest block mb-0.5">Poids</span>
+                  <span className="text-2xl font-black text-awan-gold font-mono tabular-nums">{latestM.weight}<span className="text-xs ml-1 opacity-50">KG</span></span>
+                </div>
+                {latestM.body_fat_pct != null && (
+                  <div>
+                    <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest block mb-0.5">MG</span>
+                    <span className="text-xl font-black text-awan-tx font-mono tabular-nums">{latestM.body_fat_pct}<span className="text-xs ml-0.5 opacity-50">%</span></span>
+                  </div>
+                )}
+                <span className="text-[9px] font-mono text-awan-tx-mute opacity-50 mb-1">{latestM.date}</span>
+              </div>
+            ) : (
+              <span className="awan-value text-xs italic opacity-50">Aucune mesure</span>
+            )}
           </Card>
         );
+      }
 
-      case 'macros':
+      case 'macros': {
+        const { kcal, p, c, f } = mealStore.totals;
         return (
           <Card title={(L as { dash: { widgets: { macros: string } } }).dash.widgets.macros} onPress={() => navigate('Nutrition')}>
-            <span className="awan-value text-xs italic opacity-50">Aucune entrée aujourd'hui</span>
+            {kcal > 0 ? (
+              <div className="flex flex-row gap-4 mt-1">
+                <div>
+                  <span className="text-[9px] font-black text-awan-gold uppercase tracking-widest block mb-0.5">KCAL</span>
+                  <span className="text-2xl font-black text-awan-gold font-mono tabular-nums">{kcal}</span>
+                </div>
+                <div>
+                  <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest block mb-0.5">P</span>
+                  <span className="text-xl font-black text-awan-tx font-mono">{p}g</span>
+                </div>
+                <div>
+                  <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest block mb-0.5">G</span>
+                  <span className="text-xl font-black text-awan-tx font-mono">{c}g</span>
+                </div>
+                <div>
+                  <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest block mb-0.5">L</span>
+                  <span className="text-xl font-black text-awan-tx font-mono">{f}g</span>
+                </div>
+              </div>
+            ) : (
+              <span className="awan-value text-xs italic opacity-50">Aucune entrée aujourd'hui</span>
+            )}
           </Card>
         );
+      }
 
       case 'analyse':
-        return <BilanZen summary="Système opérationnel — données insuffisantes pour analyse approfondie." loading={false} />;
+        return <BilanZen summary={aiSummary || 'Chargement...'} loading={!aiSummary} />;
 
       case 'islam':
         return (
           <Card title="UNITÉ SPIRITUELLE" onPress={() => navigate('Islam')} highlight>
-            <div className="grid grid-cols-2 gap-3 mt-1">
+            <div className="grid grid-cols-3 gap-3 mt-1">
               <div className="bg-awan-bg-soft/80 p-3 rounded-awan-lg border border-white/5 shadow-inner">
                 <span className="awan-label text-[8px] text-awan-gold-active mb-1 block">
                   PROCHAINE : {nextPrayerName}
@@ -199,6 +264,15 @@ export default function DashboardScreen({ navigate }: NavProps) {
                 <span className="text-xl font-bold font-mono text-awan-gold tabular-nums">
                   {prayerH}H {prayerM}M
                 </span>
+              </div>
+              <div className="bg-awan-bg-soft/80 p-3 rounded-awan-lg border border-white/5 flex flex-col items-center justify-center text-center">
+                <span className="text-[8px] font-black text-awan-gold-active tracking-widest uppercase block mb-1">PRIÈRES</span>
+                <div className="flex flex-row gap-1 justify-center mb-1">
+                  {Array.from({ length: prayerStore.total }).map((_, i) => (
+                    <div key={i} className={`w-2 h-2 rounded-full ${i < prayerStore.doneCount ? 'bg-awan-gold shadow-[0_0_5px_#D4AF37]' : 'bg-white/10'}`} />
+                  ))}
+                </div>
+                <span className="text-xl font-black font-mono text-awan-gold tabular-nums">{prayerStore.doneCount}<span className="text-xs opacity-50">/{prayerStore.total}</span></span>
               </div>
               <div className="bg-awan-bg-soft/80 p-3 rounded-awan-lg border border-white/5 flex flex-col items-center justify-center text-center">
                 <span className="text-2xl text-awan-gold-active font-bold leading-tight mb-1">{word.ar}</span>
