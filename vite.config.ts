@@ -22,6 +22,11 @@ export default defineConfig(({mode}) => {
         'react-native-web/Libraries/Utilities/codegenNativeComponent': path.resolve(__dirname, 'src/utils/codegenNativeComponent.js'),
       },
     },
+    build: {
+      outDir: 'dist',
+      assetsDir: 'assets',
+    },
+    base: './',
     optimizeDeps: {
       include: [
         'react-native-safe-area-context',

@@ -1,4 +1,4 @@
 export type { IStorage, ITransaction, ParseFn } from './IStorage';
 export { MemoryStorage } from './MemoryStorage';
-// SqliteStorage: import directly to avoid bundling Capacitor in test environments
-// import { SqliteStorage } from '@/data/storage/SqliteStorage';
+export { IndexedDBStorage } from './IndexedDBStorage';
+// SqliteStorage: lazy-imported in storageService to avoid bundling Capacitor in web/test builds
