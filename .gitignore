@@ -16,3 +16,9 @@ metadata.json
 *.swp
 *.swo
 ~*
+app/
+ARCHITECTURE.md
+README.md
+design.config.js
+design.source.json
+docs/phases/
