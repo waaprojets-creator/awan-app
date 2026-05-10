@@ -15,12 +15,12 @@ import { DailyCanvas } from '../components/DailyCanvas';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
-
-// Sub-components will be updated in next steps...
+import { useWorkoutStore } from '../hooks/useWorkoutStore';
 
 export default function SportScreen() {
-  const { db, updateDb, navigate } = useAppState() as any;
+  const { navigate } = useAppState() as any;
   const { getEntriesByDate, addEntry, moveEntry } = useDaily();
+  const workoutStore = useWorkoutStore();
 
   const [view, setView] = useState('list'); // 'list', 'create', 'active', 'history'
   const [activeWorkout, setActiveWorkout] = useState<any>(null);
@@ -73,8 +73,7 @@ export default function SportScreen() {
   };
 
   const saveRoutine = (rout: any) => {
-    const freshDb = { ...db, routinesMuscu: [...(db.routinesMuscu || []), rout] };
-    updateDb(freshDb);
+    workoutStore.saveRoutine({ v: 1, id: rout.id, name: rout.name, exercises: rout.exercises, createdAt: Date.now() });
     setView('list');
   };
 
@@ -96,8 +95,16 @@ export default function SportScreen() {
       duration: timer,
       date: ds(new Date())
     };
-    const freshDb = { ...db, workoutLogs: [...(db.workoutLogs || []), finished] };
-    updateDb(freshDb);
+    workoutStore.saveSession({
+      v: 1,
+      id: finished.id,
+      name: finished.name,
+      date: finished.date,
+      duration: finished.duration,
+      startTime: finished.startTime,
+      endTime: finished.endTime,
+      exercises: finished.exercises,
+    });
     setActiveWorkout(null);
 
     addEntry(today, {
@@ -122,10 +129,7 @@ export default function SportScreen() {
       'Confirmer la suppression de ce profil d\'entraînement ?',
       [
         { text: 'ANNULER', style: 'cancel' },
-        { text: 'SUPPRIMER', style: 'destructive', onPress: () => {
-          const freshDb = { ...db, routinesMuscu: (db.routinesMuscu || []).filter((r: any) => r.id !== rout.id) };
-          updateDb(freshDb);
-        }}
+        { text: 'SUPPRIMER', style: 'destructive', onPress: () => workoutStore.deleteRoutine(rout.id) }
       ]
     );
   };
@@ -188,7 +192,7 @@ export default function SportScreen() {
 
             <div className="mb-20">
               <Heading level={4} mono subtitle="Protocoles Guidés">ROUTINES ENREGISTRÉES</Heading>
-              {(!db?.routinesMuscu || db.routinesMuscu.length === 0) ? (
+              {workoutStore.routines.length === 0 ? (
                 <Card className="py-16 items-center bg-white/5 border-white/10 border-dashed">
                   <Dumbbell size={48} className="text-white/10 mb-6" />
                   <span className="awan-label mb-8">AUCUN PROTOCOLE ACTIF DÉTECTÉ</span>
@@ -198,7 +202,7 @@ export default function SportScreen() {
                 </Card>
               ) : (
                 <StaggerList>
-                  {db.routinesMuscu.map((r: any) => (
+                  {workoutStore.routines.map((r) => (
                     <StaggerItem key={r.id} className="mb-4">
                       <Card className="p-6 bg-awan-bg-highlight/20" onPress={() => startWorkout(r)}>
                         <div className="flex flex-row justify-between items-center mb-1">
@@ -228,7 +232,7 @@ export default function SportScreen() {
 
       {view === 'create' && <CreateRoutine onSave={saveRoutine} onCancel={() => setView('list')} />}
       {view === 'active' && <ActiveWorkout workout={activeWorkout} timer={timer} formatTime={formatTime} onUpdate={setActiveWorkout} onFinish={finishWorkout} onAbort={() => { setActiveWorkout(null); setView('list'); }} />}
-      {view === 'history' && <WorkoutHistory logs={db?.workoutLogs || []} onBack={() => setView('list')} />}
+      {view === 'history' && <WorkoutHistory logs={workoutStore.sessions} onBack={() => setView('list')} />}
       <ExerciseDetail exercise={(null as any)} visible={false} onClose={() => {}} />
     </PageWrapper>
   );

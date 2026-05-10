@@ -1,4 +1,5 @@
 import { migrateWorkoutLog } from '../schemas/sport/workoutLog';
+import { migrateRoutine, migrateWorkoutSession } from '../schemas/sport/routine';
 import { migrateRule } from '../schemas/coach/rule';
 import { migrateAssessment } from '../schemas/coach/assessment';
 import { migrateScheduleTask } from '../schemas/planning/scheduleTask';
@@ -13,6 +14,8 @@ import { migrateDailySummary } from '../schemas/activity/dailySummary';
  */
 export const migrators = {
   'sport.workoutLog': migrateWorkoutLog,
+  'sport.routine': migrateRoutine,
+  'sport.session': migrateWorkoutSession,
   'coach.rule': migrateRule,
   'coach.assessment': migrateAssessment,
   'planning.task': migrateScheduleTask,
