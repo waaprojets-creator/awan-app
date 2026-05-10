@@ -2,6 +2,9 @@ import { migrateWorkoutLog } from '../schemas/sport/workoutLog';
 import { migrateRoutine, migrateWorkoutSession } from '../schemas/sport/routine';
 import { migrateMealEntry } from '../schemas/nutrition/mealEntry';
 import { migrateMeasurement } from '../schemas/anthropo/measurement';
+import { migratePrayerLog } from '../schemas/islam/prayerLog';
+import { migrateQuranProgress } from '../schemas/islam/quranProgress';
+import { migrateJournalEntry } from '../schemas/journal/journalEntry';
 import { migrateRule } from '../schemas/coach/rule';
 import { migrateAssessment } from '../schemas/coach/assessment';
 import { migrateScheduleTask } from '../schemas/planning/scheduleTask';
@@ -20,6 +23,9 @@ export const migrators = {
   'sport.session': migrateWorkoutSession,
   'nutrition.meal': migrateMealEntry,
   'anthropo.measurement': migrateMeasurement,
+  'islam.prayer': migratePrayerLog,
+  'islam.quran': migrateQuranProgress,
+  'journal.entry': migrateJournalEntry,
   'coach.rule': migrateRule,
   'coach.assessment': migrateAssessment,
   'planning.task': migrateScheduleTask,

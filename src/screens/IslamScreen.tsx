@@ -4,7 +4,7 @@ import { View, ScrollView, TextInput as RNTextInput } from 'react-native';
 // react-native-web TextInput doesn't declare className in TS types
 const TextInput = RNTextInput as React.ComponentType<any>;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Compass, BookOpen, RefreshCcw, Clock, CheckCircle2, ChevronRight, ChevronLeft, Plus, Target, Shield, Zap } from 'lucide-react';
+import { Compass, BookOpen, RefreshCcw, Clock, CheckCircle2, ChevronRight, Plus, Shield, Zap, TrendingUp, Minus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SpiritualService } from '../utils/spiritualService';
 import arabicData from '../assets/data/1.json';
@@ -13,6 +13,9 @@ import { DailyCanvas } from '../components/DailyCanvas';
 import { useDaily } from '../context/DailyContext';
 import { ds } from '../utils/storage';
 import { useAppState } from '../context/AppStateContext';
+import { usePrayerStore } from '../hooks/usePrayerStore';
+import { useQuranStore } from '../hooks/useQuranStore';
+import type { PrayerName } from '../data/schemas/islam/prayerLog';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
@@ -29,6 +32,8 @@ export default function IslamScreen() {
   const [showAnswer, setShowAnswer] = useState(false);
 
   const todayStr = ds(new Date());
+  const prayerStore = usePrayerStore(todayStr);
+  const quranStore = useQuranStore();
   const [inputText, setInputText] = useState('');
 
   const handleAddEntry = () => {
@@ -101,31 +106,38 @@ export default function IslamScreen() {
               {prayers.map((key) => {
                 const time = prayerTimes[key];
                 const isNext = prayerTimes.next === key;
-                const isPast = !isNext && new Date() > time;
-                
+                const isSunrise = key === 'sunrise';
+                const done = !isSunrise && prayerStore.isDone(key as PrayerName);
+
                 return (
-                  <div key={key} className={`flex flex-row justify-between items-center px-6 py-5 border-b border-white/5 transition-all ${isNext ? 'bg-awan-gold/10' : ''}`}>
+                  <Touch
+                    key={key}
+                    onPress={() => !isSunrise && prayerStore.toggle(key as PrayerName)}
+                    className={`flex flex-row justify-between items-center px-6 py-5 border-b border-white/5 transition-all ${isNext ? 'bg-awan-gold/10' : done ? 'bg-awan-status-ok/5' : ''}`}
+                  >
                     <div className="flex flex-row items-center gap-4">
-                      <div className={`w-1 h-8 rounded-full ${isNext ? 'bg-awan-gold shadow-[0_0_10px_#D4AF37]' : isPast ? 'bg-white/10' : 'bg-white/5'}`} />
-                      <span className={`text-xs font-black tracking-[0.2em] uppercase ${isNext ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
+                      <div className={`w-1 h-8 rounded-full ${done ? 'bg-awan-status-ok shadow-[0_0_8px_rgba(74,222,128,0.4)]' : isNext ? 'bg-awan-gold shadow-[0_0_10px_#D4AF37]' : 'bg-white/5'}`} />
+                      <span className={`text-xs font-black tracking-[0.2em] uppercase ${done ? 'text-awan-status-ok' : isNext ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
                         {SpiritualService.translatePrayer(key)}
                       </span>
                     </div>
                     <div className="flex flex-row items-center gap-6">
-                      <span className={`text-xl font-mono font-black tabular-nums ${isNext ? 'text-awan-gold' : 'text-awan-tx'}`}>
+                      <span className={`text-xl font-mono font-black tabular-nums ${done ? 'text-awan-status-ok' : isNext ? 'text-awan-gold' : 'text-awan-tx'}`}>
                         {String(time.getHours()).padStart(2, '0')}:{String(time.getMinutes()).padStart(2, '0')}
                       </span>
-                      {isNext ? (
+                      {isSunrise ? (
+                        <div className="w-4" />
+                      ) : done ? (
+                        <CheckCircle2 size={16} className="text-awan-status-ok" />
+                      ) : isNext ? (
                         <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
                           <Clock size={16} className="text-awan-gold" />
                         </motion.div>
-                      ) : isPast ? (
-                        <CheckCircle2 size={16} className="text-awan-gold/40" />
                       ) : (
-                        <div className="w-4" />
+                        <div className="w-4 h-4 rounded-full border border-white/20" />
                       )}
                     </div>
-                  </div>
+                  </Touch>
                 );
               })}
             </div>
@@ -208,6 +220,80 @@ export default function IslamScreen() {
                 filterModule="islam"
               />
             </div>
+          </div>
+
+          <div className="mb-10">
+            <div className="flex flex-row justify-between items-end mb-6 px-1">
+              <Heading level={4} mono subtitle="Récitation" className="mb-0">PROGRESSION CORAN</Heading>
+              <TrendingUp size={14} className="text-awan-gold mb-1" />
+            </div>
+
+            <Card className="bg-awan-bg-highlight/20 border border-white/10 p-6 shadow-xl" variant="flat">
+              {quranStore.progress ? (
+                <div>
+                  <div className="flex flex-row justify-between items-center mb-6">
+                    <div>
+                      <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase block mb-1">SOURATE ACTUELLE</span>
+                      <span className="text-3xl font-black text-awan-tx tabular-nums">{quranStore.progress.currentSurah}</span>
+                      <span className="text-sm font-black text-awan-tx-mute"> / 114</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[9px] font-black text-awan-tx-mute tracking-widest uppercase block mb-1">VERSET</span>
+                      <span className="text-3xl font-black text-awan-tx tabular-nums">{quranStore.progress.currentAyah}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[9px] font-black text-awan-tx-mute tracking-widest uppercase block mb-1">TOTAL LU</span>
+                      <span className="text-3xl font-black text-awan-tx tabular-nums">{quranStore.progress.totalAyahsRead}</span>
+                    </div>
+                  </div>
+
+                  <div className="mb-5">
+                    <div className="flex flex-row justify-between items-center mb-2">
+                      <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest">Objectif Journalier</span>
+                      <span className="text-xs font-black text-awan-gold font-mono">{quranStore.progress.dailyAyahTarget} AYAHS</span>
+                    </div>
+                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-awan-gold rounded-full transition-all"
+                        style={{ width: `${Math.min(100, (quranStore.progress.totalAyahsRead % quranStore.progress.dailyAyahTarget) / quranStore.progress.dailyAyahTarget * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-row gap-3">
+                    <Touch
+                      onPress={() => quranStore.advance(1)}
+                      className="flex-1 h-12 bg-awan-gold/10 border border-awan-gold/30 rounded-2xl flex items-center justify-center gap-2"
+                    >
+                      <Plus size={16} className="text-awan-gold" />
+                      <span className="text-xs font-black text-awan-gold uppercase tracking-widest">+1 Ayah</span>
+                    </Touch>
+                    <Touch
+                      onPress={() => quranStore.advance(5)}
+                      className="flex-1 h-12 bg-awan-gold rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-awan-gold/20"
+                    >
+                      <span className="text-xs font-black text-black uppercase tracking-widest">+5 Ayahs</span>
+                    </Touch>
+                    <Touch
+                      onPress={() => quranStore.advance(-1)}
+                      className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center"
+                    >
+                      <Minus size={16} className="text-awan-tx-mute" />
+                    </Touch>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-8 flex flex-col items-center gap-4">
+                  <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest opacity-50">Aucune progression enregistrée</span>
+                  <Touch
+                    onPress={() => quranStore.advance(0)}
+                    className="px-6 h-12 bg-awan-gold rounded-2xl flex items-center justify-center shadow-lg shadow-awan-gold/20"
+                  >
+                    <span className="text-xs font-black text-black uppercase tracking-widest">Initialiser</span>
+                  </Touch>
+                </div>
+              )}
+            </Card>
           </div>
 
           <div className="mb-20">
