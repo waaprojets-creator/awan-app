@@ -1,4 +1,4 @@
-export type { IStorage, ITransaction } from './IStorage';
+export type { IStorage, ITransaction, ParseFn } from './IStorage';
 export { MemoryStorage } from './MemoryStorage';
-
-// SqliteStorage exported separately to avoid importing Capacitor in tests
+// SqliteStorage: import directly to avoid bundling Capacitor in test environments
+// import { SqliteStorage } from '@/data/storage/SqliteStorage';
