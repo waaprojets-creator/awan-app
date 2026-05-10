@@ -41,7 +41,7 @@ export default function MensurationScreen() {
 
   useEffect(() => {
     BiometricsService.sync().then((data) => {
-      setMetrics(data);
+      setMetrics(data as any);
       const today = data.history.find((h: any) => h.date === todayStr);
       if (today) setCurrentEntry(today as any);
     });
