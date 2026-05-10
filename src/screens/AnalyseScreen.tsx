@@ -237,56 +237,70 @@ export default function AnalyseScreen() {
 
              {tab === 'nutrition' && (
                 <div className="space-y-8">
-                   <div className="grid grid-cols-2 gap-4">
-                      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
-                         <div className="flex flex-row items-center gap-2 mb-3">
-                            <Flame size={12} className="text-awan-gold" />
-                            <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase">Moy. Kcal</span>
-                         </div>
-                         <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">{nutritionStats.avgKcal}</span>
-                      </Card>
-                      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
-                         <div className="flex flex-row items-center gap-2 mb-3">
-                            <Activity size={12} className="text-awan-status-error" />
-                            <span className="text-[9px] font-black text-awan-status-error tracking-widest uppercase">Moy. Prot</span>
-                         </div>
-                         <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">{nutritionStats.avgP}<span className="text-sm ml-1">G</span></span>
-                      </Card>
-                   </div>
-
-                   <Card className="p-6 bg-white/5 border-white/5" variant="flat">
-                      <Heading level={4} mono subtitle="Énergie">FLUX CALORIQUE</Heading>
-                      <div className="h-[200px] mt-6">
-                         <BarChart data={nutritionStats.data} dataKey="kcal" color={theme.title} />
-                      </div>
-                   </Card>
+                   {nutritionStats.count === 0 && mealsByDay.length > 0 ? (
+                     <EmptyState Icon={Flame} label="Aucun repas enregistré sur la période" />
+                   ) : (
+                     <>
+                       <div className="grid grid-cols-2 gap-4">
+                          <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+                             <div className="flex flex-row items-center gap-2 mb-3">
+                                <Flame size={12} className="text-awan-gold" />
+                                <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase">Moy. Kcal</span>
+                             </div>
+                             <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">{nutritionStats.avgKcal || '—'}</span>
+                          </Card>
+                          <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+                             <div className="flex flex-row items-center gap-2 mb-3">
+                                <Activity size={12} className="text-awan-status-error" />
+                                <span className="text-[9px] font-black text-awan-status-error tracking-widest uppercase">Moy. Prot</span>
+                             </div>
+                             <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">
+                               {nutritionStats.avgP || '—'}{nutritionStats.avgP > 0 && <span className="text-sm ml-1">G</span>}
+                             </span>
+                          </Card>
+                       </div>
+                       <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+                          <Heading level={4} mono subtitle="Énergie">FLUX CALORIQUE</Heading>
+                          <div className="h-[200px] mt-6">
+                             <BarChart data={nutritionStats.data} dataKey="kcal" color={theme.title} />
+                          </div>
+                       </Card>
+                     </>
+                   )}
                 </div>
              )}
 
              {tab === 'muscu' && (
                 <div className="space-y-8">
-                   <Card className="p-6 bg-white/5 border-white/5" variant="flat">
-                      <Heading level={4} mono subtitle="Force de Projection">VOLUME TOTAL (KG)</Heading>
-                      <div className="h-[200px] mt-6">
-                         <BarChart data={muscuStats} dataKey="weight" color={theme.title} />
-                      </div>
-                   </Card>
-                   <Card className="p-6 bg-white/5 border-white/5" variant="flat">
-                      <Heading level={4} mono subtitle="Densité Opérative">SÉRIES COMPLÉTÉES</Heading>
-                      <div className="h-[200px] mt-6">
-                         <BarChart data={muscuStats} dataKey="sets" color="#FFF" />
-                      </div>
-                   </Card>
+                   {workoutStore.loading ? (
+                     <LoadingState label="Chargement des séances..." />
+                   ) : muscuStats.length === 0 ? (
+                     <EmptyState Icon={Dumbbell} label="Aucune séance sur la période" />
+                   ) : (
+                     <>
+                       <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+                          <Heading level={4} mono subtitle="Force de Projection">VOLUME TOTAL (KG)</Heading>
+                          <div className="h-[200px] mt-6">
+                             <BarChart data={muscuStats} dataKey="weight" color={theme.title} />
+                          </div>
+                       </Card>
+                       <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+                          <Heading level={4} mono subtitle="Densité Opérative">SÉRIES COMPLÉTÉES</Heading>
+                          <div className="h-[200px] mt-6">
+                             <BarChart data={muscuStats} dataKey="sets" color="#FFF" />
+                          </div>
+                       </Card>
+                     </>
+                   )}
                 </div>
              )}
 
              {tab === 'measures' && (
                 <div className="space-y-4">
-                  {measureStore.history.length === 0 ? (
-                    <div className="py-20 flex flex-col items-center opacity-30">
-                      <Ruler size={40} className="text-awan-tx-mute mb-4" />
-                      <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest">Aucune mesure enregistrée</span>
-                    </div>
+                  {measureStore.loading ? (
+                    <LoadingState label="Chargement des mesures..." />
+                  ) : measureStore.history.length === 0 ? (
+                    <EmptyState Icon={Ruler} label="Aucune mesure enregistrée" />
                   ) : (
                     measureStore.history.slice().reverse().slice(0, 10).map((m, i) => (
                       <Card key={i} className="p-5 bg-white/5 border-white/5" variant="flat">
@@ -420,9 +434,18 @@ function Legend({ data }: { data: any[] }) {
 
 function EmptyState({ Icon, label }: { Icon: any, label: string }) {
   return (
-    <div className="items-center py-20 opacity-30">
+    <div className="flex flex-col items-center py-20 opacity-30">
       <Icon size={48} className="text-awan-tx-mute mb-4" />
       <span className="text-xs font-bold uppercase tracking-widest text-awan-tx-mute">{label}</span>
+    </div>
+  );
+}
+
+function LoadingState({ label }: { label: string }) {
+  return (
+    <div className="flex flex-col items-center py-20 opacity-30">
+      <div className="w-8 h-8 rounded-full border-2 border-awan-gold border-t-transparent animate-spin mb-4" />
+      <span className="text-[10px] font-black uppercase tracking-widest text-awan-tx-mute">{label}</span>
     </div>
   );
 }

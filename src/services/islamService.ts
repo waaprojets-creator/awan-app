@@ -62,8 +62,8 @@ export const IslamService = {
     };
     const next: QuranProgressLatest = {
       ...prev,
-      currentAyah: prev.currentAyah + ayahsRead,
-      totalAyahsRead: prev.totalAyahsRead + ayahsRead,
+      currentAyah: Math.max(1, prev.currentAyah + ayahsRead),
+      totalAyahsRead: Math.max(0, prev.totalAyahsRead + ayahsRead),
       lastReadDate: date,
       updatedAt: Date.now(),
     };
