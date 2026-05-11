@@ -42,22 +42,28 @@ jobs:
         run: npm run build
 
       - name: Add Android platform
-        run: npx cap add android
-        continue-on-error: true  # Ignore si le dossier android existe déjà
+        run: |
+          echo "=== Cap version ==="
+          npx cap --version
+          echo "=== Cap add android ==="
+          npx cap add android 2>&1
+          echo "=== Android folder contents ==="
+          ls android/ || echo "ERROR: android directory not created"
 
       - name: Capacitor sync
-        run: npx cap sync android
+        run: |
+          npx cap sync android 2>&1
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
       - name: Build debug APK
         if: ${{ inputs.build_type == 'debug' }}
-        run: cd android && ./gradlew assembleDebug --no-daemon --stacktrace
+        run: cd android && ./gradlew assembleDebug --no-daemon
 
       - name: Build release APK (unsigned)
         if: ${{ inputs.build_type == 'release' }}
-        run: cd android && ./gradlew assembleRelease --no-daemon --stacktrace
+        run: cd android && ./gradlew assembleRelease --no-daemon
 
       - name: Upload debug APK
         if: ${{ inputs.build_type == 'debug' }}
