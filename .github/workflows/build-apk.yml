@@ -32,9 +32,6 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install dependencies
         run: npm ci
 
@@ -42,17 +39,10 @@ jobs:
         run: npm run build
 
       - name: Add Android platform
-        run: |
-          echo "=== Cap version ==="
-          npx cap --version
-          echo "=== Cap add android ==="
-          npx cap add android 2>&1
-          echo "=== Android folder contents ==="
-          ls android/ || echo "ERROR: android directory not created"
+        run: npx cap add android
 
       - name: Capacitor sync
-        run: |
-          npx cap sync android 2>&1
+        run: npx cap sync android
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew
