@@ -41,19 +41,23 @@ jobs:
       - name: Build web assets
         run: npm run build
 
+      - name: Add Android platform
+        run: npx cap add android
+        continue-on-error: true  # Ignore si le dossier android existe déjà
+
       - name: Capacitor sync
-        run: npx cap add android && npx cap sync android
+        run: npx cap sync android
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
       - name: Build debug APK
         if: ${{ inputs.build_type == 'debug' }}
-        run: cd android && ./gradlew assembleDebug --no-daemon
+        run: cd android && ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Build release APK (unsigned)
         if: ${{ inputs.build_type == 'release' }}
-        run: cd android && ./gradlew assembleRelease --no-daemon
+        run: cd android && ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Upload debug APK
         if: ${{ inputs.build_type == 'debug' }}
