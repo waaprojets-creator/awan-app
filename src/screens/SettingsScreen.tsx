@@ -18,12 +18,7 @@ export default function SettingsScreen() {
   const { db, updateDb, navigate } = useAppState() as any;
   const theme = useTheme();
   const themeMode = useThemeMode();
-  const storeCfg = useAppStore((s: any) => s.cfg);
-  const setStoreCfg = useAppStore((s: any) => s.updateCfg);
-
-  const setTheme = (mode: 'light' | 'dark') => {
-    setStoreCfg({ ...storeCfg, theme: mode });
-  };
+  const setTheme = useAppStore((s: any) => s.setTheme);
 
   if (!db) return null;
   const config = db.config || { corsApiKey: '', jitFactor: 1.2 };

@@ -10,6 +10,7 @@ interface AppState {
   lock: () => void;
   setReady: () => void;
   toggleTheme: () => void;
+  setTheme: (mode: Theme) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -20,4 +21,5 @@ export const useAppStore = create<AppState>((set) => ({
   lock:   () => set({ isUnlocked: false }),
   setReady: () => set({ ready: true }),
   toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
+  setTheme: (mode) => set({ theme: mode }),
 }));
