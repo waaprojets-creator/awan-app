@@ -163,7 +163,7 @@ export default function SportScreen() {
               <Heading level={4} mono subtitle="Capture Musculaire">FLUX LIBRE</Heading>
               <div className="flex flex-row gap-3 items-center">
                 <TextInput
-                  className="flex-1 bg-awan-bg-soft border border-white/5 rounded-awan-xl px-5 py-4 text-sm font-bold text-awan-tx"
+                  className="flex-1 bg-awan-bg border border-white/5 rounded-awan-xl px-5 py-4 text-sm font-bold text-awan-tx"
                   placeholder="Rédiger une performance..."
                   placeholderTextColor="#6C665E"
                   value={inputText}
@@ -181,7 +181,7 @@ export default function SportScreen() {
 
             <div className="mb-10">
                <Heading level={4} mono subtitle="Séquence Motrice">HISTORIQUE DU JOUR</Heading>
-               <div className="bg-awan-bg-soft/40 p-4 rounded-awan-xl border border-white/5 min-h-[150px]">
+               <div className="bg-awan-bg/40 p-4 rounded-awan-xl border border-white/5 min-h-[150px]">
                 <DailyCanvas 
                   dateId={today} 
                   filterModule="sport"
@@ -204,7 +204,7 @@ export default function SportScreen() {
                 <StaggerList>
                   {workoutStore.routines.map((r) => (
                     <StaggerItem key={r.id} className="mb-4">
-                      <Card className="p-6 bg-awan-bg-highlight/20" onPress={() => startWorkout(r)}>
+                      <Card className="p-6 bg-awan-surface/20" onPress={() => startWorkout(r)}>
                         <div className="flex flex-row justify-between items-center mb-1">
                           <span className="text-lg font-bold text-awan-tx uppercase tracking-tight">{r.name}</span>
                           <Touch onPress={(e) => { e.stopPropagation(); deleteRoutine(r); }}>
@@ -247,7 +247,7 @@ function ExerciseDetail({ exercise, visible, onClose }: any) {
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md bg-awan-bg-highlight rounded-awan-3xl border border-white/10 shadow-2xl overflow-hidden"
+          className="w-full max-w-md bg-awan-surface rounded-awan-3xl border border-white/10 shadow-2xl overflow-hidden"
         >
           <div className="p-8 border-b border-white/10 bg-white/5 relative">
             <span className="awan-label mb-2 text-awan-gold">{MUSCLES[exercise.m]?.l?.toUpperCase()}</span>

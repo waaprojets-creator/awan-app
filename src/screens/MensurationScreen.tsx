@@ -188,7 +188,7 @@ export default function MensurationScreen() {
                     <div className="w-1 h-1 bg-white/10 rounded-full" />
                   </div>
                 </div>
-                <div className="bg-awan-bg-highlight/30 rounded-awan-3xl border border-white/10 p-6 relative overflow-hidden shadow-2xl">
+                <div className="bg-awan-surface/30 rounded-awan-3xl border border-white/10 p-6 relative overflow-hidden shadow-2xl">
                    {isScanning && (
                       <motion.div 
                         initial={{ top: -20 }}

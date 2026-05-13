@@ -119,7 +119,7 @@ export default function NutritionScreen() {
              <Heading level={1} className="mb-0 flex-1" subtitle="Carburant Organique">NUTRITION</Heading>
         </div>
           {/* Biometric Summary Matrix */}
-          <Card className="mb-8 p-6 bg-awan-bg-highlight/20 border-awan-gold/10 shadow-[0_0_40px_rgba(212,175,55,0.05)]">
+          <Card className="mb-8 p-6 bg-awan-surface/20 border-awan-gold/10 shadow-[0_0_40px_rgba(212,175,55,0.05)]">
             <div className="flex justify-between items-center mb-8">
               <div className="flex flex-col">
                 <span className="awan-label text-awan-gold">INDEX CALORIQUE</span>
@@ -202,7 +202,7 @@ export default function NutritionScreen() {
             <Heading level={4} mono subtitle="Capture Libre">FLUX NUTRITIF</Heading>
             <div className="flex flex-row gap-3 items-center">
               <TextInput
-                className="flex-1 bg-awan-bg-soft border border-white/5 rounded-awan-xl px-5 py-4 text-sm font-bold text-awan-tx"
+                className="flex-1 bg-awan-bg border border-white/5 rounded-awan-xl px-5 py-4 text-sm font-bold text-awan-tx"
                 placeholder="Rédiger un apport organique..."
                 placeholderTextColor="#6C665E"
                 value={inputText}
@@ -223,7 +223,7 @@ export default function NutritionScreen() {
             <Heading level={4} mono subtitle="Vigilance Halal">INSPECTEUR ING RÉDIENTS</Heading>
             <div className="flex flex-col gap-3">
               <TextInput
-                className="bg-awan-bg-soft border border-white/5 rounded-awan-xl px-5 py-4 text-sm font-bold text-awan-tx min-h-[100px]"
+                className="bg-awan-bg border border-white/5 rounded-awan-xl px-5 py-4 text-sm font-bold text-awan-tx min-h-[100px]"
                 placeholder="CONSTITUANTS À ANALYSER..."
                 placeholderTextColor="#6C665E"
                 value={auditText}
@@ -273,7 +273,7 @@ export default function NutritionScreen() {
           {/* Journal Unit */}
           <div className="mb-10">
             <Heading level={4} mono subtitle="Séquence Tactique">HISTORIQUE DU JOUR</Heading>
-            <div className="bg-awan-bg-soft/40 p-4 rounded-awan-xl border border-white/5 min-h-[150px]">
+            <div className="bg-awan-bg/40 p-4 rounded-awan-xl border border-white/5 min-h-[150px]">
               <DailyCanvas 
                 dateId={today} 
                 filterModule="nutrition"
@@ -290,7 +290,7 @@ export default function NutritionScreen() {
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-md bg-awan-bg-highlight rounded-awan-3xl border border-white/10 shadow-2xl overflow-hidden"
+            className="w-full max-w-md bg-awan-surface rounded-awan-3xl border border-white/10 shadow-2xl overflow-hidden"
           >
             {selectedFood && (
               <>

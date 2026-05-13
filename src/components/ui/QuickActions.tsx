@@ -39,7 +39,7 @@ export function QuickActions({ onNavigate }: QuickActionsProps) {
               >
                 <Touch
                   onPress={() => handleAction(action.route)}
-                  className="flex flex-row items-center gap-3 bg-awan-bg-highlight border border-white/10 px-4 py-2 rounded-full shadow-2xl"
+                  className="flex flex-row items-center gap-3 bg-awan-surface border border-white/10 px-4 py-2 rounded-full shadow-2xl"
                 >
                   <span className="text-xs font-bold uppercase tracking-widest text-awan-tx">
                     {action.label}
@@ -59,7 +59,7 @@ export function QuickActions({ onNavigate }: QuickActionsProps) {
 
       <Touch
         onPress={toggleMenu}
-        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl border border-white/10 transition-all duration-300 ${isOpen ? 'bg-awan-bg-highlight rotate-90' : 'bg-awan-gold-active'}`}
+        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl border border-white/10 transition-all duration-300 ${isOpen ? 'bg-awan-surface rotate-90' : 'bg-awan-gold'}`}
       >
         {isOpen ? (
           <X size={28} color="#D4AF37" />

@@ -177,7 +177,7 @@ export default function AnalyseScreen() {
 
         {/* Tab Control */}
         <div className="px-6 mb-8">
-           <div className="bg-awan-bg-highlight/30 p-1.5 rounded-3xl border border-white/5 flex flex-row shadow-2xl">
+           <div className="bg-awan-surface/30 p-1.5 rounded-3xl border border-white/5 flex flex-row shadow-2xl">
               {TABS.map(({ id, label, Icon }) => (
                 <Touch 
                   key={id} 
@@ -196,7 +196,7 @@ export default function AnalyseScreen() {
            {RANGES.map(r => (
              <Touch 
                key={r.id} 
-               className={`px-6 py-1.5 rounded-full border transition-all ${range === r.id ? 'bg-awan-gold-active/20 border-awan-gold' : 'bg-white/5 border-white/5'}`}
+               className={`px-6 py-1.5 rounded-full border transition-all ${range === r.id ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'}`}
                onPress={() => setRange(r.id)}
              >
                <span className={`text-[10px] font-black tracking-[0.2em] ${range === r.id ? 'text-awan-gold' : 'text-white/20'}`}>{r.label}</span>

@@ -114,7 +114,7 @@ export default function JournalScreen() {
                <span className="text-[9px] font-mono text-awan-gold opacity-50 uppercase">Ready for Sync</span>
             </div>
             
-            <div className="bg-awan-bg-highlight/30 p-6 rounded-awan-3xl border border-white/10 shadow-2xl">
+            <div className="bg-awan-surface/30 p-6 rounded-awan-3xl border border-white/10 shadow-2xl">
               <div className="flex flex-row flex-wrap gap-2 mb-6">
                 {MODULES.map((mod) => (
                   <Touch 
@@ -213,7 +213,7 @@ export default function JournalScreen() {
                       initial={{ opacity: 0, y: -8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, x: -20 }}
-                      className="bg-awan-bg-highlight/20 border border-white/5 rounded-2xl p-5"
+                      className="bg-awan-surface/20 border border-white/5 rounded-2xl p-5"
                     >
                       <div className="flex flex-row justify-between items-start mb-3">
                         <div className="flex flex-row items-center gap-3">

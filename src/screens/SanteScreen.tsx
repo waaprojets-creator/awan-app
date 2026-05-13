@@ -118,7 +118,7 @@ function SectionCard({ data, index, onPress, ...props }: any) {
   return (
     <StaggerItem index={index}>
        <Touch onPress={onPress} className="block w-full text-left">
-          <Card className="group bg-awan-bg-highlight/20 border-white/5 hover:border-awan-gold/40 transition-all p-6 relative overflow-hidden" variant="flat">
+          <Card className="group bg-awan-surface/20 border-white/5 hover:border-awan-gold/40 transition-all p-6 relative overflow-hidden" variant="flat">
              <div className="flex flex-row items-start gap-5">
                 <div 
                   className="w-14 h-14 rounded-2xl items-center justify-center border transition-all group-hover:scale-110"

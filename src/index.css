@@ -4,23 +4,19 @@
 @theme {
   /* ALARM DEFAULTS — remplacés par useThemeSync au chargement.
      Si magenta/cyan visible → variable non couverte par le système. */
-  --color-awan-bg: #FF00FF;
-  --color-awan-bg-soft: #FF00FF;
-  --color-awan-bg-card: #FF00FF;
-  --color-awan-bg-highlight: #FF00FF;
+  --color-awan-bg:      #FF00FF;
+  --color-awan-surface: #FF00FF;
 
   --color-awan-gold: #FF00FF;
-  --color-awan-gold-active: #FF00FF;
-  --color-awan-gold-dim: #FF00FF;
 
-  --color-awan-tx: #00FFFF;
-  --color-awan-tx-dim: #00FFFF;
+  --color-awan-tx:      #00FFFF;
+  --color-awan-tx-dim:  #00FFFF;
   --color-awan-tx-mute: #00FFFF;
 
-  --color-awan-status-ok: #FF00FF;
-  --color-awan-status-warn: #FF00FF;
-  --color-awan-status-error: #FF00FF;
-  --color-awan-status-info: #FF00FF;
+  --color-awan-status-ok:     #FF00FF;
+  --color-awan-status-warn:   #FF00FF;
+  --color-awan-status-error:  #FF00FF;
+  --color-awan-status-info:   #FF00FF;
   --color-awan-status-spirit: #FF00FF;
 
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
@@ -39,13 +35,13 @@
     color: var(--color-awan-tx);
   }
   body {
-    @apply font-sans antialiased selection:bg-awan-gold-active/30;
+    @apply font-sans antialiased selection:bg-awan-gold/30;
   }
 }
 
 @layer components {
   .awan-card {
-    @apply bg-awan-bg-card border border-white/5 rounded-awan-lg shadow-2xl;
+    @apply bg-awan-surface border border-white/5 rounded-awan-lg shadow-2xl;
     backdrop-filter: blur(10px);
   }
   
@@ -62,7 +58,7 @@
   }
 
   .awan-glow-gold {
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.08);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-awan-gold) 8%, transparent);
   }
 
   .touch-feedback {

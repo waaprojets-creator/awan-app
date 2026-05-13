@@ -48,7 +48,7 @@ export default function MentalScreen() {
 
         {/* Brain Status Visualizer Placeholder */}
         <div className="px-6 mb-10">
-          <Card className="aspect-square bg-awan-bg-highlight/20 border-white/5 flex items-center justify-center relative overflow-hidden" variant="flat">
+          <Card className="aspect-square bg-awan-surface/20 border-white/5 flex items-center justify-center relative overflow-hidden" variant="flat">
             <div className="absolute inset-0 opacity-10">
               <div 
                 className="w-full h-full" 

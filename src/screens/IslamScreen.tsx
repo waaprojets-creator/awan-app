@@ -102,7 +102,7 @@ export default function IslamScreen() {
               <Zap size={14} className="text-awan-gold mb-1" />
             </div>
             
-            <div className="bg-awan-bg-highlight/20 rounded-awan-2xl border border-white/10 overflow-hidden shadow-2xl">
+            <div className="bg-awan-surface/20 rounded-awan-2xl border border-white/10 overflow-hidden shadow-2xl">
               {prayers.map((key) => {
                 const time = prayerTimes[key];
                 const isNext = prayerTimes.next === key;
@@ -214,7 +214,7 @@ export default function IslamScreen() {
 
           <div className="mb-14">
             <Heading level={4} mono subtitle="Rémanence" className="mb-6">SEQUENCE D'ACTES</Heading>
-            <div className="bg-awan-bg-highlight/10 p-2 rounded-awan-2xl border border-white/5 min-h-[160px] shadow-inner">
+            <div className="bg-awan-surface/10 p-2 rounded-awan-2xl border border-white/5 min-h-[160px] shadow-inner">
               <DailyCanvas 
                 dateId={todayStr} 
                 filterModule="islam"
@@ -228,7 +228,7 @@ export default function IslamScreen() {
               <TrendingUp size={14} className="text-awan-gold mb-1" />
             </div>
 
-            <Card className="bg-awan-bg-highlight/20 border border-white/10 p-6 shadow-xl" variant="flat">
+            <Card className="bg-awan-surface/20 border border-white/10 p-6 shadow-xl" variant="flat">
               {quranStore.progress ? (
                 <div>
                   <div className="flex flex-row justify-between items-center mb-6">
@@ -302,7 +302,7 @@ export default function IslamScreen() {
               <BookOpen size={14} className="text-awan-tx-mute mb-1" />
             </div>
 
-            <Card className="bg-awan-bg-highlight/30 border border-white/10 p-8 shadow-2xl relative overflow-hidden group" variant="flat">
+            <Card className="bg-awan-surface/30 border border-white/10 p-8 shadow-2xl relative overflow-hidden group" variant="flat">
               <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none group-hover:scale-110 transition-all">
                 <BookOpen size={120} className="text-awan-gold" />
               </div>

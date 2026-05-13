@@ -55,7 +55,7 @@ function SmartHeader({ tasksLate, nextPrayer }: SmartHeaderProps) {
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mb-8 p-6 bg-awan-bg-highlight/30 rounded-awan-3xl border border-white/5 flex flex-row items-center gap-6 shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden"
+      className="mb-8 p-6 bg-awan-surface/30 rounded-awan-3xl border border-white/5 flex flex-row items-center gap-6 shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden"
     >
       <div className="absolute top-0 right-0 w-48 h-48 bg-awan-gold/5 rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none" />
       <div className="relative">
@@ -151,14 +151,14 @@ export default function DashboardScreen({ navigate }: NavProps) {
                   <Touch
                     key={opt.key}
                     className={`flex-1 flex flex-col items-center p-3 rounded-awan-md border transition-all ${
-                      active ? 'bg-awan-bg-highlight border-awan-gold-active' : 'bg-awan-bg-soft border-white/5'
+                      active ? 'bg-awan-surface border-awan-gold' : 'bg-awan-bg border-white/5'
                     }`}
                     onPress={() => setTransportMode(opt.key)}
                   >
                     {Icon && <Icon size={20} color={active ? theme.selected : theme.text} />}
                     <span
                       className={`text-[9px] mt-1 uppercase font-bold tracking-widest ${
-                        active ? 'text-awan-gold-active' : 'text-awan-tx-mute'
+                        active ? 'text-awan-gold' : 'text-awan-tx-mute'
                       }`}
                     >
                       {opt.label}
@@ -257,16 +257,16 @@ export default function DashboardScreen({ navigate }: NavProps) {
         return (
           <Card title="UNITÉ SPIRITUELLE" onPress={() => navigate('Islam')} highlight>
             <div className="grid grid-cols-3 gap-3 mt-1">
-              <div className="bg-awan-bg-soft/80 p-3 rounded-awan-lg border border-white/5 shadow-inner">
-                <span className="awan-label text-[8px] text-awan-gold-active mb-1 block">
+              <div className="bg-awan-bg/80 p-3 rounded-awan-lg border border-white/5 shadow-inner">
+                <span className="awan-label text-[8px] text-awan-gold mb-1 block">
                   PROCHAINE : {nextPrayerName}
                 </span>
                 <span className="text-xl font-bold font-mono text-awan-gold tabular-nums">
                   {prayerH}H {prayerM}M
                 </span>
               </div>
-              <div className="bg-awan-bg-soft/80 p-3 rounded-awan-lg border border-white/5 flex flex-col items-center justify-center text-center">
-                <span className="text-[8px] font-black text-awan-gold-active tracking-widest uppercase block mb-1">PRIÈRES</span>
+              <div className="bg-awan-bg/80 p-3 rounded-awan-lg border border-white/5 flex flex-col items-center justify-center text-center">
+                <span className="text-[8px] font-black text-awan-gold tracking-widest uppercase block mb-1">PRIÈRES</span>
                 <div className="flex flex-row gap-1 justify-center mb-1">
                   {Array.from({ length: prayerStore.total }).map((_, i) => (
                     <div key={i} className={`w-2 h-2 rounded-full ${i < prayerStore.doneCount ? 'bg-awan-gold shadow-[0_0_5px_#D4AF37]' : 'bg-white/10'}`} />
@@ -274,8 +274,8 @@ export default function DashboardScreen({ navigate }: NavProps) {
                 </div>
                 <span className="text-xl font-black font-mono text-awan-gold tabular-nums">{prayerStore.doneCount}<span className="text-xs opacity-50">/{prayerStore.total}</span></span>
               </div>
-              <div className="bg-awan-bg-soft/80 p-3 rounded-awan-lg border border-white/5 flex flex-col items-center justify-center text-center">
-                <span className="text-2xl text-awan-gold-active font-bold leading-tight mb-1">{word.ar}</span>
+              <div className="bg-awan-bg/80 p-3 rounded-awan-lg border border-white/5 flex flex-col items-center justify-center text-center">
+                <span className="text-2xl text-awan-gold font-bold leading-tight mb-1">{word.ar}</span>
                 <span className="awan-label text-[8px] opacity-70 truncate w-full">{word.fr}</span>
               </div>
             </div>

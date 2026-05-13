@@ -36,7 +36,7 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
           </motion.span>
           <div
             className={`h-0.5 w-4 mt-1 transition-all duration-300 ${
-              isOn('Analyse') ? 'bg-awan-gold-active w-8' : 'bg-transparent'
+              isOn('Analyse') ? 'bg-awan-gold w-8' : 'bg-transparent'
             }`}
           />
         </Touch>
@@ -77,7 +77,7 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
           </motion.span>
           <div
             className={`h-0.5 w-4 mt-1 transition-all duration-300 ${
-              isOn('Islam') ? 'bg-awan-gold-active w-8' : 'bg-transparent'
+              isOn('Islam') ? 'bg-awan-gold w-8' : 'bg-transparent'
             }`}
           />
         </Touch>

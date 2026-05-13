@@ -57,15 +57,11 @@ export function useThemeSync(): void {
     const root = document.documentElement;
 
     // Backgrounds
-    root.style.setProperty('--color-awan-bg',           theme.bg);
-    root.style.setProperty('--color-awan-bg-soft',      theme.bg);
-    root.style.setProperty('--color-awan-bg-card',      theme.surface);
-    root.style.setProperty('--color-awan-bg-highlight', theme.surface);
+    root.style.setProperty('--color-awan-bg',      theme.bg);
+    root.style.setProperty('--color-awan-surface',  theme.surface);
 
-    // Gold (fixe entre les modes, dim calculé)
-    root.style.setProperty('--color-awan-gold',         theme.selected);
-    root.style.setProperty('--color-awan-gold-active',  theme.selected);
-    root.style.setProperty('--color-awan-gold-dim',     'rgba(212,175,55,0.10)');
+    // Gold
+    root.style.setProperty('--color-awan-gold', theme.selected);
 
     // Typography
     root.style.setProperty('--color-awan-tx',           theme.title);

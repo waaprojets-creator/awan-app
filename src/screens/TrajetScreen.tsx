@@ -126,7 +126,7 @@ export default function TrajetScreen() {
           <Heading level={1} subtitle="Logistique de Projection">TRAJET</Heading>
         </div>
 
-        <div className="h-[400px] w-full bg-awan-bg-highlight/20 relative">
+        <div className="h-[400px] w-full bg-awan-surface/20 relative">
           <MapComponent 
             entries={mapEntries} 
             route={route} 
@@ -165,7 +165,7 @@ export default function TrajetScreen() {
                 >
                   {results.slice(0, 5).map((r, i) => (
                     <Touch key={i} className="p-4 border-b border-white/5 flex flex-row items-center gap-3 hover:bg-white/5" onPress={() => addPoi(r)}>
-                      <MapPin size={16} className="text-awan-gold-active" />
+                      <MapPin size={16} className="text-awan-gold" />
                       <div className="flex-1">
                         <span className="text-xs font-bold text-awan-tx block mb-0.5">{r.properties.label}</span>
                         <span className="text-[10px] font-medium text-awan-tx-mute uppercase tracking-widest">{r.properties.region}</span>

@@ -403,7 +403,7 @@ export default function PlanningScreen() {
             <Heading level={4} mono subtitle="Injection de Tâche">NOUVELLE MISSION</Heading>
             <div className="space-y-3">
               <TextInput
-                className="bg-awan-bg-soft border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold text-awan-tx"
+                className="bg-awan-bg border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold text-awan-tx"
                 placeholder="TITRE DE LA TÂCHE..."
                 placeholderTextColor="#6C665E"
                 value={aiTitle}
@@ -413,7 +413,7 @@ export default function PlanningScreen() {
                 <div className="flex-1">
                   <span className="awan-label mb-2 block">DURÉE (MIN)</span>
                   <TextInput
-                    className="bg-awan-bg-soft border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold text-awan-tx font-mono"
+                    className="bg-awan-bg border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold text-awan-tx font-mono"
                     placeholder="30"
                     placeholderTextColor="#6C665E"
                     keyboardType="numeric"
@@ -512,7 +512,7 @@ export default function PlanningScreen() {
                   {planner.schedule.slots.map((slot, i) => {
                     const task = taskMap.get(slot.taskId);
                     return (
-                      <Card key={i} className="flex-row items-center gap-4 py-4 px-5 bg-awan-bg-highlight/20 border-awan-gold/10" variant="flat">
+                      <Card key={i} className="flex-row items-center gap-4 py-4 px-5 bg-awan-surface/20 border-awan-gold/10" variant="flat">
                         <div className="w-16 items-center">
                           <span className="text-[10px] font-black text-awan-gold font-mono">{minToTime(slot.startMin)}</span>
                           <span className="text-[8px] font-bold text-awan-tx-mute font-mono">{minToTime(slot.endMin)}</span>
@@ -580,7 +580,7 @@ export default function PlanningScreen() {
       </div>
       <EventModal visible={showEvModal} initial={editEv} defaultDate={ds(selDate)} categories={categories} onClose={() => setShowEvModal(false)} onSave={async (ev: any) => { const evs = db.events || []; const newEvs = editEv ? evs.map((e: any) => e.id === editEv.id ? { ...e, ...ev } : e) : [...evs, { id: uid(), ...ev }]; await updateDb({ ...db, events: newEvs }); setShowEvModal(false); }} />
       <ImportModal visible={showImportModal} onClose={() => setShowImportModal(false)} onImport={async (json: string) => { try { const raw = JSON.parse(json); const newRoutines = (Array.isArray(raw) ? raw : [raw]).map(r => ({ id: uid(), name: r.name || 'Importé', time: r.time || '08:00', frequency: 'daily', color: theme.title })); await updateDb({ ...db, routines: [...(db.routines || []), ...newRoutines] }); setShowImportModal(false); } catch (e) { Alert.alert('Erreur', 'JSON invalide'); } }} />
-      {dragConfirm && <Modal transparent visible><div className="flex-1 bg-black/90 justify-center items-center p-8 backdrop-blur-md"><Card className="w-full p-8 bg-awan-bg-highlight border-awan-gold" variant="flat"><Heading level={4} mono subtitle="Mise à jour routine" className="mb-6">{L.planning.editRoutine}</Heading><span className="text-sm text-awan-tx-mute mb-8 block leading-relaxed">{L.planning.editPrompt}</span><div className="flex flex-col gap-4"><Touch className="bg-awan-gold h-16 rounded-2xl items-center justify-center" onPress={() => confirmRoutineUpdate(true)}><span className="font-black text-black text-xs uppercase tracking-widest font-mono">{L.planning.allOccurrences}</span></Touch><Touch className="bg-white/5 border border-white/10 h-16 rounded-2xl items-center justify-center" onPress={() => confirmRoutineUpdate(false)}><span className="font-black text-awan-tx text-xs uppercase tracking-widest font-mono">{L.planning.onlyThis}</span></Touch><Touch className="h-12 items-center justify-center" onPress={() => setDragConfirm(null)}><span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-[0.2em] font-mono">{L.common.cancel}</span></Touch></div></Card></div></Modal>}
+      {dragConfirm && <Modal transparent visible><div className="flex-1 bg-black/90 justify-center items-center p-8 backdrop-blur-md"><Card className="w-full p-8 bg-awan-surface border-awan-gold" variant="flat"><Heading level={4} mono subtitle="Mise à jour routine" className="mb-6">{L.planning.editRoutine}</Heading><span className="text-sm text-awan-tx-mute mb-8 block leading-relaxed">{L.planning.editPrompt}</span><div className="flex flex-col gap-4"><Touch className="bg-awan-gold h-16 rounded-2xl items-center justify-center" onPress={() => confirmRoutineUpdate(true)}><span className="font-black text-black text-xs uppercase tracking-widest font-mono">{L.planning.allOccurrences}</span></Touch><Touch className="bg-white/5 border border-white/10 h-16 rounded-2xl items-center justify-center" onPress={() => confirmRoutineUpdate(false)}><span className="font-black text-awan-tx text-xs uppercase tracking-widest font-mono">{L.planning.onlyThis}</span></Touch><Touch className="h-12 items-center justify-center" onPress={() => setDragConfirm(null)}><span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-[0.2em] font-mono">{L.common.cancel}</span></Touch></div></Card></div></Modal>}
     </PageWrapper>
   );
 }
@@ -619,7 +619,7 @@ function EventModal({ visible, initial, defaultDate, categories, onClose, onSave
   return (
     <Modal visible={visible} transparent animationType="slide">
       <div className="flex-1 bg-black/70 justify-end backdrop-blur-sm">
-        <div className="bg-awan-bg-highlight p-8 pt-4 rounded-t-[40px] border-t border-white/10 w-full max-w-lg mx-auto shadow-2xl">
+        <div className="bg-awan-surface p-8 pt-4 rounded-t-[40px] border-t border-white/10 w-full max-w-lg mx-auto shadow-2xl">
           <div className="w-12 h-1.5 bg-white/10 rounded-full self-center mb-10" />
           <Heading level={2} subtitle="Paramètres du Segment" className="text-center mb-12">PLANIFICATION</Heading>
           <div className="space-y-8">
@@ -650,7 +650,7 @@ function ImportModal({ visible, onClose, onImport }: any) {
   return (
     <Modal visible={visible} transparent animationType="fade">
       <div className="flex-1 bg-black/80 justify-end backdrop-blur-md">
-        <div className="bg-awan-bg-highlight p-8 pt-4 rounded-t-[40px] border-t border-white/10 w-full max-w-lg mx-auto shadow-2xl">
+        <div className="bg-awan-surface p-8 pt-4 rounded-t-[40px] border-t border-white/10 w-full max-w-lg mx-auto shadow-2xl">
           <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-10" />
           <Heading level={2} subtitle="Base de Données Routines" className="text-center mb-12">IMPORTATION</Heading>
           <TextInput className="bg-black/40 border border-white/5 rounded-2xl p-6 text-awan-tx font-mono text-xs mb-10 min-h-[200px]" multiline value={json} onChangeText={setJson} placeholder="[{'name': 'Routine'}]" placeholderTextColor="#252525" />
