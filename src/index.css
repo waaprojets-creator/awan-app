@@ -2,24 +2,26 @@
 @import "tailwindcss";
 
 @theme {
-  --color-awan-bg: #1A1A1A;
-  --color-awan-bg-soft: #222220;
-  --color-awan-bg-card: #4C4A44;
-  --color-awan-bg-highlight: #5A5850;
+  /* ALARM DEFAULTS — remplacés par useThemeSync au chargement.
+     Si magenta/cyan visible → variable non couverte par le système. */
+  --color-awan-bg: #FF00FF;
+  --color-awan-bg-soft: #FF00FF;
+  --color-awan-bg-card: #FF00FF;
+  --color-awan-bg-highlight: #FF00FF;
 
-  --color-awan-gold: #D4AF37;
-  --color-awan-gold-active: #E5C363;
-  --color-awan-gold-dim: rgba(212, 175, 55, 0.1);
+  --color-awan-gold: #FF00FF;
+  --color-awan-gold-active: #FF00FF;
+  --color-awan-gold-dim: #FF00FF;
 
-  --color-awan-tx: #EDE8E2;
-  --color-awan-tx-dim: #F8F5F2;
-  --color-awan-tx-mute: rgba(248,245,242,0.30);
+  --color-awan-tx: #00FFFF;
+  --color-awan-tx-dim: #00FFFF;
+  --color-awan-tx-mute: #00FFFF;
 
-  --color-awan-status-ok: #4ECDC4;
-  --color-awan-status-warn: #FFE66D;
-  --color-awan-status-error: #8A0C0C;
-  --color-awan-status-info: #4FACFE;
-  --color-awan-status-spirit: #D4AF37;
+  --color-awan-status-ok: #FF00FF;
+  --color-awan-status-warn: #FF00FF;
+  --color-awan-status-error: #FF00FF;
+  --color-awan-status-info: #FF00FF;
+  --color-awan-status-spirit: #FF00FF;
 
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;

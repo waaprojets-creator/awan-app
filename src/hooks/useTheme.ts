@@ -56,26 +56,28 @@ export function useThemeSync(): void {
   useEffect(() => {
     const root = document.documentElement;
 
-    // Backgrounds & surfaces
-    root.style.setProperty('--color-awan-bg', theme.bg);
-    root.style.setProperty('--color-awan-bg-soft', theme.surface);
-    root.style.setProperty('--color-awan-bg-card', theme.surface);
+    // Backgrounds
+    root.style.setProperty('--color-awan-bg',           theme.bg);
+    root.style.setProperty('--color-awan-bg-soft',      theme.bg);
+    root.style.setProperty('--color-awan-bg-card',      theme.surface);
     root.style.setProperty('--color-awan-bg-highlight', theme.surface);
 
-    // Selected (gold)
-    root.style.setProperty('--color-awan-gold', theme.selected);
-    root.style.setProperty('--color-awan-gold-active', theme.selected);
+    // Gold (fixe entre les modes, dim calculé)
+    root.style.setProperty('--color-awan-gold',         theme.selected);
+    root.style.setProperty('--color-awan-gold-active',  theme.selected);
+    root.style.setProperty('--color-awan-gold-dim',     'rgba(212,175,55,0.10)');
 
     // Typography
-    root.style.setProperty('--color-awan-tx', theme.title);
-    root.style.setProperty('--color-awan-tx-dim', theme.text);
-    root.style.setProperty('--color-awan-tx-mute', theme.mute);
+    root.style.setProperty('--color-awan-tx',           theme.title);
+    root.style.setProperty('--color-awan-tx-dim',       theme.text);
+    root.style.setProperty('--color-awan-tx-mute',      theme.mute);
 
-    // Status (mapping selon décisions projet)
-    root.style.setProperty('--color-awan-status-error', theme.danger);
-    root.style.setProperty('--color-awan-status-warn', theme.danger);
-    root.style.setProperty('--color-awan-status-ok', theme.title);
-    root.style.setProperty('--color-awan-status-info', theme.text);
+    // Status sémantiques fixes (ne dépendent pas du mode)
+    root.style.setProperty('--color-awan-status-ok',     '#4ECDC4');
+    root.style.setProperty('--color-awan-status-warn',   '#FFE66D');
+    root.style.setProperty('--color-awan-status-info',   '#4FACFE');
+    // Status liés au thème
+    root.style.setProperty('--color-awan-status-error',  theme.danger);
     root.style.setProperty('--color-awan-status-spirit', theme.selected);
   }, [theme]);
 }
