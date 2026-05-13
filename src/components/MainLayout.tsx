@@ -45,13 +45,13 @@ class ScreenErrorBoundary extends Component<{ children: React.ReactNode }, Error
   }
 }
 
-function PageTransition({ children }: { children: React.ReactNode }) {
+function PageTransition({ children, direction = 1 }: { children: React.ReactNode; direction?: number }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15, filter: 'blur(10px)' }}
-      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-      exit={{ opacity: 0, y: -15, filter: 'blur(10px)' }}
-      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0, x: 24 * direction }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -24 * direction }}
+      transition={{ duration: 0.15, ease: 'easeOut' }}
       className="flex-1 flex flex-col h-full w-full min-h-0 overflow-hidden"
     >
       {children}
