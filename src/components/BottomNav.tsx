@@ -25,8 +25,8 @@ const TABS: TabDef[] = [
   { route: 'Reglages', label: (L as { tabs: { reglages: string } }).tabs.reglages, icon: IconReglages as TabDef['icon'] },
 ];
 
-const GOLD = '#D4AF37';
-const MUTE = '#6C665E';
+const GOLD  = '#D4AF37';
+const MUTE  = '#6C665E';
 const ICON_SZ = (ICON_SIZE as { tab: number }).tab ?? 20;
 
 export default function BottomNav({ currentRoute, onNavigate }: BottomNavProps) {
@@ -55,6 +55,7 @@ export default function BottomNav({ currentRoute, onNavigate }: BottomNavProps) 
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             onClick={() => onNavigate(tab.route)}
           >
+            {/* Indicateur actif — ligne 2px top */}
             {active && (
               <motion.div
                 layoutId="tb-nav-indicator"
@@ -66,12 +67,15 @@ export default function BottomNav({ currentRoute, onNavigate }: BottomNavProps) 
 
             <Icon size={ICON_SZ} color={active ? GOLD : MUTE} />
 
+            {/* Cairo 600 — label tactique */}
             <span
-              className="mt-1.5 font-mono uppercase tracking-[0.2em]"
+              className="mt-1.5 uppercase tracking-[0.15em]"
               style={{
+                fontFamily: 'Cairo, sans-serif',
                 fontSize: '8px',
-                fontWeight: 900,
+                fontWeight: active ? 700 : 600,
                 color: active ? GOLD : MUTE,
+                letterSpacing: '0.15em',
               }}
             >
               {tab.label}

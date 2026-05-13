@@ -20,7 +20,14 @@
   --color-awan-status-spirit: #FF00FF;
 
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Cairo", ui-sans-serif, system-ui, sans-serif;
+
+  /* Hiérarchie typographique Cairo */
+  --fw-mute:    300;
+  --fw-body:    400;
+  --fw-label:   600;
+  --fw-value:   700;
+  --fw-display: 900;
 
   --radius-awan-sm: 8px;
   --radius-awan-md: 12px;
