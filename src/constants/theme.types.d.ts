@@ -12,6 +12,8 @@ export const UiSelectedLight: string;
 export const UiSelectedDark: string;
 export const UiTextLight: string;
 export const UiTextDark: string;
+export const UiMuteLight: string;
+export const UiMuteDark: string;
 export const UiDangerLight: string;
 export const UiDangerDark: string;
 export const Palette0: string;

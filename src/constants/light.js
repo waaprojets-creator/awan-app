@@ -7,6 +7,7 @@ export const UiSurfaceLight = "#EDE8E2";
 export const UiTitleLight = "#1A1A1A";
 export const UiSelectedLight = "#D4AF37";
 export const UiTextLight = "#4C4A44";
+export const UiMuteLight = "#6C665E";
 export const UiDangerLight = "#B58787";
 export const Palette0 = "#E74C3C";
 export const Palette1 = "#3498DB";

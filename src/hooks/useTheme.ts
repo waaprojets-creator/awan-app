@@ -11,6 +11,7 @@ export interface AwanTheme {
   title: string;
   selected: string;
   text: string;
+  mute: string;
   danger: string;
   palette: string[];
 }
@@ -24,6 +25,7 @@ function buildTheme(mode: ThemeMode): AwanTheme {
     title:    src[`UiTitle${suffix}`],
     selected: src[`UiSelected${suffix}`],
     text:     src[`UiText${suffix}`],
+    mute:     src[`UiMute${suffix}`],
     danger:   src[`UiDanger${suffix}`],
     palette: [
       src.Palette0, src.Palette1, src.Palette2, src.Palette3, src.Palette4,
@@ -67,7 +69,7 @@ export function useThemeSync(): void {
     // Typography
     root.style.setProperty('--color-awan-tx', theme.title);
     root.style.setProperty('--color-awan-tx-dim', theme.text);
-    root.style.setProperty('--color-awan-tx-mute', theme.text);
+    root.style.setProperty('--color-awan-tx-mute', theme.mute);
 
     // Status (mapping selon décisions projet)
     root.style.setProperty('--color-awan-status-error', theme.danger);

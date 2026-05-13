@@ -1,12 +1,9 @@
-/**
- * Do not edit directly, this file was auto-generated.
- */
-
-export const UiBgDark = "#0D0D0D";
-export const UiSurfaceDark = "#1C1C1C";
-export const UiTitleDark = "#F8F5F2";
+export const UiBgDark = "#1A1A1A";
+export const UiSurfaceDark = "#4C4A44";
+export const UiTitleDark = "#EDE8E2";
+export const UiTextDark = "#F8F5F2";
+export const UiMuteDark = "rgba(248,245,242,0.30)";
 export const UiSelectedDark = "#D4AF37";
-export const UiTextDark = "#A8A095";
 export const UiDangerDark = "#FF6B6B";
 export const Palette0 = "#E74C3C";
 export const Palette1 = "#3498DB";

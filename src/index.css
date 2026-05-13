@@ -2,18 +2,18 @@
 @import "tailwindcss";
 
 @theme {
-  --color-awan-bg: #0D0D0D;
-  --color-awan-bg-soft: #141414;
-  --color-awan-bg-card: #1C1C1C;
-  --color-awan-bg-highlight: #252525;
+  --color-awan-bg: #1A1A1A;
+  --color-awan-bg-soft: #222220;
+  --color-awan-bg-card: #4C4A44;
+  --color-awan-bg-highlight: #5A5850;
 
   --color-awan-gold: #D4AF37;
   --color-awan-gold-active: #E5C363;
   --color-awan-gold-dim: rgba(212, 175, 55, 0.1);
 
-  --color-awan-tx: #F2EDE8;
-  --color-awan-tx-dim: #A8A095;
-  --color-awan-tx-mute: #6C665E;
+  --color-awan-tx: #EDE8E2;
+  --color-awan-tx-dim: #F8F5F2;
+  --color-awan-tx-mute: rgba(248,245,242,0.30);
 
   --color-awan-status-ok: #4ECDC4;
   --color-awan-status-warn: #FFE66D;
