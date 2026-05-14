@@ -20,6 +20,7 @@ import MensurationScreen from '../screens/MensurationScreen';
 import NutritionScreen   from '../screens/NutritionScreen';
 import MentalScreen      from '../screens/MentalScreen';
 import JournalScreen     from '../screens/JournalScreen';
+import CoachScreen       from '../screens/CoachScreen';
 
 type ErrorState = { error: Error | null };
 
@@ -121,6 +122,7 @@ export default function MainLayout() {
               <Route path="/nutrition">{wrap(NutritionScreen)}</Route>
               <Route path="/mental">{wrap(MentalScreen)}</Route>
               <Route path="/journal">{wrap(JournalScreen)}</Route>
+              <Route path="/coach">{wrap(CoachScreen)}</Route>
               <Route>{wrap(DashboardScreen)}</Route>
             </Switch>
           </AnimatePresence>

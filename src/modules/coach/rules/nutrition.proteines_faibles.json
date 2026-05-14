@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "id": "nutrition.proteines_faibles",
+  "domain": "nutrition",
+  "name": "Apport protéique faible — moyenne 7j < 112 g (80kg × 1.4)",
+  "signals": [
+    { "type": "avg", "source": "nutrition.meal", "field": "proteinG", "window": { "days": 7 } }
+  ],
+  "condition": { "op": "lt", "value": 112 },
+  "signalIndex": 0,
+  "severity": "warn",
+  "adviceKey": "coach.nutrition.proteines_faibles",
+  "enabled": true
+}
