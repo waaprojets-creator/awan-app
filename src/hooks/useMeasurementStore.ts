@@ -32,5 +32,10 @@ export function useMeasurementStore() {
     [history],
   );
 
-  return { history, loading, save, getByDate };
+  const remove = useCallback(async (date: string): Promise<void> => {
+    await MeasurementService.delete(date);
+    setHistory(prev => prev.filter(e => e.date !== date));
+  }, []);
+
+  return { history, loading, save, getByDate, remove };
 }

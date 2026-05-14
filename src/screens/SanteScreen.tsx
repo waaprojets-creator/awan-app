@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ScrollView } from 'react-native';
 import { InstrumentCard } from '../components/ui/InstrumentCard';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
@@ -7,8 +7,6 @@ import { useMealStore } from '../hooks/useMealStore';
 import { useMeasurementStore } from '../hooks/useMeasurementStore';
 import { ds } from '../utils/storage';
 import { sessionsThisWeek } from '../hooks/useAwanScore';
-
-const KCAL_TARGET = 2000;
 
 function toStatus(pct: number) {
   if (pct >= 75) return 'ok' as const;
@@ -20,6 +18,13 @@ export default function SanteScreen({ navigate }: any) {
   const workoutStore  = useWorkoutStore();
   const mealStore     = useMealStore(ds(new Date()));
   const measureStore  = useMeasurementStore();
+
+  const KCAL_TARGET = useMemo(() => {
+    try {
+      const profile = JSON.parse(localStorage.getItem('awan.nutrition.profile') ?? '{}');
+      return typeof profile.targetKcal === 'number' ? profile.targetKcal : 2000;
+    } catch { return 2000; }
+  }, []);
 
   const sessCount     = sessionsThisWeek(workoutStore.sessions as any);
   const latestMeasure = measureStore.history.slice().sort((a, b) => a.date.localeCompare(b.date)).at(-1);

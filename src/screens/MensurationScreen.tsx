@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, ScrollView, TextInput as RNTextInput, Modal, Alert, Switch } from 'react-native';
 
 const TextInput = RNTextInput as React.ComponentType<any>;
@@ -40,6 +40,89 @@ export default function MensurationScreen() {
   };
 
   const [currentEntry, setCurrentEntry] = useState(blankEntry);
+
+  // S2.1 — Filtre fenêtre temporelle pour le graphique
+  const [weightFilter, setWeightFilter] = useState<30 | 90 | 365>(30);
+
+  // S2.3 — Objectifs configurables (persistés en localStorage)
+  const GOALS_KEY = 'awan.mensuration.goals';
+  const [targetWeightKg, setTargetWeightKg] = useState<string>('');
+  const [targetBodyFatPct, setTargetBodyFatPct] = useState<string>('');
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(GOALS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { targetWeightKg?: number; targetBodyFatPct?: number };
+        if (typeof parsed.targetWeightKg === 'number') setTargetWeightKg(String(parsed.targetWeightKg));
+        if (typeof parsed.targetBodyFatPct === 'number') setTargetBodyFatPct(String(parsed.targetBodyFatPct));
+      }
+    } catch {
+      /* ignore malformed storage */
+    }
+  }, []);
+
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      const payload: { targetWeightKg?: number; targetBodyFatPct?: number } = {};
+      const w = parseFloat(targetWeightKg.replace(',', '.'));
+      const bf = parseFloat(targetBodyFatPct.replace(',', '.'));
+      if (!isNaN(w) && w > 0) payload.targetWeightKg = w;
+      if (!isNaN(bf) && bf > 0) payload.targetBodyFatPct = bf;
+      try { localStorage.setItem(GOALS_KEY, JSON.stringify(payload)); } catch { /* quota */ }
+    }, 800);
+    return () => clearTimeout(handle);
+  }, [targetWeightKg, targetBodyFatPct]);
+
+  // S2.1 — Données du graphique filtrées par fenêtre temporelle
+  const weightSeries = useMemo(() => {
+    const cutoff = Date.now() - weightFilter * 24 * 60 * 60 * 1000;
+    return measureStore.history
+      .filter(e => e.weight > 0)
+      .filter(e => new Date(e.date).getTime() >= cutoff)
+      .slice()
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }, [measureStore.history, weightFilter]);
+
+  // S2.2 — Tendance hebdomadaire (delta sur ~7 jours)
+  const weeklyTrend = useMemo(() => {
+    const series = measureStore.history.filter(e => e.weight > 0).slice().sort((a, b) => a.date.localeCompare(b.date));
+    if (series.length < 1) return null;
+    const last = series[series.length - 1];
+    if (!last) return null;
+    const lastTs = new Date(last.date).getTime();
+    const sevenDaysAgo = lastTs - 7 * 24 * 60 * 60 * 1000;
+    // closest entry at-or-before 7d ago
+    let baseline = series[0];
+    for (const e of series) {
+      const ts = new Date(e.date).getTime();
+      if (ts <= sevenDaysAgo) baseline = e;
+    }
+    if (!baseline || baseline.date === last.date) return null;
+    return { delta: last.weight - baseline.weight, current: last.weight };
+  }, [measureStore.history]);
+
+  // S2.3 — Progression vers le poids cible
+  const goalProgress = useMemo(() => {
+    const target = parseFloat(targetWeightKg.replace(',', '.'));
+    const current = currentEntry.weight || weeklyTrend?.current || 0;
+    if (!current || isNaN(target) || target <= 0) return null;
+    const diff = Math.abs(current - target);
+    const ratio = diff / target;
+    let status: 'ok' | 'warn' | 'error' = 'error';
+    if (ratio <= 0.02) status = 'ok';
+    else if (ratio <= 0.10) status = 'warn';
+    const pct = Math.min(100, Math.max(0, (1 - ratio) * 100));
+    return { target, current, status, pct, diff };
+  }, [targetWeightKg, currentEntry.weight, weeklyTrend]);
+
+  // S2.4 — Suppression mesure
+  const handleDeleteMeasurement = (date: string) => {
+    Alert.alert('Suppression', `Supprimer la mesure du ${date} ?`, [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Supprimer', style: 'destructive', onPress: () => { void measureStore.remove(date); } },
+    ]);
+  };
 
   // load today's entry from store once store is ready
   useEffect(() => {
@@ -159,6 +242,162 @@ export default function MensurationScreen() {
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }}>
         <div className="p-6">
+          {/* S2.1 — Évolution du poids (SVG inline) */}
+          <div className="mb-10">
+            <div className="flex flex-row justify-between items-end mb-4 px-1">
+              <Heading level={4} mono subtitle="Courbe temporelle" className="mb-0">ÉVOLUTION DU POIDS</Heading>
+              <div className="bg-black/40 p-1 rounded-xl border border-white/5 flex flex-row gap-1">
+                {([30, 90, 365] as const).map(d => (
+                  <Touch
+                    key={d}
+                    onPress={() => setWeightFilter(d)}
+                    className={`px-3 py-1.5 rounded-lg transition-all ${weightFilter === d ? 'bg-awan-gold' : ''}`}
+                  >
+                    <span className={`text-[9px] font-black uppercase tracking-widest ${weightFilter === d ? 'text-black' : 'text-awan-tx-mute'}`}>
+                      {d === 365 ? '1AN' : `${d}J`}
+                    </span>
+                  </Touch>
+                ))}
+              </div>
+            </div>
+            <Card className="p-5 bg-white/3 border-white/5" variant="flat">
+              {weightSeries.length < 2 ? (
+                <div className="h-[100px] flex items-center justify-center">
+                  <span className="text-[10px] font-black text-awan-tx-mute tracking-widest uppercase">Pas assez de données</span>
+                </div>
+              ) : (() => {
+                const ws = weightSeries;
+                const xs = ws.map(e => new Date(e.date).getTime());
+                const ys = ws.map(e => e.weight);
+                const minX = Math.min(...xs);
+                const maxX = Math.max(...xs);
+                const minY = Math.min(...ys);
+                const maxY = Math.max(...ys);
+                const rangeX = maxX - minX || 1;
+                const rangeY = maxY - minY || 1;
+                const points = ws.map((e, i) => {
+                  const x = ((xs[i]! - minX) / rangeX) * 290 + 5;
+                  const y = 90 - ((ys[i]! - minY) / rangeY) * 80;
+                  return { x, y, v: ys[i]!, date: e.date };
+                });
+                const polyline = points.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
+                return (
+                  <div>
+                    <div className="flex flex-row justify-between items-baseline mb-2">
+                      <span className="text-[9px] font-bold text-awan-tx-mute font-mono">MIN {minY.toFixed(1)} KG</span>
+                      <span className="text-[9px] font-bold text-awan-tx-mute font-mono">MAX {maxY.toFixed(1)} KG</span>
+                    </div>
+                    <svg viewBox="0 0 300 100" width="100%" height="100" preserveAspectRatio="none">
+                      <polyline
+                        fill="none"
+                        stroke="var(--color-awan-gold)"
+                        strokeOpacity={0.7}
+                        strokeWidth={1.5}
+                        points={polyline}
+                      />
+                      {points.map((p, i) => (
+                        <circle key={i} cx={p.x} cy={p.y} r={3} fill="var(--color-awan-gold)" />
+                      ))}
+                    </svg>
+                    {/* S2.2 — Tendance hebdomadaire */}
+                    {weeklyTrend && (
+                      <div className="mt-4 pt-4 border-t border-white/5 flex flex-row items-center justify-between">
+                        <span className="text-[9px] font-black text-awan-tx-mute tracking-widest uppercase">Tendance 7J</span>
+                        {(() => {
+                          const d = weeklyTrend.delta;
+                          if (d === 0) {
+                            return (
+                              <span className="text-sm font-mono font-bold" style={{ color: 'var(--color-awan-tx-mute)' }}>
+                                → Stable
+                              </span>
+                            );
+                          }
+                          const isUp = d > 0;
+                          const arrow = isUp ? '▲' : '▼';
+                          const sign = isUp ? '+' : '−';
+                          const color = isUp ? 'var(--color-awan-status-error)' : 'var(--color-awan-status-ok)';
+                          return (
+                            <span className="text-sm font-mono font-bold" style={{ color }}>
+                              {arrow} {sign}{Math.abs(d).toFixed(1)} kg
+                            </span>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </Card>
+          </div>
+
+          {/* S2.3 — Objectifs configurables */}
+          <div className="mb-10">
+            <Heading level={4} mono subtitle="Cibles opératives" className="mb-6">OBJECTIFS</Heading>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <Card className="p-4 bg-white/5 border-white/5" variant="flat">
+                <span className="text-[9px] font-black text-awan-gold tracking-widest mb-2 block uppercase">Poids cible</span>
+                <div className="flex flex-row items-baseline gap-2">
+                  <TextInput
+                    className="text-2xl font-black text-awan-tx font-mono flex-1 outline-none"
+                    keyboardType="numeric"
+                    value={targetWeightKg}
+                    onChangeText={setTargetWeightKg}
+                    placeholder="00.0"
+                    placeholderTextColor="rgba(255,255,255,0.1)"
+                  />
+                  <span className="text-[10px] font-bold text-awan-tx-mute font-mono">KG</span>
+                </div>
+              </Card>
+              <Card className="p-4 bg-white/5 border-white/5" variant="flat">
+                <span className="text-[9px] font-black text-awan-gold tracking-widest mb-2 block uppercase">% Graisse cible</span>
+                <div className="flex flex-row items-baseline gap-2">
+                  <TextInput
+                    className="text-2xl font-black text-awan-tx font-mono flex-1 outline-none"
+                    keyboardType="numeric"
+                    value={targetBodyFatPct}
+                    onChangeText={setTargetBodyFatPct}
+                    placeholder="00.0"
+                    placeholderTextColor="rgba(255,255,255,0.1)"
+                  />
+                  <span className="text-[10px] font-bold text-awan-tx-mute font-mono">%</span>
+                </div>
+              </Card>
+            </div>
+            {goalProgress && (
+              <Card className="p-4 bg-white/3 border-white/5" variant="flat">
+                <div className="flex flex-row justify-between items-baseline mb-2">
+                  <span className="text-[9px] font-black text-awan-tx-mute tracking-widest uppercase">Progression poids</span>
+                  <span className="text-[10px] font-mono font-bold text-awan-tx">
+                    {goalProgress.current.toFixed(1)} / {goalProgress.target.toFixed(1)} KG
+                  </span>
+                </div>
+                <div className="h-[4px] bg-white/5 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${goalProgress.pct}%`,
+                      backgroundColor:
+                        goalProgress.status === 'ok' ? 'var(--color-awan-status-ok)'
+                        : goalProgress.status === 'warn' ? 'var(--color-awan-status-warn)'
+                        : 'var(--color-awan-status-error)',
+                    }}
+                  />
+                </div>
+                <span
+                  className="text-[8px] font-mono font-bold mt-2 block uppercase tracking-widest"
+                  style={{
+                    color:
+                      goalProgress.status === 'ok' ? 'var(--color-awan-status-ok)'
+                      : goalProgress.status === 'warn' ? 'var(--color-awan-status-warn)'
+                      : 'var(--color-awan-status-error)',
+                  }}
+                >
+                  Δ {goalProgress.diff.toFixed(1)} KG
+                </span>
+              </Card>
+            )}
+          </div>
+
           {/* Quick Log Input */}
           <div className="mb-10">
             <Card className="flex-row items-center gap-4 bg-white/5 border-white/10 p-5" variant="flat">
@@ -281,6 +520,12 @@ export default function MensurationScreen() {
                          <span className="text-[9px] font-bold text-awan-tx-mute uppercase">%</span>
                       </div>
                    </div>
+                   <Touch
+                     onPress={() => handleDeleteMeasurement(h.date)}
+                     className="w-8 h-8 rounded-lg items-center justify-center bg-white/5 border border-white/5"
+                   >
+                     <X size={14} className="text-awan-tx-mute" />
+                   </Touch>
                 </Card>
               ))}
             </div>

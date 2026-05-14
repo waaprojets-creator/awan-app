@@ -24,4 +24,9 @@ export const MeasurementService = {
     // clé = date pour un seul enregistrement par jour
     await storage.set(`${MEASURE_PREFIX}.${entry.date}`, entry);
   },
+
+  async delete(date: string): Promise<void> {
+    const storage = await getStorage();
+    await storage.delete(`${MEASURE_PREFIX}.${date}`);
+  },
 };
