@@ -33,9 +33,9 @@ export function Card({
       {...props}
       className={`
       awan-card p-5 flex flex-col gap-3 relative overflow-hidden group
-      ${highlight ? 'border-awan-gold/30 bg-awan-bg-highlight shadow-[0_0_30px_rgba(212,175,55,0.08)]' : ''}
+      ${highlight ? 'border-awan-gold/30 bg-awan-surface shadow-[0_0_30px_rgba(212,175,55,0.08)]' : ''}
       ${variant === 'outline' ? 'bg-transparent border-white/10' : ''}
-      ${variant === 'flat' ? 'border-none shadow-none bg-awan-bg-soft/50' : ''}
+      ${variant === 'flat' ? 'border-none shadow-none bg-awan-bg/50' : ''}
       ${className}
     `}>
       {/* Visual Accents */}

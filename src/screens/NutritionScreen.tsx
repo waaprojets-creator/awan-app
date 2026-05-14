@@ -1,16 +1,19 @@
-// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useState, useMemo } from 'react';
-import { View, ScrollView, TextInput, Modal } from 'react-native';
+import { View, ScrollView, TextInput as RNTextInput, Modal } from 'react-native';
+
+const TextInput = RNTextInput as React.ComponentType<any>;
 import { Info, X, CheckCircle, AlertTriangle, ShieldCheck, ChevronLeft, Plus, Search, UtensilsCrossed, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PageWrapper } from '../components/Animated';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
-import { ds } from '../utils/storage';
+import { ds, uid } from '../utils/storage';
 import { DailyCanvas } from '../components/DailyCanvas';
 import { NUTRITION_DB } from '../data/nutrition_db';
 import { NutritionService } from '../services/nutritionService';
 import { LocalAIService } from '../services/localAIService';
+import { useMealStore } from '../hooks/useMealStore';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
@@ -18,14 +21,13 @@ import { Touch } from '../components/ui/Touch';
 export default function NutritionScreen() {
   const { navigate } = useAppState() as any;
   const { getEntriesByDate, addEntry, moveEntry } = useDaily();
-  
+
   const [inputText, setInputText] = useState('');
   const [auditText, setAuditText] = useState('');
   const [auditResult, setAuditResult] = useState<any>(null);
   const today = ds(new Date());
 
-  const allEntries = getEntriesByDate(today);
-  const nutritionEntries = allEntries.filter(e => e.module === 'nutrition');
+  const mealStore = useMealStore(today);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFood, setSelectedFood] = useState<any>(null);
@@ -33,7 +35,7 @@ export default function NutritionScreen() {
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
-    return NUTRITION_DB.filter(f => f.name.toLowerCase().includes(q) || f.category.toLowerCase().includes(q));
+    return (NUTRITION_DB as any[]).filter((f: any) => f.name?.toLowerCase().includes(q) || f.category?.toLowerCase().includes(q));
   }, [searchQuery]);
 
   const handleAudit = () => {
@@ -42,42 +44,83 @@ export default function NutritionScreen() {
     setAuditResult(res);
   };
 
+  const handleAddFromDb = (item: any) => {
+    const now = Date.now();
+    const entryId = uid();
+    mealStore.add({
+      v: 1,
+      id: entryId,
+      date: today,
+      name: item.name,
+      kcal: item.calories ?? 0,
+      p: item.macros?.p ?? 0,
+      c: item.macros?.c ?? 0,
+      f: item.macros?.f ?? 0,
+      timestamp: now,
+      source: 'db',
+    });
+    addEntry(today, {
+      id: entryId,
+      timestamp: now,
+      module: 'nutrition',
+      rawText: `${item.name} ${item.calories}kcal`,
+      tokens: [
+        { label: 'Aliment', value: item.name, icon: 'utensils' },
+        { label: 'Énergie', value: `${item.calories}kcal`, icon: 'flame' },
+      ],
+    });
+    setSearchQuery('');
+  };
+
   const handleAddEntry = () => {
     if (!inputText.trim()) return;
-    
-    const entryId = Date.now().toString();
+    const now = Date.now();
+    const entryId = uid();
     const parts = inputText.split(' ');
     const tokens = parts.map((part) => {
-      let icon = '🍗';
+      let icon = 'utensils';
       let label = 'Aliment';
-      if (part.match(/\d+g|\d+kg/i)) { icon = '⚖️'; label = 'Quantité'; }
-      if (part.match(/\d+kcal|\d+cal/i)) { icon = '🔥'; label = 'Énergie'; }
+      if (part.match(/\d+g|\d+kg/i)) { icon = 'scale'; label = 'Quantité'; }
+      if (part.match(/\d+kcal|\d+cal/i)) { icon = 'flame'; label = 'Énergie'; }
       return { label, value: part, icon };
     });
 
-    const newEntry = {
+    // parse macros from free text for IStorage
+    const parsed = NutritionService.calculateDailyTotal([{ rawText: inputText }]);
+    mealStore.add({
+      v: 1,
       id: entryId,
-      timestamp: Date.now(),
+      date: today,
+      name: parts[0] ?? inputText,
+      kcal: parsed.kcal,
+      p: parsed.p,
+      c: parsed.c,
+      f: parsed.f,
+      timestamp: now,
+      source: 'quick',
+    });
+
+    addEntry(today, {
+      id: entryId,
+      timestamp: now,
       module: 'nutrition',
       rawText: inputText,
-      tokens
-    };
-
-    addEntry(today, newEntry);
+      tokens,
+    });
     setInputText('');
   };
 
-  const nutritionTotals = useMemo(() => NutritionService.calculateDailyTotal(nutritionEntries), [nutritionEntries]);
+  const nutritionTotals = mealStore.totals;
 
   return (
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }} style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
         
         <div className="px-6 pt-4 pb-4">
-             <Heading level={1} className="mb-0 flex-1" subtitle="Carburant Organique">NUTRITION</Heading>
+          <ScreenHeader tag="BODY · NUTRITION" title="NUTRITION" />
         </div>
           {/* Biometric Summary Matrix */}
-          <Card className="mb-8 p-6 bg-awan-bg-highlight/20 border-awan-gold/10 shadow-[0_0_40px_rgba(212,175,55,0.05)]">
+          <Card className="mb-8 p-6 bg-awan-surface/20 border-awan-gold/10 shadow-[0_0_40px_rgba(212,175,55,0.05)]">
             <div className="flex justify-between items-center mb-8">
               <div className="flex flex-col">
                 <span className="awan-label text-awan-gold">INDEX CALORIQUE</span>
@@ -132,7 +175,7 @@ export default function NutritionScreen() {
                   exit={{ opacity: 0, scale: 0.98 }}
                   className="gap-3 mt-4"
                 >
-                  {searchResults.map(item => (
+                  {(searchResults as any[]).map((item: any) => (
                     <Card key={item.id} className="flex-row items-center gap-4 py-4 px-5 bg-white/10" variant="flat">
                       <div className="flex-1">
                         <span className="text-sm font-bold text-awan-tx uppercase tracking-tight">{item.name}</span>
@@ -144,7 +187,7 @@ export default function NutritionScreen() {
                         <Touch onPress={() => setSelectedFood(item)} className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center border border-white/10">
                           <Info size={16} className="text-awan-tx-mute" />
                         </Touch>
-                        <Touch onPress={() => { setInputText(`${item.name} `); setSearchQuery(''); }} className="w-9 h-9 rounded-xl bg-awan-gold/20 flex items-center justify-center border border-awan-gold/30">
+                        <Touch onPress={() => handleAddFromDb(item)} className="w-9 h-9 rounded-xl bg-awan-gold/20 flex items-center justify-center border border-awan-gold/30">
                           <Plus size={18} className="text-awan-gold" />
                         </Touch>
                       </div>
@@ -160,7 +203,7 @@ export default function NutritionScreen() {
             <Heading level={4} mono subtitle="Capture Libre">FLUX NUTRITIF</Heading>
             <div className="flex flex-row gap-3 items-center">
               <TextInput
-                className="flex-1 bg-awan-bg-soft border border-white/5 rounded-awan-xl px-5 py-4 text-sm font-bold text-awan-tx"
+                className="flex-1 bg-awan-bg border border-white/5 rounded-awan-xl px-5 py-4 text-sm font-bold text-awan-tx"
                 placeholder="Rédiger un apport organique..."
                 placeholderTextColor="#6C665E"
                 value={inputText}
@@ -181,7 +224,7 @@ export default function NutritionScreen() {
             <Heading level={4} mono subtitle="Vigilance Halal">INSPECTEUR ING RÉDIENTS</Heading>
             <div className="flex flex-col gap-3">
               <TextInput
-                className="bg-awan-bg-soft border border-white/5 rounded-awan-xl px-5 py-4 text-sm font-bold text-awan-tx min-h-[100px]"
+                className="bg-awan-bg border border-white/5 rounded-awan-xl px-5 py-4 text-sm font-bold text-awan-tx min-h-[100px]"
                 placeholder="CONSTITUANTS À ANALYSER..."
                 placeholderTextColor="#6C665E"
                 value={auditText}
@@ -231,7 +274,7 @@ export default function NutritionScreen() {
           {/* Journal Unit */}
           <div className="mb-10">
             <Heading level={4} mono subtitle="Séquence Tactique">HISTORIQUE DU JOUR</Heading>
-            <div className="bg-awan-bg-soft/40 p-4 rounded-awan-xl border border-white/5 min-h-[150px]">
+            <div className="bg-awan-bg/40 p-4 rounded-awan-xl border border-white/5 min-h-[150px]">
               <DailyCanvas 
                 dateId={today} 
                 filterModule="nutrition"
@@ -248,7 +291,7 @@ export default function NutritionScreen() {
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-md bg-awan-bg-highlight rounded-awan-3xl border border-white/10 shadow-2xl overflow-hidden"
+            className="w-full max-w-md bg-awan-surface rounded-awan-3xl border border-white/10 shadow-2xl overflow-hidden"
           >
             {selectedFood && (
               <>

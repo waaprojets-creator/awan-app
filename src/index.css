@@ -2,27 +2,32 @@
 @import "tailwindcss";
 
 @theme {
-  --color-awan-bg: #0D0D0D;
-  --color-awan-bg-soft: #141414;
-  --color-awan-bg-card: #1C1C1C;
-  --color-awan-bg-highlight: #252525;
+  /* ALARM DEFAULTS — remplacés par useThemeSync au chargement.
+     Si magenta/cyan visible → variable non couverte par le système. */
+  --color-awan-bg:      #FF00FF;
+  --color-awan-surface: #FF00FF;
 
-  --color-awan-gold: #D4AF37;
-  --color-awan-gold-active: #E5C363;
-  --color-awan-gold-dim: rgba(212, 175, 55, 0.1);
+  --color-awan-gold: #FF00FF;
 
-  --color-awan-tx: #F2EDE8;
-  --color-awan-tx-dim: #A8A095;
-  --color-awan-tx-mute: #6C665E;
+  --color-awan-tx:      #00FFFF;
+  --color-awan-tx-dim:  #00FFFF;
+  --color-awan-tx-mute: #00FFFF;
 
-  --color-awan-status-ok: #4ECDC4;
-  --color-awan-status-warn: #FFE66D;
-  --color-awan-status-error: #FF6B6B;
-  --color-awan-status-info: #4FACFE;
-  --color-awan-status-spirit: #D4AF37;
+  --color-awan-status-ok:     #FF00FF;
+  --color-awan-status-warn:   #FF00FF;
+  --color-awan-status-error:  #FF00FF;
+  --color-awan-status-info:   #FF00FF;
+  --color-awan-status-spirit: #FF00FF;
 
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Cairo", ui-sans-serif, system-ui, sans-serif;
+
+  /* Hiérarchie typographique Cairo */
+  --fw-mute:    300;
+  --fw-body:    400;
+  --fw-label:   600;
+  --fw-value:   700;
+  --fw-display: 900;
 
   --radius-awan-sm: 8px;
   --radius-awan-md: 12px;
@@ -37,13 +42,13 @@
     color: var(--color-awan-tx);
   }
   body {
-    @apply font-sans antialiased selection:bg-awan-gold-active/30;
+    @apply font-sans antialiased selection:bg-awan-gold/30;
   }
 }
 
 @layer components {
   .awan-card {
-    @apply bg-awan-bg-card border border-white/5 rounded-awan-lg shadow-2xl;
+    @apply bg-awan-surface border border-white/5 rounded-awan-lg shadow-2xl;
     backdrop-filter: blur(10px);
   }
   
@@ -60,7 +65,7 @@
   }
 
   .awan-glow-gold {
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.08);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-awan-gold) 8%, transparent);
   }
 
   .touch-feedback {

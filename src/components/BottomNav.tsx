@@ -1,75 +1,100 @@
-// @ts-nocheck — legacy, rewritten per sprint
 import React from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { motion } from 'motion/react';
-import { useTheme } from '../hooks/useTheme';
-import {
-  IconPlanning, IconTrajet, IconSante, IconReglages, ICON_SIZE,
-} from '../constants/icons';
+import { IconPlanning, IconTrajet, IconSante, IconReglages, ICON_SIZE } from '../constants/icons';
 import { FileText } from 'lucide-react';
 import { L } from '../constants/labels';
 import { Touch } from './ui/Touch';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import { useAppStore } from '../data/store/appStore';
+import { MoonMenu } from './MoonMenu';
 
-const TABS = [
-  { route: 'Planning', label: L.tabs.planning, icon: IconPlanning },
-  { route: 'Journal',  label: 'Journal',       icon: ({ size, color }) => <FileText size={size} color={color} /> },
-  { route: 'Trajet',   label: L.tabs.trajet,   icon: IconTrajet   },
-  { route: 'Sante',    label: L.tabs.sante,    icon: IconSante    },
-  { route: 'Reglages', label: L.tabs.reglages, icon: IconReglages },
+interface BottomNavProps {
+  currentRoute: string;
+  onNavigate: (route: string) => void;
+}
+
+interface TabDef {
+  route: string;
+  label: string;
+  icon: React.ComponentType<{ size: number; color: string }>;
+}
+
+const TABS: TabDef[] = [
+  { route: 'Planning', label: (L as { tabs: { planning: string } }).tabs.planning, icon: IconPlanning as TabDef['icon'] },
+  { route: 'Journal',  label: 'JOURNAL', icon: ({ size, color }) => <FileText size={size} color={color} /> },
+  { route: 'Trajet',   label: (L as { tabs: { trajet: string } }).tabs.trajet,   icon: IconTrajet as TabDef['icon'] },
+  { route: 'Sante',    label: (L as { tabs: { sante: string } }).tabs.sante,    icon: IconSante as TabDef['icon'] },
+  { route: 'Reglages', label: (L as { tabs: { reglages: string } }).tabs.reglages, icon: IconReglages as TabDef['icon'] },
 ];
 
-export default function BottomNav({ currentRoute, onNavigate }: any) {
+const ICON_SZ = (ICON_SIZE as { tab: number }).tab ?? 20;
+
+export default function BottomNav({ currentRoute, onNavigate }: BottomNavProps) {
   const insets = useSafeAreaInsets();
-  const theme = useTheme();
+  const network = useNetworkStatus();
+  const { isOfflineForced, toggleOffline } = useAppStore();
+
+  const isEffectivelyOffline = isOfflineForced || !network.isOnline;
+  const statusColor = isEffectivelyOffline
+    ? 'var(--color-awan-tx-mute)'
+    : 'var(--color-awan-status-ok)';
 
   return (
-    <div 
-      className="flex flex-row bg-awan-bg border-t border-white/5 pt-3"
-      style={{ paddingBottom: Math.max(insets.bottom, 12), backdropFilter: 'blur(20px)' }}
+    <>
+      <MoonMenu onNavigate={onNavigate} currentRoute={currentRoute} />
+    <div
+      className="flex flex-row border-t relative"
+      style={{
+        backgroundColor: 'var(--color-awan-bg)',
+        borderTopColor: 'rgba(255,255,255,0.06)',
+        paddingBottom: Math.max(insets.bottom, 12),
+      }}
     >
-      {TABS.map(tab => {
+      {/* Network status indicator dot */}
+      <motion.div
+        className="absolute top-2 right-4 w-2 h-2 rounded-full"
+        style={{ backgroundColor: statusColor }}
+        animate={{ opacity: isEffectivelyOffline ? 0.5 : 1 }}
+        transition={{ duration: 0.3 }}
+      />
+
+      {TABS.map((tab) => {
         const Icon = tab.icon;
-        const active = currentRoute === tab.route || (tab.route === 'Reglages' && currentRoute === 'Settings');
-        
+        const active =
+          currentRoute === tab.route ||
+          (tab.route === 'Reglages' && currentRoute === 'Settings');
+
         return (
-          <Touch
+          <motion.div
             key={tab.route}
-            className="flex-1 flex flex-col items-center justify-center py-2 relative"
-            onPress={() => onNavigate(tab.route)}
+            className="flex-1 flex flex-col items-center justify-center pt-3 relative cursor-pointer select-none"
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            onClick={() => onNavigate(tab.route)}
           >
-            <motion.div
-              animate={{ 
-                scale: active ? 1.1 : 1,
-                opacity: active ? 1 : 0.4
+            <Icon
+              size={ICON_SZ}
+              color={active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)'}
+            />
+
+            {/* Cairo 600 — label tactique */}
+            <span
+              className="mt-1.5 uppercase tracking-[0.15em]"
+              style={{
+                fontFamily: 'Cairo, sans-serif',
+                fontSize: '8px',
+                fontWeight: active ? 700 : 600,
+                color: active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)',
+                letterSpacing: '0.15em',
               }}
-              className="mb-1"
-            >
-              <Icon size={20} color={active ? theme.title : theme.text} />
-            </motion.div>
-            
-            <span 
-              className={`text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${active ? 'text-awan-gold' : 'text-awan-tx-mute'}`}
             >
               {tab.label}
             </span>
-
-            {active && (
-              <motion.div 
-                layoutId="nav-glow"
-                className="absolute inset-0 bg-awan-gold/5 blur-xl -z-10 rounded-full"
-              />
-            )}
-            
-            {active && (
-              <motion.div 
-                layoutId="nav-line"
-                className="absolute -top-[13px] h-0.5 w-6 bg-awan-gold rounded-full shadow-[0_0_8px_rgba(212,175,55,0.8)]"
-                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              />
-            )}
-          </Touch>
+          </motion.div>
         );
       })}
     </div>
+    </>
   );
 }

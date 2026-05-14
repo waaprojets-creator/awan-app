@@ -1,8 +1,9 @@
-// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useState, useMemo, useEffect } from 'react';
 import {
-  View, Modal, TextInput, ScrollView
+  View, Modal, TextInput as RNTextInput, ScrollView
 } from 'react-native';
+
+const TextInput = RNTextInput as React.ComponentType<any>;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { motion } from 'motion/react';
 import { CATS } from '../constants/theme';
@@ -45,7 +46,7 @@ export default function TasksScreen() {
       timestamp: Date.now(),
       module: 'task',
       rawText: inputText,
-      tokens: [{ label: 'MISSION', value: 'RAPIDE', icon: '⚡' }]
+      tokens: [{ label: 'MISSION', value: 'RAPIDE', icon: 'zap' }]
     });
     setInputText('');
   };
@@ -304,7 +305,7 @@ export default function TasksScreen() {
 
       <Modal visible={showModal} transparent animationType="fade">
         <div className="flex-1 flex justify-end bg-black/90 backdrop-blur-md">
-          <div className="bg-awan-bg-highlight p-10 rounded-t-[48px] border-t border-white/10 w-full max-w-lg mx-auto shadow-2xl">
+          <div className="bg-awan-surface p-10 rounded-t-[48px] border-t border-white/10 w-full max-w-lg mx-auto shadow-2xl">
             <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-10" />
             <Heading level={2} className="text-center mb-12" subtitle="Configuration d'Objectif">DÉPLOIEMENT</Heading>
             

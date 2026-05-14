@@ -1,154 +1,112 @@
-// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import { motion, AnimatePresence } from 'motion/react';
-import { useTheme } from '../hooks/useTheme';
 import { HexagonLogo, ICON_SIZE } from '../constants/icons';
-import { useAppState } from '../context/AppStateContext';
+import { useAppStore } from '@/data/store/appStore';
 import { L } from '../constants/labels';
 
-const MotionView = motion(View);
-const MotionText = motion(Text);
+const MotionDiv = motion.div as React.ComponentType<any>;
 
 export default function LockScreen() {
-  const { unlock } = useAppState() as any;
-  const theme = useTheme();
+  const unlock = useAppStore((s) => s.unlock);
   const [isUnlocking, setIsUnlocking] = useState(false);
 
   const letters = ['A', 'W', 'A', 'N'];
 
-  const containerVariants = {
-    initial: { opacity: 0, scale: 0.9 },
-    animate: { 
-      opacity: 1, 
-      scale: 1,
-      transition: { duration: 1.74, ease: "easeOut" }
-    }
-  };
-
-  const pulseVariants = {
-    animate: {
-      scale: [1, 0.85, 1],
-      transition: {
-        duration: 4.64,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }
-    }
-  };
-
-  const arabicVariants = {
-    initial: { opacity: 1, y: 0, rotateY: 0 },
-    exit: { 
-      opacity: 0, 
-      y: -30, 
-      rotateY: 180,
-      transition: { duration: 0.64, ease: "easeIn" }
-    }
-  };
-
-  const letterContainerVariants = {
-    initial: { opacity: 0 },
-    animate: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.16
-      }
-    }
-  };
-
-  const letterVariants = {
-    initial: { 
-      opacity: 0, 
-      y: 30, 
-      rotateY: 180 
-    },
-    animate: { 
-      opacity: 1, 
-      y: 0, 
-      rotateY: 0,
-      transition: {
-        type: "spring",
-        stiffness: 100,
-        damping: 10
-      }
-    }
-  };
-
   const handleUnlockSequence = () => {
     if (isUnlocking) return;
     setIsUnlocking(true);
-    
-    // Framer motion handles visual transition via AnimatePresence & variants
-    setTimeout(() => {
-      unlock();
-    }, 1800); 
+    setTimeout(() => { unlock(); }, 1800);
   };
 
-  const s = makeStyles(theme);
-
   return (
-    <View style={s.container}>
-      <MotionView 
-        initial="initial"
-        animate="animate"
-        variants={containerVariants}
-        style={{ alignItems: 'center' }}
+    <div
+      style={{ backgroundColor: 'var(--color-awan-bg)' }}
+      className="flex-1 flex items-center justify-center min-h-screen"
+    >
+      <MotionDiv
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1.74, ease: 'easeOut' }}
+        className="flex flex-col items-center"
       >
-        <TouchableOpacity activeOpacity={0.6} onPress={handleUnlockSequence} style={s.logoWrapper}>
-          <MotionView 
-            animate={!isUnlocking ? "animate" : { scale: 1.1 }}
-            variants={pulseVariants}
+        <TouchableOpacity activeOpacity={0.6} onPress={handleUnlockSequence} style={{ padding: 20 }}>
+          <MotionDiv
+            animate={isUnlocking ? { scale: 1.1 } : { scale: [1, 0.85, 1] }}
+            transition={
+              isUnlocking
+                ? undefined
+                : { duration: 4.64, repeat: Infinity, ease: 'easeInOut' }
+            }
           >
-            <HexagonLogo size={ICON_SIZE.hero} variant="rich" />
-          </MotionView>
+            <HexagonLogo size={(ICON_SIZE as { hero: number }).hero} variant="rich" />
+          </MotionDiv>
         </TouchableOpacity>
 
-        <View style={s.textContainer}>
+        <div className="h-16 w-48 flex items-center justify-center mt-2">
           <AnimatePresence mode="wait">
             {!isUnlocking ? (
-              <MotionText 
+              <motion.span
                 key="arabic"
-                variants={arabicVariants}
-                initial="initial"
-                animate="initial"
-                exit="exit"
-                style={s.titleArabic}
+                initial={{ opacity: 1 }}
+                exit={{ opacity: 0, y: -30 }}
+                transition={{ duration: 0.64 }}
+                style={{
+                  fontFamily: 'Cairo, sans-serif',
+                  fontSize: '32px',
+                  fontWeight: 300,
+                  letterSpacing: '0.08em',
+                  color: 'var(--color-awan-tx)',
+                }}
               >
-                {L.header.arabic}
-              </MotionText>
+                {(L as { header: { arabic: string } }).header.arabic}
+              </motion.span>
             ) : (
-              <MotionView
+              <motion.div
                 key="latin"
-                variants={letterContainerVariants}
-                initial="initial"
-                animate="animate"
-                style={s.latinContainer}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-row"
               >
                 {letters.map((char, i) => (
-                  <MotionText 
-                    key={i} 
-                    variants={letterVariants}
-                    style={s.titleLatinChar}
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.16, type: 'spring', stiffness: 100, damping: 10 }}
+                    style={{
+                      fontFamily: 'Cairo, sans-serif',
+                      fontSize: '24px',
+                      fontWeight: 900,
+                      letterSpacing: '0.25em',
+                      color: 'var(--color-awan-tx)',
+                      marginInline: '2px',
+                    }}
                   >
                     {char}
-                  </MotionText>
+                  </motion.span>
                 ))}
-              </MotionView>
+              </motion.div>
             )}
           </AnimatePresence>
-        </View>
-      </MotionView>
-    </View>
+        </div>
+
+        <motion.span
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.3 }}
+          transition={{ delay: 1.2, duration: 0.8 }}
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '8px',
+            fontWeight: 400,
+            letterSpacing: '0.4em',
+            color: 'var(--color-awan-tx-mute)',
+            marginTop: '24px',
+          }}
+        >
+          APPUYER POUR DÉVERROUILLER
+        </motion.span>
+      </MotionDiv>
+    </div>
   );
 }
-
-const makeStyles = (theme: any) => StyleSheet.create({
-  container:      { flex: 1, backgroundColor: theme.bg, alignItems: 'center', justifyContent: 'center' },
-  logoWrapper:    { padding: 20 },
-  textContainer:  { height: 60, width: 200, alignItems: 'center', justifyContent: 'center', marginTop: 10 },
-  titleArabic:    { fontSize: 32, letterSpacing: 2, color: theme.title, position: 'absolute', textAlign: 'center' },
-  latinContainer: { flexDirection: 'row', position: 'absolute' },
-  titleLatinChar: { fontSize: 24, letterSpacing: 4, color: theme.title, marginHorizontal: 2, fontWeight: 'bold' },
-});
-

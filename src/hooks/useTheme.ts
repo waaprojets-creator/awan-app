@@ -11,6 +11,7 @@ export interface AwanTheme {
   title: string;
   selected: string;
   text: string;
+  mute: string;
   danger: string;
   palette: string[];
 }
@@ -24,6 +25,7 @@ function buildTheme(mode: ThemeMode): AwanTheme {
     title:    src[`UiTitle${suffix}`],
     selected: src[`UiSelected${suffix}`],
     text:     src[`UiText${suffix}`],
+    mute:     src[`UiMute${suffix}`],
     danger:   src[`UiDanger${suffix}`],
     palette: [
       src.Palette0, src.Palette1, src.Palette2, src.Palette3, src.Palette4,
@@ -54,26 +56,24 @@ export function useThemeSync(): void {
   useEffect(() => {
     const root = document.documentElement;
 
-    // Backgrounds & surfaces
-    root.style.setProperty('--color-awan-bg', theme.bg);
-    root.style.setProperty('--color-awan-bg-soft', theme.surface);
-    root.style.setProperty('--color-awan-bg-card', theme.surface);
-    root.style.setProperty('--color-awan-bg-highlight', theme.surface);
+    // Backgrounds
+    root.style.setProperty('--color-awan-bg',      theme.bg);
+    root.style.setProperty('--color-awan-surface',  theme.surface);
 
-    // Selected (gold)
+    // Gold
     root.style.setProperty('--color-awan-gold', theme.selected);
-    root.style.setProperty('--color-awan-gold-active', theme.selected);
 
     // Typography
-    root.style.setProperty('--color-awan-tx', theme.title);
-    root.style.setProperty('--color-awan-tx-dim', theme.text);
-    root.style.setProperty('--color-awan-tx-mute', theme.text);
+    root.style.setProperty('--color-awan-tx',           theme.title);
+    root.style.setProperty('--color-awan-tx-dim',       theme.text);
+    root.style.setProperty('--color-awan-tx-mute',      theme.mute);
 
-    // Status (mapping selon décisions projet)
-    root.style.setProperty('--color-awan-status-error', theme.danger);
-    root.style.setProperty('--color-awan-status-warn', theme.danger);
-    root.style.setProperty('--color-awan-status-ok', theme.title);
-    root.style.setProperty('--color-awan-status-info', theme.text);
+    // Status sémantiques fixes (ne dépendent pas du mode)
+    root.style.setProperty('--color-awan-status-ok',     '#4ECDC4');
+    root.style.setProperty('--color-awan-status-warn',   '#FFE66D');
+    root.style.setProperty('--color-awan-status-info',   '#4FACFE');
+    // Status liés au thème
+    root.style.setProperty('--color-awan-status-error',  theme.danger);
     root.style.setProperty('--color-awan-status-spirit', theme.selected);
   }, [theme]);
 }

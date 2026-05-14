@@ -1,9 +1,11 @@
-// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useState, useCallback, useMemo, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  Modal, TextInput, Alert,
+  Modal, TextInput as RNTextInput, Alert,
 } from 'react-native';
+import { usePlanner } from '../hooks/usePlanner';
+
+const TextInput = RNTextInput as React.ComponentType<any>;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { motion, useDragControls } from 'motion/react';
 import { CATS, MONTHS, MONTHS_S, DAYS_S } from '../constants/theme';
@@ -15,10 +17,11 @@ import { useAppState } from '../context/AppStateContext';
 import { requestNotificationPermission, NOTIF_INTERVALS } from '../utils/notifications';
 
 import { useLongPressDrag } from '../hooks/useLongPressDrag';
-import { Clock, Plus, Download, ChevronLeft, ChevronRight, Calendar, Columns, Grid3X3, Zap, Target, Layers } from 'lucide-react';
+import { Clock, Plus, Download, ChevronLeft, ChevronRight, Calendar, Columns, Grid3X3, Zap, Target, Layers, Trash } from 'lucide-react';
 import { PageWrapper, StaggerItem, AnimatePresence } from '../components/Animated';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 
 const DraggableEvent = React.memo(({ ev, hourHeight, handleEventDragEnd, setEditEv, setShowEvModal, categories, containerRef }: any) => {
@@ -66,7 +69,12 @@ const STABS = [
   { id: 0, label: 'HEBDO', Icon: Columns },
   { id: 1, label: 'MENSUEL', Icon: Grid3X3 },
   { id: 2, label: 'ANNUEL', Icon: Calendar },
+  { id: 4, label: 'FLUX IA', Icon: Target },
 ];
+
+function minToTime(min: number): string {
+  return `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+}
 
 export default function PlanningScreen() {
   const insets = useSafeAreaInsets();
@@ -88,6 +96,12 @@ export default function PlanningScreen() {
   const [creatingEv, setCreatingEv] = useState<any>(null);
   const gridPressTimeout = useRef<any>(null);
   const gridStartPos = useRef<any>(null);
+
+  const planner = usePlanner();
+  const [aiTitle, setAiTitle] = useState('');
+  const [aiDuration, setAiDuration] = useState('30');
+  const [aiEnergy, setAiEnergy] = useState<'low' | 'medium' | 'high'>('medium');
+  const [aiPriority, setAiPriority] = useState(3);
 
   const categories = useMemo(() => {
     const base: any = { ...CATS };
@@ -359,12 +373,187 @@ export default function PlanningScreen() {
     );
   }
 
+  function renderAiSchedule() {
+    const today = ds(new Date());
+    const taskMap = new Map(planner.tasks.map(t => [t.id, t]));
+
+    const addAiTask = async () => {
+      const dur = parseInt(aiDuration, 10);
+      if (!aiTitle.trim() || isNaN(dur) || dur < 5) return;
+      await planner.saveTask({
+        v: 1,
+        id: uid(),
+        title: aiTitle.trim(),
+        durationMin: dur,
+        priority: aiPriority,
+        energyLevel: aiEnergy,
+        domain: 'general',
+        tags: [],
+        dependsOn: [],
+        enabled: true,
+      });
+      setAiTitle('');
+      setAiDuration('30');
+    };
+
+    return (
+      <ScrollView contentContainerStyle={{ paddingBottom: 120 }} style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+        <div className="px-6 space-y-8 pt-2">
+          {/* Add task form */}
+          <div>
+            <Heading level={4} mono subtitle="Injection de Tâche">NOUVELLE MISSION</Heading>
+            <div className="space-y-3">
+              <TextInput
+                className="bg-awan-bg border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold text-awan-tx"
+                placeholder="TITRE DE LA TÂCHE..."
+                placeholderTextColor="#6C665E"
+                value={aiTitle}
+                onChangeText={setAiTitle}
+              />
+              <div className="flex flex-row gap-3">
+                <div className="flex-1">
+                  <span className="awan-label mb-2 block">DURÉE (MIN)</span>
+                  <TextInput
+                    className="bg-awan-bg border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold text-awan-tx font-mono"
+                    placeholder="30"
+                    placeholderTextColor="#6C665E"
+                    keyboardType="numeric"
+                    value={aiDuration}
+                    onChangeText={setAiDuration}
+                  />
+                </div>
+                <div className="flex-1">
+                  <span className="awan-label mb-2 block">PRIORITÉ</span>
+                  <div className="flex flex-row gap-1">
+                    {[1, 2, 3, 4, 5].map(p => (
+                      <Touch
+                        key={p}
+                        onPress={() => setAiPriority(p)}
+                        className={`flex-1 h-14 rounded-xl items-center justify-center border ${aiPriority === p ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'}`}
+                      >
+                        <span className={`text-xs font-black font-mono ${aiPriority === p ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{p}</span>
+                      </Touch>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <span className="awan-label mb-2 block">NIVEAU ÉNERGIE</span>
+                <div className="flex flex-row gap-2">
+                  {(['low', 'medium', 'high'] as const).map(e => (
+                    <Touch
+                      key={e}
+                      onPress={() => setAiEnergy(e)}
+                      className={`flex-1 h-12 rounded-xl items-center justify-center border ${aiEnergy === e ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'}`}
+                    >
+                      <span className={`text-[9px] font-black uppercase tracking-widest ${aiEnergy === e ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
+                        {e === 'low' ? 'BAS' : e === 'medium' ? 'MOYEN' : 'ÉLEVÉ'}
+                      </span>
+                    </Touch>
+                  ))}
+                </div>
+              </div>
+              <Touch
+                onPress={addAiTask}
+                className="h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center"
+              >
+                <div className="flex flex-row items-center gap-3">
+                  <Plus size={18} className="text-awan-gold" />
+                  <span className="awan-label text-awan-gold">INJECTER TÂCHE</span>
+                </div>
+              </Touch>
+            </div>
+          </div>
+
+          {/* Task list */}
+          {planner.tasks.length > 0 && (
+            <div>
+              <Heading level={4} mono subtitle={`${planner.tasks.length} missions`}>FILE D'ATTENTE</Heading>
+              <div className="space-y-2">
+                {planner.tasks.map(t => (
+                  <Card key={t.id} className="flex-row items-center gap-4 py-4 px-5 bg-white/5 border-white/5" variant="flat">
+                    <div className="flex-1">
+                      <span className="text-sm font-bold text-awan-tx uppercase tracking-tight">{t.title}</span>
+                      <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-widest mt-0.5 block">
+                        {t.durationMin} MIN • P{t.priority} • {t.energyLevel.toUpperCase()}
+                      </span>
+                    </div>
+                    <Touch onPress={() => planner.deleteTask(t.id)} className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center border border-white/10">
+                      <Trash size={14} className="text-awan-tx-mute" />
+                    </Touch>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Optimize button */}
+          <Touch
+            onPress={() => planner.optimize(today)}
+            className={`h-16 rounded-2xl flex items-center justify-center border ${planner.optimizing ? 'bg-white/5 border-white/10' : 'bg-awan-gold/10 border-awan-gold/30'}`}
+          >
+            <div className="flex flex-row items-center gap-3">
+              <Zap size={20} className={planner.optimizing ? 'text-awan-tx-mute' : 'text-awan-gold'} />
+              <span className={`awan-label ${planner.optimizing ? 'text-awan-tx-mute' : 'text-awan-gold'}`}>
+                {planner.optimizing ? 'CALCUL EN COURS...' : 'OPTIMISER AUJOURD\'HUI'}
+              </span>
+            </div>
+          </Touch>
+
+          {/* Schedule result */}
+          {planner.schedule && (
+            <div>
+              <Heading level={4} mono subtitle={`${planner.schedule.slots.length} créneaux`}>PLANNING OPTIMISÉ</Heading>
+              {planner.schedule.slots.length === 0 ? (
+                <Card className="py-10 items-center bg-white/5 border-white/5" variant="flat">
+                  <span className="awan-label">AUCUN CRÉNEAU GÉNÉRÉ</span>
+                </Card>
+              ) : (
+                <div className="space-y-2">
+                  {planner.schedule.slots.map((slot, i) => {
+                    const task = taskMap.get(slot.taskId);
+                    return (
+                      <Card key={i} className="flex-row items-center gap-4 py-4 px-5 bg-awan-surface/20 border-awan-gold/10" variant="flat">
+                        <div className="w-16 items-center">
+                          <span className="text-[10px] font-black text-awan-gold font-mono">{minToTime(slot.startMin)}</span>
+                          <span className="text-[8px] font-bold text-awan-tx-mute font-mono">{minToTime(slot.endMin)}</span>
+                        </div>
+                        <div className="w-px h-8 bg-awan-gold/20" />
+                        <div className="flex-1">
+                          <span className="text-sm font-bold text-awan-tx uppercase tracking-tight">{task?.title ?? slot.taskId}</span>
+                          <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-widest">
+                            {slot.endMin - slot.startMin} MIN
+                          </span>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                  {planner.schedule.unscheduled.length > 0 && (
+                    <Card className="py-4 px-5 bg-awan-status-error/5 border-awan-status-error/20" variant="flat">
+                      <span className="text-[9px] font-black text-awan-status-error uppercase tracking-widest">
+                        {planner.schedule.unscheduled.length} TÂCHES NON PLANIFIÉES
+                      </span>
+                    </Card>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </ScrollView>
+    );
+  }
+
   return (
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
-      <div className="px-6 pt-4 pb-4">
-        <div className="flex flex-row justify-between items-center mb-4">
-           <Heading level={1} className="mb-0" subtitle="Chronologie Tactique">PLANNING</Heading>
-           <Touch onPress={() => setShowImportModal(true)} className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center"><Download size={20} className="text-awan-tx-mute" /></Touch>
+      <div className="px-6 pt-4 pb-1">
+        <div className="flex flex-row justify-between items-baseline">
+          <div className="flex-1">
+            <ScreenHeader tag="TIME · PLANNING" title="PLANNING" className="mb-3" />
+          </div>
+          <Touch onPress={() => setShowImportModal(true)} className="mb-6 w-8 h-8 flex items-center justify-center" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+            <Download size={16} color="var(--color-awan-tx-mute)" />
+          </Touch>
         </div>
         <div className="flex flex-row gap-2 bg-black/40 p-1.5 rounded-[24px] border border-white/10">
           {STABS.map(({ id, label, Icon }) => (
@@ -381,6 +570,7 @@ export default function PlanningScreen() {
           {subTab === 1 && renderMonthly()}
           {subTab === 2 && renderAnnual()}
           {subTab === 3 && renderDaily()}
+          {subTab === 4 && renderAiSchedule()}
         </motion.div>
       </AnimatePresence>
       <div className="px-6 pb-24 flex flex-row gap-4 mt-auto">
@@ -395,7 +585,7 @@ export default function PlanningScreen() {
       </div>
       <EventModal visible={showEvModal} initial={editEv} defaultDate={ds(selDate)} categories={categories} onClose={() => setShowEvModal(false)} onSave={async (ev: any) => { const evs = db.events || []; const newEvs = editEv ? evs.map((e: any) => e.id === editEv.id ? { ...e, ...ev } : e) : [...evs, { id: uid(), ...ev }]; await updateDb({ ...db, events: newEvs }); setShowEvModal(false); }} />
       <ImportModal visible={showImportModal} onClose={() => setShowImportModal(false)} onImport={async (json: string) => { try { const raw = JSON.parse(json); const newRoutines = (Array.isArray(raw) ? raw : [raw]).map(r => ({ id: uid(), name: r.name || 'Importé', time: r.time || '08:00', frequency: 'daily', color: theme.title })); await updateDb({ ...db, routines: [...(db.routines || []), ...newRoutines] }); setShowImportModal(false); } catch (e) { Alert.alert('Erreur', 'JSON invalide'); } }} />
-      {dragConfirm && <Modal transparent visible><div className="flex-1 bg-black/90 justify-center items-center p-8 backdrop-blur-md"><Card className="w-full p-8 bg-awan-bg-highlight border-awan-gold" variant="flat"><Heading level={4} mono subtitle="Mise à jour routine" className="mb-6">{L.planning.editRoutine}</Heading><span className="text-sm text-awan-tx-mute mb-8 block leading-relaxed">{L.planning.editPrompt}</span><div className="flex flex-col gap-4"><Touch className="bg-awan-gold h-16 rounded-2xl items-center justify-center" onPress={() => confirmRoutineUpdate(true)}><span className="font-black text-black text-xs uppercase tracking-widest font-mono">{L.planning.allOccurrences}</span></Touch><Touch className="bg-white/5 border border-white/10 h-16 rounded-2xl items-center justify-center" onPress={() => confirmRoutineUpdate(false)}><span className="font-black text-awan-tx text-xs uppercase tracking-widest font-mono">{L.planning.onlyThis}</span></Touch><Touch className="h-12 items-center justify-center" onPress={() => setDragConfirm(null)}><span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-[0.2em] font-mono">{L.common.cancel}</span></Touch></div></Card></div></Modal>}
+      {dragConfirm && <Modal transparent visible><div className="flex-1 bg-black/90 justify-center items-center p-8 backdrop-blur-md"><Card className="w-full p-8 bg-awan-surface border-awan-gold" variant="flat"><Heading level={4} mono subtitle="Mise à jour routine" className="mb-6">{L.planning.editRoutine}</Heading><span className="text-sm text-awan-tx-mute mb-8 block leading-relaxed">{L.planning.editPrompt}</span><div className="flex flex-col gap-4"><Touch className="bg-awan-gold h-16 rounded-2xl items-center justify-center" onPress={() => confirmRoutineUpdate(true)}><span className="font-black text-black text-xs uppercase tracking-widest font-mono">{L.planning.allOccurrences}</span></Touch><Touch className="bg-white/5 border border-white/10 h-16 rounded-2xl items-center justify-center" onPress={() => confirmRoutineUpdate(false)}><span className="font-black text-awan-tx text-xs uppercase tracking-widest font-mono">{L.planning.onlyThis}</span></Touch><Touch className="h-12 items-center justify-center" onPress={() => setDragConfirm(null)}><span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-[0.2em] font-mono">{L.common.cancel}</span></Touch></div></Card></div></Modal>}
     </PageWrapper>
   );
 }
@@ -434,7 +624,7 @@ function EventModal({ visible, initial, defaultDate, categories, onClose, onSave
   return (
     <Modal visible={visible} transparent animationType="slide">
       <div className="flex-1 bg-black/70 justify-end backdrop-blur-sm">
-        <div className="bg-awan-bg-highlight p-8 pt-4 rounded-t-[40px] border-t border-white/10 w-full max-w-lg mx-auto shadow-2xl">
+        <div className="bg-awan-surface p-8 pt-4 rounded-t-[40px] border-t border-white/10 w-full max-w-lg mx-auto shadow-2xl">
           <div className="w-12 h-1.5 bg-white/10 rounded-full self-center mb-10" />
           <Heading level={2} subtitle="Paramètres du Segment" className="text-center mb-12">PLANIFICATION</Heading>
           <div className="space-y-8">
@@ -465,7 +655,7 @@ function ImportModal({ visible, onClose, onImport }: any) {
   return (
     <Modal visible={visible} transparent animationType="fade">
       <div className="flex-1 bg-black/80 justify-end backdrop-blur-md">
-        <div className="bg-awan-bg-highlight p-8 pt-4 rounded-t-[40px] border-t border-white/10 w-full max-w-lg mx-auto shadow-2xl">
+        <div className="bg-awan-surface p-8 pt-4 rounded-t-[40px] border-t border-white/10 w-full max-w-lg mx-auto shadow-2xl">
           <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-10" />
           <Heading level={2} subtitle="Base de Données Routines" className="text-center mb-12">IMPORTATION</Heading>
           <TextInput className="bg-black/40 border border-white/5 rounded-2xl p-6 text-awan-tx font-mono text-xs mb-10 min-h-[200px]" multiline value={json} onChangeText={setJson} placeholder="[{'name': 'Routine'}]" placeholderTextColor="#252525" />

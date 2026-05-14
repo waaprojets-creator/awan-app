@@ -1,151 +1,161 @@
-// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React from 'react';
-import { View, ScrollView } from 'react-native';
-import { useTheme } from '../hooks/useTheme';
-import { useAppState } from '../context/AppStateContext';
-import { PageWrapper, StaggerItem } from '../components/Animated';
-import { Card } from '../components/ui/Card';
-import { Heading } from '../components/ui/Heading';
-import { Touch } from '../components/ui/Touch';
-import { Dumbbell, Utensils, Ruler, Activity, Shield, TrendingUp, Zap, Heart, Plus, Brain } from 'lucide-react';
+import { ScrollView } from 'react-native';
+import { InstrumentCard } from '../components/ui/InstrumentCard';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
+import { useWorkoutStore } from '../hooks/useWorkoutStore';
+import { useMealStore } from '../hooks/useMealStore';
+import { useMeasurementStore } from '../hooks/useMeasurementStore';
+import { ds } from '../utils/storage';
+import { sessionsThisWeek } from '../hooks/useAwanScore';
 
-export default function SanteScreen({ navigate }: any) {
-  const theme = useTheme();
+const KCAL_TARGET = 2000;
 
-  const SECTIONS = [
-    { 
-      id: 'sport', 
-      title: 'CONTRÔLE OPÉRATIF', 
-      sub: 'SPORT & PERFORMANCE', 
-      desc: 'Planification et exécution des protocoles d\'entraînement physique.',
-      Icon: Dumbbell,
-      route: 'Sport',
-      status: 'ACTIVE',
-      color: theme.title
-    },
-    { 
-      id: 'nutrition', 
-      title: 'LOGISTIQUE BIOLOGIQUE', 
-      sub: 'NUTRITION & CARBURANT', 
-      desc: 'Gestion des apports caloriques et optimisation métabolique.',
-      Icon: Utensils,
-      route: 'Nutrition',
-      status: 'OPTIMAL',
-      color: '#FF6B6B'
-    },
-    { 
-      id: 'mensuration', 
-      title: 'SCAN BIOMÉTRIQUE', 
-      sub: 'COMPOSITION CORPORELLE', 
-      desc: 'Suivi des indicateurs de structure et de masse corporelle.',
-      Icon: Ruler,
-      route: 'Mensuration',
-      status: 'SYNC',
-      color: '#4ECDC4'
-    },
-    { 
-      id: 'mental', 
-      title: 'CONTRÔLE COGNITIF', 
-      sub: 'MÉTRIQUES MENTALES', 
-      desc: 'Analyse du focus, du stress et de l\'état de conscience optimal.',
-      Icon: Brain,
-      route: 'Mental',
-      status: 'OPTIMAL',
-      color: '#A78BFA'
-    },
-  ];
-
-  return (
-    <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
-      <ScrollView 
-        style={{ flex: 1 }} 
-        contentContainerStyle={{ paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}
-      >
-        <div className="px-6 pt-4 pb-4">
-           <Heading level={1} subtitle="Système de Monitoring Biosphère">CENTRE DE SANTÉ</Heading>
-
-           <div className="mt-8 grid grid-cols-2 gap-4">
-              <Card className="p-5 bg-white/5 border-white/5 relative overflow-hidden" variant="flat">
-                 <div className="absolute -right-4 -top-4 w-16 h-16 bg-awan-gold/10 rounded-full blur-2xl" />
-                 <Heart size={14} className="text-awan-gold mb-3" />
-                 <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">STATUT VITAL</span>
-                 <span className="text-xl font-black text-awan-tx uppercase tracking-tight">STABLE</span>
-              </Card>
-              <Card className="p-5 bg-white/5 border-white/5" variant="flat">
-                 <Activity size={14} className="text-awan-status-error mb-3" />
-                 <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">RÉCUPÉRATION</span>
-                 <span className="text-xl font-black text-awan-tx uppercase tracking-tight">84%</span>
-              </Card>
-           </div>
-        </div>
-
-        <div className="px-6 space-y-6">
-           <div className="flex flex-row justify-between items-center mb-2 px-1">
-              <Heading level={4} mono subtitle="Unités Disponibles" className="mb-0">MODULES TACTIQUES</Heading>
-              <Touch className="w-8 h-8 rounded-full bg-white/5 items-center justify-center border border-white/10">
-                 <Plus size={14} className="text-awan-tx-mute" />
-              </Touch>
-           </div>
-
-           {SECTIONS.map((s, i) => (
-             <SectionCard 
-               key={s.id} 
-               data={s} 
-               index={i} 
-               onPress={() => navigate(s.route)} 
-             />
-           ))}
-        </div>
-
-        <div className="px-6 mt-12 mb-20">
-           <Card className="p-8 bg-awan-gold/5 border-awan-gold/20 flex-row items-center gap-6" variant="flat">
-              <div className="w-16 h-16 rounded-3xl bg-awan-gold items-center justify-center shadow-lg shadow-awan-gold/30">
-                 <Shield size={32} className="text-black" />
-              </div>
-              <div className="flex-1">
-                 <span className="text-[10px] font-black text-awan-gold tracking-widest uppercase mb-1 block">Advanced Security</span>
-                 <span className="text-lg font-black text-awan-tx leading-tight">SYSTÈME DE PROTECTION PHYSIQUE ACTIVÉ</span>
-              </div>
-           </Card>
-        </div>
-      </ScrollView>
-    </PageWrapper>
-  );
+function toStatus(pct: number) {
+  if (pct >= 75) return 'ok' as const;
+  if (pct >= 40) return 'warn' as const;
+  return 'error' as const;
 }
 
-function SectionCard({ data, index, onPress, ...props }: any) {
-  const { Icon, color } = data;
+export default function SanteScreen({ navigate }: any) {
+  const workoutStore  = useWorkoutStore();
+  const mealStore     = useMealStore(ds(new Date()));
+  const measureStore  = useMeasurementStore();
+
+  const sessCount     = sessionsThisWeek(workoutStore.sessions as any);
+  const latestMeasure = measureStore.history.slice().sort((a, b) => a.date.localeCompare(b.date)).at(-1);
+  const kcal          = mealStore.totals.kcal;
+  const kcalPct       = Math.min(100, Math.round((kcal / KCAL_TARGET) * 100));
+  const sportPct      = Math.min(100, sessCount * 25);
+
   return (
-    <StaggerItem index={index}>
-       <Touch onPress={onPress} className="block w-full text-left">
-          <Card className="group bg-awan-bg-highlight/20 border-white/5 hover:border-awan-gold/40 transition-all p-6 relative overflow-hidden" variant="flat">
-             <div className="flex flex-row items-start gap-5">
-                <div 
-                  className="w-14 h-14 rounded-2xl items-center justify-center border transition-all group-hover:scale-110"
-                  style={{ backgroundColor: `${color}10`, borderColor: `${color}30` }}
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}
+      showsVerticalScrollIndicator={false}
+    >
+      <ScreenHeader tag="BODY" title="SANTÉ" />
+
+      {/* ── 2×2 modules ────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <InstrumentCard
+          label="SPORT"
+          value={sessCount}
+          unit="séances/sem"
+          status={toStatus(sportPct)}
+          progress={sportPct}
+          index={1}
+          onPress={() => navigate('Sport')}
+        />
+        <InstrumentCard
+          label="NUTRITION"
+          value={kcal}
+          unit="kcal"
+          status={toStatus(kcalPct)}
+          progress={kcalPct}
+          index={2}
+          onPress={() => navigate('Nutrition')}
+        />
+        <InstrumentCard
+          label="MENSURATION"
+          value={latestMeasure?.weight ?? '—'}
+          unit={latestMeasure ? 'kg' : ''}
+          status={latestMeasure ? 'ok' : 'mute'}
+          index={3}
+          onPress={() => navigate('Mensuration')}
+        />
+        <InstrumentCard
+          label="MENTAL"
+          value="—"
+          status="mute"
+          index={4}
+          onPress={() => navigate('Mental')}
+        />
+      </div>
+
+      {/* ── Macros résumé ──────────────────────────────────────────────────────── */}
+      {kcal > 0 && (
+        <div
+          className="p-4 border mb-4"
+          style={{
+            backgroundColor: 'var(--color-awan-surface)',
+            borderColor: 'rgba(255,255,255,0.06)',
+          }}
+        >
+          <span
+            className="uppercase block mb-3"
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: '7px',
+              fontWeight: 'var(--fw-mute)' as any,
+              color: 'var(--color-awan-tx-mute)',
+              letterSpacing: '0.3em',
+            }}
+          >
+            MACROS [05]
+          </span>
+          <div className="grid grid-cols-3 gap-4">
+            {([['P', mealStore.totals.p], ['G', mealStore.totals.c], ['L', mealStore.totals.f]] as const).map(([k, v]) => (
+              <div key={k} className="flex flex-col">
+                <span
+                  style={{
+                    fontFamily: 'var(--font-sans)',
+                    fontSize: '7px',
+                    fontWeight: 'var(--fw-mute)' as any,
+                    color: 'var(--color-awan-tx-mute)',
+                    letterSpacing: '0.3em',
+                    textTransform: 'uppercase',
+                  }}
                 >
-                   <Icon size={24} color={color} />
-                </div>
-                
-                <div className="flex-1">
-                   <div className="flex flex-row items-center justify-between mb-1">
-                      <span className="text-[10px] font-black tracking-widest uppercase" style={{ color }}>{data.title}</span>
-                      <div className="px-2 py-0.5 rounded bg-white/5 border border-white/10">
-                         <span className="text-[8px] font-black text-awan-tx-mute tracking-tighter uppercase">{data.status}</span>
-                      </div>
-                   </div>
-                   <Heading level={3} className="text-awan-tx mb-2">{data.sub}</Heading>
-                   <span className="text-xs text-awan-tx-mute leading-relaxed">{data.desc}</span>
-                </div>
-             </div>
-             
-             {/* Progress bar simulation */}
-             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/5">
-                <div className="h-full opacity-50" style={{ width: `${60 + index * 10}%`, backgroundColor: color }} />
-             </div>
-          </Card>
-       </Touch>
-    </StaggerItem>
+                  {k}
+                </span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '20px',
+                    fontWeight: 700,
+                    color: 'var(--color-awan-tx)',
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  {v}<span style={{ fontSize: '10px', opacity: 0.5, marginLeft: 2 }}>g</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Statut système ─────────────────────────────────────────────────────── */}
+      <div
+        className="p-4 border"
+        style={{
+          backgroundColor: 'var(--color-awan-surface)',
+          borderColor: 'rgba(255,255,255,0.06)',
+        }}
+      >
+        <span
+          className="uppercase block mb-1"
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: '7px',
+            fontWeight: 'var(--fw-mute)' as any,
+            color: 'var(--color-awan-tx-mute)',
+            letterSpacing: '0.3em',
+          }}
+        >
+          MONITORING BIOSPHÈRE [06]
+        </span>
+        <span
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: '11px',
+            fontWeight: 'var(--fw-body)' as any,
+            color: 'var(--color-awan-tx-dim)',
+          }}
+        >
+          {sessCount} séance{sessCount !== 1 ? 's' : ''} cette semaine · {kcalPct}% objectif calorique
+        </span>
+      </div>
+    </ScrollView>
   );
 }

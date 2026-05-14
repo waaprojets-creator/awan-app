@@ -1,6 +1,9 @@
-// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { View, ScrollView, TextInput, Modal, Alert, Image, FlatList } from 'react-native';
+import { View, ScrollView, TextInput as RNTextInput, Modal, Alert, Image as RNImage, FlatList as RNFlatList } from 'react-native';
+
+const TextInput = RNTextInput as React.ComponentType<any>;
+const Image = RNImage as React.ComponentType<any>;
+const FlatList = RNFlatList as React.ComponentType<any>;
 import { motion, AnimatePresence } from 'motion/react';
 import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
@@ -9,15 +12,18 @@ import { uid, ds } from '../utils/storage';
 import { Play, Plus, Trash2, Clock, CheckCircle2, ChevronLeft, Dumbbell, History, Info, Activity, Flame, Target, X, ChevronRight, Search, Activity as ActivityIcon } from 'lucide-react';
 import { PageWrapper, StaggerList, StaggerItem } from '../components/Animated';
 import { DailyCanvas } from '../components/DailyCanvas';
+import { InstrumentCard } from '../components/ui/InstrumentCard';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
-
-// Sub-components will be updated in next steps...
+import { useWorkoutStore } from '../hooks/useWorkoutStore';
+import { sessionsThisWeek } from '../hooks/useAwanScore';
 
 export default function SportScreen() {
-  const { db, updateDb, navigate } = useAppState() as any;
+  const { navigate } = useAppState() as any;
   const { getEntriesByDate, addEntry, moveEntry } = useDaily();
+  const workoutStore = useWorkoutStore();
 
   const [view, setView] = useState('list'); // 'list', 'create', 'active', 'history'
   const [activeWorkout, setActiveWorkout] = useState<any>(null);
@@ -28,18 +34,18 @@ export default function SportScreen() {
   const today = ds(new Date());
 
   const allEntries = getEntriesByDate(today);
-  const sportEntries = allEntries.filter(e => e.module === 'sport');
+  const sportEntries = allEntries.filter((e: any) => e.module === 'sport');
 
   const handleAddEntry = () => {
     if (!inputText.trim()) return;
     const entryId = Date.now().toString();
     const parts = inputText.split(' ');
     const tokens = parts.map((part) => {
-      let icon = '🏋️';
+      let icon = 'dumbbell';
       let label = 'Exercice';
-      if (part.includes('kg')) { icon = '⚖️'; label = 'Charge'; }
-      if (part.includes('x') || !isNaN(Number(part))) { icon = '🔄'; label = 'Reps/Séries'; }
-      if (part.includes('min') || part.includes('h')) { icon = '⏱️'; label = 'Durée'; }
+      if (part.includes('kg')) { icon = 'scale'; label = 'Charge'; }
+      if (part.includes('x') || !isNaN(Number(part))) { icon = 'repeat'; label = 'Reps/Séries'; }
+      if (part.includes('min') || part.includes('h')) { icon = 'clock'; label = 'Durée'; }
       return { label, value: part, icon };
     });
 
@@ -70,8 +76,7 @@ export default function SportScreen() {
   };
 
   const saveRoutine = (rout: any) => {
-    const freshDb = { ...db, routinesMuscu: [...(db.routinesMuscu || []), rout] };
-    updateDb(freshDb);
+    workoutStore.saveRoutine({ v: 1, id: rout.id, name: rout.name, exercises: rout.exercises, createdAt: Date.now() });
     setView('list');
   };
 
@@ -93,8 +98,16 @@ export default function SportScreen() {
       duration: timer,
       date: ds(new Date())
     };
-    const freshDb = { ...db, workoutLogs: [...(db.workoutLogs || []), finished] };
-    updateDb(freshDb);
+    workoutStore.saveSession({
+      v: 1,
+      id: finished.id,
+      name: finished.name,
+      date: finished.date,
+      duration: finished.duration,
+      startTime: finished.startTime,
+      endTime: finished.endTime,
+      exercises: finished.exercises,
+    });
     setActiveWorkout(null);
 
     addEntry(today, {
@@ -103,10 +116,10 @@ export default function SportScreen() {
       module: 'sport',
       rawText: `Séance: ${finished.name} (${Math.floor(timer/60)} min)`,
       tokens: [
-        { label: 'Type', value: 'Séance Guidée', icon: '📋' },
-        { label: 'Nom', value: finished.name, icon: '🏋️' },
-        { label: 'Durée', value: `${Math.floor(timer/60)} min`, icon: '⏱️' },
-        { label: 'Exercices', value: String(finished.exercises.length), icon: '🔢' }
+        { label: 'Type', value: 'Séance Guidée', icon: 'clipboard' },
+        { label: 'Nom', value: finished.name, icon: 'dumbbell' },
+        { label: 'Durée', value: `${Math.floor(timer/60)} min`, icon: 'clock' },
+        { label: 'Exercices', value: String(finished.exercises.length), icon: 'hash' }
       ]
     });
 
@@ -119,10 +132,7 @@ export default function SportScreen() {
       'Confirmer la suppression de ce profil d\'entraînement ?',
       [
         { text: 'ANNULER', style: 'cancel' },
-        { text: 'SUPPRIMER', style: 'destructive', onPress: () => {
-          const freshDb = { ...db, routinesMuscu: (db.routinesMuscu || []).filter((r: any) => r.id !== rout.id) };
-          updateDb(freshDb);
-        }}
+        { text: 'SUPPRIMER', style: 'destructive', onPress: () => workoutStore.deleteRoutine(rout.id) }
       ]
     );
   };
@@ -131,32 +141,40 @@ export default function SportScreen() {
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
       {view === 'list' && (
         <ScrollView contentContainerStyle={{ paddingBottom: 120 }} style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-          <div className="px-6 pt-12 pb-6">
-          <Heading level={1} className="mb-8" subtitle="Condition Physique">VECTEUR SPORTIF</Heading>
+          <div className="px-6 pt-4 pb-6">
+            <ScreenHeader tag="BODY · SPORT" title="VECTEUR SPORTIF" />
 
-          {/* Quick Metrics */}
-            <div className="flex flex-row gap-4 mb-10">
-              <Card className="flex-1 p-5 bg-white/5 border-white/5" variant="flat">
-                <div className="flex flex-row items-center gap-2 mb-2">
-                  <ActivityIcon size={12} className="text-awan-gold" />
-                  <span className="awan-label">NIVEAU FLUX</span>
-                </div>
-                <span className="text-xl font-bold font-mono text-awan-tx">85%</span>
-              </Card>
-              <Card className="flex-1 p-5 bg-white/5 border-white/5" variant="flat">
-                <div className="flex flex-row items-center gap-2 mb-2">
-                  <Flame size={12} className="text-awan-status-error" />
-                  <span className="awan-label">OUTPUT</span>
-                </div>
-                <span className="text-xl font-bold font-mono text-awan-tx">1.2K</span>
-              </Card>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {(() => {
+                const cnt = sessionsThisWeek(workoutStore.sessions as any);
+                const pct = Math.min(100, cnt * 25);
+                return (
+                  <>
+                    <InstrumentCard
+                      label="FLUX"
+                      value={`${pct}`}
+                      unit="%"
+                      status={pct >= 75 ? 'ok' : pct >= 40 ? 'warn' : 'error'}
+                      progress={pct}
+                      index={1}
+                    />
+                    <InstrumentCard
+                      label="SÉANCES"
+                      value={cnt}
+                      unit="/sem"
+                      status={cnt > 0 ? 'ok' : 'mute'}
+                      index={2}
+                    />
+                  </>
+                );
+              })()}
             </div>
 
             <div className="mb-10">
               <Heading level={4} mono subtitle="Capture Musculaire">FLUX LIBRE</Heading>
               <div className="flex flex-row gap-3 items-center">
                 <TextInput
-                  className="flex-1 bg-awan-bg-soft border border-white/5 rounded-awan-xl px-5 py-4 text-sm font-bold text-awan-tx"
+                  className="flex-1 bg-awan-bg border border-white/5 rounded-awan-xl px-5 py-4 text-sm font-bold text-awan-tx"
                   placeholder="Rédiger une performance..."
                   placeholderTextColor="#6C665E"
                   value={inputText}
@@ -174,7 +192,7 @@ export default function SportScreen() {
 
             <div className="mb-10">
                <Heading level={4} mono subtitle="Séquence Motrice">HISTORIQUE DU JOUR</Heading>
-               <div className="bg-awan-bg-soft/40 p-4 rounded-awan-xl border border-white/5 min-h-[150px]">
+               <div className="bg-awan-bg/40 p-4 rounded-awan-xl border border-white/5 min-h-[150px]">
                 <DailyCanvas 
                   dateId={today} 
                   filterModule="sport"
@@ -185,7 +203,7 @@ export default function SportScreen() {
 
             <div className="mb-20">
               <Heading level={4} mono subtitle="Protocoles Guidés">ROUTINES ENREGISTRÉES</Heading>
-              {(!db?.routinesMuscu || db.routinesMuscu.length === 0) ? (
+              {workoutStore.routines.length === 0 ? (
                 <Card className="py-16 items-center bg-white/5 border-white/10 border-dashed">
                   <Dumbbell size={48} className="text-white/10 mb-6" />
                   <span className="awan-label mb-8">AUCUN PROTOCOLE ACTIF DÉTECTÉ</span>
@@ -195,9 +213,9 @@ export default function SportScreen() {
                 </Card>
               ) : (
                 <StaggerList>
-                  {db.routinesMuscu.map((r: any) => (
+                  {workoutStore.routines.map((r) => (
                     <StaggerItem key={r.id} className="mb-4">
-                      <Card className="p-6 bg-awan-bg-highlight/20" onPress={() => startWorkout(r)}>
+                      <Card className="p-6 bg-awan-surface/20" onPress={() => startWorkout(r)}>
                         <div className="flex flex-row justify-between items-center mb-1">
                           <span className="text-lg font-bold text-awan-tx uppercase tracking-tight">{r.name}</span>
                           <Touch onPress={(e) => { e.stopPropagation(); deleteRoutine(r); }}>
@@ -225,7 +243,7 @@ export default function SportScreen() {
 
       {view === 'create' && <CreateRoutine onSave={saveRoutine} onCancel={() => setView('list')} />}
       {view === 'active' && <ActiveWorkout workout={activeWorkout} timer={timer} formatTime={formatTime} onUpdate={setActiveWorkout} onFinish={finishWorkout} onAbort={() => { setActiveWorkout(null); setView('list'); }} />}
-      {view === 'history' && <WorkoutHistory logs={db?.workoutLogs || []} onBack={() => setView('list')} />}
+      {view === 'history' && <WorkoutHistory logs={workoutStore.sessions} onBack={() => setView('list')} />}
       <ExerciseDetail exercise={(null as any)} visible={false} onClose={() => {}} />
     </PageWrapper>
   );
@@ -240,10 +258,10 @@ function ExerciseDetail({ exercise, visible, onClose }: any) {
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md bg-awan-bg-highlight rounded-awan-3xl border border-white/10 shadow-2xl overflow-hidden"
+          className="w-full max-w-md bg-awan-surface rounded-awan-3xl border border-white/10 shadow-2xl overflow-hidden"
         >
           <div className="p-8 border-b border-white/10 bg-white/5 relative">
-            <span className="awan-label mb-2 text-awan-gold">{MUSCLES[exercise.m]?.l.toUpperCase()}</span>
+            <span className="awan-label mb-2 text-awan-gold">{MUSCLES[exercise.m]?.l?.toUpperCase()}</span>
             <Heading level={2} className="mb-0">{exercise.n}</Heading>
             <Touch onPress={onClose} className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
               <X size={20} className="text-awan-tx-mute" />
@@ -417,10 +435,10 @@ function CreateRoutine({ onSave, onCancel }: any) {
 
           <FlatList
             data={filteredExercises}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item: any) => item.id.toString()}
             className="flex-1"
             contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
-            renderItem={({ item: ex }) => (
+            renderItem={({ item: ex }: { item: any }) => (
               <Card className="flex-row items-center gap-4 py-4 px-5 bg-white/5 mb-3" variant="flat" onPress={() => addEx(ex)}>
                 <div className="w-12 h-12 rounded-xl bg-black/40 items-center justify-center border border-white/10">
                   {ex.img ? <Image source={{ uri: ex.img }} className="w-full h-full" resizeMode="cover" /> : <span className="text-xl">{ex.icon}</span>}
@@ -511,7 +529,7 @@ function ActiveWorkout({ workout, timer, formatTime, onUpdate, onFinish, onAbort
                   className="flex-1 bg-black/40 border border-white/5 rounded-xl h-12 text-center text-awan-gold font-mono font-bold text-lg"
                   keyboardType="numeric" 
                   value={set.weight} 
-                  onChangeText={v => updateSet(exIdx, setIdx, 'weight', v)} 
+                  onChangeText={(v: string) => updateSet(exIdx, setIdx, 'weight', v)}
                   placeholder="0"
                   placeholderTextColor="#252525"
                 />
@@ -519,7 +537,7 @@ function ActiveWorkout({ workout, timer, formatTime, onUpdate, onFinish, onAbort
                   className="flex-1 bg-black/40 border border-white/5 rounded-xl h-12 text-center text-awan-tx font-mono font-bold text-lg"
                   keyboardType="numeric" 
                   value={set.reps} 
-                  onChangeText={v => updateSet(exIdx, setIdx, 'reps', v)} 
+                  onChangeText={(v: string) => updateSet(exIdx, setIdx, 'reps', v)}
                   placeholder="0"
                   placeholderTextColor="#252525"
                 />

@@ -1,12 +1,12 @@
 import type { IStorage } from './IStorage';
-import { MemoryStorage } from './MemoryStorage';
 
 let _instance: IStorage | null = null;
 
 /**
  * Returns the active IStorage singleton.
- * - On native Capacitor (iOS/Android): SqliteStorage (lazy-imported to keep Capacitor out of web bundle)
- * - On web / test: MemoryStorage
+ * - Native Capacitor (iOS/Android): SqliteStorage
+ * - Browser: IndexedDBStorage (persistent across reloads)
+ * - Test/SSR: MemoryStorage (injected via _setStorageForTest or fallback)
  */
 export async function getStorage(): Promise<IStorage> {
   if (_instance) return _instance;
@@ -21,7 +21,11 @@ export async function getStorage(): Promise<IStorage> {
     const sqlite = new SqliteStorage();
     await sqlite.open();
     _instance = sqlite;
+  } else if (typeof indexedDB !== 'undefined') {
+    const { IndexedDBStorage } = await import('./IndexedDBStorage');
+    _instance = new IndexedDBStorage();
   } else {
+    const { MemoryStorage } = await import('./MemoryStorage');
     _instance = new MemoryStorage();
   }
 

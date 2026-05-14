@@ -1,22 +1,22 @@
-// @ts-nocheck — legacy screen, sera réécrit Sprint 2+
 import React, { useMemo, useState, useEffect } from 'react';
 import { View, Dimensions, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Circle, Rect, G, Line } from 'react-native-svg';
-import { 
-  startOfDay, endOfDay, subDays, subMonths, subYears, 
-  parseISO, format, startOfWeek, eachDayOfInterval 
+import {
+  startOfDay, endOfDay, subDays, subMonths,
+  parseISO, format, startOfWeek, eachDayOfInterval
 } from 'date-fns';
 import { CATS } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
 import { ds } from '../utils/storage';
 import { eventsForDate } from '../utils/recurrence';
-import { useAppState } from '../context/AppStateContext';
-import { useDaily } from '../context/DailyContext';
-import { NutritionService } from '../services/nutritionService';
 import { LocalAIService } from '../services/localAIService';
-import { PageWrapper, StaggerItem, AnimatePresence } from '../components/Animated';
-import { Activity, Dumbbell, Ruler, Flame, TrendingUp, Search, Info, Shield, Zap } from 'lucide-react';
+import { MealService } from '../services/mealService';
+import { useWorkoutStore } from '../hooks/useWorkoutStore';
+import { useMeasurementStore } from '../hooks/useMeasurementStore';
+import { usePrayerStore } from '../hooks/usePrayerStore';
+import { PageWrapper, AnimatePresence } from '../components/Animated';
+import { Activity, Dumbbell, Ruler, Flame } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
@@ -48,86 +48,108 @@ const SvgG = G as any;
 
 export default function AnalyseScreen() {
   const insets = useSafeAreaInsets();
-  const { db } = useAppState();
-  const { getEntriesByDate } = useDaily();
   const theme = useTheme();
+  const today = ds(new Date());
   const [tab, setTab] = useState('activity');
   const [range, setRange] = useState('week');
   const [aiSummary, setAiSummary] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+  const [mealsByDay, setMealsByDay] = useState<Array<{ label: string; kcal: number; p: number }>>([]);
 
-  // ... (useMemos remain correct logic-wise, just need UI refinement)
-  const categories = useMemo(() => {
-    const base = { ...CATS };
-    if (db?.categories) {
-      db.categories.forEach((c: any) => { base[c.key] = { l: c.label, c: c.color }; });
-    }
-    return base;
-  }, [db?.categories]);
+  const workoutStore = useWorkoutStore();
+  const measureStore = useMeasurementStore();
+  const prayerStore = usePrayerStore(today);
 
-  const getColorForKey = (key: string) => (key === FREE_KEY ? FREE_COLOR : categories[key]?.c || theme.title);
-  const getLabelForKey = (key: string) => (key === FREE_KEY ? FREE_LABEL : categories[key]?.l || key);
+  const categories = useMemo((): Record<string, { l: string; c: string }> => ({ ...CATS }), []);
+  const getColorForKey = (key: string) => (key === FREE_KEY ? FREE_COLOR : categories[key]?.c ?? theme.title);
+  const getLabelForKey = (key: string) => (key === FREE_KEY ? FREE_LABEL : categories[key]?.l ?? key);
 
   const interval = useMemo(() => {
     const now = new Date();
     let start = startOfDay(now);
-    let end = endOfDay(now);
+    const end = endOfDay(now);
     if (range === 'week') start = startOfWeek(subDays(now, 6), { weekStartsOn: 1 });
     if (range === 'month') start = subMonths(now, 1);
     return { start, end };
   }, [range]);
 
   const activityData = useMemo(() => {
-    if (!db) return [];
     const totals: Record<string, number> = {};
     let totalMinutes = 0;
     const days = eachDayOfInterval(interval);
     days.forEach(day => {
-      const dateStr = ds(day);
-      const evs = eventsForDate(db, dateStr);
-      evs.forEach(ev => {
+      const evs = eventsForDate(null, ds(day));
+      evs.forEach((ev: any) => {
         if (!ev.time) return;
-        totals[ev.category || 'perso'] = (totals[ev.category || 'perso'] || 0) + (ev.duration || 30);
+        totals[ev.category || 'perso'] = (totals[ev.category || 'perso'] ?? 0) + (ev.duration || 30);
         totalMinutes += (ev.duration || 30);
       });
     });
     totals[FREE_KEY] = Math.max(0, days.length * 1440 - totalMinutes);
     return Object.entries(totals).map(([key, value]) => ({
       key, value, color: getColorForKey(key), label: getLabelForKey(key),
-    })).sort((a,b) => b.value - a.value);
-  }, [db, categories, interval]);
+    })).sort((a, b) => b.value - a.value);
+  }, [categories, interval]);
 
   const muscuStats = useMemo(() => {
-    if (!db?.workoutLogs) return [];
-    return (db.workoutLogs || []).filter((log: any) => {
-        const d = parseISO(log.date);
+    return workoutStore.sessions
+      .filter(s => {
+        const d = parseISO(s.date);
         return d >= interval.start && d <= interval.end;
-      }).map((log: any) => {
+      })
+      .map(s => {
         let weight = 0; let sets = 0;
-        log.exercises.forEach((ex: any) => ex.sets.forEach((s: any) => {
-          weight += (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 0);
-          sets += 1;
-        }));
-        return { label: format(parseISO(log.date), 'dd/MM'), weight, sets };
+        s.exercises.forEach((ex: any) => {
+          (ex.sets as any[] | undefined ?? []).forEach((set: any) => {
+            weight += (parseFloat(set.weight) || 0) * (parseInt(set.reps) || 0);
+            sets += 1;
+          });
+        });
+        return { label: format(parseISO(s.date), 'dd/MM'), weight, sets };
       });
-  }, [db?.workoutLogs, interval]);
-
-  const nutritionStats = useMemo(() => {
-    const days = eachDayOfInterval(interval);
-    let avgKcal = 0; let avgP = 0; let count = 0;
-    const data = days.map(day => {
-      const tot = NutritionService.calculateDailyTotal(getEntriesByDate(ds(day)).filter(e => e.module === 'nutrition'));
-      if (tot.kcal > 0) { avgKcal += tot.kcal; avgP += tot.p; count++; }
-      return { label: format(day, 'dd/MM'), kcal: tot.kcal, p: tot.p };
-    });
-    return { data, avgKcal: count > 0 ? Math.round(avgKcal/count) : 0, avgP: count > 0 ? Math.round(avgP/count) : 0, count };
-  }, [interval, getEntriesByDate]);
+  }, [workoutStore.sessions, interval]);
 
   useEffect(() => {
-    LocalAIService.generateZenSummary(db).then(setAiSummary);
-  }, [db]);
+    const days = eachDayOfInterval(interval);
+    Promise.all(
+      days.map(async day => {
+        const meals = await MealService.getByDate(ds(day));
+        const tot = MealService.totals(meals);
+        return { label: format(day, 'dd/MM'), kcal: tot.kcal, p: tot.p };
+      })
+    ).then(setMealsByDay);
+  }, [interval]);
 
-  if (!db) return null;
+  const nutritionStats = useMemo(() => {
+    let avgKcal = 0; let avgP = 0; let count = 0;
+    mealsByDay.forEach(d => {
+      if (d.kcal > 0) { avgKcal += d.kcal; avgP += d.p; count++; }
+    });
+    return {
+      data: mealsByDay,
+      avgKcal: count > 0 ? Math.round(avgKcal / count) : 0,
+      avgP: count > 0 ? Math.round(avgP / count) : 0,
+      count,
+    };
+  }, [mealsByDay]);
+
+  useEffect(() => {
+    const sorted = measureStore.history.slice().sort((a, b) => a.date.localeCompare(b.date));
+    const latest = sorted.at(-1) ?? null;
+    const prev = sorted.at(-2) ?? null;
+    const weightTrend = latest && prev
+      ? latest.weight > prev.weight ? 'up' : latest.weight < prev.weight ? 'down' : 'stable'
+      : null;
+    setAiLoading(true);
+    LocalAIService.generateZenSummary({
+      kcalToday: mealsByDay.at(-1)?.kcal,
+      prayersDone: prayerStore.doneCount,
+      prayersTotal: prayerStore.total,
+      lastWorkoutName: workoutStore.sessions.at(-1)?.name ?? null,
+      weightKg: latest?.weight ?? null,
+      weightTrend,
+    }).then(s => { setAiSummary(s); setAiLoading(false); });
+  }, [measureStore.history, mealsByDay, workoutStore.sessions, prayerStore.doneCount]);
 
   return (
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
@@ -136,17 +158,26 @@ export default function AnalyseScreen() {
            <Heading level={1} subtitle="Intelligence de Situation">ANALYSE TACTIQUE</Heading>
            
            <div className="mt-8">
-             <BilanZen 
-                summary={aiSummary} 
-                loading={aiLoading} 
-                onRefresh={() => { setAiLoading(true); LocalAIService.generateZenSummary(db).then(s => {setAiSummary(s); setAiLoading(false);}); }} 
+             <BilanZen
+                summary={aiSummary}
+                loading={aiLoading}
+                onRefresh={() => {
+                  setAiLoading(true);
+                  LocalAIService.generateZenSummary({
+                    kcalToday: mealsByDay.at(-1)?.kcal,
+                    prayersDone: prayerStore.doneCount,
+                    prayersTotal: prayerStore.total,
+                    lastWorkoutName: workoutStore.sessions.at(-1)?.name ?? null,
+                    weightKg: measureStore.history.at(-1)?.weight ?? null,
+                  }).then(s => { setAiSummary(s); setAiLoading(false); });
+                }}
              />
            </div>
         </div>
 
         {/* Tab Control */}
         <div className="px-6 mb-8">
-           <div className="bg-awan-bg-highlight/30 p-1.5 rounded-3xl border border-white/5 flex flex-row shadow-2xl">
+           <div className="bg-awan-surface/30 p-1.5 rounded-3xl border border-white/5 flex flex-row shadow-2xl">
               {TABS.map(({ id, label, Icon }) => (
                 <Touch 
                   key={id} 
@@ -165,7 +196,7 @@ export default function AnalyseScreen() {
            {RANGES.map(r => (
              <Touch 
                key={r.id} 
-               className={`px-6 py-1.5 rounded-full border transition-all ${range === r.id ? 'bg-awan-gold-active/20 border-awan-gold' : 'bg-white/5 border-white/5'}`}
+               className={`px-6 py-1.5 rounded-full border transition-all ${range === r.id ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'}`}
                onPress={() => setRange(r.id)}
              >
                <span className={`text-[10px] font-black tracking-[0.2em] ${range === r.id ? 'text-awan-gold' : 'text-white/20'}`}>{r.label}</span>
@@ -198,7 +229,7 @@ export default function AnalyseScreen() {
                     </Card>
                     <Card className="border-white/5 bg-white/5 p-6" variant="flat">
                        <span className="text-[10px] font-black text-awan-tx-mute tracking-widest mb-2 block uppercase">Veille System</span>
-                       <span className="text-3xl font-black text-awan-tx font-mono">{Math.round(activityData.find(d => d.key === FREE_KEY)?.value / 60 || 0)}<span className="text-sm ml-1 opacity-50">H</span></span>
+                       <span className="text-3xl font-black text-awan-tx font-mono">{Math.round((activityData.find(d => d.key === FREE_KEY)?.value ?? 0) / 60)}<span className="text-sm ml-1 opacity-50">H</span></span>
                     </Card>
                   </div>
                 </div>
@@ -206,68 +237,100 @@ export default function AnalyseScreen() {
 
              {tab === 'nutrition' && (
                 <div className="space-y-8">
-                   <div className="grid grid-cols-2 gap-4">
-                      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
-                         <div className="flex flex-row items-center gap-2 mb-3">
-                            <Flame size={12} className="text-awan-gold" />
-                            <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase">Moy. Kcal</span>
-                         </div>
-                         <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">{nutritionStats.avgKcal}</span>
-                      </Card>
-                      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
-                         <div className="flex flex-row items-center gap-2 mb-3">
-                            <Activity size={12} className="text-awan-status-error" />
-                            <span className="text-[9px] font-black text-awan-status-error tracking-widest uppercase">Moy. Prot</span>
-                         </div>
-                         <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">{nutritionStats.avgP}<span className="text-sm ml-1">G</span></span>
-                      </Card>
-                   </div>
-
-                   <Card className="p-6 bg-white/5 border-white/5" variant="flat">
-                      <Heading level={4} mono subtitle="Énergie">FLUX CALORIQUE</Heading>
-                      <div className="h-[200px] mt-6">
-                         <BarChart data={nutritionStats.data} dataKey="kcal" color={theme.title} />
-                      </div>
-                   </Card>
+                   {nutritionStats.count === 0 && mealsByDay.length > 0 ? (
+                     <EmptyState Icon={Flame} label="Aucun repas enregistré sur la période" />
+                   ) : (
+                     <>
+                       <div className="grid grid-cols-2 gap-4">
+                          <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+                             <div className="flex flex-row items-center gap-2 mb-3">
+                                <Flame size={12} className="text-awan-gold" />
+                                <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase">Moy. Kcal</span>
+                             </div>
+                             <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">{nutritionStats.avgKcal || '—'}</span>
+                          </Card>
+                          <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+                             <div className="flex flex-row items-center gap-2 mb-3">
+                                <Activity size={12} className="text-awan-status-error" />
+                                <span className="text-[9px] font-black text-awan-status-error tracking-widest uppercase">Moy. Prot</span>
+                             </div>
+                             <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">
+                               {nutritionStats.avgP || '—'}{nutritionStats.avgP > 0 && <span className="text-sm ml-1">G</span>}
+                             </span>
+                          </Card>
+                       </div>
+                       <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+                          <Heading level={4} mono subtitle="Énergie">FLUX CALORIQUE</Heading>
+                          <div className="h-[200px] mt-6">
+                             <BarChart data={nutritionStats.data} dataKey="kcal" color={theme.title} />
+                          </div>
+                       </Card>
+                     </>
+                   )}
                 </div>
              )}
 
              {tab === 'muscu' && (
                 <div className="space-y-8">
-                   <Card className="p-6 bg-white/5 border-white/5" variant="flat">
-                      <Heading level={4} mono subtitle="Force de Projection">VOLUME TOTAL (KG)</Heading>
-                      <div className="h-[200px] mt-6">
-                         <BarChart data={muscuStats} dataKey="weight" color={theme.title} />
-                      </div>
-                   </Card>
-                   <Card className="p-6 bg-white/5 border-white/5" variant="flat">
-                      <Heading level={4} mono subtitle="Densité Opérative">SÉRIES COMPLÉTÉES</Heading>
-                      <div className="h-[200px] mt-6">
-                         <BarChart data={muscuStats} dataKey="sets" color="#FFF" />
-                      </div>
-                   </Card>
+                   {workoutStore.loading ? (
+                     <LoadingState label="Chargement des séances..." />
+                   ) : muscuStats.length === 0 ? (
+                     <EmptyState Icon={Dumbbell} label="Aucune séance sur la période" />
+                   ) : (
+                     <>
+                       <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+                          <Heading level={4} mono subtitle="Force de Projection">VOLUME TOTAL (KG)</Heading>
+                          <div className="h-[200px] mt-6">
+                             <BarChart data={muscuStats} dataKey="weight" color={theme.title} />
+                          </div>
+                       </Card>
+                       <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+                          <Heading level={4} mono subtitle="Densité Opérative">SÉRIES COMPLÉTÉES</Heading>
+                          <div className="h-[200px] mt-6">
+                             <BarChart data={muscuStats} dataKey="sets" color="#FFF" />
+                          </div>
+                       </Card>
+                     </>
+                   )}
                 </div>
              )}
 
              {tab === 'measures' && (
                 <div className="space-y-4">
-                  {(db.mesures || []).slice(-10).reverse().map((m: any, i: number) => (
-                    <Card key={i} className="flex-row items-center justify-between p-5 bg-white/5 border-white/5" variant="flat">
-                      <div className="flex flex-row items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-awan-gold/10 flex items-center justify-center border border-awan-gold/20">
-                           <Ruler size={18} className="text-awan-gold" />
+                  {measureStore.loading ? (
+                    <LoadingState label="Chargement des mesures..." />
+                  ) : measureStore.history.length === 0 ? (
+                    <EmptyState Icon={Ruler} label="Aucune mesure enregistrée" />
+                  ) : (
+                    measureStore.history.slice().reverse().slice(0, 10).map((m, i) => (
+                      <Card key={i} className="p-5 bg-white/5 border-white/5" variant="flat">
+                        <div className="flex flex-row items-center justify-between mb-3">
+                          <span className="text-[9px] font-mono text-awan-gold uppercase tracking-widest">{m.date}</span>
+                          {m.body_fat_pct != null && (
+                            <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest">{m.body_fat_pct}% MG</span>
+                          )}
                         </div>
-                        <div>
-                          <span className="text-[9px] font-mono text-awan-tx-mute uppercase tracking-widest mb-1 block">Capture biometric: {m.date}</span>
-                          <span className="text-sm font-black text-awan-tx uppercase tracking-tight">{m.label || 'MESURE'}</span>
+                        <div className="flex flex-row items-end gap-6">
+                          <div>
+                            <span className="text-[9px] font-black text-awan-tx-mute uppercase block mb-1">Poids</span>
+                            <span className="text-3xl font-black text-awan-gold tabular-nums font-mono">{m.weight}<span className="text-sm ml-1 opacity-50">KG</span></span>
+                          </div>
+                          {m.bpm_rest != null && m.bpm_rest > 0 && (
+                            <div>
+                              <span className="text-[9px] font-black text-awan-tx-mute uppercase block mb-1">BPM repos</span>
+                              <span className="text-2xl font-black text-awan-tx tabular-nums font-mono">{m.bpm_rest}</span>
+                            </div>
+                          )}
+                          {Object.entries(m.measurements).slice(0, 2).map(([k, v]) => (
+                            <div key={k}>
+                              <span className="text-[9px] font-black text-awan-tx-mute uppercase block mb-1">{k}</span>
+                              <span className="text-2xl font-black text-awan-tx tabular-nums font-mono">{v}<span className="text-sm ml-0.5 opacity-50">cm</span></span>
+                            </div>
+                          ))}
                         </div>
-                      </div>
-                      <div className="flex flex-row items-baseline gap-1">
-                        <span className="text-2xl font-black text-awan-gold">{m.value}</span>
-                        <span className="text-[10px] font-bold text-awan-tx-mute uppercase font-mono">{m.unit || 'CM'}</span>
-                      </div>
-                    </Card>
-                  ))}
+                      </Card>
+                    ))
+                  )}
                 </div>
              )}
            </motion.div>
@@ -371,9 +434,18 @@ function Legend({ data }: { data: any[] }) {
 
 function EmptyState({ Icon, label }: { Icon: any, label: string }) {
   return (
-    <div className="items-center py-20 opacity-30">
+    <div className="flex flex-col items-center py-20 opacity-30">
       <Icon size={48} className="text-awan-tx-mute mb-4" />
       <span className="text-xs font-bold uppercase tracking-widest text-awan-tx-mute">{label}</span>
+    </div>
+  );
+}
+
+function LoadingState({ label }: { label: string }) {
+  return (
+    <div className="flex flex-col items-center py-20 opacity-30">
+      <div className="w-8 h-8 rounded-full border-2 border-awan-gold border-t-transparent animate-spin mb-4" />
+      <span className="text-[10px] font-black uppercase tracking-widest text-awan-tx-mute">{label}</span>
     </div>
   );
 }
