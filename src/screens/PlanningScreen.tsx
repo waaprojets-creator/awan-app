@@ -21,6 +21,7 @@ import { Clock, Plus, Download, ChevronLeft, ChevronRight, Calendar, Columns, Gr
 import { PageWrapper, StaggerItem, AnimatePresence } from '../components/Animated';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 
 const DraggableEvent = React.memo(({ ev, hourHeight, handleEventDragEnd, setEditEv, setShowEvModal, categories, containerRef }: any) => {
@@ -545,10 +546,14 @@ export default function PlanningScreen() {
 
   return (
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
-      <div className="px-6 pt-4 pb-4">
-        <div className="flex flex-row justify-between items-center mb-4">
-           <Heading level={1} className="mb-0" subtitle="Chronologie Tactique">PLANNING</Heading>
-           <Touch onPress={() => setShowImportModal(true)} className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center"><Download size={20} className="text-awan-tx-mute" /></Touch>
+      <div className="px-6 pt-4 pb-1">
+        <div className="flex flex-row justify-between items-baseline">
+          <div className="flex-1">
+            <ScreenHeader tag="TIME · PLANNING" title="PLANNING" className="mb-3" />
+          </div>
+          <Touch onPress={() => setShowImportModal(true)} className="mb-6 w-8 h-8 flex items-center justify-center" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+            <Download size={16} color="var(--color-awan-tx-mute)" />
+          </Touch>
         </div>
         <div className="flex flex-row gap-2 bg-black/40 p-1.5 rounded-[24px] border border-white/10">
           {STABS.map(({ id, label, Icon }) => (

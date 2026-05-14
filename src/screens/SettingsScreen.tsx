@@ -7,10 +7,11 @@ import { AV } from '../constants/theme';
 import { useTheme, useThemeMode } from '../hooks/useTheme';
 import { useAppStore } from '../store/appStore';
 import { useAppState } from '../context/AppStateContext';
-import { ChevronLeft, Shield, Cpu, Trash2, Database, Key, RefreshCw, Plus } from 'lucide-react';
+import { Shield, Cpu, Trash2, Database, Key, RefreshCw, Plus } from 'lucide-react';
 import { PageWrapper } from '../components/Animated';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 
 export default function SettingsScreen() {
@@ -66,26 +67,31 @@ export default function SettingsScreen() {
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
       >
-        <div className="px-6 pt-4 pb-4 bg-white/3 border-b border-white/5">
-          <div className="flex flex-row items-center gap-4 mb-4">
-            <Touch onPress={() => navigate('Dashboard')} className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center">
-              <ChevronLeft size={20} className="text-awan-tx-mute" />
-            </Touch>
-            <Heading level={1} className="mb-0 flex-1" subtitle="Terminal de Contrôle">SYSTÈME</Heading>
-            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
-              <Cpu size={18} className="text-white/40" />
-            </div>
+        <div
+          className="px-6 pt-4 pb-4 border-b"
+          style={{ borderBottomColor: 'rgba(255,255,255,0.06)' }}
+        >
+          <ScreenHeader tag="SYSTÈME" title="RÉGLAGES" statusText={`● v${AV}`} />
+          <div
+            className="flex flex-row items-center gap-4 p-4 border"
+            style={{
+              backgroundColor: 'var(--color-awan-surface)',
+              borderColor: 'rgba(212,175,55,0.15)',
+            }}
+          >
+            <Shield size={20} color="var(--color-awan-gold)" />
+            <span
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '9px',
+                fontWeight: 400,
+                color: 'var(--color-awan-status-ok)',
+                letterSpacing: '0.2em',
+              }}
+            >
+              NOYAU OPÉRATIONNEL
+            </span>
           </div>
-
-          <Card className="flex-row items-center gap-4 p-6 bg-white/5 border-white/5" variant="flat">
-             <div className="w-12 h-12 bg-awan-gold/10 rounded-2xl flex items-center justify-center border border-awan-gold/20">
-                <Shield size={24} className="text-awan-gold" />
-             </div>
-             <div>
-                <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">ÉTAT DU NOYAU</span>
-                <span className="text-sm font-black text-awan-gold uppercase tracking-[0.2em]">OPÉRATIONNEL • v{AV}</span>
-             </div>
-          </Card>
         </div>
 
         <div className="p-6">

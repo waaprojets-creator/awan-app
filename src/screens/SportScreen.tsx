@@ -12,10 +12,13 @@ import { uid, ds } from '../utils/storage';
 import { Play, Plus, Trash2, Clock, CheckCircle2, ChevronLeft, Dumbbell, History, Info, Activity, Flame, Target, X, ChevronRight, Search, Activity as ActivityIcon } from 'lucide-react';
 import { PageWrapper, StaggerList, StaggerItem } from '../components/Animated';
 import { DailyCanvas } from '../components/DailyCanvas';
+import { InstrumentCard } from '../components/ui/InstrumentCard';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
 import { useWorkoutStore } from '../hooks/useWorkoutStore';
+import { sessionsThisWeek } from '../hooks/useAwanScore';
 
 export default function SportScreen() {
   const { navigate } = useAppState() as any;
@@ -138,25 +141,33 @@ export default function SportScreen() {
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
       {view === 'list' && (
         <ScrollView contentContainerStyle={{ paddingBottom: 120 }} style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-          <div className="px-6 pt-12 pb-6">
-          <Heading level={1} className="mb-8" subtitle="Condition Physique">VECTEUR SPORTIF</Heading>
+          <div className="px-6 pt-4 pb-6">
+            <ScreenHeader tag="BODY · SPORT" title="VECTEUR SPORTIF" />
 
-          {/* Quick Metrics */}
-            <div className="flex flex-row gap-4 mb-10">
-              <Card className="flex-1 p-5 bg-white/5 border-white/5" variant="flat">
-                <div className="flex flex-row items-center gap-2 mb-2">
-                  <ActivityIcon size={12} className="text-awan-gold" />
-                  <span className="awan-label">NIVEAU FLUX</span>
-                </div>
-                <span className="text-xl font-bold font-mono text-awan-tx">85%</span>
-              </Card>
-              <Card className="flex-1 p-5 bg-white/5 border-white/5" variant="flat">
-                <div className="flex flex-row items-center gap-2 mb-2">
-                  <Flame size={12} className="text-awan-status-error" />
-                  <span className="awan-label">OUTPUT</span>
-                </div>
-                <span className="text-xl font-bold font-mono text-awan-tx">1.2K</span>
-              </Card>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {(() => {
+                const cnt = sessionsThisWeek(workoutStore.sessions as any);
+                const pct = Math.min(100, cnt * 25);
+                return (
+                  <>
+                    <InstrumentCard
+                      label="FLUX"
+                      value={`${pct}`}
+                      unit="%"
+                      status={pct >= 75 ? 'ok' : pct >= 40 ? 'warn' : 'error'}
+                      progress={pct}
+                      index={1}
+                    />
+                    <InstrumentCard
+                      label="SÉANCES"
+                      value={cnt}
+                      unit="/sem"
+                      status={cnt > 0 ? 'ok' : 'mute'}
+                      index={2}
+                    />
+                  </>
+                );
+              })()}
             </div>
 
             <div className="mb-10">

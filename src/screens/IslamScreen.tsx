@@ -16,6 +16,8 @@ import { useAppState } from '../context/AppStateContext';
 import { usePrayerStore } from '../hooks/usePrayerStore';
 import { useQuranStore } from '../hooks/useQuranStore';
 import type { PrayerName } from '../data/schemas/islam/prayerLog';
+import { InstrumentCard } from '../components/ui/InstrumentCard';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
@@ -75,25 +77,30 @@ export default function IslamScreen() {
 
   return (
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
-      <ScrollView 
-        contentContainerStyle={{ paddingBottom: 120 }}
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
       >
-        <div className="px-6 pt-4 pb-4">
-          <Heading level={1} className="mb-0" subtitle="Alignement Vectoriel">AQIDA</Heading>
-        </div>
+        <ScreenHeader tag="SPIRIT" title="ISLAM" />
 
-          <div className="flex flex-row gap-4">
-             <Card className="flex-1 p-5 bg-white/5 border-white/5" variant="flat">
-                <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase mb-1 block">STATUT</span>
-                <span className="text-xl font-black text-awan-tx uppercase tracking-tight">SYNCHRONISÉ</span>
-             </Card>
-             <Card className="flex-1 p-5 bg-white/5 border-white/5" variant="flat">
-                <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">VECTEUR</span>
-                <span className="text-xl font-black text-awan-tx uppercase tracking-tight">MEKKA</span>
-             </Card>
-          </div>
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <InstrumentCard
+            label="PRIÈRES"
+            value={prayerStore.doneCount}
+            unit={`/${prayerStore.total}`}
+            status={prayerStore.doneCount >= prayerStore.total ? 'ok' : prayerStore.doneCount > 0 ? 'warn' : 'mute'}
+            progress={prayerStore.total > 0 ? Math.round((prayerStore.doneCount / prayerStore.total) * 100) : 0}
+            index={1}
+          />
+          <InstrumentCard
+            label="QIBLA"
+            value={showQibla ? `${Math.round(qiblaAngle)}°` : '—'}
+            status={showQibla ? 'spirit' : 'mute'}
+            index={2}
+            onPress={activateQibla}
+          />
+        </div>
 
         <div className="p-6">
           <div className="mb-10">

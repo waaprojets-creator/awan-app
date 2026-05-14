@@ -5,6 +5,7 @@ const TextInput = RNTextInput as React.ComponentType<any>;
 import { Info, X, CheckCircle, AlertTriangle, ShieldCheck, ChevronLeft, Plus, Search, UtensilsCrossed, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PageWrapper } from '../components/Animated';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
 import { ds, uid } from '../utils/storage';
@@ -116,7 +117,7 @@ export default function NutritionScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }} style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
         
         <div className="px-6 pt-4 pb-4">
-             <Heading level={1} className="mb-0 flex-1" subtitle="Carburant Organique">NUTRITION</Heading>
+          <ScreenHeader tag="BODY · NUTRITION" title="NUTRITION" />
         </div>
           {/* Biometric Summary Matrix */}
           <Card className="mb-8 p-6 bg-awan-surface/20 border-awan-gold/10 shadow-[0_0_40px_rgba(212,175,55,0.05)]">

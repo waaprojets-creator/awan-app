@@ -30,6 +30,7 @@ import { PageWrapper, StaggerItem } from '../components/Animated';
 import { DailyCanvas } from '../components/DailyCanvas';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 
 // Fix for default marker icons in Leaflet
@@ -122,8 +123,8 @@ export default function TrajetScreen() {
         contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
-        <div className="px-6 pt-4 pb-4">
-          <Heading level={1} subtitle="Logistique de Projection">TRAJET</Heading>
+        <div className="px-6 pt-4 pb-1">
+          <ScreenHeader tag="TRAJET" title="TRAJET" />
         </div>
 
         <div className="h-[400px] w-full bg-awan-surface/20 relative">

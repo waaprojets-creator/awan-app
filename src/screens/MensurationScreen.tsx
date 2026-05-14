@@ -14,6 +14,7 @@ import { PageWrapper } from '../components/Animated';
 import { DailyCanvas } from '../components/DailyCanvas';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
+import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 
 export default function MensurationScreen() {
@@ -114,8 +115,8 @@ export default function MensurationScreen() {
 
   return (
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
-      <div className="px-6 pt-4 pb-4">
-           <Heading level={1} className="mb-0 flex-1" subtitle="Capture Biométrique">DÉTAILS PHYSIQUES</Heading>
+      <div className="px-6 pt-4 pb-2">
+        <ScreenHeader tag="BODY · MENSURATION" title="DÉTAILS PHYSIQUES" />
       </div>
       
       <div className="flex flex-row justify-between bg-black/40 p-5 rounded-awan-3xl border border-white/5 shadow-inner mx-6 mb-6">
