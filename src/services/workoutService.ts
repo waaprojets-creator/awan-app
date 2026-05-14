@@ -1,6 +1,14 @@
 import { getStorage } from '@/data/storage/storageService';
-import { migrateRoutine, migrateWorkoutSession } from '@/data/schemas/sport/routine';
-import type { RoutineLatest, WorkoutSessionLatest } from '@/data/schemas/sport/routine';
+import {
+  migrateRoutine,
+  migrateWorkoutSession,
+  nextCycleLetter,
+} from '@/data/schemas/sport/routine';
+import type {
+  RoutineLatest,
+  WorkoutSessionLatest,
+  CycleLetter,
+} from '@/data/schemas/sport/routine';
 import { eventBus } from '@/data/events/bus';
 
 const ROUTINE_PREFIX = 'sport.routine';
@@ -12,6 +20,11 @@ export const WorkoutService = {
     const keys = await storage.list(ROUTINE_PREFIX);
     const results = await Promise.all(keys.map(k => storage.get(k, migrateRoutine)));
     return results.filter((r): r is RoutineLatest => r !== null);
+  },
+
+  async getRoutineById(id: string): Promise<RoutineLatest | null> {
+    const storage = await getStorage();
+    return storage.get(`${ROUTINE_PREFIX}.${id}`, migrateRoutine);
   },
 
   async saveRoutine(routine: RoutineLatest): Promise<void> {
@@ -31,9 +44,35 @@ export const WorkoutService = {
     return results.filter((r): r is WorkoutSessionLatest => r !== null);
   },
 
+  async getLastSessionByRoutine(routineId: string): Promise<WorkoutSessionLatest | null> {
+    const sessions = await WorkoutService.getAllSessions();
+    const matching = sessions
+      .filter(s => s.routineId === routineId && !s.isException)
+      .sort((a, b) => b.startTime - a.startTime);
+    return matching[0] ?? null;
+  },
+
   async saveSession(session: WorkoutSessionLatest): Promise<void> {
     const storage = await getStorage();
     await storage.set(`${SESSION_PREFIX}.${session.id}`, session);
     eventBus.emit('workout.completed', { workoutId: session.id, date: session.date });
+  },
+
+  async computeNextRoutine(
+    routines: RoutineLatest[],
+    sessions: WorkoutSessionLatest[],
+  ): Promise<RoutineLatest | null> {
+    if (routines.length === 0) return null;
+    const cycled = routines.filter(r => r.cycleLetter);
+    if (cycled.length === 0) return routines[0] ?? null;
+    const availableLetters = Array.from(
+      new Set(cycled.map(r => r.cycleLetter).filter((l): l is CycleLetter => !!l)),
+    );
+    const lastReal = sessions
+      .filter(s => !s.isException && s.cycleLetter)
+      .sort((a, b) => b.startTime - a.startTime)[0];
+    const targetLetter = nextCycleLetter(lastReal?.cycleLetter ?? null, availableLetters);
+    if (!targetLetter) return cycled[0] ?? null;
+    return cycled.find(r => r.cycleLetter === targetLetter) ?? cycled[0] ?? null;
   },
 };
