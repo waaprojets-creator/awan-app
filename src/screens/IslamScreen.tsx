@@ -111,10 +111,13 @@ export default function IslamScreen() {
             
             <div className="bg-awan-surface/20 rounded-awan-2xl border border-white/10 overflow-hidden shadow-2xl">
               {prayers.map((key) => {
-                const time = prayerTimes[key];
+                const time: Date | undefined = (prayerTimes as Record<string, Date | undefined>)[key];
                 const isNext = prayerTimes.next === key;
                 const isSunrise = key === 'sunrise';
                 const done = !isSunrise && prayerStore.isDone(key as PrayerName);
+                const timeLabel = time instanceof Date
+                  ? `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`
+                  : '--:--';
 
                 return (
                   <Touch
@@ -130,7 +133,7 @@ export default function IslamScreen() {
                     </div>
                     <div className="flex flex-row items-center gap-6">
                       <span className={`text-xl font-mono font-black tabular-nums ${done ? 'text-awan-status-ok' : isNext ? 'text-awan-gold' : 'text-awan-tx'}`}>
-                        {String(time.getHours()).padStart(2, '0')}:{String(time.getMinutes()).padStart(2, '0')}
+                        {timeLabel}
                       </span>
                       {isSunrise ? (
                         <div className="w-4" />
