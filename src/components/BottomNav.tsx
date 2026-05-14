@@ -73,16 +73,6 @@ export default function BottomNav({ currentRoute, onNavigate }: BottomNavProps) 
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             onClick={() => onNavigate(tab.route)}
           >
-            {/* Indicateur actif — ligne 2px top */}
-            {active && (
-              <motion.div
-                layoutId="tb-nav-indicator"
-                className="absolute top-0 left-4 right-4 h-[2px]"
-                style={{ backgroundColor: 'var(--color-awan-gold)' }}
-                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              />
-            )}
-
             <Icon
               size={ICON_SZ}
               color={active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)'}
