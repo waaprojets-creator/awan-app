@@ -261,7 +261,7 @@ function ExerciseDetail({ exercise, visible, onClose }: any) {
           className="w-full max-w-md bg-awan-surface rounded-awan-3xl border border-white/10 shadow-2xl overflow-hidden"
         >
           <div className="p-8 border-b border-white/10 bg-white/5 relative">
-            <span className="awan-label mb-2 text-awan-gold">{MUSCLES[exercise.m]?.l?.toUpperCase()}</span>
+            <span className="awan-label mb-2 text-awan-gold">{MUSCLES[exercise.pm?.[0] ?? '']?.toUpperCase()}</span>
             <Heading level={2} className="mb-0">{exercise.n}</Heading>
             <Touch onPress={onClose} className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
               <X size={20} className="text-awan-tx-mute" />
@@ -320,7 +320,7 @@ function CreateRoutine({ onSave, onCancel }: any) {
     return (EXERCISES as any[]).filter(ex => {
       const s = search.trim().toLowerCase();
       const matchesSearch = !s || ex.n.toLowerCase().includes(s) || (ex.eq && ex.eq.toLowerCase().includes(s));
-      const matchesMuscle = !filterMuscle || ex.m === filterMuscle;
+      const matchesMuscle = !filterMuscle || (ex.pm || []).includes(filterMuscle);
       return matchesSearch && matchesMuscle;
     });
   }, [search, filterMuscle]);
@@ -369,7 +369,7 @@ function CreateRoutine({ onSave, onCancel }: any) {
                   </div>
                   <div className="flex-1">
                     <span className="text-sm font-bold text-awan-tx uppercase tracking-tight">{ex.n}</span>
-                    <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-widest mt-1">{(MUSCLES as any)[ex.m]?.l} • {ex.eq}</span>
+                    <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-widest mt-1">{MUSCLES[ex.pm?.[0] ?? '']} • {ex.eq}</span>
                   </div>
                   <Touch onPress={() => setSelectedEx(selectedEx.filter((_, i) => i !== idx))}>
                     <Trash2 size={16} className="text-awan-status-error/40 hover:text-awan-status-error" />
@@ -421,13 +421,13 @@ function CreateRoutine({ onSave, onCancel }: any) {
               >
                 <span className="text-[10px] font-black uppercase tracking-widest text-center">Tous</span>
               </Touch>
-              {Object.entries(MUSCLES).map(([id, m]: any) => (
-                <Touch 
-                  key={id} 
+              {Object.entries(MUSCLES).map(([id, label]) => (
+                <Touch
+                  key={id}
                   onPress={() => setFilterMuscle(id)}
                   className={`px-4 py-2 rounded-full border transition-all ${filterMuscle === id ? 'bg-white/10 border-white/20' : 'bg-white/5 border-transparent'}`}
                 >
-                  <span className="text-[10px] font-black uppercase tracking-widest text-center" style={{ color: filterMuscle === id ? '#D4AF37' : '#6C665E' }}>{m.l}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-center" style={{ color: filterMuscle === id ? '#D4AF37' : '#6C665E' }}>{label}</span>
                 </Touch>
               ))}
             </ScrollView>
