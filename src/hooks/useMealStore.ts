@@ -24,7 +24,16 @@ export function useMealStore(date: string) {
     setMeals(prev => prev.filter(e => e.id !== id));
   }, []);
 
+  const update = useCallback(async (entry: MealEntryLatest): Promise<void> => {
+    await MealService.save(entry);
+    setMeals(prev =>
+      prev
+        .map(e => (e.id === entry.id ? entry : e))
+        .sort((a, b) => a.timestamp - b.timestamp),
+    );
+  }, []);
+
   const totals = MealService.totals(meals);
 
-  return { meals, loading, totals, add, remove };
+  return { meals, loading, totals, add, remove, update };
 }
