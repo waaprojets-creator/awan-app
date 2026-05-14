@@ -141,13 +141,6 @@ export default function SanteScreen({ navigate }: any) {
           onPress={() => navigate('Mensuration')}
           {...(weightDelta ? { delta: weightDelta } : {})}
         />
-        <InstrumentCard
-          label="MENTAL"
-          value="—"
-          status="mute"
-          index={4}
-          onPress={() => navigate('Mental')}
-        />
       </div>
 
       {/* ── Macros résumé ──────────────────────────────────────────────────────── */}

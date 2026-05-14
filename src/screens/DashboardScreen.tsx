@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { ScrollView } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { ScrollView, TextInput as RNTextInput } from 'react-native';
+import { Upload, X } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { TRANSPORT_ICONS } from '../constants/icons';
 import { L, TRANSPORT_OPTIONS } from '../constants/labels';
@@ -8,11 +9,10 @@ import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
 import { QuickActions } from '../components/ui/QuickActions';
-import { BilanZen } from '../components/BilanZen';
 import { InstrumentCard } from '../components/ui/InstrumentCard';
 import { AwanScoreDisplay } from '../components/AwanScoreDisplay';
 import { SpiritualService } from '../utils/spiritualService';
-import { LocalAIService } from '../services/localAIService';
+import { importFromJson } from '../utils/importJson';
 import { useMealStore } from '../hooks/useMealStore';
 import { useMeasurementStore } from '../hooks/useMeasurementStore';
 import { useWorkoutStore } from '../hooks/useWorkoutStore';
@@ -37,11 +37,15 @@ interface PrayerInfo {
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
+const TextInput = RNTextInput as React.ComponentType<any>;
+
 export default function DashboardScreen({ navigate }: NavProps) {
   const theme = useTheme();
   const today = ds(new Date());
   const [transportMode, setTransportMode] = useState<string>('car');
-  const [aiSummary, setAiSummary] = useState('');
+  const [importModal, setImportModal] = useState<boolean>(false);
+  const [importText, setImportText] = useState<string>('');
+  const [importResult, setImportResult] = useState<{ success: boolean; message: string } | null>(null);
 
   // Stores existants — conservés intégralement
   const mealStore    = useMealStore(today);
@@ -104,18 +108,6 @@ export default function DashboardScreen({ navigate }: NavProps) {
     : 0;
   const prayerH = Math.floor(timeDiff / 60);
   const prayerM = timeDiff % 60;
-
-  // AI Summary
-  useEffect(() => {
-    const latestMeasure = measureStore.history.slice().sort((a, b) => a.date.localeCompare(b.date)).at(-1) ?? null;
-    LocalAIService.generateZenSummary({
-      kcalToday:       mealStore.totals.kcal,
-      prayersDone:     prayerStore.doneCount,
-      prayersTotal:    prayerStore.total,
-      lastWorkoutName: workoutStore.sessions.at(-1)?.name ?? null,
-      weightKg:        latestMeasure?.weight ?? null,
-    }).then(setAiSummary);
-  }, [mealStore.totals.kcal, prayerStore.doneCount, workoutStore.sessions.length, measureStore.history.length]);
 
   // Mot arabe du jour
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86_400_000);
@@ -254,30 +246,12 @@ export default function DashboardScreen({ navigate }: NavProps) {
           index={2}
           onPress={() => navigate('Sante')}
         />
-        {score.mind.value > 0 ? (
-          <InstrumentCard
-            label="MIND"
-            value={score.mind.value}
-            status={score.mind.status}
-            progress={score.mind.value}
-            index={3}
-            onPress={() => navigate('Mental')}
-          />
-        ) : (
-          <InstrumentCard
-            label="MIND"
-            value="—"
-            status={score.mind.status}
-            index={3}
-            onPress={() => navigate('Mental')}
-          />
-        )}
         <InstrumentCard
           label="TIME"
           value={`${prayerH}h${String(prayerM).padStart(2, '0')}`}
           unit={`→ ${nextPrayerName}`}
           status={score.time.status}
-          index={4}
+          index={3}
           onPress={() => navigate('Planning')}
         />
       </div>
@@ -336,14 +310,14 @@ export default function DashboardScreen({ navigate }: NavProps) {
           value={latestMeasure?.weight ?? '—'}
           unit={latestMeasure ? 'kg' : ''}
           status={latestMeasure ? 'ok' : 'mute'}
-          index={5}
+          index={4}
           onPress={() => navigate('Mensuration')}
         />
         <InstrumentCard
           label="DERNIÈRE SÉANCE"
           value={lastSession?.name ? lastSession.name.slice(0, 8).toUpperCase() : '—'}
           status={lastSession ? 'spirit' : 'mute'}
-          index={6}
+          index={5}
           onPress={() => navigate('Sport')}
         />
       </div>
@@ -367,7 +341,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
               letterSpacing: '0.3em',
             }}
           >
-            MACROS DU JOUR [07]
+            MACROS DU JOUR [06]
           </span>
           <div className="grid grid-cols-3 gap-4">
             {([['P', mealStore.totals.p], ['G', mealStore.totals.c], ['L', mealStore.totals.f]] as const).map(([k, v]) => (
@@ -419,7 +393,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
             letterSpacing: '0.3em',
           }}
         >
-          MODE TRANSPORT [08]
+          MODE TRANSPORT [07]
         </span>
         <div className="flex flex-row gap-2">
           {(TRANSPORT_OPTIONS as Array<{ key: string; label: string }>).map((opt) => {
@@ -509,14 +483,164 @@ export default function DashboardScreen({ navigate }: NavProps) {
         </div>
       </Touch>
 
-      {/* ── BilanZen — synthèse IA en pied de page (mode SOIR/NUIT prioritaire) ── */}
-      {(temporal.mode === 'SOIR' || temporal.mode === 'NUIT' || aiSummary) && (
-        <div className="mt-2 mb-2">
-          <BilanZen summary={aiSummary || 'Chargement...'} loading={!aiSummary} />
+      {/* ── Import JSON global — bouton discret ──────────────────────────────── */}
+      <Touch
+        onPress={() => { setImportResult(null); setImportText(''); setImportModal(true); }}
+        className="block w-full text-left mb-4"
+      >
+        <div
+          className="p-4 border flex flex-row items-center gap-3"
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.05)',
+            borderColor: 'rgba(255,255,255,0.05)',
+          }}
+        >
+          <Upload size={16} color="var(--color-awan-tx-mute)" />
+          <div className="flex flex-col flex-1">
+            <span
+              className="uppercase block"
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontSize: '7px',
+                fontWeight: 'var(--fw-mute)' as any,
+                color: 'var(--color-awan-tx-mute)',
+                letterSpacing: '0.3em',
+              }}
+            >
+              IMPORT [09]
+            </span>
+            <span
+              className="font-mono font-bold uppercase"
+              style={{
+                fontSize: '11px',
+                color: 'var(--color-awan-tx)',
+                letterSpacing: '0.1em',
+              }}
+            >
+              IMPORTER UN JSON
+            </span>
+          </div>
         </div>
-      )}
+      </Touch>
 
       <QuickActions onNavigate={navigate} />
+
+      {/* ── Modal IMPORT JSON ───────────────────────────────────────────────── */}
+      {importModal && (
+        <div
+          className="fixed inset-0 z-[200] flex items-end justify-center"
+          style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+          onClick={() => setImportModal(false)}
+        >
+          <div
+            className="w-full max-w-xl border rounded-awan-xl flex flex-col"
+            style={{
+              backgroundColor: 'var(--color-awan-surface)',
+              borderColor: 'rgba(255,255,255,0.05)',
+              maxHeight: '88vh',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div
+              className="flex flex-row items-center justify-between p-4 border-b"
+              style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+            >
+              <span
+                className="uppercase"
+                style={{
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: '8px',
+                  fontWeight: 'var(--fw-mute)' as any,
+                  color: 'var(--color-awan-tx-mute)',
+                  letterSpacing: '0.4em',
+                }}
+              >
+                IMPORT JSON
+              </span>
+              <Touch
+                onPress={() => setImportModal(false)}
+                className="p-1"
+              >
+                <X size={18} color="var(--color-awan-tx-mute)" />
+              </Touch>
+            </div>
+
+            {/* Body */}
+            <div className="p-4 flex flex-col gap-3">
+              <TextInput
+                value={importText}
+                onChangeText={(v: string) => setImportText(v)}
+                multiline
+                numberOfLines={10}
+                placeholder={'{ "type": "sport.routine", "data": { ... } }'}
+                placeholderTextColor="rgba(255,255,255,0.25)"
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 12,
+                  color: 'var(--color-awan-tx)',
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(255,255,255,0.05)',
+                  borderRadius: 8,
+                  padding: 12,
+                  minHeight: 200,
+                  textAlignVertical: 'top',
+                }}
+              />
+
+              {importResult && (
+                <div
+                  className="p-3 border"
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.05)',
+                    borderColor: 'rgba(255,255,255,0.05)',
+                  }}
+                >
+                  <span
+                    className="font-mono"
+                    style={{
+                      fontSize: '11px',
+                      color: importResult.success
+                        ? 'var(--color-awan-status-ok)'
+                        : 'var(--color-awan-status-error)',
+                    }}
+                  >
+                    {importResult.message}
+                  </span>
+                </div>
+              )}
+
+              <Touch
+                onPress={async () => {
+                  const res = await importFromJson(importText);
+                  setImportResult(res);
+                }}
+                className="block w-full"
+              >
+                <div
+                  className="p-3 border flex items-center justify-center"
+                  style={{
+                    backgroundColor: 'rgba(212,175,55,0.08)',
+                    borderColor: 'var(--color-awan-gold)',
+                  }}
+                >
+                  <span
+                    className="font-mono font-bold uppercase"
+                    style={{
+                      fontSize: '11px',
+                      color: 'var(--color-awan-gold)',
+                      letterSpacing: '0.3em',
+                    }}
+                  >
+                    IMPORTER
+                  </span>
+                </div>
+              </Touch>
+            </div>
+          </div>
+        </div>
+      )}
     </ScrollView>
   );
 }
