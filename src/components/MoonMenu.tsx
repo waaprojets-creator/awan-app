@@ -56,7 +56,7 @@ const EDGES: [string, string][] = [
 function FullMoon({ color }: { color: string }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="9" fill={color} />
+      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.5" fill="none" />
     </svg>
   );
 }
@@ -64,10 +64,13 @@ function FullMoon({ color }: { color: string }) {
 function CrescentMoon({ color }: { color: string }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      {/* Croissant : cercle plein avec un cercle décalé soustrait */}
       <path
         d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
-        fill={color}
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
       />
     </svg>
   );
@@ -118,7 +121,7 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
               inset: 0,
               zIndex: 90,
               // Dégradé radiel partant du coin bas-gauche (position lune)
-              background: `radial-gradient(circle at ${MOON_X + 12}px ${MOON_Y + 12}px, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.60) 30%, rgba(0,0,0,0.28) 65%, rgba(0,0,0,0) 100%)`,
+              background: 'rgba(0,0,0,0.6)',
             }}
             onClick={() => setIsOpen(false)}
           >
@@ -194,7 +197,7 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
                       y={cy - r - 8}
                       textAnchor="middle"
                       fill={isActive ? 'var(--color-awan-gold)' : isTier0 ? 'rgba(255,255,255,0.9)' : node.tier === 1 ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.4)'}
-                      fontSize={isTier0 ? 10 : node.tier === 1 ? 8.5 : 7.5}
+                      fontSize={isTier0 ? 17 : node.tier === 1 ? 14 : 13}
                       fontFamily="var(--font-sans)"
                       fontWeight={isTier0 ? 700 : 600}
                       letterSpacing="0.15em"
