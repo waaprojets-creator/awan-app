@@ -46,7 +46,7 @@ export default function TasksScreen() {
       timestamp: Date.now(),
       module: 'task',
       rawText: inputText,
-      tokens: [{ label: 'MISSION', value: 'RAPIDE', icon: '⚡' }]
+      tokens: [{ label: 'MISSION', value: 'RAPIDE', icon: 'zap' }]
     });
     setInputText('');
   };

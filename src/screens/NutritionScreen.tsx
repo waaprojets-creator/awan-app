@@ -65,8 +65,8 @@ export default function NutritionScreen() {
       module: 'nutrition',
       rawText: `${item.name} ${item.calories}kcal`,
       tokens: [
-        { label: 'Aliment', value: item.name, icon: '🍗' },
-        { label: 'Énergie', value: `${item.calories}kcal`, icon: '🔥' },
+        { label: 'Aliment', value: item.name, icon: 'utensils' },
+        { label: 'Énergie', value: `${item.calories}kcal`, icon: 'flame' },
       ],
     });
     setSearchQuery('');
@@ -78,10 +78,10 @@ export default function NutritionScreen() {
     const entryId = uid();
     const parts = inputText.split(' ');
     const tokens = parts.map((part) => {
-      let icon = '🍗';
+      let icon = 'utensils';
       let label = 'Aliment';
-      if (part.match(/\d+g|\d+kg/i)) { icon = '⚖️'; label = 'Quantité'; }
-      if (part.match(/\d+kcal|\d+cal/i)) { icon = '🔥'; label = 'Énergie'; }
+      if (part.match(/\d+g|\d+kg/i)) { icon = 'scale'; label = 'Quantité'; }
+      if (part.match(/\d+kcal|\d+cal/i)) { icon = 'flame'; label = 'Énergie'; }
       return { label, value: part, icon };
     });
 

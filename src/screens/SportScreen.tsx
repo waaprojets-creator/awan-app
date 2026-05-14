@@ -41,11 +41,11 @@ export default function SportScreen() {
     const entryId = Date.now().toString();
     const parts = inputText.split(' ');
     const tokens = parts.map((part) => {
-      let icon = '🏋️';
+      let icon = 'dumbbell';
       let label = 'Exercice';
-      if (part.includes('kg')) { icon = '⚖️'; label = 'Charge'; }
-      if (part.includes('x') || !isNaN(Number(part))) { icon = '🔄'; label = 'Reps/Séries'; }
-      if (part.includes('min') || part.includes('h')) { icon = '⏱️'; label = 'Durée'; }
+      if (part.includes('kg')) { icon = 'scale'; label = 'Charge'; }
+      if (part.includes('x') || !isNaN(Number(part))) { icon = 'repeat'; label = 'Reps/Séries'; }
+      if (part.includes('min') || part.includes('h')) { icon = 'clock'; label = 'Durée'; }
       return { label, value: part, icon };
     });
 
@@ -116,10 +116,10 @@ export default function SportScreen() {
       module: 'sport',
       rawText: `Séance: ${finished.name} (${Math.floor(timer/60)} min)`,
       tokens: [
-        { label: 'Type', value: 'Séance Guidée', icon: '📋' },
-        { label: 'Nom', value: finished.name, icon: '🏋️' },
-        { label: 'Durée', value: `${Math.floor(timer/60)} min`, icon: '⏱️' },
-        { label: 'Exercices', value: String(finished.exercises.length), icon: '🔢' }
+        { label: 'Type', value: 'Séance Guidée', icon: 'clipboard' },
+        { label: 'Nom', value: finished.name, icon: 'dumbbell' },
+        { label: 'Durée', value: `${Math.floor(timer/60)} min`, icon: 'clock' },
+        { label: 'Exercices', value: String(finished.exercises.length), icon: 'hash' }
       ]
     });
 

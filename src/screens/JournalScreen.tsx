@@ -14,18 +14,7 @@ import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
 import { ChevronLeft, Plus, History, Layout, Filter, Terminal, BookMarked, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-
-const MODULE_ICONS: Record<string, string> = {
-  nutrition: '🍲',
-  sport: '🏋️',
-  trajet: '🗺️',
-  islam: '🕌',
-  mesure: '📏',
-  task: '🚩',
-  sante: '🏥',
-  mental: '🧠',
-  mensuration: '⚖️'
-};
+import { TokenIcon, MODULE_ICON_KEY } from '../constants/tokenIcons';
 
 export default function JournalScreen() {
   const { navigate } = useAppState() as any;
@@ -63,8 +52,8 @@ export default function JournalScreen() {
       module: activeModule,
       rawText: inputText,
       tokens: [
-        { label: 'SYS', value: activeModule.toUpperCase(), icon: '📡' },
-        { label: 'LOG', value: inputText.slice(0, 20).toUpperCase(), icon: MODULE_ICONS[activeModule] || '📄' },
+        { label: 'SYS', value: activeModule.toUpperCase(), icon: 'radio' },
+        { label: 'LOG', value: inputText.slice(0, 20).toUpperCase(), icon: MODULE_ICON_KEY[activeModule] || 'file' },
       ]
     });
     setInputText('');
@@ -123,7 +112,7 @@ export default function JournalScreen() {
                     onPress={() => setActiveModule(mod)}
                   >
                     <div className="flex flex-row items-center gap-2">
-                       <span className="text-xs">{MODULE_ICONS[mod]}</span>
+                       <TokenIcon iconKey={MODULE_ICON_KEY[mod.toLowerCase()] ?? 'file'} size={12} color={activeModule === mod ? '#000' : 'var(--color-awan-tx-mute)'} />
                        <span className={`text-[10px] font-black uppercase tracking-widest ${activeModule === mod ? 'text-black' : 'text-awan-tx-mute'}`}>{mod}</span>
                     </div>
                   </Touch>
@@ -217,7 +206,7 @@ export default function JournalScreen() {
                     >
                       <div className="flex flex-row justify-between items-start mb-3">
                         <div className="flex flex-row items-center gap-3">
-                          <span className="text-lg">{MODULE_ICONS[entry.module] || '📄'}</span>
+                          <TokenIcon iconKey={MODULE_ICON_KEY[entry.module] || 'file'} size={18} />
                           <div>
                             <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase block">{entry.module}</span>
                             <div className="flex flex-row gap-1 mt-1">

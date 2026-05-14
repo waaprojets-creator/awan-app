@@ -60,7 +60,7 @@ export default function MensurationScreen() {
       timestamp: Date.now(),
       module: 'mesure',
       rawText: inputText,
-      tokens: [{ label: 'BIO', value: 'CAPTURE', icon: '🧬' }]
+      tokens: [{ label: 'BIO', value: 'CAPTURE', icon: 'dna' }]
     });
     setInputText('');
   };

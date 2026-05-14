@@ -45,7 +45,7 @@ export default function IslamScreen() {
       timestamp: Date.now(),
       module: 'islam',
       rawText: inputText,
-      tokens: [{ label: 'FOI', value: 'DHIKR', icon: '📿' }]
+      tokens: [{ label: 'FOI', value: 'DHIKR', icon: 'star' }]
     });
     setInputText('');
   };

@@ -5,6 +5,7 @@ import { useTheme } from '../hooks/useTheme';
 import { BaseDailyEntry } from '../types/daily';
 import { useDaily } from '../context/DailyContext';
 import { ds } from '../utils/storage';
+import { TokenIcon } from '../constants/tokenIcons';
 
 interface DailyCanvasProps {
   dateId?: string;
@@ -45,7 +46,7 @@ export function DailyCanvas({
           {renderItem ? renderItem(entry) : (
             <div className="bg-white/5 border border-white/5 rounded-2xl p-4 flex flex-row items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-awan-gold/10 flex items-center justify-center border border-awan-gold/20">
-                  <span className="text-xl">{entry.tokens[0]?.icon || '📋'}</span>
+                  <TokenIcon iconKey={entry.tokens[0]?.icon || 'clipboard'} size={16} />
                 </div>
                 <div className="flex-1">
                   <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase mb-1 block">{entry.module}</span>

@@ -7,6 +7,7 @@ import { L } from '../constants/labels';
 import { Touch } from './ui/Touch';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useAppStore } from '../data/store/appStore';
+import { MoonMenu } from './MoonMenu';
 
 interface BottomNavProps {
   currentRoute: string;
@@ -40,6 +41,8 @@ export default function BottomNav({ currentRoute, onNavigate }: BottomNavProps) 
     : 'var(--color-awan-status-ok)';
 
   return (
+    <>
+      <MoonMenu onNavigate={onNavigate} currentRoute={currentRoute} />
     <div
       className="flex flex-row border-t relative"
       style={{
@@ -102,5 +105,6 @@ export default function BottomNav({ currentRoute, onNavigate }: BottomNavProps) 
         );
       })}
     </div>
+    </>
   );
 }
