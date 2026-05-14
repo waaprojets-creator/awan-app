@@ -5,6 +5,8 @@ import { IconPlanning, IconTrajet, IconSante, IconReglages, ICON_SIZE } from '..
 import { FileText } from 'lucide-react';
 import { L } from '../constants/labels';
 import { Touch } from './ui/Touch';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import { useAppStore } from '../data/store/appStore';
 
 interface BottomNavProps {
   currentRoute: string;
@@ -25,22 +27,35 @@ const TABS: TabDef[] = [
   { route: 'Reglages', label: (L as { tabs: { reglages: string } }).tabs.reglages, icon: IconReglages as TabDef['icon'] },
 ];
 
-const GOLD  = '#D4AF37';
-const MUTE  = '#6C665E';
 const ICON_SZ = (ICON_SIZE as { tab: number }).tab ?? 20;
 
 export default function BottomNav({ currentRoute, onNavigate }: BottomNavProps) {
   const insets = useSafeAreaInsets();
+  const network = useNetworkStatus();
+  const { isOfflineForced, toggleOffline } = useAppStore();
+
+  const isEffectivelyOffline = isOfflineForced || !network.isOnline;
+  const statusColor = isEffectivelyOffline
+    ? 'var(--color-awan-tx-mute)'
+    : 'var(--color-awan-status-ok)';
 
   return (
     <div
-      className="flex flex-row border-t"
+      className="flex flex-row border-t relative"
       style={{
-        backgroundColor: '#0A0A0A',
-        borderTopColor: '#1A1A1A',
+        backgroundColor: 'var(--color-awan-bg)',
+        borderTopColor: 'rgba(255,255,255,0.06)',
         paddingBottom: Math.max(insets.bottom, 12),
       }}
     >
+      {/* Network status indicator dot */}
+      <motion.div
+        className="absolute top-2 right-4 w-2 h-2 rounded-full"
+        style={{ backgroundColor: statusColor }}
+        animate={{ opacity: isEffectivelyOffline ? 0.5 : 1 }}
+        transition={{ duration: 0.3 }}
+      />
+
       {TABS.map((tab) => {
         const Icon = tab.icon;
         const active =
@@ -60,12 +75,15 @@ export default function BottomNav({ currentRoute, onNavigate }: BottomNavProps) 
               <motion.div
                 layoutId="tb-nav-indicator"
                 className="absolute top-0 left-4 right-4 h-[2px]"
-                style={{ backgroundColor: GOLD }}
+                style={{ backgroundColor: 'var(--color-awan-gold)' }}
                 transition={{ type: 'spring', stiffness: 400, damping: 30 }}
               />
             )}
 
-            <Icon size={ICON_SZ} color={active ? GOLD : MUTE} />
+            <Icon
+              size={ICON_SZ}
+              color={active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)'}
+            />
 
             {/* Cairo 600 — label tactique */}
             <span
@@ -74,7 +92,7 @@ export default function BottomNav({ currentRoute, onNavigate }: BottomNavProps) 
                 fontFamily: 'Cairo, sans-serif',
                 fontSize: '8px',
                 fontWeight: active ? 700 : 600,
-                color: active ? GOLD : MUTE,
+                color: active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)',
                 letterSpacing: '0.15em',
               }}
             >
