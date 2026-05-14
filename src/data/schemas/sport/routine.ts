@@ -1,17 +1,42 @@
 import { z } from 'zod';
 import { IdSchema } from '../common/id';
 import { DateStringSchema, TimestampSchema } from '../common/date';
+import { ExerciseSetV1Schema } from './exerciseSet';
 import { createMigrator } from '../../migrations/runner';
 
-const RoutineExerciseSchema = z.object({
+// ─── Routine (template d'entraînement) ──────────────────────────────────────
+
+export const CycleLetterSchema = z.enum(['A', 'B', 'C', 'D']);
+export type CycleLetter = z.infer<typeof CycleLetterSchema>;
+
+export const RoutineExerciseSchema = z.object({
   rid: z.string(),
-}).catchall(z.unknown());
+  exerciseId: z.string(),
+  name: z.string(),
+  primaryMuscle: z.string().optional(),
+  equipment: z.string().optional(),
+  plannedSets: z.number().int().positive(),
+  plannedReps: z.number().int().positive(),
+  plannedWeightKg: z.number().nonnegative().optional(),
+  restSec: z.number().int().nonnegative(),
+  order: z.number().int().nonnegative(),
+  notes: z.string().optional(),
+});
+
+export const DEFAULT_PLANNED_SETS = 3;
+export const DEFAULT_PLANNED_REPS = 10;
+export const DEFAULT_REST_SEC = 90;
+
+export type RoutineExercise = z.infer<typeof RoutineExerciseSchema>;
 
 export const RoutineV1Schema = z.object({
   v: z.literal(1),
   id: IdSchema,
   name: z.string().min(1),
+  cycleLetter: CycleLetterSchema.nullable().optional(),
+  assignedDays: z.array(z.number().int().min(0).max(6)).optional(),
   exercises: z.array(RoutineExerciseSchema),
+  defaultRestSec: z.number().int().nonnegative(),
   createdAt: TimestampSchema,
 });
 
@@ -31,15 +56,38 @@ export const migrateRoutine = createMigrator<Routine, RoutineLatest>(
 
 // ─── WorkoutSession (séance complétée) ───────────────────────────────────────
 
+export const WorkoutExerciseLogSchema = z.object({
+  rid: z.string(),
+  exerciseId: z.string(),
+  name: z.string(),
+  primaryMuscle: z.string().optional(),
+  equipment: z.string().optional(),
+  order: z.number().int().nonnegative(),
+  sets: z.array(ExerciseSetV1Schema),
+  substitutedFrom: z.string().optional(),
+});
+
+export type WorkoutExerciseLog = z.infer<typeof WorkoutExerciseLogSchema>;
+
 export const WorkoutSessionV1Schema = z.object({
   v: z.literal(1),
   id: IdSchema,
+  routineId: IdSchema.optional(),
   name: z.string(),
+  cycleLetter: CycleLetterSchema.nullable().optional(),
   date: DateStringSchema,
-  duration: z.number().int().nonnegative(),
   startTime: TimestampSchema,
   endTime: TimestampSchema,
-  exercises: z.array(RoutineExerciseSchema),
+  duration: z.number().int().nonnegative(),
+  warmupStartedAt: TimestampSchema.optional(),
+  workoutEndedAt: TimestampSchema.optional(),
+  solo: z.boolean(),
+  availableTimeMin: z.number().int().positive().optional(),
+  feeling: z.number().int().min(1).max(5).optional(),
+  sessionRPE: z.number().int().min(1).max(10).optional(),
+  note: z.string().optional(),
+  isException: z.boolean(),
+  exercises: z.array(WorkoutExerciseLogSchema),
 });
 
 export type WorkoutSessionV1 = z.infer<typeof WorkoutSessionV1Schema>;
@@ -55,3 +103,21 @@ export const migrateWorkoutSession = createMigrator<WorkoutSession, WorkoutSessi
   {},
   WORKOUT_SESSION_LATEST_VERSION,
 );
+
+// ─── Helpers cycle dynamique ────────────────────────────────────────────────
+
+const CYCLE_ORDER: CycleLetter[] = ['A', 'B', 'C', 'D'];
+
+export function nextCycleLetter(
+  current: CycleLetter | null | undefined,
+  availableLetters: CycleLetter[],
+): CycleLetter | null {
+  if (availableLetters.length === 0) return null;
+  if (!current) return availableLetters[0] ?? null;
+  const sorted = [...availableLetters].sort(
+    (a, b) => CYCLE_ORDER.indexOf(a) - CYCLE_ORDER.indexOf(b),
+  );
+  const curIdx = CYCLE_ORDER.indexOf(current);
+  const next = sorted.find(l => CYCLE_ORDER.indexOf(l) > curIdx);
+  return next ?? sorted[0] ?? null;
+}
