@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "id": "sport.stagnation_charge",
+  "domain": "sport",
+  "name": "Stagnation de la charge moyenne sur 21 jours",
+  "signals": [
+    { "type": "trend", "source": "sport.workoutLog", "field": "weightKg", "window": { "days": 21 } }
+  ],
+  "condition": { "op": "lte", "value": 0 },
+  "signalIndex": 0,
+  "severity": "info",
+  "adviceKey": "coach.sport.stagnation_charge",
+  "enabled": true
+}

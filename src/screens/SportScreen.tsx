@@ -70,10 +70,51 @@ const SET_KIND_COLOR: Record<SetKind, string> = {
   failure: 'text-red-400',
 };
 
+const ACTIVE_SESSION_KEY = 'awan.sport.activeSession';
+const BEST_ONERMS_KEY = 'awan.sport.bestOneRMs';
+
 function formatTime(s: number) {
   const mins = Math.floor(s / 60);
   const secs = s % 60;
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+function computeOneRM(weightKg: number, reps: number): number {
+  if (reps <= 0 || weightKg <= 0) return 0;
+  return Math.round(weightKg * (1 + reps / 30) * 10) / 10;
+}
+
+function loadBestOneRMs(): Record<string, number> {
+  try { return JSON.parse(localStorage.getItem(BEST_ONERMS_KEY) ?? '{}'); } catch { return {}; }
+}
+
+async function notifyRestEnd() {
+  try {
+    const { LocalNotifications } = await import('@capacitor/local-notifications');
+    const perm = await LocalNotifications.checkPermissions();
+    if (perm.display !== 'granted') {
+      await LocalNotifications.requestPermissions();
+    }
+    await LocalNotifications.schedule({
+      notifications: [{
+        id: 9001,
+        title: 'AWAN SPORT',
+        body: 'Repos terminé — Série suivante !',
+        schedule: { at: new Date() },
+      }],
+    });
+  } catch {
+    try {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.start(); osc.stop(ctx.currentTime + 0.4);
+    } catch { /* silent */ }
+  }
 }
 
 export default function SportScreen() {
@@ -84,6 +125,7 @@ export default function SportScreen() {
   const [view, setView] = useState<ViewMode>('list');
   const [editingRoutine, setEditingRoutine] = useState<RoutineLatest | null>(null);
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
+  const [resumeModal, setResumeModal] = useState<ActiveSession | null>(null);
   const [timer, setTimer] = useState(0);
   const timerRef = useRef<any>(null);
 
@@ -92,6 +134,21 @@ export default function SportScreen() {
   useEffect(() => {
     loadExerciseCatalog();
   }, []);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(ACTIVE_SESSION_KEY);
+      if (saved) setResumeModal(JSON.parse(saved) as ActiveSession);
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => {
+    if (!activeSession) { localStorage.removeItem(ACTIVE_SESSION_KEY); return; }
+    const save = () => { try { localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(activeSession)); } catch { /* ignore */ } };
+    save();
+    const id = setInterval(save, 30_000);
+    return () => clearInterval(id);
+  }, [activeSession]);
 
   useEffect(() => {
     if (activeSession) {
@@ -168,6 +225,7 @@ export default function SportScreen() {
       currentExerciseIdx: 0,
       restEndAt: null,
       stage: 'arrived',
+      bestOneRMs: loadBestOneRMs(),
     });
     setView('active');
   }, []);
@@ -241,6 +299,7 @@ export default function SportScreen() {
       ],
     });
 
+    localStorage.removeItem(ACTIVE_SESSION_KEY);
     setActiveSession(null);
     setView('list');
   }, [activeSession, workoutStore, addEntry]);
@@ -270,6 +329,7 @@ export default function SportScreen() {
         onUpdate={handleSessionUpdate}
         onFinishRequest={() => setView('finish')}
         onAbort={() => {
+          localStorage.removeItem(ACTIVE_SESSION_KEY);
           setActiveSession(null);
           setView('list');
         }}
@@ -293,6 +353,33 @@ export default function SportScreen() {
 
   return (
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
+      {resumeModal && (
+        <Modal visible={true} transparent animationType="fade">
+          <div className="flex-1 flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}>
+            <div className="w-full bg-awan-surface rounded-t-3xl border-t border-white/10 p-6 pb-10">
+              <span className="awan-label text-awan-gold mb-2 block">SÉANCE EN COURS</span>
+              <span className="text-lg font-bold text-awan-tx uppercase mb-1 block">{resumeModal.routineName}</span>
+              <span className="text-[10px] font-bold text-awan-tx-mute uppercase tracking-widest mb-6 block">
+                Démarrée à {new Date(resumeModal.startTime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+              <div className="flex flex-row gap-3">
+                <Touch
+                  className="flex-1 h-14 bg-awan-gold rounded-awan-xl flex items-center justify-center"
+                  onPress={() => { setActiveSession(resumeModal); setResumeModal(null); setView('active'); }}
+                >
+                  <span className="awan-label text-black font-black">REPRENDRE</span>
+                </Touch>
+                <Touch
+                  className="flex-1 h-14 bg-white/5 border border-white/10 rounded-awan-xl flex items-center justify-center"
+                  onPress={() => { localStorage.removeItem(ACTIVE_SESSION_KEY); setResumeModal(null); }}
+                >
+                  <span className="awan-label text-awan-tx-mute">ABANDONNER</span>
+                </Touch>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }} style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
         <div className="px-6 pt-4 pb-6">
           <ScreenHeader tag="BODY · SPORT" title="VECTEUR SPORTIF" />
@@ -437,6 +524,8 @@ interface ActiveSet {
   completed: boolean;
   completedAt?: number | undefined;
   index: number;
+  isPR?: boolean | undefined;
+  setStartedAt?: number | undefined;
 }
 
 interface ActiveExercise {
@@ -466,6 +555,7 @@ interface ActiveSession {
   currentExerciseIdx: number;
   restEndAt: number | null;
   stage: 'arrived' | 'workout' | 'done';
+  bestOneRMs: Record<string, number>;
 }
 
 interface SessionSummary {
@@ -896,6 +986,62 @@ function ExerciseDetail({
   );
 }
 
+// ─── Rest Ring + Chrono Overlay ─────────────────────────────────────────────
+
+function RestRing({ remaining, total }: { remaining: number; total: number }) {
+  const r = 14;
+  const circ = 2 * Math.PI * r;
+  const pct = total > 0 ? remaining / total : 0;
+  return (
+    <svg width={36} height={36} viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
+      <circle cx={18} cy={18} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={2.5} />
+      <circle
+        cx={18} cy={18} r={r} fill="none"
+        stroke="var(--color-awan-status-warn)"
+        strokeWidth={2.5}
+        strokeDasharray={`${circ * pct} ${circ}`}
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function ChronoOverlay({
+  timer,
+  restRemaining,
+  restTotal,
+  routineName,
+}: {
+  timer: number;
+  restRemaining: number;
+  restTotal: number;
+  routineName: string;
+}) {
+  const isResting = restRemaining > 0;
+  return (
+    <div
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 80, backdropFilter: 'blur(12px)' }}
+      className="bg-awan-bg/90 border-b border-awan-gold/10"
+    >
+      <div className="flex flex-row items-center px-5 py-2 gap-4">
+        <div className="flex flex-row items-center gap-2 flex-1">
+          <Clock size={11} className="text-awan-tx-mute" />
+          <span className="text-sm font-mono font-bold text-awan-gold tracking-widest tabular-nums">{formatTime(timer)}</span>
+        </div>
+        {isResting && (
+          <div className="flex flex-row items-center gap-2">
+            <RestRing remaining={restRemaining} total={restTotal} />
+            <span className="text-sm font-mono font-bold tracking-widest tabular-nums" style={{ color: 'var(--color-awan-status-warn)' }}>
+              {formatTime(restRemaining)}
+            </span>
+          </div>
+        )}
+        <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest max-w-[100px] truncate">{routineName}</span>
+      </div>
+    </div>
+  );
+}
+
 // ─── Active Workout ─────────────────────────────────────────────────────────
 
 function ActiveWorkout({
@@ -912,6 +1058,12 @@ function ActiveWorkout({
   onAbort: () => void;
 }) {
   const [restRemaining, setRestRemaining] = useState(0);
+  const prevRestRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (prevRestRef.current > 0 && restRemaining === 0) notifyRestEnd();
+    prevRestRef.current = restRemaining;
+  }, [restRemaining]);
 
   useEffect(() => {
     if (!session.restEndAt) { setRestRemaining(0); return; }
@@ -949,13 +1101,30 @@ function ActiveWorkout({
       if (!ex) return s;
       const set = ex.sets[setIdx];
       if (!set || set.completed) return s;
+
+      let isPR = false;
+      let newBestOneRMs = s.bestOneRMs;
+      if (set.kind === 'working' && set.weightKg && set.reps) {
+        const oneRM = computeOneRM(set.weightKg, set.reps);
+        const currentBest = s.bestOneRMs[ex.exerciseId] ?? 0;
+        if (oneRM > currentBest) {
+          isPR = true;
+          newBestOneRMs = { ...s.bestOneRMs, [ex.exerciseId]: oneRM };
+          try {
+            const stored = loadBestOneRMs();
+            stored[ex.exerciseId] = oneRM;
+            localStorage.setItem(BEST_ONERMS_KEY, JSON.stringify(stored));
+          } catch { /* ignore */ }
+        }
+      }
+
       const exercises = s.exercises.map((e, i) =>
         i !== exIdx
           ? e
-          : { ...e, sets: e.sets.map((st, j) => (j !== setIdx ? st : { ...st, completed: true, completedAt: Date.now() })) },
+          : { ...e, sets: e.sets.map((st, j) => j !== setIdx ? st : { ...st, completed: true, completedAt: Date.now(), isPR }) },
       );
       const restEndAt = Date.now() + ex.restSec * 1000;
-      return { ...s, exercises, restEndAt };
+      return { ...s, exercises, restEndAt, bestOneRMs: newBestOneRMs };
     });
   }, [onUpdate]);
 
@@ -1000,7 +1169,13 @@ function ActiveWorkout({
 
   return (
     <div className="flex-1 bg-awan-bg">
-      <div className="px-6 pt-12 pb-6 border-b border-white/5 bg-white/10">
+      <ChronoOverlay
+        timer={timer}
+        restRemaining={restRemaining}
+        restTotal={session.exercises[session.currentExerciseIdx]?.restSec ?? 90}
+        routineName={session.routineName}
+      />
+      <div style={{ paddingTop: 44 }} className="px-6 pt-12 pb-6 border-b border-white/5 bg-white/10">
         <div className="flex flex-row justify-between items-center mb-6">
           <div className="flex-1">
             <span className="awan-label text-awan-gold mb-1 block">SÉANCE EN COURS</span>
@@ -1016,13 +1191,16 @@ function ActiveWorkout({
             <Clock size={16} className="text-awan-gold mr-2" />
             <span className="text-xl font-mono font-bold text-awan-gold tracking-widest tabular-nums">{formatTime(timer)}</span>
           </Card>
-          <Card className={`flex-row items-center justify-center py-3 bg-black/40 ${restRemaining > 0 ? 'border-orange-400/50' : 'border-white/5'}`}>
-            <Timer size={16} className={restRemaining > 0 ? 'text-orange-400 mr-2' : 'text-awan-tx-mute mr-2'} />
-            <span className={`text-xl font-mono font-bold tracking-widest tabular-nums ${restRemaining > 0 ? 'text-orange-400' : 'text-awan-tx-mute'}`}>
+          <Card className={`flex-row items-center justify-center gap-2 py-3 bg-black/40 ${restRemaining > 0 ? 'border-awan-status-warn/30' : 'border-white/5'}`}>
+            {restRemaining > 0
+              ? <RestRing remaining={restRemaining} total={session.exercises[session.currentExerciseIdx]?.restSec ?? 90} />
+              : <Timer size={16} className="text-awan-tx-mute" />
+            }
+            <span className={`text-xl font-mono font-bold tracking-widest tabular-nums ${restRemaining > 0 ? 'text-awan-status-warn' : 'text-awan-tx-mute'}`}>
               {formatTime(restRemaining)}
             </span>
             {restRemaining > 0 && (
-              <Touch onPress={skipRest} className="ml-3 px-2 py-1 bg-white/10 rounded">
+              <Touch onPress={skipRest} className="ml-1 px-2 py-1 bg-white/10 rounded">
                 <span className="text-[9px] font-black text-awan-tx tracking-widest">PASSER</span>
               </Touch>
             )}
@@ -1157,19 +1335,31 @@ function SetRow({
         placeholderTextColor="#3a3a3a"
         editable={!completed}
       />
-      <Touch
-        onPress={onComplete}
-        disabled={completed}
-        className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-          completed ? 'bg-awan-status-ok/20' : 'bg-awan-gold/20 border border-awan-gold/30'
-        }`}
-      >
-        <CheckCircle2
-          size={18}
-          className={completed ? 'text-awan-status-ok' : 'text-awan-gold'}
-          strokeWidth={completed ? 2 : 3}
-        />
-      </Touch>
+      <div className="relative">
+        <Touch
+          onPress={onComplete}
+          disabled={completed}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+            completed ? 'bg-awan-status-ok/20' : 'bg-awan-gold/20 border border-awan-gold/30'
+          }`}
+        >
+          <CheckCircle2
+            size={18}
+            className={completed ? 'text-awan-status-ok' : 'text-awan-gold'}
+            strokeWidth={completed ? 2 : 3}
+          />
+        </Touch>
+        {set.isPR === true && set.completed && (
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 12 }}
+            style={{ position: 'absolute', top: -6, right: -6, backgroundColor: 'var(--color-awan-gold)', borderRadius: 6, paddingInline: 4, paddingBlock: 2 }}
+          >
+            <span style={{ fontSize: 7, fontWeight: 900, color: '#000', letterSpacing: '0.1em' }}>PR</span>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }

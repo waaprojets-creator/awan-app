@@ -35,6 +35,7 @@ const NODES: Node[] = [
   { id: 'Mental',      label: 'MIND',       sub: 'BODY.4',     x: 42, y: 66, tier: 2 },
   { id: 'Reglages',    label: 'SYSTÈME',    sub: 'SYS',        x: 62, y: 76, tier: 2 },
   { id: 'Tasks',       label: 'TASKS',      sub: 'OPS',        x: 92, y: 30, tier: 2 },
+  { id: 'Coach',       label: 'COACH',      sub: 'SYS.1',      x: 62, y: 56, tier: 2 },
 ];
 
 const EDGES: [string, string][] = [
@@ -49,6 +50,7 @@ const EDGES: [string, string][] = [
   ['Sante', 'Mental'],
   ['Journal', 'Reglages'],
   ['Planning', 'Tasks'],
+  ['Dashboard', 'Coach'],
 ];
 
 // ── SVG Lune ──────────────────────────────────────────────────────────────────

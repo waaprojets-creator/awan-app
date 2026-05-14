@@ -2,15 +2,25 @@ import { migrateRule } from '@/data/schemas/coach/rule';
 import type { RuleLatest } from '@/data/schemas/coach/rule';
 
 import sportNoWorkout from './rules/sport.no_workout_7d.json';
+import sportStagnationCharge from './rules/sport.stagnation_charge.json';
+import sportFatigueRpe from './rules/sport.fatigue_rpe.json';
 import nutritionProtein from './rules/nutrition.protein_low.json';
+import nutritionDeficitAgressif from './rules/nutrition.deficit_agressif.json';
+import nutritionProteinesFaibles from './rules/nutrition.proteines_faibles.json';
 import anthropoWeight from './rules/anthropo.weight_gain_trend.json';
+import anthropoPerteRapide from './rules/anthropo.perte_rapide.json';
 import sleepShort from './rules/sleep.short_avg.json';
 import crossSleepWorkout from './rules/cross.sleep_workout.json';
 
 const RAW_BUNDLED: unknown[] = [
   sportNoWorkout,
+  sportStagnationCharge,
+  sportFatigueRpe,
   nutritionProtein,
+  nutritionDeficitAgressif,
+  nutritionProteinesFaibles,
   anthropoWeight,
+  anthropoPerteRapide,
   sleepShort,
   crossSleepWorkout,
 ];

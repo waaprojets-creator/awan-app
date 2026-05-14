@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "id": "nutrition.deficit_agressif",
+  "domain": "nutrition",
+  "name": "Déficit calorique agressif — moyenne 7j < 1200 kcal",
+  "signals": [
+    { "type": "avg", "source": "nutrition.meal", "field": "kcal", "window": { "days": 7 } }
+  ],
+  "condition": { "op": "lt", "value": 1200 },
+  "signalIndex": 0,
+  "severity": "alert",
+  "adviceKey": "coach.nutrition.deficit_agressif",
+  "enabled": true
+}

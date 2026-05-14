@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "id": "anthropo.perte_rapide",
+  "domain": "anthropo",
+  "name": "Perte de poids rapide — tendance 7j < -1 kg",
+  "signals": [
+    { "type": "trend", "source": "anthropo.measurement", "field": "weightKg", "window": { "days": 7 } }
+  ],
+  "condition": { "op": "lt", "value": -1 },
+  "signalIndex": 0,
+  "severity": "warn",
+  "adviceKey": "coach.anthropo.perte_rapide",
+  "enabled": true
+}
