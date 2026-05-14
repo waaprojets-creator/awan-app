@@ -14,6 +14,7 @@ import { LocalAIService } from '../services/localAIService';
 import { MealService } from '../services/mealService';
 import { useWorkoutStore } from '../hooks/useWorkoutStore';
 import { useMeasurementStore } from '../hooks/useMeasurementStore';
+import { useMealStore } from '../hooks/useMealStore';
 import { usePrayerStore } from '../hooks/usePrayerStore';
 import { PageWrapper, AnimatePresence } from '../components/Animated';
 import { Activity, Dumbbell, Ruler, Flame } from 'lucide-react';
@@ -59,6 +60,7 @@ export default function AnalyseScreen() {
   const workoutStore = useWorkoutStore();
   const measureStore = useMeasurementStore();
   const prayerStore = usePrayerStore(today);
+  const mealStoreToday = useMealStore(today);
 
   const categories = useMemo((): Record<string, { l: string; c: string }> => ({ ...CATS }), []);
   const getColorForKey = (key: string) => (key === FREE_KEY ? FREE_COLOR : categories[key]?.c ?? theme.title);
@@ -119,6 +121,18 @@ export default function AnalyseScreen() {
       })
     ).then(setMealsByDay);
   }, [interval]);
+
+  // Courbe poids — restreinte à l'intervalle sélectionné
+  const weightTrend = useMemo(() => {
+    return measureStore.history
+      .filter(m => {
+        const d = parseISO(m.date);
+        return d >= interval.start && d <= interval.end;
+      })
+      .slice()
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map(m => ({ label: format(parseISO(m.date), 'dd/MM'), weight: m.weight }));
+  }, [measureStore.history, interval]);
 
   const nutritionStats = useMemo(() => {
     let avgKcal = 0; let avgP = 0; let count = 0;
@@ -241,6 +255,19 @@ export default function AnalyseScreen() {
                      <EmptyState Icon={Flame} label="Aucun repas enregistré sur la période" />
                    ) : (
                      <>
+                       <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+                         <span className="awan-label text-awan-tx-mute mb-2 block">KCAL · AUJOURD'HUI</span>
+                         <div className="flex items-baseline gap-2">
+                           <span className="text-3xl font-mono font-bold text-awan-gold tracking-tighter">
+                             {mealStoreToday.totals.kcal || '—'}
+                           </span>
+                           {mealStoreToday.totals.kcal > 0 && (
+                             <span className="text-[10px] font-mono text-awan-tx-mute">
+                               · P {mealStoreToday.totals.p}g · G {mealStoreToday.totals.c}g · L {mealStoreToday.totals.f}g
+                             </span>
+                           )}
+                         </div>
+                       </Card>
                        <div className="grid grid-cols-2 gap-4">
                           <Card className="p-6 bg-white/5 border-white/5" variant="flat">
                              <div className="flex flex-row items-center gap-2 mb-3">
@@ -302,7 +329,16 @@ export default function AnalyseScreen() {
                   ) : measureStore.history.length === 0 ? (
                     <EmptyState Icon={Ruler} label="Aucune mesure enregistrée" />
                   ) : (
-                    measureStore.history.slice().reverse().slice(0, 10).map((m, i) => (
+                    <>
+                    {weightTrend.length > 1 && (
+                      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+                        <Heading level={4} mono subtitle="Trajectoire biométrique">COURBE POIDS</Heading>
+                        <div className="h-[200px] mt-6">
+                          <BarChart data={weightTrend} dataKey="weight" color={theme.title} />
+                        </div>
+                      </Card>
+                    )}
+                    {measureStore.history.slice().reverse().slice(0, 10).map((m, i) => (
                       <Card key={i} className="p-5 bg-white/5 border-white/5" variant="flat">
                         <div className="flex flex-row items-center justify-between mb-3">
                           <span className="text-[9px] font-mono text-awan-gold uppercase tracking-widest">{m.date}</span>
@@ -329,7 +365,8 @@ export default function AnalyseScreen() {
                           ))}
                         </div>
                       </Card>
-                    ))
+                    ))}
+                    </>
                   )}
                 </div>
              )}

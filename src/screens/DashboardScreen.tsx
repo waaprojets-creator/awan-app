@@ -18,6 +18,7 @@ import { useMeasurementStore } from '../hooks/useMeasurementStore';
 import { useWorkoutStore } from '../hooks/useWorkoutStore';
 import { usePrayerStore } from '../hooks/usePrayerStore';
 import { useAwanScore, sessionsThisWeek } from '../hooks/useAwanScore';
+import { useHealthScore } from '../hooks/useHealthScore';
 import { useTemporalMode } from '../hooks/useTemporalMode';
 import { useCoach } from '../hooks/useCoach';
 import type { Severity } from '../data/schemas/coach/rule';
@@ -82,6 +83,15 @@ export default function DashboardScreen({ navigate }: NavProps) {
     tasksDone:       0,
     tasksTotal:      0,
   });
+
+  // Health Score composite — Sport/Nutrition/Mensuration/Mental/Islam
+  const health = useHealthScore();
+  const HEALTH_LABEL_COLOR: Record<typeof health.scoreLabel, string> = {
+    CRITIQUE: 'var(--color-awan-status-error)',
+    MOYEN:    'var(--color-awan-status-warn)',
+    BON:      'var(--color-awan-status-ok)',
+    OPTIMAL:  'var(--color-awan-gold)',
+  };
 
   // Prochaine prière
   const prayerInfo = useMemo<PrayerInfo>(() => {
@@ -166,6 +176,62 @@ export default function DashboardScreen({ navigate }: NavProps) {
       {/* ── Score global AWAN — instrument principal ─────────────────────────── */}
       <div className="mb-4">
         <AwanScoreDisplay score={score} temporal={temporal} />
+      </div>
+
+      {/* ── Health Score composite — synthèse Sport/Nutri/Mensu/Mental/Islam ── */}
+      <div
+        className="p-4 border mb-4 flex flex-row items-center justify-between"
+        style={{
+          backgroundColor: 'var(--color-awan-surface)',
+          borderColor: 'rgba(255,255,255,0.06)',
+        }}
+      >
+        <div className="flex flex-col">
+          <span
+            className="uppercase block mb-1"
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: '7px',
+              fontWeight: 'var(--fw-mute)' as any,
+              color: 'var(--color-awan-tx-mute)',
+              letterSpacing: '0.3em',
+            }}
+          >
+            HEALTH SCORE [00]
+          </span>
+          <span
+            className="font-mono font-bold uppercase"
+            style={{
+              fontSize: '10px',
+              color: HEALTH_LABEL_COLOR[health.scoreLabel],
+              letterSpacing: '0.2em',
+            }}
+          >
+            {health.scoreLabel}
+          </span>
+        </div>
+        <div className="flex items-baseline gap-1">
+          <span
+            className="font-mono font-bold"
+            style={{
+              fontSize: '32px',
+              color: 'var(--color-awan-tx)',
+              letterSpacing: '-0.02em',
+              lineHeight: 1,
+            }}
+          >
+            {health.score}
+          </span>
+          <span
+            className="font-mono"
+            style={{
+              fontSize: '10px',
+              color: 'var(--color-awan-tx-mute)',
+            }}
+          >
+            /100
+          </span>
+        </div>
       </div>
 
       {/* ── Grille 2×2 — cadrans des 4 domaines ───────────────────────────────── */}
