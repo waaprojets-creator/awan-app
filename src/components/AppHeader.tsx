@@ -42,15 +42,9 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
           >
             {(L as { header: { latin: string } }).header.latin}
           </span>
-          <div
-            style={{
-              height: '2px',
-              width: isOn('Analyse') ? '32px' : '16px',
-              backgroundColor: isOn('Analyse') ? 'var(--color-awan-gold)' : 'transparent',
-              marginTop: '4px',
-              transition: 'all 0.3s',
-            }}
-          />
+          {isOn('Analyse') && (
+            <div style={{ height: '2px', width: '32px', backgroundColor: 'var(--color-awan-gold)', marginTop: '4px' }} />
+          )}
         </Touch>
       </div>
 
@@ -89,21 +83,15 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
               fontFamily: 'Cairo, sans-serif',
               fontSize: '18px',
               fontWeight: 700,
-              color: isOn('Islam') ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)',
+              color: isOn('Islam') ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)',
               transition: 'color 0.2s',
             }}
           >
             {(L as { header: { arabic: string } }).header.arabic}
           </span>
-          <div
-            style={{
-              height: '2px',
-              width: isOn('Islam') ? '32px' : '16px',
-              backgroundColor: isOn('Islam') ? 'var(--color-awan-gold)' : 'transparent',
-              marginTop: '4px',
-              transition: 'all 0.3s',
-            }}
-          />
+          {isOn('Islam') && (
+            <div style={{ height: '2px', width: '32px', backgroundColor: 'var(--color-awan-gold)', marginTop: '4px' }} />
+          )}
         </Touch>
       </div>
     </div>
