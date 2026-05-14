@@ -43,9 +43,9 @@ function SmartHeader({ tasksLate, nextPrayer }: SmartHeaderProps) {
   }, []);
 
   const getAlert = (): { icon: React.ComponentType<{ size: number; color: string }>; text: string; color: string } => {
-    if (tasksLate > 0) return { icon: AlertCircle, text: `${tasksLate} VECTEURS EN RETARD`, color: '#FF6B6B' };
-    if (nextPrayer) return { icon: Shield, text: `ALERTE : ${nextPrayer.toUpperCase()}`, color: '#D4AF37' };
-    return { icon: Zap, text: 'SYSTÈME NOMADE OPÉRATIONNEL', color: '#D4AF37' };
+    if (tasksLate > 0) return { icon: AlertCircle, text: `${tasksLate} VECTEURS EN RETARD`, color: 'var(--color-awan-status-error)' };
+    if (nextPrayer) return { icon: Shield, text: `ALERTE : ${nextPrayer.toUpperCase()}`, color: 'var(--color-awan-gold)' };
+    return { icon: Zap, text: 'SYSTÈME NOMADE OPÉRATIONNEL', color: 'var(--color-awan-gold)' };
   };
 
   const alert = getAlert();
@@ -55,7 +55,7 @@ function SmartHeader({ tasksLate, nextPrayer }: SmartHeaderProps) {
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mb-8 p-6 bg-awan-surface/30 rounded-awan-3xl border border-white/5 flex flex-row items-center gap-6 shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden"
+      className="mb-8 p-6 bg-awan-surface/30 rounded-awan-3xl border border-white/5 flex flex-row items-center gap-6 shadow-[0_0_50px_rgba(0,0,0,0.3)] relative overflow-hidden"
     >
       <div className="absolute top-0 right-0 w-48 h-48 bg-awan-gold/5 rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none" />
       <div className="relative">
@@ -269,7 +269,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
                 <span className="text-[8px] font-black text-awan-gold tracking-widest uppercase block mb-1">PRIÈRES</span>
                 <div className="flex flex-row gap-1 justify-center mb-1">
                   {Array.from({ length: prayerStore.total }).map((_, i) => (
-                    <div key={i} className={`w-2 h-2 rounded-full ${i < prayerStore.doneCount ? 'bg-awan-gold shadow-[0_0_5px_#D4AF37]' : 'bg-white/10'}`} />
+                    <div key={i} className={`w-2 h-2 rounded-full ${i < prayerStore.doneCount ? 'bg-awan-gold shadow-[0_0_5px_rgba(212,175,55,1)]' : 'bg-white/10'}`} />
                   ))}
                 </div>
                 <span className="text-xl font-black font-mono text-awan-gold tabular-nums">{prayerStore.doneCount}<span className="text-xs opacity-50">/{prayerStore.total}</span></span>
