@@ -6,6 +6,9 @@ import { createMigrator } from '../../migrations/runner';
 export const MealSourceSchema = z.enum(['manual', 'db', 'quick']);
 export type MealSource = z.infer<typeof MealSourceSchema>;
 
+export const MealTypeSchema = z.enum(['suhoor', 'dejeuner', 'diner', 'collation']);
+export type MealType = z.infer<typeof MealTypeSchema>;
+
 export const MealEntryV1Schema = z.object({
   v: z.literal(1),
   id: IdSchema,
@@ -17,6 +20,11 @@ export const MealEntryV1Schema = z.object({
   f: z.number().nonnegative(),
   timestamp: TimestampSchema,
   source: MealSourceSchema,
+  // Champs optionnels (rétro-compatibles, pas de migration requise)
+  meal: MealTypeSchema.optional(),
+  grams: z.number().positive().optional(),
+  timeHHMM: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  foodId: z.string().optional(),
 });
 
 export type MealEntryV1 = z.infer<typeof MealEntryV1Schema>;

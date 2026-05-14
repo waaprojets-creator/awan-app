@@ -18,7 +18,7 @@ import { requestNotificationPermission, NOTIF_INTERVALS } from '../utils/notific
 
 import { useLongPressDrag } from '../hooks/useLongPressDrag';
 import { Clock, Plus, Download, ChevronLeft, ChevronRight, Calendar, Columns, Grid3X3, Zap, Target, Layers, Trash } from 'lucide-react';
-import { PageWrapper, StaggerItem, AnimatePresence } from '../components/Animated';
+import { PageWrapper, AnimatePresence } from '../components/Animated';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
@@ -227,7 +227,7 @@ export default function PlanningScreen() {
 
   function renderMonthly() {
     return (
-      <StaggerItem className="flex-1">
+      <View style={{ flex: 1 }}>
         <div className="flex flex-row items-center justify-between px-6 mb-8">
           <Touch onPress={() => setCalDate(new Date(calDate.getFullYear(), calDate.getMonth()-1, 1))} className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center">
             <ChevronLeft size={20} className="text-awan-tx-mute" />
@@ -264,7 +264,7 @@ export default function PlanningScreen() {
           <Heading level={4} mono subtitle="Opérations">ORDRE DE MARCHE</Heading>
           <EvListSection events={eventsForDate(db, ds(selDate))} categories={categories} onAdd={() => setShowEvModal(true)} onAddRt={() => setShowRtModal(true)} onEdit={(ev: any) => { setEditEv(ev); setShowEvModal(true); }} />
         </div>
-      </StaggerItem>
+      </View>
     );
   }
 
@@ -279,7 +279,7 @@ export default function PlanningScreen() {
     });
     const hours = Array.from({ length: 24 }).map((_, h) => `${String(h).padStart(2, '0')}:00`);
     return (
-      <StaggerItem className="flex-1">
+      <View style={{ flex: 1 }}>
         <div className="flex flex-row items-center justify-between px-6 mb-8">
           <Touch onPress={() => setWkDate(new Date(wkDate.getTime() - 7*86400000))} className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center"><ChevronLeft size={20} className="text-awan-tx-mute" /></Touch>
           <span className="text-[10px] font-black text-awan-tx uppercase tracking-[0.4em] font-mono">{lbl.toUpperCase()}</span>
@@ -308,7 +308,7 @@ export default function PlanningScreen() {
             </div>
           </div>
         </ScrollView>
-      </StaggerItem>
+      </View>
     );
   }
 
@@ -364,7 +364,7 @@ export default function PlanningScreen() {
             <div className="flex-1 relative">
               <div onPointerDown={handleGridPointerDown} onPointerMove={handleGridPointerMove} onPointerUp={handleGridPointerUp} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }} />
               {hours.map((_, h) => <div key={h} className="h-20 border-b border-white/5 opacity-5" />)}
-              {creatingEv && <div className="absolute left-1 right-1 bg-awan-gold/20 border-l-4 border-awan-gold rounded-lg p-3 z-10" style={{ top: (creatingEv.startMins / 60) * 80, height: (creatingEv.duration / 60) * 80 }}><span className="text-[10px] font-black text-white uppercase tracking-widest">{creatingEv.title}</span></div>}
+              {creatingEv && <div className="absolute left-1 right-1 bg-awan-gold/20 border-l-4 border-awan-gold rounded-lg p-3 z-10" style={{ top: (creatingEv.startMins / 60) * 80, height: (creatingEv.duration / 60) * 80 }}><span className="text-[10px] font-black text-awan-tx uppercase tracking-widest">{creatingEv.title}</span></div>}
               {eventsForDate(db, dstr).map((ev: any) => ev.time && <DraggableEvent key={ev.id} ev={ev} hourHeight={80} handleEventDragEnd={handleEventDragEnd} setEditEv={setEditEv} setShowEvModal={setShowEvModal} categories={categories} containerRef={scrollRef} />)}
             </div>
           </div>
@@ -406,7 +406,7 @@ export default function PlanningScreen() {
               <TextInput
                 className="bg-awan-bg border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold text-awan-tx"
                 placeholder="TITRE DE LA TÂCHE..."
-                placeholderTextColor="#6C665E"
+                placeholderTextColor="var(--color-awan-tx-mute)"
                 value={aiTitle}
                 onChangeText={setAiTitle}
               />
@@ -416,7 +416,7 @@ export default function PlanningScreen() {
                   <TextInput
                     className="bg-awan-bg border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold text-awan-tx font-mono"
                     placeholder="30"
-                    placeholderTextColor="#6C665E"
+                    placeholderTextColor="var(--color-awan-tx-mute)"
                     keyboardType="numeric"
                     value={aiDuration}
                     onChangeText={setAiDuration}
@@ -595,7 +595,7 @@ function EvListSection({ events, categories, onAdd, onAddRt, onEdit }: any) {
   return (
     <div className="space-y-4">
       {events.map((ev: any) => (
-        <Touch key={ev.id} className="bg-white/3 border border-white/5 rounded-[24px] overflow-hidden flex flex-row" onPress={() => !ev.isRt && onEdit(ev)}>
+        <Touch key={ev.id} className="bg-white/5 border border-white/5 rounded-[24px] overflow-hidden flex flex-row" onPress={() => !ev.isRt && onEdit(ev)}>
           <div className="w-2" style={{ backgroundColor: ev.color || categories[ev.category]?.c || theme.title }} />
           <div className="flex-1 p-6">
             <div className="flex flex-row justify-between items-center mb-2">
@@ -628,7 +628,7 @@ function EventModal({ visible, initial, defaultDate, categories, onClose, onSave
           <div className="w-12 h-1.5 bg-white/10 rounded-full self-center mb-10" />
           <Heading level={2} subtitle="Paramètres du Segment" className="text-center mb-12">PLANIFICATION</Heading>
           <div className="space-y-8">
-            <div><span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest ml-1 mb-3 block font-mono">Identifiant de Mission</span><TextInput className="bg-black/40 border border-white/5 rounded-2xl p-5 text-awan-tx font-bold text-base" value={title} onChangeText={setTitle} placeholder="TITRE DE L'OPÉRATION..." placeholderTextColor="#252525" /></div>
+            <div><span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest ml-1 mb-3 block font-mono">Identifiant de Mission</span><TextInput className="bg-black/40 border border-white/5 rounded-2xl p-5 text-awan-tx font-bold text-base" value={title} onChangeText={setTitle} placeholder="TITRE DE L'OPÉRATION..." placeholderTextColor="var(--color-awan-tx-mute)" /></div>
             <div className="grid grid-cols-2 gap-6">
               <div><span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest ml-1 mb-3 block font-mono">Heure de Lancement</span><TextInput className="bg-black/40 border border-white/5 rounded-2xl p-5 text-awan-tx font-mono text-center text-lg" value={time} onChangeText={setTime} placeholder="12:00" /></div>
               <div><span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest ml-1 mb-3 block font-mono">Anticipation</span><Touch className="bg-black/40 border border-white/5 h-16 rounded-2xl items-center justify-center"><span className="text-xs font-black text-awan-gold uppercase tracking-widest font-mono">{reminder > 0 ? `${reminder}M` : 'OFF'}</span></Touch></div>
@@ -658,7 +658,7 @@ function ImportModal({ visible, onClose, onImport }: any) {
         <div className="bg-awan-surface p-8 pt-4 rounded-t-[40px] border-t border-white/10 w-full max-w-lg mx-auto shadow-2xl">
           <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-10" />
           <Heading level={2} subtitle="Base de Données Routines" className="text-center mb-12">IMPORTATION</Heading>
-          <TextInput className="bg-black/40 border border-white/5 rounded-2xl p-6 text-awan-tx font-mono text-xs mb-10 min-h-[200px]" multiline value={json} onChangeText={setJson} placeholder="[{'name': 'Routine'}]" placeholderTextColor="#252525" />
+          <TextInput className="bg-black/40 border border-white/5 rounded-2xl p-6 text-awan-tx font-mono text-xs mb-10 min-h-[200px]" multiline value={json} onChangeText={setJson} placeholder="[{'name': 'Routine'}]" placeholderTextColor="var(--color-awan-tx-mute)" />
           <div className="flex flex-row gap-4">
             <Touch onPress={onClose} className="flex-1 h-16 items-center justify-center rounded-2xl bg-white/5 border border-white/5"><span className="text-xs font-black text-awan-tx-mute uppercase tracking-widest font-mono">Annuler</span></Touch>
             <Touch onPress={() => onImport(json)} className="flex-1 h-16 items-center justify-center rounded-2xl bg-awan-gold shadow-xl shadow-awan-gold/20"><span className="text-xs font-black text-black uppercase tracking-widest font-mono">Exécuter Import</span></Touch>

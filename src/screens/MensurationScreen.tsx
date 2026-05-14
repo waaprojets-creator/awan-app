@@ -180,6 +180,20 @@ export default function MensurationScreen() {
     persistEntry(newEntry);
   };
 
+  const updateMeasurement = (part: string, val: string) => {
+    const v = parseFloat(val.replace(',', '.'));
+    const newEntry = { ...currentEntry };
+    if (isNaN(v) || v <= 0) {
+      const next = { ...newEntry.measurements };
+      delete next[part];
+      newEntry.measurements = next;
+    } else {
+      newEntry.measurements = { ...newEntry.measurements, [part]: v };
+    }
+    setCurrentEntry(newEntry);
+    persistEntry(newEntry);
+  };
+
   const updateSkinfold = (site: string, val: string) => {
     const v = parseFloat(val);
     const newEntry = { ...currentEntry };
@@ -497,6 +511,43 @@ export default function MensurationScreen() {
                    </div>
                 </div>
              </div>
+          </div>
+
+          {/* Mesures corporelles manuelles (saisie complète) */}
+          <div className="mb-10">
+            <Heading level={4} mono subtitle="Mesures circonférentielles (cm)" className="mb-6">MENSURATIONS</Heading>
+            <div className="grid grid-cols-2 gap-3">
+              {([
+                { key: 'neck', label: 'COU' },
+                { key: 'shoulders', label: 'ÉPAULES' },
+                { key: 'chest', label: 'POITRINE' },
+                { key: 'waist', label: 'TOUR DE TAILLE' },
+                { key: 'hips', label: 'HANCHES' },
+                { key: 'arm_left', label: 'BRAS G.' },
+                { key: 'arm_right', label: 'BRAS D.' },
+                { key: 'forearm_left', label: 'AVANT-BRAS G.' },
+                { key: 'forearm_right', label: 'AVANT-BRAS D.' },
+                { key: 'thigh_left', label: 'CUISSE G.' },
+                { key: 'thigh_right', label: 'CUISSE D.' },
+                { key: 'calf_left', label: 'MOLLET G.' },
+                { key: 'calf_right', label: 'MOLLET D.' },
+              ] as const).map(({ key, label }) => (
+                <Card key={key} className="p-4 bg-white/5 border-white/5" variant="flat">
+                  <span className="awan-label mb-2 block">{label}</span>
+                  <div className="flex flex-row items-baseline gap-2">
+                    <TextInput
+                      className="text-xl font-mono font-bold text-awan-tx flex-1 outline-none bg-transparent"
+                      keyboardType="decimal-pad"
+                      value={currentEntry.measurements[key] !== undefined ? String(currentEntry.measurements[key]) : ''}
+                      onChangeText={(v: string) => updateMeasurement(key, v)}
+                      placeholder="00.0"
+                      placeholderTextColor="rgba(255,255,255,0.1)"
+                    />
+                    <span className="text-[9px] font-bold text-awan-gold font-mono">CM</span>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </div>
 
           <div className="mb-10">

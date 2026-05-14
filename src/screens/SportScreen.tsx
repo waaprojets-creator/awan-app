@@ -72,6 +72,16 @@ const SET_KIND_COLOR: Record<SetKind, string> = {
 
 const ACTIVE_SESSION_KEY = 'awan.sport.activeSession';
 const BEST_ONERMS_KEY = 'awan.sport.bestOneRMs';
+const ROUTINE_DRAFT_KEY = 'awan.sport.routineDraft';
+
+interface RoutineDraft {
+  existingId?: string | undefined;
+  name: string;
+  cycleLetter: CycleLetter | null;
+  defaultRestSec: number;
+  exercises: RoutineExercise[];
+  savedAt: number;
+}
 
 function formatTime(s: number) {
   const mins = Math.floor(s / 60);
@@ -126,6 +136,8 @@ export default function SportScreen() {
   const [editingRoutine, setEditingRoutine] = useState<RoutineLatest | null>(null);
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
   const [resumeModal, setResumeModal] = useState<ActiveSession | null>(null);
+  const [draftResumeModal, setDraftResumeModal] = useState<RoutineDraft | null>(null);
+  const [draftToResume, setDraftToResume] = useState<RoutineDraft | null>(null);
   const [timer, setTimer] = useState(0);
   const timerRef = useRef<any>(null);
 
@@ -139,6 +151,10 @@ export default function SportScreen() {
     try {
       const saved = localStorage.getItem(ACTIVE_SESSION_KEY);
       if (saved) setResumeModal(JSON.parse(saved) as ActiveSession);
+    } catch { /* ignore */ }
+    try {
+      const savedDraft = localStorage.getItem(ROUTINE_DRAFT_KEY);
+      if (savedDraft) setDraftResumeModal(JSON.parse(savedDraft) as RoutineDraft);
     } catch { /* ignore */ }
   }, []);
 
@@ -178,9 +194,17 @@ export default function SportScreen() {
 
   const saveRoutine = useCallback((r: RoutineLatest) => {
     workoutStore.saveRoutine(r);
+    try { localStorage.removeItem(ROUTINE_DRAFT_KEY); } catch { /* ignore */ }
     setEditingRoutine(null);
     setView('list');
   }, [workoutStore]);
+
+  const cancelRoutineEdit = useCallback(() => {
+    try { localStorage.removeItem(ROUTINE_DRAFT_KEY); } catch { /* ignore */ }
+    setDraftToResume(null);
+    setEditingRoutine(null);
+    setView('list');
+  }, []);
 
   const startWorkout = useCallback(async (routine: RoutineLatest, opts?: { isException?: boolean }) => {
     const lastSession = await WorkoutService.getLastSessionByRoutine(routine.id);
@@ -315,8 +339,9 @@ export default function SportScreen() {
     return (
       <RoutineEditor
         existing={view === 'edit' ? editingRoutine : null}
+        initialDraft={draftToResume}
         onSave={saveRoutine}
-        onCancel={() => { setEditingRoutine(null); setView('list'); }}
+        onCancel={cancelRoutineEdit}
       />
     );
   }
@@ -372,6 +397,44 @@ export default function SportScreen() {
                 <Touch
                   className="flex-1 h-14 bg-white/5 border border-white/10 rounded-awan-xl flex items-center justify-center"
                   onPress={() => { localStorage.removeItem(ACTIVE_SESSION_KEY); setResumeModal(null); }}
+                >
+                  <span className="awan-label text-awan-tx-mute">ABANDONNER</span>
+                </Touch>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
+      {!resumeModal && draftResumeModal && (
+        <Modal visible={true} transparent animationType="fade">
+          <div className="flex-1 flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}>
+            <div className="w-full bg-awan-surface rounded-t-3xl border-t border-white/10 p-6 pb-10">
+              <span className="awan-label text-awan-gold mb-2 block">ROUTINE EN COURS D'ÉDITION</span>
+              <span className="text-lg font-bold text-awan-tx uppercase mb-1 block">
+                {draftResumeModal.name.trim() || 'SANS NOM'}
+              </span>
+              <span className="text-[10px] font-bold text-awan-tx-mute uppercase tracking-widest mb-6 block">
+                {draftResumeModal.exercises.length} EXERCICES · Sauvegardé à {new Date(draftResumeModal.savedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+              <div className="flex flex-row gap-3">
+                <Touch
+                  className="flex-1 h-14 bg-awan-gold rounded-awan-xl flex items-center justify-center"
+                  onPress={() => {
+                    const draft = draftResumeModal;
+                    setDraftToResume(draft);
+                    setDraftResumeModal(null);
+                    const existing = draft.existingId
+                      ? workoutStore.routines.find(r => r.id === draft.existingId) ?? null
+                      : null;
+                    setEditingRoutine(existing);
+                    setView(existing ? 'edit' : 'create');
+                  }}
+                >
+                  <span className="awan-label text-black font-black">REPRENDRE</span>
+                </Touch>
+                <Touch
+                  className="flex-1 h-14 bg-white/5 border border-white/10 rounded-awan-xl flex items-center justify-center"
+                  onPress={() => { try { localStorage.removeItem(ROUTINE_DRAFT_KEY); } catch { /* ignore */ } setDraftResumeModal(null); }}
                 >
                   <span className="awan-label text-awan-tx-mute">ABANDONNER</span>
                 </Touch>
@@ -568,21 +631,44 @@ interface SessionSummary {
 
 function RoutineEditor({
   existing,
+  initialDraft,
   onSave,
   onCancel,
 }: {
   existing: RoutineLatest | null;
+  initialDraft?: RoutineDraft | null | undefined;
   onSave: (r: RoutineLatest) => void;
   onCancel: () => void;
 }) {
-  const [name, setName] = useState(existing?.name ?? '');
-  const [cycleLetter, setCycleLetter] = useState<CycleLetter | null>(existing?.cycleLetter ?? null);
-  const [defaultRestSec, setDefaultRestSec] = useState(existing?.defaultRestSec ?? DEFAULT_REST_SEC);
+  const useDraft = !!initialDraft;
+  const [name, setName] = useState(useDraft ? initialDraft!.name : (existing?.name ?? ''));
+  const [cycleLetter, setCycleLetter] = useState<CycleLetter | null>(
+    useDraft ? initialDraft!.cycleLetter : (existing?.cycleLetter ?? null),
+  );
+  const [defaultRestSec, setDefaultRestSec] = useState(
+    useDraft ? initialDraft!.defaultRestSec : (existing?.defaultRestSec ?? DEFAULT_REST_SEC),
+  );
   const [exercises, setExercises] = useState<RoutineExercise[]>(
-    existing?.exercises ?? [],
+    useDraft ? initialDraft!.exercises : (existing?.exercises ?? []),
   );
   const [isPicking, setIsPicking] = useState(false);
   const [viewingEx, setViewingEx] = useState<ExerciseEntry | null>(null);
+
+  // S1.2 — Persistance debouncée du draft de routine
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      const draft: RoutineDraft = {
+        existingId: existing?.id,
+        name,
+        cycleLetter,
+        defaultRestSec,
+        exercises,
+        savedAt: Date.now(),
+      };
+      try { localStorage.setItem(ROUTINE_DRAFT_KEY, JSON.stringify(draft)); } catch { /* quota */ }
+    }, 1000);
+    return () => clearTimeout(handle);
+  }, [name, cycleLetter, defaultRestSec, exercises, existing]);
 
   const addExercise = useCallback((ex: ExerciseEntry) => {
     setExercises(prev => [
