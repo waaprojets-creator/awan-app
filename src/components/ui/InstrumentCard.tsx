@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Touch } from './Touch';
 
-type StatusVariant = 'ok' | 'warn' | 'error' | 'info' | 'spirit' | 'mute';
+export type StatusVariant = 'ok' | 'warn' | 'error' | 'spirit' | 'mute';
 
 interface InstrumentCardProps {
   label: string;
@@ -20,7 +20,6 @@ const STATUS_COLOR: Record<StatusVariant, string> = {
   ok:     'var(--color-awan-status-ok)',
   warn:   'var(--color-awan-status-warn)',
   error:  'var(--color-awan-status-error)',
-  info:   'var(--color-awan-status-info)',
   spirit: 'var(--color-awan-status-spirit)',
   mute:   'var(--color-awan-tx-mute)',
 };
