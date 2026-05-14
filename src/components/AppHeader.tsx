@@ -42,9 +42,6 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
           >
             {(L as { header: { latin: string } }).header.latin}
           </span>
-          {isOn('Analyse') && (
-            <div style={{ height: '2px', width: '32px', backgroundColor: 'var(--color-awan-gold)', marginTop: '4px' }} />
-          )}
         </Touch>
       </div>
 
@@ -89,9 +86,6 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
           >
             {(L as { header: { arabic: string } }).header.arabic}
           </span>
-          {isOn('Islam') && (
-            <div style={{ height: '2px', width: '32px', backgroundColor: 'var(--color-awan-gold)', marginTop: '4px' }} />
-          )}
         </Touch>
       </div>
     </div>
