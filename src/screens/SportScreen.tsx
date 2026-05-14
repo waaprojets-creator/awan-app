@@ -492,6 +492,7 @@ function RoutineEditor({
     existing?.exercises ?? [],
   );
   const [isPicking, setIsPicking] = useState(false);
+  const [viewingEx, setViewingEx] = useState<ExerciseEntry | null>(null);
 
   const addExercise = useCallback((ex: ExerciseEntry) => {
     setExercises(prev => [
@@ -537,8 +538,8 @@ function RoutineEditor({
   }, [name, cycleLetter, exercises, defaultRestSec, existing, onSave]);
 
   return (
-    <div className="flex-1 bg-awan-bg">
-      <div className="px-6 pt-12 pb-6 border-b border-white/5 bg-white/5">
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }} className="bg-awan-bg">
+      <div style={{ flexShrink: 0 }} className="px-6 pt-12 pb-6 border-b border-white/5 bg-white/5">
         <div className="flex flex-row items-center gap-4">
           <Touch onPress={onCancel} className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center">
             <ChevronLeft size={20} className="text-awan-tx-mute" />
@@ -550,7 +551,7 @@ function RoutineEditor({
         </div>
       </div>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 140, padding: 24 }} style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 140, padding: 24 }} style={{ flex: 1, minHeight: 0 }}>
         <div className="mb-6">
           <span className="awan-label mb-3 block">NOM</span>
           <TextInput
@@ -614,9 +615,17 @@ function RoutineEditor({
                         {MUSCLES[ex.primaryMuscle ?? '']} • {ex.equipment}
                       </span>
                     </div>
-                    <Touch onPress={() => removeExercise(idx)}>
-                      <Trash2 size={16} className="text-awan-status-error/40" />
-                    </Touch>
+                    <div className="flex flex-row items-center gap-2">
+                      <Touch onPress={() => {
+                        const full = searchExercises('').find(e => e.id === ex.exerciseId);
+                        if (full) setViewingEx(full);
+                      }} className="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center border border-white/10">
+                        <Info size={14} className="text-awan-tx-mute" />
+                      </Touch>
+                      <Touch onPress={() => removeExercise(idx)}>
+                        <Trash2 size={16} className="text-awan-status-error/40" />
+                      </Touch>
+                    </div>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     <NumField
@@ -657,7 +666,13 @@ function RoutineEditor({
         </div>
       </ScrollView>
 
-      <ExercisePicker visible={isPicking} onClose={() => setIsPicking(false)} onPick={addExercise} />
+      <ExercisePicker
+        visible={isPicking}
+        onClose={() => setIsPicking(false)}
+        onPick={addExercise}
+        onViewDetail={setViewingEx}
+      />
+      <ExerciseDetail exercise={viewingEx} onClose={() => setViewingEx(null)} />
     </div>
   );
 }
@@ -699,10 +714,12 @@ function ExercisePicker({
   visible,
   onClose,
   onPick,
+  onViewDetail,
 }: {
   visible: boolean;
   onClose: () => void;
   onPick: (ex: ExerciseEntry) => void;
+  onViewDetail?: (ex: ExerciseEntry) => void;
 }) {
   const [search, setSearch] = useState('');
   const [filterMuscle, setFilterMuscle] = useState<string | null>(null);
@@ -767,19 +784,113 @@ function ExercisePicker({
           className="flex-1"
           contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
           renderItem={({ item: ex }: { item: ExerciseEntry }) => (
-            <Card className="flex-row items-center gap-4 py-4 px-5 bg-white/5 mb-3" variant="flat" onPress={() => onPick(ex)}>
+            <Card className="flex-row items-center gap-3 py-4 px-5 bg-white/5 mb-3" variant="flat" onPress={() => onPick(ex)}>
               <div className="flex-1">
                 <span className="text-base font-bold text-awan-tx uppercase tracking-tight block">{ex.n}</span>
                 <span className="text-[10px] font-bold text-awan-tx-mute uppercase tracking-widest">
                   {MUSCLES[ex.pm[0] ?? '']} • {ex.eq}
                 </span>
               </div>
+              {onViewDetail && (
+                <Touch
+                  onPress={(e: any) => { e.stopPropagation?.(); onViewDetail(ex); }}
+                  className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center border border-white/10"
+                >
+                  <Info size={16} className="text-awan-tx-mute" />
+                </Touch>
+              )}
               <div className="w-9 h-9 rounded-xl bg-awan-gold/20 flex items-center justify-center border border-awan-gold/30">
                 <Plus size={18} className="text-awan-gold" />
               </div>
             </Card>
           )}
         />
+      </div>
+    </Modal>
+  );
+}
+
+// ─── Exercise Detail Modal ──────────────────────────────────────────────────
+
+function ExerciseDetail({
+  exercise,
+  onClose,
+}: {
+  exercise: ExerciseEntry | null;
+  onClose: () => void;
+}) {
+  if (!exercise) return null;
+  const musclePrimary = exercise.pm.map(m => MUSCLES[m] ?? m).join(', ');
+  const muscleSecondary = exercise.sm?.map((m: string) => MUSCLES[m] ?? m).join(', ');
+  const levelMap: Record<string, string> = { beginner: 'Débutant', intermediate: 'Intermédiaire', expert: 'Expert' };
+  const forceMap: Record<string, string> = { pull: 'Tiré', push: 'Poussé', static: 'Statique' };
+  const catMap: Record<string, string> = { strength: 'Force', stretching: 'Étirement', cardio: 'Cardio', plyometrics: 'Pliométrie', powerlifting: 'Force max', strongman: 'Homme fort', olympic_weightlifting: 'Haltérophilie' };
+
+  return (
+    <Modal visible={true} transparent animationType="fade" onRequestClose={onClose}>
+      <div
+        className="flex-1 flex justify-center items-end"
+        style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+          className="w-full bg-awan-surface rounded-t-3xl border-t border-white/10 overflow-hidden"
+          style={{ maxHeight: '75vh' }}
+          onClick={(e: any) => e.stopPropagation()}
+        >
+          {/* Handle */}
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 bg-white/20 rounded-full" />
+          </div>
+
+          {/* Header */}
+          <div className="px-6 pb-4 border-b border-white/5 flex flex-row items-start justify-between">
+            <div className="flex-1 pr-4">
+              <span className="awan-label text-awan-gold mb-1 block">{musclePrimary.toUpperCase()}</span>
+              <span className="text-xl font-bold text-awan-tx uppercase tracking-tight">{exercise.n}</span>
+            </div>
+            <Touch onPress={onClose} className="w-9 h-9 bg-white/5 rounded-full flex items-center justify-center mt-1">
+              <X size={18} className="text-awan-tx-mute" />
+            </Touch>
+          </div>
+
+          <ScrollView style={{ maxHeight: 400 }} contentContainerStyle={{ padding: 24, paddingBottom: 40 }}>
+            {/* Badges */}
+            <div className="flex flex-row flex-wrap gap-2 mb-6">
+              {exercise.eq && (
+                <div className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
+                  <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest">{exercise.eq}</span>
+                </div>
+              )}
+              {exercise.lvl && (
+                <div className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
+                  <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest">{levelMap[exercise.lvl] ?? exercise.lvl}</span>
+                </div>
+              )}
+              {exercise.cat && (
+                <div className="bg-awan-gold/10 border border-awan-gold/20 px-3 py-1.5 rounded-full">
+                  <span className="text-[10px] font-black text-awan-gold uppercase tracking-widest">{catMap[exercise.cat] ?? exercise.cat}</span>
+                </div>
+              )}
+              {exercise.force && (
+                <div className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
+                  <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest">{forceMap[exercise.force] ?? exercise.force}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Muscles secondaires */}
+            {muscleSecondary && (
+              <div className="mb-5">
+                <span className="awan-label mb-2 block">MUSCLES SECONDAIRES</span>
+                <span className="text-sm font-bold text-awan-tx">{muscleSecondary}</span>
+              </div>
+            )}
+          </ScrollView>
+        </motion.div>
       </div>
     </Modal>
   );
