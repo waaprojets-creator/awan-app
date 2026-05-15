@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, ScrollView, TextInput as RNTextInput, Alert, Switch } from 'react-native';
 
 const TextInput = RNTextInput as React.ComponentType<any>;
@@ -6,12 +6,33 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemeMode } from '../hooks/useTheme';
 import { useAppStore } from '../store/appStore';
 import { useAppState } from '../context/AppStateContext';
-import { Shield, Database, Key, RefreshCw } from 'lucide-react';
+import { Shield, Database, Key, RefreshCw, Trash2 } from 'lucide-react';
 import { PageWrapper } from '../components/Animated';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
+import { getStorage } from '../data/storage/storageService';
+import { motion, AnimatePresence } from 'motion/react';
+
+const AWAN_LS_KEYS = [
+  'awan.seed.loaded',
+  'awan.theme',
+  'awan.sport.activeSession',
+  'awan.sport.bestOneRM',
+  'awan.sport.routineDraft',
+  'awan.mensuration.goals',
+  'awan.nutrition.profile',
+  'awan.user.location',
+];
+
+async function purgeAllData() {
+  try {
+    const storage = await getStorage();
+    await storage.clear();
+  } catch { /* ignore */ }
+  AWAN_LS_KEYS.forEach(k => { try { localStorage.removeItem(k); } catch { /* ignore */ } });
+}
 
 export default function SettingsScreen() {
  const insets = useSafeAreaInsets();
@@ -19,6 +40,8 @@ export default function SettingsScreen() {
  const theme = useTheme();
  const themeMode = useThemeMode();
  const setTheme = useAppStore((s: any) => s.setTheme);
+ const [purgeModal, setPurgeModal] = useState(false);
+ const [purging, setPurging] = useState(false);
 
  if (!db) return null;
  const config = db.config || { corsApiKey: '', jitFactor: 1.2 };
@@ -35,6 +58,14 @@ export default function SettingsScreen() {
  Alert.alert('Succès', 'Optimisation terminée.');
  }}
  ]);
+ };
+
+ const handlePurgeConfirm = async () => {
+ setPurging(true);
+ await purgeAllData();
+ setPurging(false);
+ setPurgeModal(false);
+ window.location.reload();
  };
 
  return (
@@ -177,10 +208,65 @@ export default function SettingsScreen() {
  thumbColor={config.isLocked ? '#fff' : '#444'}
  />
  </Touch>
+
+ <Touch
+ onPress={() => setPurgeModal(true)}
+ className="bg-awan-status-error/10 border border-awan-status-error/30 p-6 flex-row items-center gap-5"
+ >
+ <div className="w-10 h-10 bg-awan-status-error/20 flex items-center justify-center">
+ <Trash2 size={18} className="text-awan-status-error" />
+ </div>
+ <div className="flex-1">
+ <span className="text-xs font-black text-awan-status-error uppercase tracking-widest block mb-1">PURGE DONNÉES PERSONNELLES</span>
+ <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-tighter">Suppression totale et irréversible</span>
+ </div>
+ </Touch>
  </div>
  </div>
  </div>
  </ScrollView>
+
+ {/* Modal confirmation purge */}
+ <AnimatePresence>
+ {purgeModal && (
+ <motion.div
+ initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+ style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+ onClick={() => !purging && setPurgeModal(false)}
+ >
+ <motion.div
+ initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
+ transition={{ duration: 0.2 }}
+ onClick={e => e.stopPropagation()}
+ style={{ background: 'var(--color-awan-surface)', border: '1px solid rgba(255,75,75,0.3)', width: '100%', maxWidth: 360, padding: 32 }}
+ >
+ <div className="mb-2">
+ <span className="awan-label text-awan-status-error tracking-[0.3em]">— OPÉRATION CRITIQUE —</span>
+ </div>
+ <div className="mb-6">
+ <span className="text-lg font-black text-awan-tx uppercase tracking-wider block mb-3">Purge totale</span>
+ <span className="text-[11px] text-awan-tx-mute leading-relaxed block">
+ Cette opération supprime définitivement toutes les données personnelles : séances, mesures, repas, prières, journal. Aucune récupération possible.
+ </span>
+ </div>
+ <div className="flex flex-col gap-3">
+ <Touch
+ onPress={handlePurgeConfirm}
+ className="bg-awan-status-error h-14 items-center justify-center"
+ style={{ opacity: purging ? 0.5 : 1 }}
+ >
+ <span className="text-[11px] font-black text-white uppercase tracking-[0.2em] font-mono">
+ {purging ? 'SUPPRESSION...' : 'Purger données personnelles'}
+ </span>
+ </Touch>
+ <Touch onPress={() => setPurgeModal(false)} className="h-12 items-center justify-center border border-white/10">
+ <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-[0.2em] font-mono">Annuler</span>
+ </Touch>
+ </div>
+ </motion.div>
+ </motion.div>
+ )}
+ </AnimatePresence>
  </PageWrapper>
  );
 }
