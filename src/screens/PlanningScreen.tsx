@@ -260,7 +260,7 @@ export default function PlanningScreen() {
                   ? 'text-awan-gold font-normal'
                   : 'text-awan-tx font-normal';
             return (
-              <Touch key={i} className={`w-[14.28%] h-16 items-center justify-center rounded-2xl relative ${isSel ? 'bg-awan-gold' : ''}`} onPress={() => cell.dstr && selectDate(cell.dstr)}>
+              <Touch key={i} className={`w-[14.28%] h-16 items-center justify-center  relative ${isSel ? 'bg-awan-gold' : ''}`} onPress={() => cell.dstr && selectDate(cell.dstr)}>
                 <span className={`text-sm ${numClass}`}>{cell.day}</span>
                 <div className="flex flex-row gap-0.5 mt-1">
                   {cell.evs.slice(0, 3).map((ev: any, idx: number) => <div key={idx} className={`w-1 h-1 rounded-full ${isSel ? 'bg-black/60' : 'bg-awan-gold/60'}`} />)}
@@ -299,7 +299,7 @@ export default function PlanningScreen() {
         </div>
         <div className="flex flex-row pl-12 pr-4 mb-6">
           {cols.map((c, i) => (
-            <Touch key={i} className={`flex-1 items-center justify-center h-16 rounded-2xl border ${c.dstr === ds(new Date()) ? 'bg-awan-gold/10 border-awan-gold/30' : 'border-transparent'}`} onPress={() => selectDate(c.dstr)}>
+            <Touch key={i} className={`flex-1 items-center justify-center h-16  border ${c.dstr === ds(new Date()) ? 'bg-awan-gold/10 border-awan-gold/30' : 'border-transparent'}`} onPress={() => selectDate(c.dstr)}>
               <span className="text-[8px] font-black text-awan-tx-mute mb-2 uppercase tracking-widest font-mono">{DAYS_S[i]}</span>
               <span className={`text-xl font-black ${c.dstr === ds(new Date()) ? 'text-awan-gold' : 'text-awan-tx'}`}>{c.day.getDate()}</span>
             </Touch>
@@ -376,7 +376,7 @@ export default function PlanningScreen() {
             <div className="flex-1 relative">
               <div onPointerDown={handleGridPointerDown} onPointerMove={handleGridPointerMove} onPointerUp={handleGridPointerUp} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }} />
               {hours.map((_, h) => <div key={h} className="h-20 border-b border-white/5 opacity-5" />)}
-              {creatingEv && <div className="absolute left-1 right-1 bg-awan-gold/20 border-l-4 border-awan-gold rounded-lg p-3 z-10" style={{ top: (creatingEv.startMins / 60) * 80, height: (creatingEv.duration / 60) * 80 }}><span className="text-[10px] font-black text-awan-tx uppercase tracking-widest">{creatingEv.title}</span></div>}
+              {creatingEv && <div className="absolute left-1 right-1 bg-awan-gold/20 border-l-4 border-awan-gold  p-3 z-10" style={{ top: (creatingEv.startMins / 60) * 80, height: (creatingEv.duration / 60) * 80 }}><span className="text-[10px] font-black text-awan-tx uppercase tracking-widest">{creatingEv.title}</span></div>}
               {eventsForDate(db, dstr).map((ev: any) => ev.time && <DraggableEvent key={ev.id} ev={ev} hourHeight={80} handleEventDragEnd={handleEventDragEnd} setEditEv={setEditEv} setShowEvModal={setShowEvModal} categories={categories} containerRef={scrollRef} />)}
             </div>
           </div>
@@ -416,7 +416,7 @@ export default function PlanningScreen() {
             <Heading level={4} mono subtitle="Injection de Tâche">NOUVELLE MISSION</Heading>
             <div className="space-y-3">
               <TextInput
-                className="bg-awan-bg border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold text-awan-tx"
+                className="bg-awan-bg border border-white/5  px-5 py-4 text-sm font-bold text-awan-tx"
                 placeholder="TITRE DE LA TÂCHE..."
                 placeholderTextColor="var(--color-awan-tx-mute)"
                 value={aiTitle}
@@ -426,7 +426,7 @@ export default function PlanningScreen() {
                 <div className="flex-1">
                   <span className="awan-label mb-2 block">DURÉE (MIN)</span>
                   <TextInput
-                    className="bg-awan-bg border border-white/5 rounded-2xl px-5 py-4 text-sm font-bold text-awan-tx font-mono"
+                    className="bg-awan-bg border border-white/5  px-5 py-4 text-sm font-bold text-awan-tx font-mono"
                     placeholder="30"
                     placeholderTextColor="var(--color-awan-tx-mute)"
                     keyboardType="numeric"
@@ -441,7 +441,7 @@ export default function PlanningScreen() {
                       <Touch
                         key={p}
                         onPress={() => setAiPriority(p)}
-                        className={`flex-1 h-14 rounded-xl items-center justify-center border ${aiPriority === p ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'}`}
+                        className={`flex-1 h-14  items-center justify-center border ${aiPriority === p ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'}`}
                       >
                         <span className={`text-xs font-black font-mono ${aiPriority === p ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{p}</span>
                       </Touch>
@@ -456,7 +456,7 @@ export default function PlanningScreen() {
                     <Touch
                       key={e}
                       onPress={() => setAiEnergy(e)}
-                      className={`flex-1 h-12 rounded-xl items-center justify-center border ${aiEnergy === e ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'}`}
+                      className={`flex-1 h-12  items-center justify-center border ${aiEnergy === e ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'}`}
                     >
                       <span className={`text-[9px] font-black uppercase tracking-widest ${aiEnergy === e ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
                         {e === 'low' ? 'BAS' : e === 'medium' ? 'MOYEN' : 'ÉLEVÉ'}
@@ -467,7 +467,7 @@ export default function PlanningScreen() {
               </div>
               <Touch
                 onPress={addAiTask}
-                className="h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center"
+                className="h-14 bg-white/5 border border-white/10  flex items-center justify-center"
               >
                 <div className="flex flex-row items-center gap-3">
                   <Plus size={18} className="text-awan-gold" />
@@ -490,7 +490,7 @@ export default function PlanningScreen() {
                         {t.durationMin} MIN • P{t.priority} • {t.energyLevel.toUpperCase()}
                       </span>
                     </div>
-                    <Touch onPress={() => planner.deleteTask(t.id)} className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center border border-white/10">
+                    <Touch onPress={() => planner.deleteTask(t.id)} className="w-9 h-9  bg-white/5 flex items-center justify-center border border-white/10">
                       <Trash size={14} className="text-awan-tx-mute" />
                     </Touch>
                   </Card>
@@ -502,7 +502,7 @@ export default function PlanningScreen() {
           {/* Optimize button */}
           <Touch
             onPress={() => planner.optimize(today)}
-            className={`h-16 rounded-2xl flex items-center justify-center border ${planner.optimizing ? 'bg-white/5 border-white/10' : 'bg-awan-gold/10 border-awan-gold/30'}`}
+            className={`h-16  flex items-center justify-center border ${planner.optimizing ? 'bg-white/5 border-white/10' : 'bg-awan-gold/10 border-awan-gold/30'}`}
           >
             <div className="flex flex-row items-center gap-3">
               <Zap size={20} className={planner.optimizing ? 'text-awan-tx-mute' : 'text-awan-gold'} />
@@ -525,7 +525,7 @@ export default function PlanningScreen() {
                   {planner.schedule.slots.map((slot, i) => {
                     const task = taskMap.get(slot.taskId);
                     return (
-                      <Card key={i} className="flex-row items-center gap-4 py-4 px-5 bg-awan-surface/20 border-awan-gold/10" variant="flat">
+                      <Card key={i} className="flex-row items-center gap-4 py-4 px-5 bg-awan-surface border-awan-gold/10" variant="flat">
                         <div className="w-16 items-center">
                           <span className="text-[10px] font-black text-awan-gold font-mono">{minToTime(slot.startMin)}</span>
                           <span className="text-[8px] font-bold text-awan-tx-mute font-mono">{minToTime(slot.endMin)}</span>
@@ -567,9 +567,9 @@ export default function PlanningScreen() {
             <Download size={16} color="var(--color-awan-tx-mute)" />
           </Touch>
         </div>
-        <div className="flex flex-row gap-2 bg-black/40 p-1.5 rounded-[24px] border border-white/10">
+        <div className="flex flex-row border-b border-white/10">
           {STABS.map(({ id, label, Icon }) => (
-            <Touch key={id} className={`flex-1 py-4 flex-col items-center justify-center gap-1.5 rounded-2xl ${subTab === id ? 'bg-white/5 border border-white/10' : 'opacity-30'}`} onPress={() => setSubTab(id)}>
+            <Touch key={id} className={`flex-1 py-3 flex-col items-center justify-center gap-1.5 border-b-2 transition-all ${subTab === id ? 'border-awan-gold' : 'border-transparent opacity-40'}`} onPress={() => setSubTab(id)}>
               <Icon size={18} className={subTab === id ? 'text-awan-gold' : 'text-awan-tx-mute'} />
               <span className={`text-[9px] font-black uppercase tracking-[0.2em] font-mono ${subTab === id ? 'text-awan-tx' : 'text-awan-tx-mute'}`}>{label}</span>
             </Touch>
@@ -587,11 +587,11 @@ export default function PlanningScreen() {
       </AnimatePresence>
       <div className="px-6 pb-24 flex flex-row gap-4 mt-auto">
         <Card className="flex-1 flex-row items-center gap-4 py-6 px-6 bg-white/5 border-white/5" variant="flat">
-          <div className="w-10 h-10 rounded-xl bg-awan-gold/10 flex items-center justify-center border border-awan-gold/20"><Zap size={18} className="text-awan-gold" /></div>
+          <div className="w-10 h-10  bg-awan-gold/10 flex items-center justify-center border border-awan-gold/20"><Zap size={18} className="text-awan-gold" /></div>
           <div><span className="text-2xl font-black text-awan-tx tabular-nums">{eventsForDate(db, ds(new Date())).length}</span><span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest block font-mono">Auj.</span></div>
         </Card>
         <Card className="flex-1 flex-row items-center gap-4 py-6 px-6 bg-white/5 border-white/5" variant="flat">
-          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10"><Layers size={18} className="text-awan-tx-mute" /></div>
+          <div className="w-10 h-10  bg-white/5 flex items-center justify-center border border-white/10"><Layers size={18} className="text-awan-tx-mute" /></div>
           <div><span className="text-2xl font-black text-awan-tx tabular-nums">{(db?.tasks || []).filter((t: any) => !t.done).length}</span><span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest block font-mono">Tâches</span></div>
         </Card>
       </div>
@@ -607,7 +607,7 @@ function EvListSection({ events, categories, onAdd, onAddRt, onEdit }: any) {
   return (
     <div className="space-y-4">
       {events.map((ev: any) => (
-        <Touch key={ev.id} className="bg-white/5 border border-white/5 rounded-[24px] overflow-hidden flex flex-row" onPress={() => !ev.isRt && onEdit(ev)}>
+        <Touch key={ev.id} className="bg-white/5 border border-white/5  overflow-hidden flex flex-row" onPress={() => !ev.isRt && onEdit(ev)}>
           <div className="w-2" style={{ backgroundColor: ev.color || categories[ev.category]?.c || theme.title }} />
           <div className="flex-1 p-6">
             <div className="flex flex-row justify-between items-center mb-2">
@@ -620,8 +620,8 @@ function EvListSection({ events, categories, onAdd, onAddRt, onEdit }: any) {
         </Touch>
       ))}
       <div className="flex flex-row gap-4 pt-4">
-        <Touch onPress={onAdd} className="flex-1 bg-awan-gold h-14 rounded-2xl items-center justify-center shadow-lg shadow-awan-gold/20"><span className="text-[10px] font-black text-black uppercase tracking-widest font-mono">Nouvel Événement</span></Touch>
-        <Touch onPress={onAddRt} className="flex-1 bg-white/5 border border-white/10 h-14 rounded-2xl items-center justify-center"><span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest font-mono">Routine</span></Touch>
+        <Touch onPress={onAdd} className="flex-1 bg-awan-gold h-14  items-center justify-center shadow-lg shadow-awan-gold/20"><span className="text-[10px] font-black text-black uppercase tracking-widest font-mono">Nouvel Événement</span></Touch>
+        <Touch onPress={onAddRt} className="flex-1 bg-white/5 border border-white/10 h-14  items-center justify-center"><span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest font-mono">Routine</span></Touch>
       </div>
     </div>
   );
@@ -640,20 +640,20 @@ function EventModal({ visible, initial, defaultDate, categories, onClose, onSave
           <div className="w-12 h-1.5 bg-white/10 rounded-full self-center mb-10" />
           <Heading level={2} subtitle="Paramètres du Segment" className="text-center mb-12">PLANIFICATION</Heading>
           <div className="space-y-8">
-            <div><span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest ml-1 mb-3 block font-mono">Identifiant de Mission</span><TextInput className="bg-black/40 border border-white/5 rounded-2xl p-5 text-awan-tx font-bold text-base" value={title} onChangeText={setTitle} placeholder="TITRE DE L'OPÉRATION..." placeholderTextColor="var(--color-awan-tx-mute)" /></div>
+            <div><span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest ml-1 mb-3 block font-mono">Identifiant de Mission</span><TextInput className="bg-awan-surface border border-white/5  p-5 text-awan-tx font-bold text-base" value={title} onChangeText={setTitle} placeholder="TITRE DE L'OPÉRATION..." placeholderTextColor="var(--color-awan-tx-mute)" /></div>
             <div className="grid grid-cols-2 gap-6">
-              <div><span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest ml-1 mb-3 block font-mono">Heure de Lancement</span><TextInput className="bg-black/40 border border-white/5 rounded-2xl p-5 text-awan-tx font-mono text-center text-lg" value={time} onChangeText={setTime} placeholder="12:00" /></div>
-              <div><span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest ml-1 mb-3 block font-mono">Anticipation</span><Touch className="bg-black/40 border border-white/5 h-16 rounded-2xl items-center justify-center"><span className="text-xs font-black text-awan-gold uppercase tracking-widest font-mono">{reminder > 0 ? `${reminder}M` : 'OFF'}</span></Touch></div>
+              <div><span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest ml-1 mb-3 block font-mono">Heure de Lancement</span><TextInput className="bg-awan-surface border border-white/5  p-5 text-awan-tx font-mono text-center text-lg" value={time} onChangeText={setTime} placeholder="12:00" /></div>
+              <div><span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest ml-1 mb-3 block font-mono">Anticipation</span><Touch className="bg-awan-surface border border-white/5 h-16  items-center justify-center"><span className="text-xs font-black text-awan-gold uppercase tracking-widest font-mono">{reminder > 0 ? `${reminder}M` : 'OFF'}</span></Touch></div>
             </div>
             <div>
               <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest ml-1 mb-4 block font-mono">Classification Stratégique</span>
               <div className="flex flex-row flex-wrap gap-2">
-                {Object.entries(categories).map(([k, c]: [any, any]) => <Touch key={k} className={`px-6 py-3 rounded-xl border transition-all ${cat === k ? 'bg-white/10 border-white/20 shadow-inner' : 'bg-black/20 border-transparent opacity-40'}`} onPress={() => setCat(k)}><div className="flex flex-row items-center gap-3"><div className="w-2 h-2 rounded-full shadow-[0_0_5px_rgba(255,255,255,0.3)]" style={{ backgroundColor: c.c }} /><span className="text-[10px] font-black text-awan-tx uppercase tracking-widest font-mono">{c.l}</span></div></Touch>)}
+                {Object.entries(categories).map(([k, c]: [any, any]) => <Touch key={k} className={`px-6 py-3  border transition-all ${cat === k ? 'bg-white/10 border-white/20 shadow-inner' : 'bg-awan-surface border-transparent opacity-40'}`} onPress={() => setCat(k)}><div className="flex flex-row items-center gap-3"><div className="w-2 h-2 rounded-full shadow-[0_0_5px_rgba(255,255,255,0.3)]" style={{ backgroundColor: c.c }} /><span className="text-[10px] font-black text-awan-tx uppercase tracking-widest font-mono">{c.l}</span></div></Touch>)}
               </div>
             </div>
             <div className="flex flex-row gap-4 pt-4">
-              <Touch onPress={onClose} className="flex-1 h-16 items-center justify-center rounded-2xl bg-white/5 border border-white/5"><span className="text-xs font-black text-awan-tx-mute uppercase tracking-widest font-mono">Abandonner</span></Touch>
-              <Touch onPress={() => onSave({ title, date: defaultDate, category: cat, time, reminder })} className="flex-1 h-16 items-center justify-center rounded-2xl bg-awan-gold shadow-xl shadow-awan-gold/20"><span className="text-xs font-black text-black uppercase tracking-widest font-mono">Initialiser</span></Touch>
+              <Touch onPress={onClose} className="flex-1 h-16 items-center justify-center  bg-white/5 border border-white/5"><span className="text-xs font-black text-awan-tx-mute uppercase tracking-widest font-mono">Abandonner</span></Touch>
+              <Touch onPress={() => onSave({ title, date: defaultDate, category: cat, time, reminder })} className="flex-1 h-16 items-center justify-center  bg-awan-gold shadow-xl shadow-awan-gold/20"><span className="text-xs font-black text-black uppercase tracking-widest font-mono">Initialiser</span></Touch>
             </div>
           </div>
         </div>
@@ -670,10 +670,10 @@ function ImportModal({ visible, onClose, onImport }: any) {
         <div className="bg-awan-surface p-8 pt-4 rounded-t-[40px] border-t border-white/10 w-full max-w-lg mx-auto shadow-2xl">
           <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-10" />
           <Heading level={2} subtitle="Base de Données Routines" className="text-center mb-12">IMPORTATION</Heading>
-          <TextInput className="bg-black/40 border border-white/5 rounded-2xl p-6 text-awan-tx font-mono text-xs mb-10 min-h-[200px]" multiline value={json} onChangeText={setJson} placeholder="[{'name': 'Routine'}]" placeholderTextColor="var(--color-awan-tx-mute)" />
+          <TextInput className="bg-awan-surface border border-white/5  p-6 text-awan-tx font-mono text-xs mb-10 min-h-[200px]" multiline value={json} onChangeText={setJson} placeholder="[{'name': 'Routine'}]" placeholderTextColor="var(--color-awan-tx-mute)" />
           <div className="flex flex-row gap-4">
-            <Touch onPress={onClose} className="flex-1 h-16 items-center justify-center rounded-2xl bg-white/5 border border-white/5"><span className="text-xs font-black text-awan-tx-mute uppercase tracking-widest font-mono">Annuler</span></Touch>
-            <Touch onPress={() => onImport(json)} className="flex-1 h-16 items-center justify-center rounded-2xl bg-awan-gold shadow-xl shadow-awan-gold/20"><span className="text-xs font-black text-black uppercase tracking-widest font-mono">Exécuter Import</span></Touch>
+            <Touch onPress={onClose} className="flex-1 h-16 items-center justify-center  bg-white/5 border border-white/5"><span className="text-xs font-black text-awan-tx-mute uppercase tracking-widest font-mono">Annuler</span></Touch>
+            <Touch onPress={() => onImport(json)} className="flex-1 h-16 items-center justify-center  bg-awan-gold shadow-xl shadow-awan-gold/20"><span className="text-xs font-black text-black uppercase tracking-widest font-mono">Exécuter Import</span></Touch>
           </div>
         </div>
       </div>

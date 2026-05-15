@@ -61,14 +61,14 @@ export default function SettingsScreen() {
  </div>
  <span className="text-2xl font-black text-awan-gold font-mono">{themeMode === 'dark' ? 'DARK' : 'LIGHT'}</span>
  </div>
- <div className="flex flex-row bg-black/40 p-1 gap-1">
+ <div className="flex flex-row bg-awan-surface p-1 gap-1">
  <Touch onPress={() => setTheme('light')}
  className={`flex-1 py-3 items-center justify-center ${themeMode === 'light' ? 'bg-awan-gold' : 'transparent'}`}>
- <span className={`text-[10px] font-black font-mono ${themeMode === 'light' ? 'text-black' : 'text-white/20'}`}>LIGHT</span>
+ <span className={`text-[10px] font-black font-mono ${themeMode === 'light' ? 'text-black' : 'text-awan-tx-mute'}`}>LIGHT</span>
  </Touch>
  <Touch onPress={() => setTheme('dark')}
  className={`flex-1 py-3 items-center justify-center ${themeMode === 'dark' ? 'bg-awan-gold' : 'transparent'}`}>
- <span className={`text-[10px] font-black font-mono ${themeMode === 'dark' ? 'text-black' : 'text-white/20'}`}>DARK</span>
+ <span className={`text-[10px] font-black font-mono ${themeMode === 'dark' ? 'text-black' : 'text-awan-tx-mute'}`}>DARK</span>
  </Touch>
  </div>
  </Card>
@@ -92,7 +92,7 @@ export default function SettingsScreen() {
  {/* ORS */}
  <div className="mb-10">
  <Heading level={4} mono subtitle="Intégrations Externes" className="mb-6">PROTOCOLES ORS</Heading>
- <Card className="p-0 border-white/5 bg-black/20 overflow-hidden shadow-inner mb-4">
+ <Card className="p-0 border-white/5 bg-awan-surface overflow-hidden shadow-inner mb-4">
  <div className="flex flex-row items-center px-5 h-16">
  <Key size={16} className="text-awan-gold mr-4" />
  <TextInput
@@ -121,7 +121,7 @@ export default function SettingsScreen() {
  </div>
  <span className="text-2xl font-black text-awan-gold font-mono">{(Number(config.jitFactor) || 1.2).toFixed(1)}x</span>
  </div>
- <div className="flex flex-row bg-black/40 p-1 gap-1">
+ <div className="flex flex-row bg-awan-surface p-1 gap-1">
  {[1.0, 1.1, 1.2, 1.3, 1.4, 1.5].map(v => {
  const active = Math.abs(Number(config.jitFactor || 1.2) - v) < 0.01;
  return (

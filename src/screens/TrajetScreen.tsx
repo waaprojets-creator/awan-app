@@ -131,7 +131,7 @@ export default function TrajetScreen() {
           <ScreenHeader tag="TRAJET" title="TRAJET" />
         </div>
 
-        <div className="h-[400px] w-full bg-awan-surface/20 relative">
+        <div className="h-[400px] w-full bg-awan-surface relative">
           <MapComponent 
             entries={mapEntries} 
             route={route} 
@@ -143,7 +143,7 @@ export default function TrajetScreen() {
           
           <div className="absolute top-4 left-4 right-4 z-[1000]">
             <div className="flex flex-row gap-2">
-              <div className="flex-1 bg-awan-bg/80 backdrop-blur-xl border border-white/10 rounded-2xl flex flex-row items-center px-4 py-2 shadow-2xl">
+              <div className="flex-1 bg-awan-bg/80 backdrop-blur-xl border border-white/10  flex flex-row items-center px-4 py-2 shadow-2xl">
                 <Search size={18} className="text-awan-tx-mute mr-3" />
                 <TextInput 
                   className="flex-1 text-sm font-bold text-awan-tx h-8 outline-none"
@@ -155,7 +155,7 @@ export default function TrajetScreen() {
                 />
                 {loading && <ActivityIndicator size="small" color={theme.title} />}
               </div>
-              <Touch className="w-12 h-12 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl items-center justify-center" onPress={() => setMapType(mapType === 'light' ? 'dark' : 'light')}>
+              <Touch className="w-12 h-12 bg-white/5 backdrop-blur-xl border border-white/10  items-center justify-center" onPress={() => setMapType(mapType === 'light' ? 'dark' : 'light')}>
                 <Layers size={20} className="text-awan-tx" />
               </Touch>
             </div>
@@ -166,7 +166,7 @@ export default function TrajetScreen() {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="mt-2 bg-awan-bg/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl"
+                  className="mt-2 bg-awan-bg/95 backdrop-blur-xl border border-white/10  overflow-hidden shadow-2xl"
                 >
                   {results.slice(0, 5).map((r, i) => (
                     <Touch key={i} className="p-4 border-b border-white/5 flex flex-row items-center gap-3 hover:bg-white/5" onPress={() => addPoi(r)}>
@@ -188,7 +188,7 @@ export default function TrajetScreen() {
               <Heading level={4} mono subtitle="Opératif" className="mb-0">ITINÉRAIRE</Heading>
               <div className="flex flex-row gap-2">
                 <Touch 
-                  className={`px-4 h-10 rounded-xl border border-white/10 flex flex-row items-center gap-3 transition-all ${loading ? 'opacity-30' : 'bg-awan-gold'}`} 
+                  className={`px-4 h-10  border border-white/10 flex flex-row items-center gap-3 transition-all ${loading ? 'opacity-30' : 'bg-awan-gold'}`} 
                   onPress={calculateRoute}
                   disabled={loading || mapEntries.length < 2}
                 >
@@ -196,7 +196,7 @@ export default function TrajetScreen() {
                   <span className="text-[10px] font-black text-black uppercase tracking-widest">TRACER VECTEUR</span>
                 </Touch>
                 <Touch 
-                  className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 items-center justify-center hover:bg-awan-status-error/10 hover:border-awan-status-error/30" 
+                  className="w-10 h-10  bg-white/5 border border-white/10 items-center justify-center hover:bg-awan-status-error/10 hover:border-awan-status-error/30" 
                   onPress={clearTrajets}
                 >
                   <Trash2 size={16} className="text-awan-tx-mute" />
@@ -209,7 +209,7 @@ export default function TrajetScreen() {
               module="trajet" 
               renderItem={(item) => (
                 <Card className="flex-row items-center gap-4 py-5 mb-3 bg-white/5 border-white/5" variant="flat">
-                  <div className="w-12 h-12 rounded-xl bg-awan-gold/10 flex items-center justify-center border border-awan-gold/20">
+                  <div className="w-12 h-12  bg-awan-gold/10 flex items-center justify-center border border-awan-gold/20">
                     <MapPin size={22} className="text-awan-gold" />
                   </div>
                   <div className="flex-1">
@@ -274,7 +274,7 @@ export default function TrajetScreen() {
           <div className="space-y-4">
             <Card className="flex-row items-center justify-between p-5 bg-white/5 border-white/5">
               <div className="flex flex-row items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-white/5 items-center justify-center border border-white/10">
+                <div className="w-10 h-10  bg-white/5 items-center justify-center border border-white/10">
                   <Info size={18} className="text-awan-tx-mute" />
                 </div>
                 <span className="text-xs font-black text-awan-tx uppercase tracking-wider">RADAR DE PROXIMITÉ</span>

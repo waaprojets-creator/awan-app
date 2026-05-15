@@ -175,7 +175,7 @@ function ProgressBar({ label, actual, target, unit, accent }: ProgressBarProps) 
  const color = statusColor(actual, target);
  const pct = target > 0 ? Math.min((actual / target) * 100, 120) : 0;
  return (
- <div className="bg-black/40 p-3 border border-white/5">
+ <div className="bg-awan-surface p-3 border border-white/5">
  <div className="flex flex-row justify-between items-baseline mb-2">
  <span
  className="text-[8px] font-black uppercase tracking-widest"
@@ -612,7 +612,7 @@ function AddMealModal({
  APERÇU MACROS
  </span>
  <div className="grid grid-cols-4 gap-2">
- <div className="bg-black/40 p-2 border border-white/5 text-center">
+ <div className="bg-awan-surface p-2 border border-white/5 text-center">
  <span className="text-[8px] font-black text-awan-gold uppercase tracking-widest block mb-1">
  KCAL
  </span>
@@ -620,7 +620,7 @@ function AddMealModal({
  {preview.kcal}
  </span>
  </div>
- <div className="bg-black/40 p-2 border border-white/5 text-center">
+ <div className="bg-awan-surface p-2 border border-white/5 text-center">
  <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
  P
  </span>
@@ -628,7 +628,7 @@ function AddMealModal({
  {preview.p}
  </span>
  </div>
- <div className="bg-black/40 p-2 border border-white/5 text-center">
+ <div className="bg-awan-surface p-2 border border-white/5 text-center">
  <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
  G
  </span>
@@ -636,7 +636,7 @@ function AddMealModal({
  {preview.c}
  </span>
  </div>
- <div className="bg-black/40 p-2 border border-white/5 text-center">
+ <div className="bg-awan-surface p-2 border border-white/5 text-center">
  <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
  L
  </span>
@@ -806,7 +806,7 @@ function EditMealModal({ visible, entry, onClose, onUpdate }: EditModalProps) {
  APERÇU MACROS
  </span>
  <div className="grid grid-cols-4 gap-2">
- <div className="bg-black/40 p-2 border border-white/5 text-center">
+ <div className="bg-awan-surface p-2 border border-white/5 text-center">
  <span className="text-[8px] font-black text-awan-gold uppercase tracking-widest block mb-1">
  KCAL
  </span>
@@ -814,7 +814,7 @@ function EditMealModal({ visible, entry, onClose, onUpdate }: EditModalProps) {
  {preview.kcal}
  </span>
  </div>
- <div className="bg-black/40 p-2 border border-white/5 text-center">
+ <div className="bg-awan-surface p-2 border border-white/5 text-center">
  <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
  P
  </span>
@@ -822,7 +822,7 @@ function EditMealModal({ visible, entry, onClose, onUpdate }: EditModalProps) {
  {preview.p}
  </span>
  </div>
- <div className="bg-black/40 p-2 border border-white/5 text-center">
+ <div className="bg-awan-surface p-2 border border-white/5 text-center">
  <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
  G
  </span>
@@ -830,7 +830,7 @@ function EditMealModal({ visible, entry, onClose, onUpdate }: EditModalProps) {
  {preview.c}
  </span>
  </div>
- <div className="bg-black/40 p-2 border border-white/5 text-center">
+ <div className="bg-awan-surface p-2 border border-white/5 text-center">
  <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
  L
  </span>
@@ -1072,7 +1072,7 @@ export default function NutritionScreen() {
 
  {/* Day Totals */}
  <div className="px-6 mb-8">
- <Card className="p-6 bg-awan-surface/20 border-awan-gold/20">
+ <Card className="p-6 bg-awan-surface border-awan-gold/20">
  <div className="flex justify-between items-center mb-6">
  <div className="flex flex-col">
  <span className="awan-label text-awan-gold">INDEX CALORIQUE</span>
@@ -1128,7 +1128,7 @@ export default function NutritionScreen() {
  </>
  ) : (
  <>
- <div className="bg-black/40 p-3 border border-white/5">
+ <div className="bg-awan-surface p-3 border border-white/5">
  <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">
  PROTÉINES
  </span>
@@ -1136,7 +1136,7 @@ export default function NutritionScreen() {
  {totals.p}g
  </span>
  </div>
- <div className="bg-black/40 p-3 border border-white/5">
+ <div className="bg-awan-surface p-3 border border-white/5">
  <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">
  GLUCIDES
  </span>
@@ -1144,7 +1144,7 @@ export default function NutritionScreen() {
  {totals.c}g
  </span>
  </div>
- <div className="bg-black/40 p-3 border border-white/5">
+ <div className="bg-awan-surface p-3 border border-white/5">
  <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">
  LIPIDES
  </span>

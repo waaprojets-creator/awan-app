@@ -216,7 +216,7 @@ export default function MensurationScreen() {
         <ScreenHeader tag="BODY · MENSURATION" title="DÉTAILS PHYSIQUES" />
       </div>
       
-      <div className="flex flex-row justify-between bg-black/40 p-5 rounded-awan-3xl border border-white/5 shadow-inner mx-6 mb-6">
+      <div className="flex flex-row justify-between bg-awan-surface p-5  border border-white/5 shadow-inner mx-6 mb-6">
          <div className="flex-1 items-center border-r border-white/5">
             <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase mb-2">Poids</span>
             <div className="flex flex-row items-baseline gap-1">
@@ -260,12 +260,12 @@ export default function MensurationScreen() {
           <div className="mb-10">
             <div className="flex flex-row justify-between items-end mb-4 px-1">
               <Heading level={4} mono subtitle="Courbe temporelle" className="mb-0">ÉVOLUTION DU POIDS</Heading>
-              <div className="bg-black/40 p-1 rounded-xl border border-white/5 flex flex-row gap-1">
+              <div className="bg-awan-surface p-1  border border-white/5 flex flex-row gap-1">
                 {([30, 90, 365] as const).map(d => (
                   <Touch
                     key={d}
                     onPress={() => setWeightFilter(d)}
-                    className={`px-3 py-1.5 rounded-lg transition-all ${weightFilter === d ? 'bg-awan-gold' : ''}`}
+                    className={`px-3 py-1.5  transition-all ${weightFilter === d ? 'bg-awan-gold' : ''}`}
                   >
                     <span className={`text-[9px] font-black uppercase tracking-widest ${weightFilter === d ? 'text-black' : 'text-awan-tx-mute'}`}>
                       {d === 365 ? '1AN' : `${d}J`}
@@ -415,7 +415,7 @@ export default function MensurationScreen() {
           {/* Quick Log Input */}
           <div className="mb-10">
             <Card className="flex-row items-center gap-4 bg-white/5 border-white/10 p-5" variant="flat">
-               <div className="bg-black/40 border border-white/5 rounded-2xl flex-1 px-4 py-2 flex flex-row items-center">
+               <div className="bg-awan-surface border border-white/5  flex-1 px-4 py-2 flex flex-row items-center">
                   <Database size={14} className="text-awan-gold mr-3 opacity-50" />
                   <TextInput
                     className="flex-1 h-10 text-sm font-bold text-awan-tx outline-none"
@@ -426,7 +426,7 @@ export default function MensurationScreen() {
                     onSubmitEditing={handleAddEntry}
                   />
                </div>
-               <Touch onPress={handleAddEntry} className="w-12 h-12 bg-white/5 rounded-2xl items-center justify-center border border-white/10">
+               <Touch onPress={handleAddEntry} className="w-12 h-12 bg-white/5  items-center justify-center border border-white/10">
                   <Plus size={20} className="text-awan-gold" />
                </Touch>
             </Card>
@@ -442,7 +442,7 @@ export default function MensurationScreen() {
                     <div className="w-1 h-1 bg-white/10 rounded-full" />
                   </div>
                 </div>
-                <div className="bg-awan-surface/30 rounded-awan-3xl border border-white/10 p-6 relative overflow-hidden shadow-2xl">
+                <div className="bg-awan-surface  border border-white/10 p-6 relative overflow-hidden shadow-2xl">
                    {isScanning && (
                       <motion.div 
                         initial={{ top: -20 }}
@@ -452,7 +452,7 @@ export default function MensurationScreen() {
                       />
                    )}
                    <HumanAnatomySvg onPartPress={handlePartPress} updatedParts={updatedParts as any} />
-                   <div className="mt-6 p-3 bg-black/40 rounded-xl border border-white/5 flex flex-row items-center gap-3">
+                   <div className="mt-6 p-3 bg-awan-surface  border border-white/5 flex flex-row items-center gap-3">
                       <Target size={14} className="text-awan-gold" />
                       <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest leading-tight">Toucher une zone pour injection biométrique</span>
                    </div>
@@ -463,15 +463,15 @@ export default function MensurationScreen() {
              <div className="flex-[2] space-y-6">
                 <div>
                    <span className="text-[10px] font-black text-awan-gold tracking-[0.4em] mb-3 block uppercase opacity-50">Config</span>
-                   <div className="bg-black/40 p-1.5 rounded-2xl border border-white/5 flex flex-col gap-2">
+                   <div className="bg-awan-surface p-1.5  border border-white/5 flex flex-col gap-2">
                       <Touch 
-                        className={`py-3 items-center rounded-xl transition-all ${gender === 'man' ? 'bg-awan-gold' : ''}`}
+                        className={`py-3 items-center  transition-all ${gender === 'man' ? 'bg-awan-gold' : ''}`}
                         onPress={() => setGender('man')}
                       >
                          <span className={`text-[9px] font-black uppercase tracking-widest ${gender === 'man' ? 'text-black' : 'text-awan-tx-mute'}`}>HOMME</span>
                       </Touch>
                       <Touch 
-                        className={`py-3 items-center rounded-xl transition-all ${gender === 'woman' ? 'bg-awan-gold' : ''}`}
+                        className={`py-3 items-center  transition-all ${gender === 'woman' ? 'bg-awan-gold' : ''}`}
                         onPress={() => setGender('woman')}
                       >
                          <span className={`text-[9px] font-black uppercase tracking-widest ${gender === 'woman' ? 'text-black' : 'text-awan-tx-mute'}`}>FEMME</span>
@@ -573,7 +573,7 @@ export default function MensurationScreen() {
                    </div>
                    <Touch
                      onPress={() => handleDeleteMeasurement(h.date)}
-                     className="w-8 h-8 rounded-lg items-center justify-center bg-white/5 border border-white/5"
+                     className="w-8 h-8  items-center justify-center bg-white/5 border border-white/5"
                    >
                      <X size={14} className="text-awan-tx-mute" />
                    </Touch>
@@ -590,17 +590,17 @@ export default function MensurationScreen() {
            <motion.div 
              initial={{ scale: 0.9, opacity: 0 }}
              animate={{ scale: 1, opacity: 1 }}
-             className="w-full max-w-sm bg-awan-bg border border-awan-gold/30 rounded-awan-3xl p-8 shadow-[0_0_50px_rgba(212,175,55,0.2)]"
+             className="w-full max-w-sm bg-awan-bg border border-awan-gold/30  p-8 shadow-[0_0_50px_rgba(212,175,55,0.2)]"
            >
               <div className="items-center mb-8">
-                 <div className="w-16 h-16 rounded-2xl bg-awan-gold/10 flex items-center justify-center mb-4 border border-awan-gold/20">
+                 <div className="w-16 h-16  bg-awan-gold/10 flex items-center justify-center mb-4 border border-awan-gold/20">
                     <Target size={32} className="text-awan-gold" />
                  </div>
                  <span className="text-[10px] font-black text-awan-gold tracking-[0.5em] uppercase mb-1">Cible Opérative</span>
                  <Heading level={2} className="mb-0 text-center uppercase tracking-widest">{selectedPart?.replace('_', ' ')}</Heading>
               </div>
 
-              <div className="bg-black/40 border border-white/10 rounded-2xl p-6 mb-10 shadow-inner">
+              <div className="bg-awan-surface border border-white/10  p-6 mb-10 shadow-inner">
                  <span className="text-[10px] font-black text-awan-tx-mute tracking-[0.4em] uppercase mb-3 block text-center">Valeur en CM</span>
                  <TextInput 
                     className="text-5xl font-black text-awan-gold font-mono text-center outline-none"
@@ -614,10 +614,10 @@ export default function MensurationScreen() {
               </div>
 
               <div className="flex flex-row gap-4">
-                 <Touch onPress={() => setSelectedPart(null)} className="flex-1 h-14 rounded-xl items-center justify-center bg-white/5 border border-white/10">
+                 <Touch onPress={() => setSelectedPart(null)} className="flex-1 h-14  items-center justify-center bg-white/5 border border-white/10">
                     <span className="text-xs font-black text-awan-tx-mute tracking-widest uppercase">ANNULER</span>
                  </Touch>
-                 <Touch onPress={saveMeasurement} className="flex-[2] h-14 rounded-xl items-center justify-center bg-awan-gold shadow-lg shadow-awan-gold/20">
+                 <Touch onPress={saveMeasurement} className="flex-[2] h-14  items-center justify-center bg-awan-gold shadow-lg shadow-awan-gold/20">
                     <span className="text-xs font-black text-black tracking-widest uppercase">SYDNC SIGNALS</span>
                  </Touch>
               </div>

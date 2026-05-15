@@ -27,7 +27,7 @@ export function BilanZen({ summary, onRefresh, loading }: BilanZenProps) {
           </div>
           <div>
             <span className="awan-label text-[8px] text-awan-gold block mb-0.5 tracking-[0.3em]">SYNTHÈSE IA</span>
-            <Heading level={3} className="mb-0 leading-none">CONSCIECE TACTIQUE</Heading>
+            <Heading level={3} className="mb-0 leading-none">CONSCIENCE TACTIQUE</Heading>
           </div>
         </div>
         {onRefresh && (

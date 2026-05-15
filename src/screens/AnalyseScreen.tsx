@@ -191,15 +191,15 @@ export default function AnalyseScreen() {
 
         {/* Tab Control */}
         <div className="px-6 mb-8">
-           <div className="bg-awan-surface/30 p-1.5 rounded-3xl border border-white/5 flex flex-row shadow-2xl">
+           <div className="border-b border-white/10 flex flex-row">
               {TABS.map(({ id, label, Icon }) => (
-                <Touch 
-                  key={id} 
-                  className={`flex-1 py-3 items-center justify-center rounded-2xl transition-all ${tab === id ? 'bg-awan-gold shadow-lg' : ''}`}
+                <Touch
+                  key={id}
+                  className={`flex-1 py-3 items-center justify-center border-b-2 transition-all ${tab === id ? 'border-awan-gold' : 'border-transparent opacity-40'}`}
                   onPress={() => setTab(id)}
                 >
-                  <Icon size={18} className={tab === id ? 'text-black' : 'text-awan-tx-mute'} />
-                  <span className={`text-[8px] font-black uppercase tracking-widest mt-1 ${tab === id ? 'text-black' : 'text-awan-tx-mute'}`}>{label}</span>
+                  <Icon size={18} className={tab === id ? 'text-awan-gold' : 'text-awan-tx-mute'} />
+                  <span className={`text-[8px] font-black uppercase tracking-widest mt-1 ${tab === id ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{label}</span>
                 </Touch>
               ))}
            </div>
@@ -210,10 +210,10 @@ export default function AnalyseScreen() {
            {RANGES.map(r => (
              <Touch 
                key={r.id} 
-               className={`px-6 py-1.5 rounded-full border transition-all ${range === r.id ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'}`}
+               className={`px-6 py-1.5 border transition-all ${range === r.id ? 'bg-awan-gold/20 border-awan-gold' : 'border-white/10'}`}
                onPress={() => setRange(r.id)}
              >
-               <span className={`text-[10px] font-black tracking-[0.2em] ${range === r.id ? 'text-awan-gold' : 'text-white/20'}`}>{r.label}</span>
+               <span className={`text-[10px] font-black tracking-[0.2em] ${range === r.id ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{r.label}</span>
              </Touch>
            ))}
         </div>

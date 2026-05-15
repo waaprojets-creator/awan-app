@@ -525,7 +525,7 @@ export default function SportScreen() {
  <StaggerList>
  {workoutStore.routines.map(r => (
  <StaggerItem key={r.id} className="mb-4">
- <Card className="p-6 bg-awan-surface/20" onPress={() => startWorkout(r)}>
+ <Card className="p-6 bg-awan-surface" onPress={() => startWorkout(r)}>
  <div className="flex flex-row justify-between items-center mb-2">
  <span className="text-lg font-bold text-awan-tx uppercase tracking-tight flex-1">{r.name}</span>
  <div className="flex flex-row gap-2">
@@ -751,7 +751,7 @@ function RoutineEditor({
  <Touch onPress={() => setDefaultRestSec(Math.max(0, defaultRestSec - 15))} className="w-12 h-12 bg-white/5 flex items-center justify-center">
  <Minus size={16} className="text-awan-tx-mute" />
  </Touch>
- <div className="flex-1 bg-black/40 h-12 flex items-center justify-center">
+ <div className="flex-1 bg-awan-surface h-12 flex items-center justify-center">
  <span className="text-awan-gold font-mono font-bold text-lg">{defaultRestSec}s</span>
  </div>
  <Touch onPress={() => setDefaultRestSec(defaultRestSec + 15)} className="w-12 h-12 bg-white/5 flex items-center justify-center">
@@ -857,13 +857,13 @@ function NumField({
  <div>
  <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-widest mb-1 block">{label}</span>
  <div className="flex flex-row items-center gap-1">
- <Touch onPress={() => onChange(Math.max(min, value - step))} className="w-8 h-10 bg-black/30 flex items-center justify-center">
+ <Touch onPress={() => onChange(Math.max(min, value - step))} className="w-8 h-10 bg-awan-surface flex items-center justify-center">
  <Minus size={12} className="text-awan-tx-mute" />
  </Touch>
- <div className="flex-1 bg-black/40 h-10 flex items-center justify-center">
+ <div className="flex-1 bg-awan-surface h-10 flex items-center justify-center">
  <span className="text-awan-tx font-mono font-bold text-sm">{value}</span>
  </div>
- <Touch onPress={() => onChange(value + step)} className="w-8 h-10 bg-black/30 flex items-center justify-center">
+ <Touch onPress={() => onChange(value + step)} className="w-8 h-10 bg-awan-surface flex items-center justify-center">
  <Plus size={12} className="text-awan-tx-mute" />
  </Touch>
  </div>
@@ -1260,11 +1260,11 @@ function ActiveWorkout({
  </div>
 
  <div className="grid grid-cols-2 gap-3">
- <Card className="flex-row items-center justify-center py-3 bg-black/40 border-awan-gold/20">
+ <Card className="flex-row items-center justify-center py-3 bg-awan-surface border-awan-gold/20">
  <Clock size={16} className="text-awan-gold mr-2" />
  <span className="text-xl font-mono font-bold text-awan-gold tracking-widest tabular-nums">{formatTime(timer)}</span>
  </Card>
- <Card className={`flex-row items-center justify-center gap-2 py-3 bg-black/40 ${restRemaining > 0 ? 'border-awan-status-warn/30' : 'border-white/5'}`}>
+ <Card className={`flex-row items-center justify-center gap-2 py-3 bg-awan-surface ${restRemaining > 0 ? 'border-awan-status-warn/30' : 'border-white/5'}`}>
  {restRemaining > 0
  ? <RestRing remaining={restRemaining} total={session.exercises[session.currentExerciseIdx]?.restSec ?? 90} />
  : <Timer size={16} className="text-awan-tx-mute" />
@@ -1355,7 +1355,7 @@ function SetRow({
  <div className="w-6 text-center">
  <span className="text-xs font-mono font-black text-awan-tx-mute">{index + 1}</span>
  </div>
- <Touch onPress={() => setKindMenu(v => !v)} className="w-14 h-10 bg-black/30 flex items-center justify-center relative">
+ <Touch onPress={() => setKindMenu(v => !v)} className="w-14 h-10 bg-awan-surface flex items-center justify-center relative">
  <span className={`text-[9px] font-black tracking-widest ${SET_KIND_COLOR[set.kind]}`}>{SET_KIND_LABEL[set.kind]}</span>
  {kindMenu && (
  <div className="absolute top-full left-0 mt-1 bg-awan-surface border border-white/10 z-10 min-w-[100px]">
@@ -1372,7 +1372,7 @@ function SetRow({
  )}
  </Touch>
  <TextInput
- className="flex-1 bg-black/40 border border-white/5 h-10 text-center text-awan-gold font-mono font-bold text-sm"
+ className="flex-1 bg-awan-surface border border-white/5 h-10 text-center text-awan-gold font-mono font-bold text-sm"
  keyboardType="decimal-pad"
  value={set.weightKg !== undefined ? String(set.weightKg) : ''}
  onChangeText={(v: string) => {
@@ -1384,7 +1384,7 @@ function SetRow({
  editable={!completed}
  />
  <TextInput
- className="flex-1 bg-black/40 border border-white/5 h-10 text-center text-awan-tx font-mono font-bold text-sm"
+ className="flex-1 bg-awan-surface border border-white/5 h-10 text-center text-awan-tx font-mono font-bold text-sm"
  keyboardType="number-pad"
  value={set.reps !== undefined ? String(set.reps) : ''}
  onChangeText={(v: string) => {
@@ -1396,7 +1396,7 @@ function SetRow({
  editable={!completed}
  />
  <TextInput
- className="w-8 bg-black/40 border border-white/5 h-10 text-center text-awan-tx-mute font-mono font-bold text-sm"
+ className="w-8 bg-awan-surface border border-white/5 h-10 text-center text-awan-tx-mute font-mono font-bold text-sm"
  keyboardType="number-pad"
  value={set.rir !== undefined ? String(set.rir) : ''}
  onChangeText={(v: string) => {

@@ -80,7 +80,7 @@ export default function JournalScreen() {
           </div>
         </div>
 
-        <div className="flex flex-row items-center justify-between bg-black/30 p-4 rounded-2xl border border-white/5 shadow-inner">
+        <div className="flex flex-row items-center justify-between bg-awan-surface p-4  border border-white/5 shadow-inner">
            <Touch className="w-8 h-8 items-center justify-center">
               <ChevronLeft size={16} className="text-white/20" />
            </Touch>
@@ -103,12 +103,12 @@ export default function JournalScreen() {
                <span className="text-[9px] font-mono text-awan-gold opacity-50 uppercase">Ready for Sync</span>
             </div>
             
-            <div className="bg-awan-surface/30 p-6 rounded-awan-3xl border border-white/10 shadow-2xl">
+            <div className="bg-awan-surface p-6  border border-white/10 shadow-2xl">
               <div className="flex flex-row flex-wrap gap-2 mb-6">
                 {MODULES.map((mod) => (
                   <Touch 
                     key={mod} 
-                    className={`px-4 py-2 rounded-xl border transition-all ${activeModule === mod ? 'bg-awan-gold border-awan-gold' : 'bg-white/5 border-white/5'}`}
+                    className={`px-4 py-2  border transition-all ${activeModule === mod ? 'bg-awan-gold border-awan-gold' : 'bg-white/5 border-white/5'}`}
                     onPress={() => setActiveModule(mod)}
                   >
                     <div className="flex flex-row items-center gap-2">
@@ -122,14 +122,14 @@ export default function JournalScreen() {
               <div className="flex flex-row gap-2 mb-4">
                 {([1, 2, 3, 4, 5] as const).map(v => (
                   <Touch key={v} onPress={() => setMoodValue(v)}
-                    className={`flex-1 h-9 rounded-xl border text-center flex items-center justify-center transition-all ${moodValue === v ? 'bg-awan-gold border-awan-gold' : 'bg-white/5 border-white/10'}`}
+                    className={`flex-1 h-9  border text-center flex items-center justify-center transition-all ${moodValue === v ? 'bg-awan-gold border-awan-gold' : 'bg-white/5 border-white/10'}`}
                   >
                     <span className={`text-xs font-black ${moodValue === v ? 'text-black' : 'text-awan-tx-mute'}`}>{v}</span>
                   </Touch>
                 ))}
               </div>
               <div className="flex flex-row gap-3 items-center">
-                <div className="flex-1 bg-black/40 border border-white/10 rounded-2xl px-5 py-2 flex flex-row items-center">
+                <div className="flex-1 bg-awan-surface border border-white/10  px-5 py-2 flex flex-row items-center">
                   <Terminal size={14} className="text-awan-gold mr-3 opacity-50" />
                   <TextInput
                     className="flex-1 h-12 text-sm text-awan-tx font-bold outline-none"
@@ -142,7 +142,7 @@ export default function JournalScreen() {
                 </div>
                 <Touch
                   onPress={handleAddEntry}
-                  className="w-14 h-14 bg-awan-gold rounded-2xl flex items-center justify-center shadow-lg shadow-awan-gold/20"
+                  className="w-14 h-14 bg-awan-gold  flex items-center justify-center shadow-lg shadow-awan-gold/20"
                 >
                   <Plus size={24} color="black" strokeWidth={3} />
                 </Touch>
@@ -160,8 +160,8 @@ export default function JournalScreen() {
               </div>
             </div>
 
-            <div className="bg-white/5 rounded-awan-3xl border border-white/5 min-h-[200px] p-2 relative">
-              <div className="absolute inset-0 opacity-[0.03] pointer-events-none overflow-hidden rounded-awan-3xl">
+            <div className="bg-white/5  border border-white/5 min-h-[200px] p-2 relative">
+              <div className="absolute inset-0 opacity-[0.03] pointer-events-none overflow-hidden ">
                  <div className="w-full h-full" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
               </div>
 
@@ -202,7 +202,7 @@ export default function JournalScreen() {
                       initial={{ opacity: 0, y: -8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, x: -20 }}
-                      className="bg-awan-surface/20 border border-white/5 rounded-2xl p-5"
+                      className="bg-awan-surface border border-white/5  p-5"
                     >
                       <div className="flex flex-row justify-between items-start mb-3">
                         <div className="flex flex-row items-center gap-3">
@@ -221,7 +221,7 @@ export default function JournalScreen() {
                             {new Date(entry.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                           <Touch onPress={() => journalStore.remove(entry.id)}
-                            className="w-7 h-7 rounded-lg bg-awan-status-error/10 flex items-center justify-center border border-awan-status-error/20"
+                            className="w-7 h-7  bg-awan-status-error/10 flex items-center justify-center border border-awan-status-error/20"
                           >
                             <Trash2 size={12} className="text-awan-status-error" />
                           </Touch>
@@ -231,7 +231,7 @@ export default function JournalScreen() {
                       {entry.tags.length > 0 && (
                         <div className="flex flex-row flex-wrap gap-2 mt-3">
                           {entry.tags.map(tag => (
-                            <span key={tag} className="text-[9px] font-black text-awan-tx-mute bg-white/5 px-2 py-1 rounded-md border border-white/5 uppercase tracking-widest">{tag}</span>
+                            <span key={tag} className="text-[9px] font-black text-awan-tx-mute bg-white/5 px-2 py-1  border border-white/5 uppercase tracking-widest">{tag}</span>
                           ))}
                         </div>
                       )}
