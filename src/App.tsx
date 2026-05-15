@@ -2,7 +2,7 @@ import React from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAppStore } from '@/data/store/appStore';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme, useThemeSync } from '@/hooks/useTheme';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import LockScreen from '@/screens/LockScreen';
 import MainLayout from '@/components/MainLayout';
@@ -18,6 +18,7 @@ function SplashLoader() {
 
 function Root() {
   const { isUnlocked, ready } = useAppStore();
+  useThemeSync();
   if (!ready) return <SplashLoader />;
   if (!isUnlocked) return <LockScreen />;
   return <MainLayout />;
