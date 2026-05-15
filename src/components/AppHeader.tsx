@@ -10,6 +10,14 @@ interface AppHeaderProps {
   onNavigate: (route: string) => void;
 }
 
+const LABEL_STYLE_BASE = {
+  fontFamily: 'var(--font-sans)',
+  fontWeight: 900,
+  letterSpacing: '0.33em',
+  textTransform: 'uppercase' as const,
+  transition: 'color 0.2s',
+} as const;
+
 export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) {
   const insets = useSafeAreaInsets();
   const isOn = (name: string) => currentRoute === name;
@@ -31,13 +39,9 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
         >
           <span
             style={{
-              fontFamily: 'var(--font-mono)',
+              ...LABEL_STYLE_BASE,
               fontSize: '13px',
-              fontWeight: 900,
-              letterSpacing: '0.29em',
               color: isOn('Analyse') ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)',
-              textTransform: 'uppercase',
-              transition: 'color 0.2s',
             }}
           >
             {(L as { header: { latin: string } }).header.latin}
@@ -45,7 +49,7 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
         </Touch>
       </div>
 
-      {/* Logo hexagone → Dashboard — rotation uniquement, pas de scale */}
+      {/* Logo hexagone → Dashboard */}
       <div className="flex justify-center items-center px-4">
         <Touch
           onPress={() => onNavigate('Dashboard')}
@@ -65,7 +69,7 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
         </Touch>
       </div>
 
-      {/* AWAN arabe → Islam — style identique au latin */}
+      {/* AWAN arabe → Islam */}
       <div className="flex-1 flex justify-end">
         <Touch
           onPress={() => onNavigate('Islam')}
@@ -74,12 +78,9 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
         >
           <span
             style={{
-              fontFamily: 'var(--font-sans)',
+              ...LABEL_STYLE_BASE,
               fontSize: '14px',
-              fontWeight: 900,
-              letterSpacing: '0.29em',
               color: isOn('Islam') ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)',
-              transition: 'color 0.2s',
             }}
           >
             {(L as { header: { arabic: string } }).header.arabic}

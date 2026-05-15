@@ -1,0 +1,21 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark background -->
+  <rect width="512" height="512" fill="#0D0D0D"/>
+  <!-- Hexagon -->
+  <polygon
+    points="256,64 416,160 416,352 256,448 96,352 96,160"
+    stroke="#D4AF37"
+    stroke-width="8"
+    fill="none"
+  />
+  <!-- Inner hexagon -->
+  <polygon
+    points="256,100 388,172 388,340 256,412 124,340 124,172"
+    stroke="#D4AF37"
+    stroke-width="2"
+    fill="none"
+    opacity="0.25"
+  />
+  <!-- AWAN text -->
+  <text x="256" y="284" text-anchor="middle" font-family="serif" font-size="80" font-weight="900" fill="#D4AF37" letter-spacing="12">AWAN</text>
+</svg>

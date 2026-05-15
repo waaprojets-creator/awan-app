@@ -29,10 +29,10 @@
   --fw-value:   700;
   --fw-display: 900;
 
-  --radius-awan-sm: 8px;
-  --radius-awan-md: 12px;
-  --radius-awan-lg: 16px;
-  --radius-awan-xl: 24px;
+  --radius-awan-sm: 0px;
+  --radius-awan-md: 0px;
+  --radius-awan-lg: 0px;
+  --radius-awan-xl: 0px;
 }
 
 @layer base {
@@ -48,8 +48,8 @@
 
 @layer components {
   .awan-card {
-    @apply bg-awan-surface border border-white/5 rounded-awan-lg shadow-2xl;
-    backdrop-filter: blur(10px);
+    @apply bg-awan-surface border border-white/5 shadow-2xl;
+    border-radius: 0;
   }
   
   .awan-label {

@@ -7,6 +7,14 @@ import { L } from '../constants/labels';
 
 const MotionDiv = motion.div as React.ComponentType<any>;
 
+const TEXT_STYLE = {
+  fontFamily: 'var(--font-sans)',
+  fontSize: '28px',
+  fontWeight: 900,
+  letterSpacing: '0.25em',
+  color: 'var(--color-awan-tx)',
+} as const;
+
 export default function LockScreen() {
   const unlock = useAppStore((s) => s.unlock);
   const [isUnlocking, setIsUnlocking] = useState(false);
@@ -43,7 +51,7 @@ export default function LockScreen() {
           </MotionDiv>
         </TouchableOpacity>
 
-        <div className="h-16 w-48 flex items-center justify-center mt-2">
+        <div className="h-16 w-56 flex items-center justify-center mt-2">
           <AnimatePresence mode="wait">
             {!isUnlocking ? (
               <motion.span
@@ -51,13 +59,7 @@ export default function LockScreen() {
                 initial={{ opacity: 1 }}
                 exit={{ opacity: 0, y: -30 }}
                 transition={{ duration: 0.64 }}
-                style={{
-                  fontFamily: 'var(--font-sans)',
-                  fontSize: '32px',
-                  fontWeight: 300,
-                  letterSpacing: '0.08em',
-                  color: 'var(--color-awan-tx)',
-                }}
+                style={TEXT_STYLE}
               >
                 {(L as { header: { arabic: string } }).header.arabic}
               </motion.span>
@@ -74,14 +76,7 @@ export default function LockScreen() {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.16, type: 'spring', stiffness: 100, damping: 10 }}
-                    style={{
-                      fontFamily: 'var(--font-sans)',
-                      fontSize: '24px',
-                      fontWeight: 900,
-                      letterSpacing: '0.25em',
-                      color: 'var(--color-awan-tx)',
-                      marginInline: '2px',
-                    }}
+                    style={{ ...TEXT_STYLE, marginInline: '2px' }}
                   >
                     {char}
                   </motion.span>
@@ -90,22 +85,6 @@ export default function LockScreen() {
             )}
           </AnimatePresence>
         </div>
-
-        <motion.span
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.3 }}
-          transition={{ delay: 1.2, duration: 0.8 }}
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '8px',
-            fontWeight: 400,
-            letterSpacing: '0.4em',
-            color: 'var(--color-awan-tx-mute)',
-            marginTop: '24px',
-          }}
-        >
-          APPUYER POUR DÉVERROUILLER
-        </motion.span>
       </MotionDiv>
     </div>
   );

@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { Switch, Route, useLocation } from 'wouter';
 import { AnimatePresence, motion } from 'motion/react';
 import { useTheme, useThemeSync } from '../hooks/useTheme';
+import { ToastProvider } from './ui/Toast';
 import AppHeader from './AppHeader';
 import BottomNav from './BottomNav';
 import { useAndroidBack } from '../hooks/useAndroidBack';
@@ -91,6 +92,7 @@ export default function MainLayout() {
   );
 
   return (
+    <ToastProvider>
     <View style={[s.root, { backgroundColor: theme.bg }]}>
       <div
         className="absolute inset-0 pointer-events-none opacity-[0.03] z-0"
@@ -130,6 +132,7 @@ export default function MainLayout() {
         <BottomNav currentRoute={currentRoute} onNavigate={navigate} />
       </ScreenErrorBoundary>
     </View>
+    </ToastProvider>
   );
 }
 

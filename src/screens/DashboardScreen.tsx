@@ -23,6 +23,7 @@ import type { Severity } from '../data/schemas/coach/rule';
 import type { Advice } from '../data/schemas/coach/assessment';
 import type { NavProps } from '../types/nav';
 import arabicData from '../assets/data/1.json';
+import { useToast } from '../components/ui/Toast';
 
 const KCAL_TARGET_DEFAULT = 2000;
 const TextInput = RNTextInput as React.ComponentType<any>;
@@ -39,6 +40,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
   const [importText, setImportText] = useState<string>('');
   const [importResult, setImportResult] = useState<{ success: boolean; message: string } | null>(null);
   const [showScoreInfo, setShowScoreInfo] = useState(false);
+  const { toast } = useToast();
 
   const mealStore    = useMealStore(today);
   const measureStore = useMeasurementStore();
@@ -320,11 +322,23 @@ export default function DashboardScreen({ navigate }: NavProps) {
                   CHARGER UN FICHIER .JSON
                 </span>
                 <input type="file" accept=".json,application/json" className="hidden"
-                  onChange={(e: any) => {
+                  onChange={async (e: any) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
                     const reader = new FileReader();
-                    reader.onload = (ev) => { if (ev.target?.result) setImportText(ev.target.result as string); };
+                    reader.onload = async (ev) => {
+                      const text = ev.target?.result as string;
+                      if (!text) return;
+                      setImportText(text);
+                      const res = await importFromJson(text);
+                      setImportResult(res);
+                      if (res.success) {
+                        toast('Importation réussie', 'success');
+                        setTimeout(() => setImportModal(false), 800);
+                      } else {
+                        toast(res.message || 'Échec importation', 'error');
+                      }
+                    };
                     reader.readAsText(file);
                   }} />
               </label>
@@ -339,7 +353,16 @@ export default function DashboardScreen({ navigate }: NavProps) {
                   </span>
                 </div>
               )}
-              <Touch onPress={async () => { const res = await importFromJson(importText); setImportResult(res); }} className="block w-full">
+              <Touch onPress={async () => {
+                const res = await importFromJson(importText);
+                setImportResult(res);
+                if (res.success) {
+                  toast('Importation réussie', 'success');
+                  setTimeout(() => setImportModal(false), 800);
+                } else {
+                  toast(res.message || 'Échec importation', 'error');
+                }
+              }} className="block w-full">
                 <div className="p-3 border flex items-center justify-center" style={{ backgroundColor: 'rgba(212,175,55,0.08)', borderColor: 'var(--color-awan-gold)' }}>
                   <span className="font-mono font-bold uppercase" style={{ fontSize: '11px', color: 'var(--color-awan-gold)', letterSpacing: '0.3em' }}>
                     {common.import}

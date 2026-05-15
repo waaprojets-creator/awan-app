@@ -12,24 +12,30 @@ function useWindowDimensions() {
   return dims;
 }
 
-interface Node { id: string; label: string; sub: string; x: number; y: number; tier: 0 | 1 | 2; }
+interface Node { id: string; label: string; x: number; y: number; tier: 0 | 1 | 2; }
 
 const nav = (L as any).nav as Record<string, string | undefined>;
 const n = (k: string): string => nav[k] ?? k;
 
+// Dashboard at (50,52) — center-ish
+// Islam (82,14) top-right, Sante (22,14) top-left
+// Sport/Nutrition/Mensuration far-left column, equidistant y=28/44/60
+// Reglages (88,52) horizontal right of Dashboard
+// Coach (12,52) horizontal left of Dashboard
+// Journal/Planning/Trajet spread at bottom, Tasks below Planning
 const NODES: Node[] = [
-  { id: 'Dashboard',   label: n('hub'),         sub: n('hubSub'),         x: 50, y: 40, tier: 0 },
-  { id: 'Islam',       label: n('spirit'),       sub: n('spiritSub'),      x: 80, y: 13, tier: 1 },
-  { id: 'Sante',       label: n('sante'),        sub: n('santeSub'),       x: 20, y: 13, tier: 1 },
-  { id: 'Sport',       label: n('sport'),        sub: n('sportSub'),       x:  7, y: 27, tier: 2 },
-  { id: 'Nutrition',   label: n('nutrition'),    sub: n('nutritionSub'),   x:  7, y: 43, tier: 2 },
-  { id: 'Mensuration', label: n('mensuration'),  sub: n('mensurationSub'), x:  7, y: 59, tier: 2 },
-  { id: 'Reglages',    label: n('reglages'),     sub: n('reglagesSub'),    x: 84, y: 36, tier: 2 },
-  { id: 'Coach',       label: n('coach'),        sub: n('coachSub'),       x: 22, y: 70, tier: 2 },
-  { id: 'Journal',     label: n('journal'),      sub: n('journalSub'),     x: 28, y: 82, tier: 1 },
-  { id: 'Planning',    label: n('planning'),     sub: n('planningSub'),    x: 50, y: 86, tier: 1 },
-  { id: 'Tasks',       label: n('tasks'),        sub: n('tasksSub'),       x: 64, y: 74, tier: 2 },
-  { id: 'Trajet',      label: n('trajet'),       sub: n('trajetSub'),      x: 74, y: 82, tier: 1 },
+  { id: 'Dashboard',   label: n('hub'),        x: 50, y: 52, tier: 0 },
+  { id: 'Islam',       label: n('spirit'),     x: 82, y: 14, tier: 1 },
+  { id: 'Sante',       label: n('sante'),      x: 22, y: 14, tier: 1 },
+  { id: 'Sport',       label: n('sport'),      x:  8, y: 28, tier: 2 },
+  { id: 'Nutrition',   label: n('nutrition'),  x:  8, y: 44, tier: 2 },
+  { id: 'Mensuration', label: n('mensuration'),x:  8, y: 60, tier: 2 },
+  { id: 'Reglages',    label: n('reglages'),   x: 88, y: 52, tier: 2 },
+  { id: 'Coach',       label: n('coach'),      x: 12, y: 52, tier: 2 },
+  { id: 'Journal',     label: n('journal'),    x: 18, y: 80, tier: 1 },
+  { id: 'Planning',    label: n('planning'),   x: 50, y: 82, tier: 1 },
+  { id: 'Tasks',       label: n('tasks'),      x: 62, y: 90, tier: 2 },
+  { id: 'Trajet',      label: n('trajet'),     x: 82, y: 80, tier: 1 },
 ];
 
 const EDGES: [string, string][] = [
@@ -54,24 +60,20 @@ function FullMoon({ color }: { color: string }) {
       <circle cx="15" cy="7"  r="1.1" stroke={color} strokeWidth="0.6" fill="none" opacity={0.28} />
       <circle cx="15" cy="14" r="1.4" stroke={color} strokeWidth="0.6" fill="none" opacity={0.30} />
       <circle cx="8"  cy="15" r="0.7" stroke={color} strokeWidth="0.5" fill="none" opacity={0.25} />
-      <circle cx="11" cy="5.5" r="0.35" fill={color} opacity={0.18} />
-      <circle cx="17" cy="11" r="0.28" fill={color} opacity={0.14} />
-      <circle cx="6"  cy="12" r="0.28" fill={color} opacity={0.18} />
-      <circle cx="14" cy="18" r="0.35" fill={color} opacity={0.14} />
     </svg>
   );
 }
 
+// Thin crescent (first-day C shape) — outer circle r=9 center (12,12),
+// inner circle r=7 center (14,12), evenodd fill creates crescent on left opening right
 function CrescentMoon({ color }: { color: string }) {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <svg width="24" height="24" viewBox="0 0 24 24">
       <path
-        d="M 12 3 A 9 9 0 0 0 12 21 A 9.85 9.85 0 0 0 12 3 Z"
-        stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+        fillRule="evenodd"
+        fill={color}
+        d="M 3 12 A 9 9 0 1 0 21 12 A 9 9 0 1 1 3 12 Z M 7 12 A 7 7 0 1 0 21 12 A 7 7 0 1 1 7 12 Z"
       />
-      <circle cx="4.5" cy="10" r="0.4" fill={color} opacity={0.28} />
-      <circle cx="4"   cy="14" r="0.3" fill={color} opacity={0.22} />
-      <circle cx="5.5" cy="8"  r="0.25" fill={color} opacity={0.18} />
     </svg>
   );
 }
@@ -103,33 +105,13 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
     const cy = (node.y / 100) * CH;
     const r  = node.tier === 0 ? 5 : node.tier === 1 ? 3.5 : 2.5;
 
-    // Bottom nodes: label above
-    if (node.y > 72) {
-      return { textX: cx, textY: cy - r - 8, anchor: 'middle', subY: cy - r - 18 };
-    }
-    // Near-right edge: label to the left
-    if (node.x > 72) {
-      const tx = Math.min(W - MARGIN, cx - r - 6);
-      return { textX: tx, textY: cy - 2, anchor: 'end', subY: cy + 9 };
-    }
-    // Near-left edge: label to the right
-    if (node.x < 18) {
-      const tx = Math.max(MARGIN, cx + r + 6);
-      return { textX: tx, textY: cy - 2, anchor: 'start', subY: cy + 9 };
-    }
-    // Tier 0 center: above
-    if (node.tier === 0) {
-      return { textX: cx, textY: cy - r - 12, anchor: 'middle', subY: cy - r - 22 };
-    }
-    // Left zone
-    if (node.x < 40) {
-      return { textX: cx - r - 6, textY: cy - 2, anchor: 'end', subY: cy + 9 };
-    }
-    // Right zone
-    if (node.x > 60) {
-      return { textX: cx + r + 6, textY: cy - 2, anchor: 'start', subY: cy + 9 };
-    }
-    return { textX: cx, textY: cy + r + 15, anchor: 'middle', subY: cy + r + 26 };
+    if (node.y > 75) return { textX: cx, textY: cy - r - 8, anchor: 'middle' };
+    if (node.x > 72) return { textX: Math.min(W - MARGIN, cx - r - 6), textY: cy - 2, anchor: 'end' };
+    if (node.x < 18) return { textX: Math.max(MARGIN, cx + r + 6), textY: cy - 2, anchor: 'start' };
+    if (node.tier === 0) return { textX: cx, textY: cy - r - 12, anchor: 'middle' };
+    if (node.x < 40) return { textX: cx - r - 6, textY: cy - 2, anchor: 'end' };
+    if (node.x > 60) return { textX: cx + r + 6, textY: cy - 2, anchor: 'start' };
+    return { textX: cx, textY: cy + r + 15, anchor: 'middle' };
   }
 
   return (
@@ -139,7 +121,7 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
-            style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'rgba(0,0,0,0.85)' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'rgba(0,0,0,0.88)' }}
             onClick={() => setIsOpen(false)}
           >
             <svg width={W} height={H} style={{ position: 'absolute', inset: 0 }} onClick={(e) => e.stopPropagation()}>
@@ -161,7 +143,7 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
                 const isTier0  = node.tier === 0;
                 const r = isTier0 ? 5 : node.tier === 1 ? 3.5 : 2.5;
                 const delay = 0.12 + i * 0.04;
-                const { textX, textY, anchor, subY } = labelPos(node);
+                const { textX, textY, anchor } = labelPos(node);
                 const lColor = isActive ? 'var(--color-awan-gold)' : isTier0 ? 'rgba(255,255,255,0.92)' : node.tier === 1 ? 'rgba(255,255,255,0.68)' : 'rgba(255,255,255,0.42)';
                 const fSize = isTier0 ? 15 : node.tier === 1 ? 12 : 11;
                 const fWeight = isTier0 ? 800 : node.tier === 1 ? 700 : 600;
@@ -180,11 +162,6 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
                       fontFamily="var(--font-sans)" fontWeight={fWeight} letterSpacing="0.12em"
                       initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: delay+0.1, duration: 0.25 }}>
                       {node.label}
-                    </motion.text>
-                    <motion.text x={textX} y={subY} textAnchor={anchor as any} fill="rgba(212,175,55,0.38)"
-                      fontSize={6} fontFamily="var(--font-mono)" letterSpacing="0.22em"
-                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: delay+0.15, duration: 0.25 }}>
-                      {node.sub}
                     </motion.text>
                   </g>
                 );

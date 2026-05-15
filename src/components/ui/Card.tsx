@@ -38,13 +38,7 @@ export function Card({
       ${variant === 'flat' ? 'border-none shadow-none bg-awan-bg/50' : ''}
       ${className}
     `}>
-      {/* Visual Accents */}
-      <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-awan-gold/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-      <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-awan-gold/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-      <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-awan-gold/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-      <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-awan-gold/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-      {(title || value) && (
+{(title || value) && (
         <div className="flex justify-between items-start">
           <div className="flex flex-col">
             {title && <span className="awan-label mb-1">{title}</span>}

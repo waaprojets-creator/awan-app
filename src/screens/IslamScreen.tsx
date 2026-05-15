@@ -1,10 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, TextInput as RNTextInput } from 'react-native';
-
-// react-native-web TextInput doesn't declare className in TS types
-const TextInput = RNTextInput as React.ComponentType<any>;
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Compass, BookOpen, RefreshCcw, Clock, CheckCircle2, ChevronRight, Plus, Shield, Zap, TrendingUp, Minus } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { ScrollView } from 'react-native';
+import { Compass, BookOpen, RefreshCcw, Clock, CheckCircle2, Plus, TrendingUp, Minus, ChevronLeft, ChevronRight, Edit2, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SpiritualService } from '../utils/spiritualService';
 import arabicData from '../assets/data/1.json';
@@ -16,33 +12,194 @@ import { useQuranStore } from '../hooks/useQuranStore';
 import type { PrayerName } from '../data/schemas/islam/prayerLog';
 import { InstrumentCard } from '../components/ui/InstrumentCard';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
-import { Card } from '../components/ui/Card';
-import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
 
+// ─── Hijri calendar utilities ──────────────────────────────────────────────────
+
+function gToJdn(y: number, m: number, d: number): number {
+  const a = Math.floor((14 - m) / 12);
+  const yr = y + 4800 - a;
+  const mn = m + 12 * a - 3;
+  return d + Math.floor((153 * mn + 2) / 5) + 365 * yr + Math.floor(yr / 4) - Math.floor(yr / 100) + Math.floor(yr / 400) - 32045;
+}
+
+function jdnToG(jdn: number): [number, number, number] {
+  const a = jdn + 32044;
+  const b = Math.floor((4 * a + 3) / 146097);
+  const c = a - Math.floor(146097 * b / 4);
+  const d = Math.floor((4 * c + 3) / 1461);
+  const e = c - Math.floor(1461 * d / 4);
+  const mn = Math.floor((5 * e + 2) / 153);
+  const day = e - Math.floor((153 * mn + 2) / 5) + 1;
+  const month = mn + 3 - 12 * Math.floor(mn / 10);
+  const year = 100 * b + d - 4800 + Math.floor(mn / 10);
+  return [year, month, day];
+}
+
+function jdnToH(jdn: number): [number, number, number] {
+  const l = jdn - 1948440 + 10632;
+  const n = Math.floor((l - 1) / 10631);
+  const l2 = l - 10631 * n + 354;
+  const j = Math.floor((10985 - l2) / 5316) * Math.floor((50 * l2) / 17719) +
+    Math.floor(l2 / 5670) * Math.floor((43 * l2) / 15238);
+  const l3 = l2 - Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50) -
+    Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29;
+  const hm = Math.floor((24 * l3) / 709);
+  const hd = l3 - Math.floor((709 * hm) / 24);
+  return [30 * n + j - 30, hm, hd];
+}
+
+function hToJdn(hy: number, hm: number, hd: number): number {
+  return hd + Math.ceil((29 * hm - 29) / 30) + (hy - 1) * 354 + Math.floor((3 + 11 * hy) / 30) + 1948440 - 385;
+}
+
+function gToH(y: number, m: number, d: number): [number, number, number] {
+  return jdnToH(gToJdn(y, m, d));
+}
+
+function hijriDaysInMonth(hm: number): number {
+  return hm % 2 === 1 ? 30 : 29;
+}
+
+const HIJRI_MONTHS = [
+  'Muharram', 'Safar', 'Rabi\' al-Awwal', 'Rabi\' al-Akhir',
+  'Jumada al-Ula', 'Jumada al-Akhira', 'Rajab', 'Sha\'ban',
+  'Ramadan', 'Shawwal', 'Dhu al-Qi\'dah', 'Dhu al-Hijjah',
+];
+
+const ISLAMIC_HOLIDAYS: [number, number, string][] = [
+  [1, 1,   'Nouvel An'],
+  [1, 10,  'Achoura'],
+  [3, 12,  'Mawlid'],
+  [7, 27,  'Isra Mi\'raj'],
+  [9, 1,   'Ramadan'],
+  [9, 27,  'Laylat al-Qadr'],
+  [10, 1,  'Aïd al-Fitr'],
+  [12, 9,  'Arafat'],
+  [12, 10, 'Aïd al-Adha'],
+  [12, 11, 'Tashriq'],
+  [12, 12, 'Tashriq'],
+  [12, 13, 'Tashriq'],
+];
+
+function hijriHoliday(hm: number, hd: number): string | null {
+  const found = ISLAMIC_HOLIDAYS.find(([m, d]) => m === hm && d === hd);
+  return found ? found[2] : null;
+}
+
+const WEEKDAYS_FR = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+
+function HijriCalendar({
+  hijriYear, hijriMonth, onSelect, selectedDate, todayStr,
+}: {
+  hijriYear: number; hijriMonth: number;
+  onSelect: (dateStr: string) => void; selectedDate: string; todayStr: string;
+}) {
+  const days = hijriDaysInMonth(hijriMonth);
+  const firstJdn = hToJdn(hijriYear, hijriMonth, 1);
+  const firstDow = (firstJdn + 1) % 7; // 0=Sun
+
+  const cells: { hd: number; gStr: string; dow: number; jdn: number }[] = [];
+  for (let hd = 1; hd <= days; hd++) {
+    const jdn = firstJdn + hd - 1;
+    const [gy, gm, gd] = jdnToG(jdn);
+    const gStr = `${gy}-${String(gm).padStart(2,'0')}-${String(gd).padStart(2,'0')}`;
+    cells.push({ hd, gStr, dow: (firstDow + hd - 1) % 7, jdn });
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      {/* Weekday headers */}
+      <div className="grid grid-cols-7 gap-1 mb-1">
+        {WEEKDAYS_FR.map((d, i) => (
+          <span key={i} className="text-center" style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.1em' }}>{d}</span>
+        ))}
+      </div>
+      {/* Calendar grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {/* Empty cells before first day */}
+        {Array.from({ length: cells[0]?.dow ?? 0 }).map((_, i) => (
+          <div key={`e${i}`} />
+        ))}
+        {cells.map(({ hd, gStr, jdn }) => {
+          const [,, gd] = jdnToG(jdn);
+          const isToday = gStr === todayStr;
+          const isSelected = gStr === selectedDate;
+          const holiday = hijriHoliday(hijriMonth, hd);
+          return (
+            <Touch key={hd} onPress={() => onSelect(gStr)}>
+              <div
+                className="flex flex-col items-center py-1 border"
+                style={{
+                  backgroundColor: isSelected ? 'var(--color-awan-gold)' : isToday ? 'rgba(212,175,55,0.12)' : 'transparent',
+                  borderColor: isToday ? 'var(--color-awan-gold)' : holiday ? 'rgba(212,175,55,0.3)' : 'rgba(255,255,255,0.05)',
+                  minHeight: 38,
+                }}
+              >
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 700, color: isSelected ? 'var(--color-awan-bg)' : isToday ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)', lineHeight: 1.2 }}>
+                  {hd}
+                </span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: isSelected ? 'var(--color-awan-bg)' : 'var(--color-awan-tx-mute)', lineHeight: 1 }}>
+                  {gd}
+                </span>
+                {holiday && (
+                  <div style={{ width: 4, height: 4, backgroundColor: isSelected ? 'var(--color-awan-bg)' : 'var(--color-awan-gold)', borderRadius: 0, marginTop: 1 }} />
+                )}
+              </div>
+            </Touch>
+          );
+        })}
+      </div>
+      {/* Holiday legend for this month */}
+      {ISLAMIC_HOLIDAYS.filter(([m]) => m === hijriMonth).map(([, hd, name]) => (
+        <div key={`${hijriMonth}-${hd}`} className="flex flex-row items-center gap-2 mt-1">
+          <div style={{ width: 4, height: 4, backgroundColor: 'var(--color-awan-gold)', borderRadius: 0, flexShrink: 0 }} />
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-gold)', letterSpacing: '0.15em' }}>
+            {hd} — {name}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Main component ─────────────────────────────────────────────────────────────
+
 export default function IslamScreen() {
-  const insets = useSafeAreaInsets();
-  const { navigate } = useAppState() as any;
-  const [prayerTimes, setPrayerTimes] = useState<any>(() => SpiritualService.getPrayerTimes());
+  useAppState() as any;
+
+  const todayStr = ds(new Date());
+  const [selectedDate, setSelectedDate] = useState(todayStr);
+  const [editMode, setEditMode] = useState(false);
+  const [prayerTimesForDate, setPrayerTimesForDate] = useState<any>(() => SpiritualService.getPrayerTimes());
   const [showQibla, setShowQibla] = useState(false);
   const [qiblaAngle, setQiblaAngle] = useState(0);
   const [compassHeading, setCompassHeading] = useState<number | null>(null);
   const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'ok' | 'cached' | 'denied'>('idle');
   const [currentWord, setCurrentWord] = useState<any>(null);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [calView, setCalView] = useState<'month' | 'year'>('month');
 
-  const todayStr = ds(new Date());
-  const prayerStore = usePrayerStore(todayStr);
+  const prayerStore = usePrayerStore(selectedDate);
   const quranStore = useQuranStore();
 
-  useEffect(() => {
-    // Refresh prayer times with real location if available
-    const { lat, lon } = SpiritualService.getCachedLocation();
-    setPrayerTimes(SpiritualService.getPrayerTimes(lat, lon));
+  const isToday = selectedDate === todayStr;
+  const isPast = selectedDate < todayStr;
 
+  // Hijri navigation state
+  const todayH = useMemo(() => {
+    const now = new Date();
+    return gToH(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  }, []);
+  const [hijriYear, setHijriYear] = useState(todayH[0]);
+  const [hijriMonth, setHijriMonth] = useState(todayH[1]);
+
+  useEffect(() => {
+    const loc = SpiritualService.getCachedLocation();
+    setPrayerTimesForDate(SpiritualService.getPrayerTimes(loc.lat, loc.lon));
     const timer = setInterval(() => {
-      const loc = SpiritualService.getCachedLocation();
-      setPrayerTimes(SpiritualService.getPrayerTimes(loc.lat, loc.lon));
+      const l = SpiritualService.getCachedLocation();
+      setPrayerTimesForDate(SpiritualService.getPrayerTimes(l.lat, l.lon));
     }, 60_000);
     return () => clearInterval(timer);
   }, []);
@@ -52,15 +209,13 @@ export default function IslamScreen() {
   }, []);
 
   const pickNewWord = () => {
-    const randomIndex = Math.floor(Math.random() * arabicData.length);
-    setCurrentWord(arabicData[randomIndex]);
+    setCurrentWord(arabicData[Math.floor(Math.random() * arabicData.length)]);
     setShowAnswer(false);
   };
 
   const activateQibla = () => {
     if (!navigator.geolocation) {
-      const angle = SpiritualService.getQiblaAngle();
-      setQiblaAngle(angle);
+      setQiblaAngle(SpiritualService.getQiblaAngle());
       setLocationStatus('cached');
       setShowQibla(true);
       return;
@@ -71,16 +226,13 @@ export default function IslamScreen() {
       ({ coords }) => {
         const { latitude: lat, longitude: lon } = coords;
         localStorage.setItem('awan.user.location', JSON.stringify({ lat, lon }));
-        const angle = SpiritualService.getQiblaAngle(lat, lon);
-        setQiblaAngle(angle);
-        setPrayerTimes(SpiritualService.getPrayerTimes(lat, lon));
+        setQiblaAngle(SpiritualService.getQiblaAngle(lat, lon));
+        setPrayerTimesForDate(SpiritualService.getPrayerTimes(lat, lon));
         setLocationStatus('ok');
       },
       () => {
-        const angle = SpiritualService.getQiblaAngle();
-        setQiblaAngle(angle);
-        const cached = localStorage.getItem('awan.user.location');
-        setLocationStatus(cached ? 'cached' : 'denied');
+        setQiblaAngle(SpiritualService.getQiblaAngle());
+        setLocationStatus(localStorage.getItem('awan.user.location') ? 'cached' : 'denied');
       },
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 3_600_000 },
     );
@@ -109,7 +261,17 @@ export default function IslamScreen() {
     };
   }, [showQibla]);
 
+  const prevMonth = () => {
+    if (hijriMonth === 1) { setHijriMonth(12); setHijriYear(y => y - 1); }
+    else setHijriMonth(m => m - 1);
+  };
+  const nextMonth = () => {
+    if (hijriMonth === 12) { setHijriMonth(1); setHijriYear(y => y + 1); }
+    else setHijriMonth(m => m + 1);
+  };
+
   const prayers = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
+  const canEdit = isPast || isToday;
 
   return (
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
@@ -118,9 +280,9 @@ export default function IslamScreen() {
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
       >
-        <ScreenHeader tag="SPIRIT" title="ISLAM" />
+        <ScreenHeader title="ISLAM" />
 
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-2 gap-3 mb-4">
           <InstrumentCard
             label="PRIÈRES"
             value={prayerStore.doneCount}
@@ -138,272 +300,343 @@ export default function IslamScreen() {
           />
         </div>
 
-        <div className="p-6">
-          <div className="mb-10">
-            <div className="flex flex-row justify-between items-end mb-6 px-1">
-              <Heading level={4} mono subtitle="Matrice du Temps" className="mb-0">CHRONO PRIÈRES</Heading>
-              <Zap size={14} className="text-awan-gold mb-1" />
-            </div>
-            
-            <div className="bg-awan-surface/20 rounded-awan-2xl border border-white/10 overflow-hidden shadow-2xl">
-              {prayers.map((key) => {
-                const time: Date | undefined = (prayerTimes as Record<string, Date | undefined>)[key];
-                const isNext = prayerTimes.next === key;
-                const isSunrise = key === 'sunrise';
-                const done = !isSunrise && prayerStore.isDone(key as PrayerName);
-                const timeLabel = time instanceof Date
-                  ? `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`
-                  : '--:--';
-
-                return (
-                  <Touch
-                    key={key}
-                    onPress={() => !isSunrise && prayerStore.toggle(key as PrayerName)}
-                    className={`flex flex-row justify-between items-center px-6 py-5 border-b border-white/5 transition-all ${isNext ? 'bg-awan-gold/10' : done ? 'bg-awan-status-ok/5' : ''}`}
-                  >
-                    <div className="flex flex-row items-center gap-4">
-                      <div className={`w-1 h-8 rounded-full ${done ? 'bg-awan-status-ok shadow-[0_0_8px_rgba(74,222,128,0.4)]' : isNext ? 'bg-awan-gold shadow-[0_0_10px_#D4AF37]' : 'bg-white/5'}`} />
-                      <span className={`text-xs font-black tracking-[0.2em] uppercase ${done ? 'text-awan-status-ok' : isNext ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
-                        {SpiritualService.translatePrayer(key)}
-                      </span>
-                    </div>
-                    <div className="flex flex-row items-center gap-6">
-                      <span className={`text-xl font-mono font-black tabular-nums ${done ? 'text-awan-status-ok' : isNext ? 'text-awan-gold' : 'text-awan-tx'}`}>
-                        {timeLabel}
-                      </span>
-                      {isSunrise ? (
-                        <div className="w-4" />
-                      ) : done ? (
-                        <CheckCircle2 size={16} className="text-awan-status-ok" />
-                      ) : isNext ? (
-                        <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
-                          <Clock size={16} className="text-awan-gold" />
-                        </motion.div>
-                      ) : (
-                        <div className="w-4 h-4 rounded-full border border-white/20" />
-                      )}
-                    </div>
-                  </Touch>
-                );
-              })}
-            </div>
+        {/* ── Sélecteur de date ──────────────────────────────────────────────── */}
+        <div className="flex flex-row items-center justify-between mb-3 p-3 border" style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: 'var(--color-awan-surface)' }}>
+          <Touch onPress={() => {
+            const d = new Date(selectedDate);
+            d.setDate(d.getDate() - 1);
+            setSelectedDate(ds(d));
+          }}>
+            <ChevronLeft size={18} color="var(--color-awan-gold)" />
+          </Touch>
+          <div className="flex flex-col items-center">
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+              {isToday ? 'AUJOURD\'HUI' : selectedDate}
+            </span>
+            {(() => {
+              const [hy, hm, hd] = gToH(...(selectedDate.split('-').map(Number) as [number, number, number]));
+              return (
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.05em' }}>
+                  {hd} {HIJRI_MONTHS[hm - 1]} {hy}
+                </span>
+              );
+            })()}
           </div>
+          <Touch onPress={() => {
+            const d = new Date(selectedDate);
+            d.setDate(d.getDate() + 1);
+            if (ds(d) <= todayStr) setSelectedDate(ds(d));
+          }} disabled={isToday}>
+            <ChevronRight size={18} color={isToday ? 'var(--color-awan-tx-mute)' : 'var(--color-awan-gold)'} />
+          </Touch>
+        </div>
 
-          <div className="mb-10">
-            <Touch onPress={activateQibla}>
-              <Card className="flex flex-row items-center gap-5 p-6 bg-awan-gold/5 border-awan-gold/30" variant="flat">
-                <div className="w-14 h-14 bg-awan-gold items-center justify-center rounded-2xl shadow-lg shadow-awan-gold/20">
-                  <Compass size={28} className="text-black" />
+        {/* ── Chrono prières ────────────────────────────────────────────────── */}
+        <div className="mb-4 border" style={{ borderColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+          <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>CHRONO PRIÈRES</span>
+            {canEdit && (
+              <Touch onPress={() => setEditMode(e => !e)}>
+                <div className="flex flex-row items-center gap-2 px-3 py-1 border" style={{ borderColor: 'var(--color-awan-gold)', backgroundColor: editMode ? 'rgba(212,175,55,0.12)' : 'transparent' }}>
+                  {editMode ? <Save size={12} color="var(--color-awan-gold)" /> : <Edit2 size={12} color="var(--color-awan-gold)" />}
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', fontWeight: 700, color: 'var(--color-awan-gold)', letterSpacing: '0.2em' }}>
+                    {editMode ? 'SAUVEGARDER' : 'MODIFIER'}
+                  </span>
                 </div>
-                <div className="flex-1">
-                  <span className="text-[10px] font-black text-awan-gold tracking-widest uppercase mb-1 block">CALIBRATION SYSTÈME</span>
-                  <Heading level={3} className="text-awan-tx mb-0 uppercase tracking-tight">Instrument de Qibla</Heading>
-                </div>
-                <ChevronRight size={20} className="text-awan-gold" />
-              </Card>
-            </Touch>
+              </Touch>
+            )}
+          </div>
+          {prayers.map((key) => {
+            const time: Date | undefined = (prayerTimesForDate as Record<string, Date | undefined>)[key];
+            const isNext = isToday && prayerTimesForDate.next === key;
+            const isSunrise = key === 'sunrise';
+            const done = !isSunrise && prayerStore.isDone(key as PrayerName);
+            const timeLabel = time instanceof Date
+              ? `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`
+              : '--:--';
+            const canToggle = !isSunrise && (isToday || (isPast && editMode));
 
-            <AnimatePresence>
-              {showQibla && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="mt-4 bg-black/40 rounded-awan-2xl border border-white/5 overflow-hidden flex flex-col items-center p-10 shadow-inner"
-                >
-                  {locationStatus === 'loading' ? (
-                    <div className="flex flex-col items-center gap-4 py-8">
-                      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}>
-                        <Compass size={32} className="text-awan-gold opacity-60" />
-                      </motion.div>
-                      <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-[0.3em]">Acquisition GPS...</span>
-                    </div>
+            return (
+              <Touch
+                key={key}
+                onPress={() => canToggle && prayerStore.toggle(key as PrayerName)}
+                className="flex flex-row justify-between items-center px-4 py-4 border-b"
+                style={{ borderColor: 'rgba(255,255,255,0.05)', backgroundColor: isNext ? 'rgba(212,175,55,0.06)' : done ? 'rgba(78,205,196,0.04)' : 'transparent' }}
+              >
+                <div className="flex flex-row items-center gap-3">
+                  <div style={{ width: 3, height: 32, backgroundColor: done ? 'var(--color-awan-status-ok)' : isNext ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.08)' }} />
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: done ? 'var(--color-awan-status-ok)' : isNext ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)' }}>
+                    {SpiritualService.translatePrayer(key)}
+                  </span>
+                </div>
+                <div className="flex flex-row items-center gap-4">
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', fontWeight: 700, color: done ? 'var(--color-awan-status-ok)' : isNext ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)' }}>
+                    {timeLabel}
+                  </span>
+                  {isSunrise ? <div style={{ width: 16 }} /> : done ? (
+                    <CheckCircle2 size={16} color="var(--color-awan-status-ok)" />
+                  ) : isNext ? (
+                    <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
+                      <Clock size={16} color="var(--color-awan-gold)" />
+                    </motion.div>
                   ) : (
-                    <>
-                      <div className="w-52 h-52 rounded-full border border-white/5 flex items-center justify-center relative bg-white/2">
-                        {/* N S E W cardinal marks */}
-                        {(['N','E','S','O'] as const).map((dir, i) => {
-                          const angle = i * 90;
-                          const rad = (angle - 90) * Math.PI / 180;
-                          const r = 92;
-                          return (
-                            <span key={dir} className="absolute text-[8px] font-black font-mono text-white/20"
-                              style={{ left: `calc(50% + ${r * Math.cos(rad)}px - 5px)`, top: `calc(50% + ${r * Math.sin(rad)}px - 7px)` }}>
-                              {dir}
-                            </span>
-                          );
-                        })}
-                        <div className="absolute inset-2 rounded-full border border-white/5 border-dashed opacity-20" />
-                        <div className="absolute inset-8 rounded-full border border-white/10 opacity-10" />
-
-                        <motion.div
-                          animate={{ rotate: compassHeading !== null ? qiblaAngle - compassHeading : qiblaAngle }}
-                          className="absolute w-1 h-[144px] flex flex-col items-center z-10"
-                          transition={{ type: 'spring', stiffness: 80, damping: 18 }}
-                        >
-                          <div className="w-2 h-[72px] bg-awan-gold rounded-t-full shadow-[0_0_20px_#D4AF37]" />
-                          <div className="w-2 h-[72px] bg-white/20 rounded-b-full" />
-                        </motion.div>
-
-                        <div className="w-16 h-16 rounded-full bg-awan-bg border-2 border-awan-gold flex items-center justify-center z-20 shadow-2xl">
-                          <span className="text-sm font-black font-mono text-awan-gold">{Math.round(qiblaAngle)}°</span>
-                        </div>
-                      </div>
-
-                      <div className="mt-8 flex flex-row items-center gap-3">
-                        <div className={`w-1.5 h-1.5 rounded-full ${locationStatus === 'ok' ? 'bg-awan-status-ok' : locationStatus === 'cached' ? 'bg-awan-gold' : 'bg-awan-status-warn'}`} />
-                        <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-[0.3em]">
-                          {locationStatus === 'ok' ? 'Position GPS Active'
-                            : locationStatus === 'cached' ? 'Position Mémorisée'
-                            : 'Position Par Défaut'}
-                        </span>
-                      </div>
-                      {compassHeading !== null && (
-                        <span className="mt-2 text-[9px] font-black text-awan-gold/40 uppercase tracking-widest font-mono">
-                          CAP {Math.round(compassHeading)}° · BOUSSOLE ACTIVE
-                        </span>
-                      )}
-                    </>
+                    <div style={{ width: 16, height: 16, border: '1px solid rgba(255,255,255,0.2)' }} />
                   )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                </div>
+              </Touch>
+            );
+          })}
+        </div>
 
-          <div className="mb-10">
-            <div className="flex flex-row justify-between items-end mb-6 px-1">
-              <Heading level={4} mono subtitle="Récitation" className="mb-0">PROGRESSION CORAN</Heading>
-              <TrendingUp size={14} className="text-awan-gold mb-1" />
+        {/* ── Qibla compass ─────────────────────────────────────────────────── */}
+        <Touch onPress={activateQibla} className="block mb-4">
+          <div className="flex flex-row items-center gap-4 p-4 border" style={{ borderColor: 'rgba(212,175,55,0.25)', backgroundColor: 'rgba(212,175,55,0.04)' }}>
+            <div className="p-3 border" style={{ borderColor: 'var(--color-awan-gold)', backgroundColor: 'rgba(212,175,55,0.1)' }}>
+              <Compass size={22} color="var(--color-awan-gold)" />
             </div>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700, color: 'var(--color-awan-gold)', letterSpacing: '0.2em' }}>
+              INSTRUMENT DE QIBLA
+            </span>
+          </div>
+        </Touch>
 
-            <Card className="bg-awan-surface/20 border border-white/10 p-6 shadow-xl" variant="flat">
-              {quranStore.progress ? (
-                <div>
-                  <div className="flex flex-row justify-between items-center mb-6">
-                    <div>
-                      <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase block mb-1">SOURATE ACTUELLE</span>
-                      <span className="text-3xl font-black text-awan-tx tabular-nums">{quranStore.progress.currentSurah}</span>
-                      <span className="text-sm font-black text-awan-tx-mute"> / 114</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[9px] font-black text-awan-tx-mute tracking-widest uppercase block mb-1">VERSET</span>
-                      <span className="text-3xl font-black text-awan-tx tabular-nums">{quranStore.progress.currentAyah}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[9px] font-black text-awan-tx-mute tracking-widest uppercase block mb-1">TOTAL LU</span>
-                      <span className="text-3xl font-black text-awan-tx tabular-nums">{quranStore.progress.totalAyahsRead}</span>
-                    </div>
-                  </div>
-
-                  <div className="mb-5">
-                    <div className="flex flex-row justify-between items-center mb-2">
-                      <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest">Objectif Journalier</span>
-                      <span className="text-xs font-black text-awan-gold font-mono">{quranStore.progress.dailyAyahTarget} AYAHS</span>
-                    </div>
-                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-awan-gold rounded-full transition-all"
-                        style={{ width: `${Math.min(100, (quranStore.progress.totalAyahsRead % quranStore.progress.dailyAyahTarget) / quranStore.progress.dailyAyahTarget * 100)}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-row gap-3">
-                    <Touch
-                      onPress={() => quranStore.advance(1)}
-                      className="flex-1 h-12 bg-awan-gold/10 border border-awan-gold/30 rounded-2xl flex items-center justify-center gap-2"
-                    >
-                      <Plus size={16} className="text-awan-gold" />
-                      <span className="text-xs font-black text-awan-gold uppercase tracking-widest">+1 Ayah</span>
-                    </Touch>
-                    <Touch
-                      onPress={() => quranStore.advance(5)}
-                      className="flex-1 h-12 bg-awan-gold rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-awan-gold/20"
-                    >
-                      <span className="text-xs font-black text-black uppercase tracking-widest">+5 Ayahs</span>
-                    </Touch>
-                    <Touch
-                      onPress={() => quranStore.advance(-1)}
-                      className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center"
-                    >
-                      <Minus size={16} className="text-awan-tx-mute" />
-                    </Touch>
-                  </div>
+        <AnimatePresence>
+          {showQibla && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="mb-4 border overflow-hidden flex flex-col items-center p-8"
+              style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: 'var(--color-awan-surface)' }}
+            >
+              {locationStatus === 'loading' ? (
+                <div className="flex flex-col items-center gap-4 py-8">
+                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}>
+                    <Compass size={32} color="var(--color-awan-gold)" />
+                  </motion.div>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>ACQUISITION GPS...</span>
                 </div>
               ) : (
-                <div className="py-8 flex flex-col items-center gap-4">
-                  <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest opacity-50">Aucune progression enregistrée</span>
-                  <Touch
-                    onPress={() => quranStore.advance(0)}
-                    className="px-6 h-12 bg-awan-gold rounded-2xl flex items-center justify-center shadow-lg shadow-awan-gold/20"
-                  >
-                    <span className="text-xs font-black text-black uppercase tracking-widest">Initialiser</span>
+                <>
+                  {/* Two-needle compass */}
+                  <div style={{ width: 208, height: 208, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                    {/* Cardinal marks */}
+                    {(['N','E','S','O'] as const).map((dir, i) => {
+                      const angle = i * 90;
+                      const rad = (angle - 90) * Math.PI / 180;
+                      const r = 88;
+                      return (
+                        <span key={dir} style={{ position: 'absolute', left: `calc(50% + ${r * Math.cos(rad)}px - 5px)`, top: `calc(50% + ${r * Math.sin(rad)}px - 7px)`, fontFamily: 'var(--font-mono)', fontSize: '8px', fontWeight: 700, color: dir === 'N' ? 'var(--color-awan-tx)' : 'rgba(255,255,255,0.2)' }}>
+                          {dir}
+                        </span>
+                      );
+                    })}
+                    <div style={{ position: 'absolute', inset: 8, borderRadius: '50%', border: '1px dashed rgba(255,255,255,0.08)' }} />
+
+                    {/* North needle — title color */}
+                    <motion.div
+                      animate={{ rotate: compassHeading !== null ? -compassHeading : 0 }}
+                      style={{ position: 'absolute', width: 4, height: 140, display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 10 }}
+                      transition={{ type: 'spring', stiffness: 80, damping: 18 }}
+                    >
+                      <div style={{ width: 4, height: 70, backgroundColor: 'var(--color-awan-tx)', opacity: 0.7 }} />
+                      <div style={{ width: 4, height: 70, backgroundColor: 'rgba(255,255,255,0.15)' }} />
+                    </motion.div>
+
+                    {/* Qibla needle — gold */}
+                    <motion.div
+                      animate={{ rotate: compassHeading !== null ? qiblaAngle - compassHeading : qiblaAngle }}
+                      style={{ position: 'absolute', width: 3, height: 140, display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 11 }}
+                      transition={{ type: 'spring', stiffness: 80, damping: 18 }}
+                    >
+                      <div style={{ width: 3, height: 70, backgroundColor: 'var(--color-awan-gold)', boxShadow: '0 0 12px var(--color-awan-gold)' }} />
+                      <div style={{ width: 3, height: 70, backgroundColor: 'rgba(212,175,55,0.2)' }} />
+                    </motion.div>
+
+                    {/* Center hub */}
+                    <div style={{ width: 52, height: 52, borderRadius: '50%', backgroundColor: 'var(--color-awan-bg)', border: '2px solid var(--color-awan-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, color: 'var(--color-awan-gold)' }}>{Math.round(qiblaAngle)}°</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-row items-center gap-4 mt-6">
+                    <div className="flex flex-row items-center gap-2">
+                      <div style={{ width: 12, height: 3, backgroundColor: 'var(--color-awan-tx)', opacity: 0.7 }} />
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>NORD</span>
+                    </div>
+                    <div className="flex flex-row items-center gap-2">
+                      <div style={{ width: 12, height: 3, backgroundColor: 'var(--color-awan-gold)' }} />
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-gold)', letterSpacing: '0.2em' }}>QIBLA</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-row items-center gap-2 mt-3">
+                    <div style={{ width: 6, height: 6, backgroundColor: locationStatus === 'ok' ? 'var(--color-awan-status-ok)' : locationStatus === 'cached' ? 'var(--color-awan-gold)' : 'var(--color-awan-status-warn)' }} />
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>
+                      {locationStatus === 'ok' ? 'GPS ACTIF' : locationStatus === 'cached' ? 'POSITION MÉMORISÉE' : 'DÉFAUT'}
+                    </span>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Calendrier hégirien ───────────────────────────────────────────── */}
+        <div className="mb-4 border" style={{ borderColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+          <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <div className="flex flex-row gap-2">
+              <Touch onPress={() => setCalView('month')}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', fontWeight: 700, color: calView === 'month' ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>MOIS</span>
+              </Touch>
+              <span style={{ color: 'var(--color-awan-tx-mute)', opacity: 0.3 }}>·</span>
+              <Touch onPress={() => setCalView('year')}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', fontWeight: 700, color: calView === 'year' ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>ANNÉE</span>
+              </Touch>
+            </div>
+            <div className="flex flex-row items-center gap-3">
+              <Touch onPress={prevMonth}><ChevronLeft size={16} color="var(--color-awan-gold)" /></Touch>
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.05em' }}>
+                {HIJRI_MONTHS[hijriMonth - 1]} {hijriYear}
+              </span>
+              <Touch onPress={nextMonth}><ChevronRight size={16} color="var(--color-awan-gold)" /></Touch>
+            </div>
+          </div>
+
+          <div className="p-4">
+            {calView === 'month' ? (
+              <HijriCalendar
+                hijriYear={hijriYear}
+                hijriMonth={hijriMonth}
+                onSelect={setSelectedDate}
+                selectedDate={selectedDate}
+                todayStr={todayStr}
+              />
+            ) : (
+              /* Annual view — list of months */
+              <div className="flex flex-col gap-2">
+                {Array.from({ length: 12 }, (_, i) => {
+                  const hm = i + 1;
+                  const monthName = HIJRI_MONTHS[i];
+                  const firstJdn = hToJdn(hijriYear, hm, 1);
+                  const [gy, gm] = jdnToG(firstJdn);
+                  const gregLabel = new Date(gy, gm - 1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                  const holidays = ISLAMIC_HOLIDAYS.filter(([m]) => m === hm);
+                  return (
+                    <Touch key={hm} onPress={() => { setHijriMonth(hm); setCalView('month'); }}>
+                      <div className="flex flex-row items-start justify-between p-3 border" style={{ borderColor: hm === hijriMonth ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.06)', backgroundColor: hm === hijriMonth ? 'rgba(212,175,55,0.06)' : 'transparent' }}>
+                        <div>
+                          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', fontWeight: 700, color: hm === hijriMonth ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)', letterSpacing: '0.1em' }}>{monthName}</span>
+                          <span style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', marginTop: 2 }}>{gregLabel}</span>
+                        </div>
+                        {holidays.length > 0 && (
+                          <div className="flex flex-col items-end gap-1">
+                            {holidays.map(([, hd, name]) => (
+                              <span key={`${hm}-${hd}`} style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-gold)', letterSpacing: '0.1em' }}>{hd} {name}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </Touch>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Progression Coran ─────────────────────────────────────────────── */}
+        <div className="mb-4 border" style={{ borderColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+          <div className="px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <div className="flex flex-row items-center justify-between">
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>PROGRESSION CORAN</span>
+              <TrendingUp size={14} color="var(--color-awan-gold)" />
+            </div>
+          </div>
+          <div className="p-4">
+            {quranStore.progress ? (
+              <div>
+                <div className="flex flex-row justify-between items-center mb-4">
+                  <div>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-gold)', letterSpacing: '0.2em', display: 'block', marginBottom: 4 }}>SOURATE</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '28px', fontWeight: 700, color: 'var(--color-awan-tx)' }}>{quranStore.progress.currentSurah}<span style={{ fontSize: '11px', color: 'var(--color-awan-tx-mute)' }}>/114</span></span>
+                  </div>
+                  <div className="text-right">
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', display: 'block', marginBottom: 4 }}>VERSET</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '28px', fontWeight: 700, color: 'var(--color-awan-tx)' }}>{quranStore.progress.currentAyah}</span>
+                  </div>
+                  <div className="text-right">
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', display: 'block', marginBottom: 4 }}>TOTAL LU</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '28px', fontWeight: 700, color: 'var(--color-awan-tx)' }}>{quranStore.progress.totalAyahsRead}</span>
+                  </div>
+                </div>
+                <div className="h-px mb-4" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+                <div className="flex flex-row gap-2">
+                  <Touch onPress={() => quranStore.advance(1)} className="flex-1 flex items-center justify-center gap-2 p-3 border" style={{ borderColor: 'rgba(212,175,55,0.3)', backgroundColor: 'rgba(212,175,55,0.06)' }}>
+                    <Plus size={14} color="var(--color-awan-gold)" />
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-gold)', letterSpacing: '0.2em' }}>+1</span>
+                  </Touch>
+                  <Touch onPress={() => quranStore.advance(5)} className="flex-1 flex items-center justify-center gap-2 p-3" style={{ backgroundColor: 'var(--color-awan-gold)' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-bg)', letterSpacing: '0.2em' }}>+5</span>
+                  </Touch>
+                  <Touch onPress={() => quranStore.advance(-1)} className="flex items-center justify-center p-3 border" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+                    <Minus size={14} color="var(--color-awan-tx-mute)" />
                   </Touch>
                 </div>
-              )}
-            </Card>
-          </div>
-
-          <div className="mb-20">
-            <div className="flex flex-row justify-between items-end mb-6 px-1">
-              <Heading level={4} mono subtitle="Lexique" className="mb-0">VOCABULAIRE TECHNIQUE</Heading>
-              <BookOpen size={14} className="text-awan-tx-mute mb-1" />
-            </div>
-
-            <Card className="bg-awan-surface/30 border border-white/10 p-8 shadow-2xl relative overflow-hidden group" variant="flat">
-              <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none group-hover:scale-110 transition-all">
-                <BookOpen size={120} className="text-awan-gold" />
               </div>
+            ) : (
+              <div className="py-6 flex flex-col items-center gap-4">
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>AUCUNE PROGRESSION</span>
+                <Touch onPress={() => quranStore.advance(0)} className="flex items-center justify-center px-6 py-3" style={{ backgroundColor: 'var(--color-awan-gold)' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-bg)', letterSpacing: '0.2em' }}>INITIALISER</span>
+                </Touch>
+              </div>
+            )}
+          </div>
+        </div>
 
-              {currentWord ? (
-                <div className="items-center py-4">
-                  <div className="w-full flex flex-row justify-between items-center mb-12">
-                    <div className="bg-awan-gold/10 border border-awan-gold/30 px-3 py-1 rounded-md">
-                      <span className="text-[9px] font-black text-awan-gold uppercase tracking-widest">{currentWord.category}</span>
-                    </div>
-                    <Touch onPress={pickNewWord} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10">
-                      <RefreshCcw size={16} className="text-awan-tx-mute" />
+        {/* ── Vocabulaire ───────────────────────────────────────────────────── */}
+        <div className="mb-8 border" style={{ borderColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+          <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>VOCABULAIRE</span>
+            <div className="flex flex-row items-center gap-2">
+              <BookOpen size={13} color="var(--color-awan-tx-mute)" />
+              <Touch onPress={pickNewWord}>
+                <RefreshCcw size={13} color="var(--color-awan-tx-mute)" />
+              </Touch>
+            </div>
+          </div>
+          <div className="p-6">
+            {currentWord ? (
+              <div className="flex flex-col items-center">
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-gold)', letterSpacing: '0.4em', marginBottom: 16, opacity: 0.6 }}>
+                  {currentWord.category?.toUpperCase()}
+                </span>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '20px', fontWeight: 700, color: 'var(--color-awan-tx)', textAlign: 'center', marginBottom: 24, letterSpacing: '0.05em' }}>
+                  {currentWord.fr}
+                </span>
+                <AnimatePresence mode="wait">
+                  {!showAnswer ? (
+                    <Touch onPress={() => setShowAnswer(true)} className="w-full flex items-center justify-center py-3" style={{ backgroundColor: 'var(--color-awan-gold)' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-bg)', letterSpacing: '0.3em' }}>RÉVÉLER</span>
                     </Touch>
-                  </div>
-                  
-                  <span className="text-[10px] font-black text-awan-gold tracking-[0.5em] uppercase mb-4 block opacity-40">Définition Symantique</span>
-                  <span className="text-3xl font-black text-awan-tx text-center mb-12 tracking-tight uppercase leading-tight">{currentWord.fr}</span>
-                  
-                  <div className="w-10 h-0.5 bg-awan-gold/20 mb-12" />
-
-                  <AnimatePresence mode="wait">
-                    {!showAnswer ? (
-                      <Touch 
-                        onPress={() => setShowAnswer(true)}
-                        className="w-full h-16 bg-awan-gold rounded-2xl flex items-center justify-center shadow-lg shadow-awan-gold/20"
-                      >
-                        <span className="text-xs font-black text-black tracking-[0.2em] uppercase">DÉCRYPTAGE DU SYMBOLE</span>
-                      </Touch>
-                    ) : (
-                      <motion.div 
-                        key="answer"
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="flex flex-col items-center w-full"
-                      >
-                        <span className="text-7xl font-sans text-awan-gold font-bold mb-6 tracking-tighter text-center">{currentWord.ar}</span>
-                        <div className="bg-black/40 px-4 py-2 rounded-lg border border-white/5">
-                           <span className="text-[10px] font-black font-mono text-awan-tx-mute tracking-[0.2em]">[{currentWord.phonetic.toUpperCase()}]</span>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ) : (
-                <div className="py-20 items-center opacity-30">
-                  <span className="text-xs font-black text-awan-status-error uppercase tracking-widest">Index de Données Corrompu</span>
-                </div>
-              )}
-            </Card>
+                  ) : (
+                    <motion.div key="answer" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center w-full">
+                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: '52px', fontWeight: 700, color: 'var(--color-awan-gold)', marginBottom: 8 }}>{currentWord.ar}</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+                        [{currentWord.phonetic?.toUpperCase()}]
+                      </span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <div className="py-12 flex items-center justify-center">
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>CHARGEMENT...</span>
+              </div>
+            )}
           </div>
         </div>
       </ScrollView>
     </PageWrapper>
   );
 }
-
