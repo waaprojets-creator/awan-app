@@ -1,27 +1,46 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { ScrollView } from 'react-native';
-import { InstrumentCard } from '../components/ui/InstrumentCard';
+import { ChevronRight, Activity, Utensils, Ruler, Brain } from 'lucide-react';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
+import { Card } from '../components/ui/Card';
+import { Touch } from '../components/ui/Touch';
 import { useWorkoutStore } from '../hooks/useWorkoutStore';
 import { useMealStore } from '../hooks/useMealStore';
 import { useMeasurementStore } from '../hooks/useMeasurementStore';
-import { usePrayerStore } from '../hooks/usePrayerStore';
+import { useCoach } from '../hooks/useCoach';
 import { ds } from '../utils/storage';
 import { sessionsThisWeek } from '../hooks/useAwanScore';
-import { MealService } from '../services/mealService';
+import type { Severity } from '../data/schemas/coach/rule';
+import type { Advice } from '../data/schemas/coach/assessment';
 
-function toStatus(pct: number) {
-  if (pct >= 75) return 'ok' as const;
-  if (pct >= 40) return 'warn' as const;
-  return 'error' as const;
+function BodySilhouette() {
+  const s = 'var(--color-awan-tx-mute)';
+  return (
+    <svg width="48" height="96" viewBox="0 0 48 96" fill="none">
+      <ellipse cx="24" cy="9" rx="7" ry="8" stroke={s} strokeWidth="1" opacity="0.45"/>
+      <rect x="21" y="16" width="6" height="4" rx="1" stroke={s} strokeWidth="0.8" opacity="0.35"/>
+      <path d="M 10 22 Q 18 18 24 19 Q 30 18 38 22 L 37 50 Q 30 54 24 54 Q 18 54 11 50 Z" stroke={s} strokeWidth="1" fill="none" opacity="0.4"/>
+      <path d="M 10 22 L 3 44 L 6 46 L 13 24" stroke={s} strokeWidth="0.8" opacity="0.35" strokeLinejoin="round"/>
+      <path d="M 38 22 L 45 44 L 42 46 L 35 24" stroke={s} strokeWidth="0.8" opacity="0.35" strokeLinejoin="round"/>
+      <path d="M 17 54 L 15 82 L 19 82 L 22 54" stroke={s} strokeWidth="0.9" opacity="0.4"/>
+      <path d="M 31 54 L 33 82 L 29 82 L 26 54" stroke={s} strokeWidth="0.9" opacity="0.4"/>
+    </svg>
+  );
 }
+
+const COACH_COLOR: Record<Severity, string> = {
+  info:  'var(--color-awan-gold)',
+  good:  'var(--color-awan-status-ok)',
+  warn:  'var(--color-awan-status-warn)',
+  alert: 'var(--color-awan-status-error)',
+};
 
 export default function SanteScreen({ navigate }: any) {
   const today = ds(new Date());
-  const workoutStore  = useWorkoutStore();
-  const mealStore     = useMealStore(today);
-  const measureStore  = useMeasurementStore();
-  const prayerStore   = usePrayerStore(today);
+  const workoutStore = useWorkoutStore();
+  const mealStore = useMealStore(today);
+  const measureStore = useMeasurementStore();
+  const { assessments: coachAssessments } = useCoach(today);
 
   const KCAL_TARGET = useMemo(() => {
     try {
@@ -30,215 +49,184 @@ export default function SanteScreen({ navigate }: any) {
     } catch { return 2000; }
   }, []);
 
-  const sessCount     = sessionsThisWeek(workoutStore.sessions as Array<{ date?: string; startTime?: number }>);
-  const latestMeasure = measureStore.history.slice().sort((a, b) => a.date.localeCompare(b.date)).at(-1);
-  const kcal          = mealStore.totals.kcal;
-  const kcalPct       = Math.min(100, Math.round((kcal / KCAL_TARGET) * 100));
-  const sportPct      = Math.min(100, sessCount * 25);
+  const sessCount = sessionsThisWeek(workoutStore.sessions as Array<{ date?: string; startTime?: number }>);
 
-  // ── Trend Sport — séances semaine N-1 ───────────────────────────────────────
-  const sessPrevWeek = useMemo(() => {
-    const now = Date.now();
-    const weekAgo  = now - 7  * 24 * 60 * 60 * 1000;
-    const twoWeeks = now - 14 * 24 * 60 * 60 * 1000;
-    return (workoutStore.sessions as Array<{ startTime?: number }>).filter(s => {
-      const t = s.startTime ?? 0;
-      return t >= twoWeeks && t < weekAgo;
-    }).length;
-  }, [workoutStore.sessions]);
+  const lastSession = useMemo(() =>
+    [...(workoutStore.sessions as Array<{ startTime?: number }>)]
+      .sort((a, b) => (b.startTime ?? 0) - (a.startTime ?? 0))[0],
+    [workoutStore.sessions]);
 
-  const sportDelta = useMemo<string | undefined>(() => {
-    const d = sessCount - sessPrevWeek;
-    if (d === 0) return '= séances';
-    return `${d > 0 ? '+' : ''}${d} séance${Math.abs(d) > 1 ? 's' : ''}`;
-  }, [sessCount, sessPrevWeek]);
+  const daysSince = lastSession?.startTime
+    ? Math.floor((Date.now() - (lastSession.startTime as number)) / 86_400_000)
+    : null;
 
-  // ── Trend Nutrition — kcal moyen 7j vs 7j précédents ────────────────────────
-  const [nutritionDelta, setNutritionDelta] = useState<string | undefined>(undefined);
+  const kcal = mealStore.totals.kcal;
+  const kcalPct = Math.min(100, Math.round((kcal / KCAL_TARGET) * 100));
 
-  useEffect(() => {
-    let active = true;
-    const now = new Date();
-    const dayMs = 24 * 60 * 60 * 1000;
-    const recent: string[] = [];
-    const prior:  string[] = [];
-    for (let i = 0; i < 7;  i++) recent.push(ds(new Date(now.getTime() - i * dayMs)));
-    for (let i = 7; i < 14; i++) prior.push(ds(new Date(now.getTime() - i * dayMs)));
+  const latestMeasure = measureStore.history
+    .slice()
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .at(-1);
 
-    Promise.all([
-      Promise.all(recent.map(d => MealService.getByDate(d))),
-      Promise.all(prior.map(d  => MealService.getByDate(d))),
-    ]).then(([recentMeals, priorMeals]) => {
-      if (!active) return;
-      const sumKcal = (days: Awaited<ReturnType<typeof MealService.getByDate>>[]) =>
-        days.reduce((s, ms) => s + MealService.totals(ms).kcal, 0);
-      const avgRecent = sumKcal(recentMeals) / 7;
-      const avgPrior  = sumKcal(priorMeals)  / 7;
-      if (avgRecent === 0 && avgPrior === 0) {
-        setNutritionDelta(undefined);
-        return;
-      }
-      const d = Math.round(avgRecent - avgPrior);
-      if (d === 0) setNutritionDelta('= kcal');
-      else setNutritionDelta(`${d > 0 ? '+' : ''}${d} kcal`);
-    });
-
-    return () => { active = false; };
-  }, []);
-
-  // ── Trend Mensuration — delta poids 7j vs 7j précédents ─────────────────────
-  const weightDelta = useMemo<string | undefined>(() => {
-    const now = new Date();
-    const dayMs = 24 * 60 * 60 * 1000;
-    const recent = measureStore.history.filter(m => {
-      const diff = now.getTime() - new Date(m.date).getTime();
-      return diff >= 0 && diff < 7 * dayMs;
-    });
-    const prior = measureStore.history.filter(m => {
-      const diff = now.getTime() - new Date(m.date).getTime();
-      return diff >= 7 * dayMs && diff < 14 * dayMs;
-    });
-    if (recent.length === 0 || prior.length === 0) return undefined;
-    const avg = (arr: typeof recent) => arr.reduce((s, m) => s + m.weight, 0) / arr.length;
-    const d = avg(recent) - avg(prior);
-    if (Math.abs(d) < 0.05) return '= kg';
-    return `${d > 0 ? '+' : ''}${d.toFixed(1)} kg`;
-  }, [measureStore.history]);
+  const topAdvice = useMemo<Advice | null>(() => {
+    const order: Record<Severity, number> = { alert: 0, warn: 1, good: 2, info: 3 };
+    const all: Advice[] = coachAssessments.flatMap((a) => a.advices);
+    if (all.length === 0) return null;
+    return [...all].sort((a, b) => order[a.severity] - order[b.severity])[0] ?? null;
+  }, [coachAssessments]);
 
   return (
     <ScrollView
       style={{ flex: 1, width: '100%', maxWidth: '100%' }}
-      contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100, width: '100%', maxWidth: '100%' }}
+      contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}
       showsVerticalScrollIndicator={false}
     >
       <ScreenHeader tag="SANTÉ" title="SANTÉ" />
 
-      {/* ── 2×2 modules ────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <InstrumentCard
-          label="SPORT"
-          value={sessCount}
-          unit="séances/sem"
-          status={toStatus(sportPct)}
-          progress={sportPct}
-          index={1}
-          onPress={() => navigate('Sport')}
-          {...(sportDelta ? { delta: sportDelta } : {})}
-        />
-        <InstrumentCard
-          label="NUTRITION"
-          value={kcal}
-          unit="kcal"
-          status={toStatus(kcalPct)}
-          progress={kcalPct}
-          index={2}
-          onPress={() => navigate('Nutrition')}
-          {...(nutritionDelta ? { delta: nutritionDelta } : {})}
-        />
-        <InstrumentCard
-          label="MENSURATION"
-          value={latestMeasure?.weight ?? '—'}
-          unit={latestMeasure ? 'kg' : ''}
-          status={latestMeasure ? 'ok' : 'mute'}
-          index={3}
-          onPress={() => navigate('Mensuration')}
-          {...(weightDelta ? { delta: weightDelta } : {})}
-        />
-        <InstrumentCard
-          label="ISLAM"
-          value={prayerStore.doneCount}
-          unit={`/${prayerStore.total}`}
-          status={prayerStore.doneCount > 0 ? 'ok' : 'mute'}
-          progress={prayerStore.total > 0 ? Math.round((prayerStore.doneCount / prayerStore.total) * 100) : 0}
-          index={4}
-          onPress={() => navigate('Islam')}
-        />
-      </div>
-
-      {/* ── Macros résumé ──────────────────────────────────────────────────────── */}
-      {kcal > 0 && (
-        <div
-          className="p-4 border mb-4"
-          style={{
-            backgroundColor: 'var(--color-awan-surface)',
-            borderColor: 'rgba(255,255,255,0.06)',
-          }}
-        >
-          <span
-            className="uppercase block mb-3"
-            style={{
-              fontFamily: 'var(--font-sans)',
-              fontSize: '7px',
-              fontWeight: 'var(--fw-mute)' as any,
-              color: 'var(--color-awan-tx-mute)',
-              letterSpacing: '0.3em',
-            }}
-          >
-            MACROS [05]
-          </span>
-          <div className="grid grid-cols-3 gap-4">
-            {([['P', mealStore.totals.p], ['G', mealStore.totals.c], ['L', mealStore.totals.f]] as const).map(([k, v]) => (
-              <div key={k} className="flex flex-col">
-                <span
-                  style={{
-                    fontFamily: 'var(--font-sans)',
-                    fontSize: '7px',
-                    fontWeight: 'var(--fw-mute)' as any,
-                    color: 'var(--color-awan-tx-mute)',
-                    letterSpacing: '0.3em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {k}
+      {/* SPORT */}
+      <Touch onPress={() => navigate('Sport')} className="mb-4 block">
+        <Card className="p-5 bg-white/3 border-white/5" variant="flat">
+          <div className="flex flex-row justify-between items-center mb-4">
+            <div className="flex flex-row items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-awan-gold/10 flex items-center justify-center border border-awan-gold/20">
+                <Activity size={15} className="text-awan-gold" />
+              </div>
+              <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase">SPORT</span>
+            </div>
+            <ChevronRight size={16} className="text-awan-tx-mute" />
+          </div>
+          <div className="flex flex-row gap-8">
+            <div>
+              <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">SÉANCES / SEM</span>
+              <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">{sessCount}</span>
+            </div>
+            {daysSince !== null && (
+              <div>
+                <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">DERNIÈRE SÉANCE</span>
+                <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">
+                  {daysSince === 0 ? "AUJOURD'HUI" : `J-${daysSince}`}
                 </span>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '20px',
-                    fontWeight: 700,
-                    color: 'var(--color-awan-tx)',
-                    letterSpacing: '-0.02em',
-                  }}
-                >
-                  {v}<span style={{ fontSize: '10px', opacity: 0.5, marginLeft: 2 }}>g</span>
+              </div>
+            )}
+          </div>
+          {sessCount > 0 && (
+            <div className="mt-3 h-0.5 bg-white/5 rounded-full overflow-hidden">
+              <div className="h-full bg-awan-gold rounded-full" style={{ width: `${Math.min(100, sessCount * 25)}%` }} />
+            </div>
+          )}
+        </Card>
+      </Touch>
+
+      {/* NUTRITION */}
+      <Touch onPress={() => navigate('Nutrition')} className="mb-4 block">
+        <Card className="p-5 bg-white/3 border-white/5" variant="flat">
+          <div className="flex flex-row justify-between items-center mb-4">
+            <div className="flex flex-row items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-awan-gold/10 flex items-center justify-center border border-awan-gold/20">
+                <Utensils size={15} className="text-awan-gold" />
+              </div>
+              <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase">NUTRITION</span>
+            </div>
+            <ChevronRight size={16} className="text-awan-tx-mute" />
+          </div>
+          <div className="flex flex-row gap-6 flex-wrap">
+            <div>
+              <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">KCAL</span>
+              <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">
+                {kcal}<span className="text-xs ml-1 opacity-50" style={{ color: 'var(--color-awan-gold)' }}>/{KCAL_TARGET}</span>
+              </span>
+            </div>
+            {(['p', 'c', 'f'] as const).map(m => (
+              <div key={m}>
+                <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
+                  {m === 'p' ? 'PROT' : m === 'c' ? 'GLUC' : 'LIP'}
+                </span>
+                <span className="text-2xl font-black text-awan-tx font-mono">
+                  {mealStore.totals[m]}<span className="text-[10px] ml-0.5 opacity-50" style={{ color: 'var(--color-awan-gold)' }}>g</span>
                 </span>
               </div>
             ))}
           </div>
-        </div>
-      )}
+          {kcal > 0 && (
+            <div className="mt-3 h-0.5 bg-white/5 rounded-full overflow-hidden">
+              <div className={`h-full rounded-full transition-all ${kcalPct >= 90 && kcalPct <= 110 ? 'bg-awan-status-ok' : 'bg-awan-gold'}`}
+                style={{ width: `${kcalPct}%` }} />
+            </div>
+          )}
+        </Card>
+      </Touch>
 
-      {/* ── Statut système ─────────────────────────────────────────────────────── */}
-      <div
-        className="p-4 border"
-        style={{
-          backgroundColor: 'var(--color-awan-surface)',
-          borderColor: 'rgba(255,255,255,0.06)',
-        }}
-      >
-        <span
-          className="uppercase block mb-1"
-          style={{
-            fontFamily: 'var(--font-sans)',
-            fontSize: '7px',
-            fontWeight: 'var(--fw-mute)' as any,
-            color: 'var(--color-awan-tx-mute)',
-            letterSpacing: '0.3em',
-          }}
-        >
-          MONITORING BIOSPHÈRE [06]
-        </span>
-        <span
-          style={{
-            fontFamily: 'var(--font-sans)',
-            fontSize: '11px',
-            fontWeight: 'var(--fw-body)' as any,
-            color: 'var(--color-awan-tx-dim)',
-          }}
-        >
-          {sessCount} séance{sessCount !== 1 ? 's' : ''} cette semaine · {kcalPct}% objectif calorique
-        </span>
-      </div>
+      {/* MENSURATION */}
+      <Touch onPress={() => navigate('Mensuration')} className="mb-4 block">
+        <Card className="p-5 bg-white/3 border-white/5" variant="flat">
+          <div className="flex flex-row justify-between items-center mb-4">
+            <div className="flex flex-row items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-awan-gold/10 flex items-center justify-center border border-awan-gold/20">
+                <Ruler size={15} className="text-awan-gold" />
+              </div>
+              <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase">MENSURATION</span>
+            </div>
+            <ChevronRight size={16} className="text-awan-tx-mute" />
+          </div>
+          <div className="flex flex-row gap-6 items-center">
+            <BodySilhouette />
+            <div className="flex flex-col gap-3 flex-1">
+              {latestMeasure ? (
+                <>
+                  <div>
+                    <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-0.5">POIDS</span>
+                    <span className="text-2xl font-black text-awan-tx font-mono tracking-tighter">
+                      {latestMeasure.weight}<span className="text-xs ml-1 text-awan-gold">kg</span>
+                    </span>
+                  </div>
+                  {latestMeasure.body_fat_pct > 0 && (
+                    <div>
+                      <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-0.5">MASSE GRASSE</span>
+                      <span className="text-2xl font-black text-awan-tx font-mono tracking-tighter">
+                        {latestMeasure.body_fat_pct.toFixed(1)}<span className="text-xs ml-1 text-awan-gold">%</span>
+                      </span>
+                    </div>
+                  )}
+                  {latestMeasure.bpm_rest > 0 && (
+                    <div>
+                      <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-0.5">BPM REPOS</span>
+                      <span className="text-2xl font-black text-awan-tx font-mono tracking-tighter">{latestMeasure.bpm_rest}</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest opacity-40">Aucune mesure</span>
+              )}
+            </div>
+          </div>
+        </Card>
+      </Touch>
+
+      {/* COACH */}
+      <Touch onPress={() => navigate('Coach')} className="mb-4 block">
+        <Card className="p-5 bg-white/3 border-white/5" variant="flat">
+          <div className="flex flex-row justify-between items-center mb-4">
+            <div className="flex flex-row items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-awan-gold/10 flex items-center justify-center border border-awan-gold/20">
+                <Brain size={15} className="text-awan-gold" />
+              </div>
+              <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase">COACH</span>
+            </div>
+            <ChevronRight size={16} className="text-awan-tx-mute" />
+          </div>
+          {topAdvice ? (
+            <div>
+              <span className="text-[9px] font-black uppercase tracking-widest block mb-1"
+                style={{ color: COACH_COLOR[topAdvice.severity] }}>
+                {topAdvice.severity.toUpperCase()}
+              </span>
+              <span className="text-xs font-bold text-awan-tx">{topAdvice.key}</span>
+            </div>
+          ) : (
+            <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest opacity-40">Analyse non effectuée</span>
+          )}
+        </Card>
+      </Touch>
     </ScrollView>
   );
 }

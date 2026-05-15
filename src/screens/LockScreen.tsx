@@ -52,7 +52,7 @@ export default function LockScreen() {
                 exit={{ opacity: 0, y: -30 }}
                 transition={{ duration: 0.64 }}
                 style={{
-                  fontFamily: 'Cairo, sans-serif',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '32px',
                   fontWeight: 300,
                   letterSpacing: '0.08em',
@@ -75,7 +75,7 @@ export default function LockScreen() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.16, type: 'spring', stiffness: 100, damping: 10 }}
                     style={{
-                      fontFamily: 'Cairo, sans-serif',
+                      fontFamily: 'var(--font-sans)',
                       fontSize: '24px',
                       fontWeight: 900,
                       letterSpacing: '0.25em',

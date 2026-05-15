@@ -497,18 +497,6 @@ export default function SportScreen() {
             </Card>
           )}
 
-          <div className="mb-10">
-            <Heading level={4} mono subtitle="Séquence Motrice">HISTORIQUE DU JOUR</Heading>
-            <div className="bg-awan-bg/40 p-4 rounded-awan-xl border border-white/5 min-h-[150px]">
-              <DailyCanvas
-                dateId={today}
-                filterModule="sport"
-                onReorder={(activeId, overId) => moveEntry(today, activeId, overId)}
-              />
-            </div>
-            {getEntriesByDate(today).filter((e: any) => e.module === 'sport').length === 0 && null}
-          </div>
-
           <div className="mb-6 flex flex-row gap-3">
             <Touch
               className="flex-1 h-14 bg-awan-gold rounded-awan-xl flex items-center justify-center"

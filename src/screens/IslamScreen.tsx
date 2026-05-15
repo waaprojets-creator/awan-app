@@ -9,8 +9,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { SpiritualService } from '../utils/spiritualService';
 import arabicData from '../assets/data/1.json';
 import { PageWrapper } from '../components/Animated';
-import { DailyCanvas } from '../components/DailyCanvas';
-import { useDaily } from '../context/DailyContext';
 import { ds } from '../utils/storage';
 import { useAppState } from '../context/AppStateContext';
 import { usePrayerStore } from '../hooks/usePrayerStore';
@@ -25,8 +23,6 @@ import { Touch } from '../components/ui/Touch';
 export default function IslamScreen() {
   const insets = useSafeAreaInsets();
   const { navigate } = useAppState() as any;
-  const { addEntry } = useDaily();
-
   const [prayerTimes, setPrayerTimes] = useState<any>(() => SpiritualService.getPrayerTimes());
   const [showQibla, setShowQibla] = useState(false);
   const [qiblaAngle, setQiblaAngle] = useState(0);
@@ -38,19 +34,6 @@ export default function IslamScreen() {
   const todayStr = ds(new Date());
   const prayerStore = usePrayerStore(todayStr);
   const quranStore = useQuranStore();
-  const [inputText, setInputText] = useState('');
-
-  const handleAddEntry = () => {
-    if (!inputText.trim()) return;
-    addEntry(todayStr, {
-      id: Date.now().toString(),
-      timestamp: Date.now(),
-      module: 'islam',
-      rawText: inputText,
-      tokens: [{ label: 'FOI', value: 'DHIKR', icon: 'star' }]
-    });
-    setInputText('');
-  };
 
   useEffect(() => {
     // Refresh prayer times with real location if available
@@ -285,36 +268,6 @@ export default function IslamScreen() {
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
-
-          <div className="mb-10">
-            <Heading level={4} mono subtitle="Flux de Dhikr" className="mb-6">CAPTURE SPIRITUELLE</Heading>
-            <Card className="flex-row items-center gap-4 bg-white/5 border-white/10 p-5" variant="flat">
-               <div className="bg-black/40 border border-white/5 rounded-2xl flex-1 px-4 py-2 flex flex-row items-center">
-                  <div className="w-2 h-2 rounded-full bg-awan-gold mr-3" />
-                  <TextInput
-                    className="flex-1 h-10 text-sm font-bold text-awan-tx outline-none"
-                    placeholder="SYDNC FOI: ACTE DE DHIKR..."
-                    placeholderTextColor="rgba(255,255,255,0.15)"
-                    value={inputText}
-                    onChangeText={setInputText}
-                    onSubmitEditing={handleAddEntry}
-                  />
-               </div>
-               <Touch onPress={handleAddEntry} className="w-12 h-12 bg-white/5 rounded-2xl items-center justify-center border border-white/10">
-                  <Plus size={20} className="text-awan-gold" />
-               </Touch>
-            </Card>
-          </div>
-
-          <div className="mb-14">
-            <Heading level={4} mono subtitle="Rémanence" className="mb-6">SEQUENCE D'ACTES</Heading>
-            <div className="bg-awan-surface/10 p-2 rounded-awan-2xl border border-white/5 min-h-[160px] shadow-inner">
-              <DailyCanvas 
-                dateId={todayStr} 
-                filterModule="islam"
-              />
-            </div>
           </div>
 
           <div className="mb-10">

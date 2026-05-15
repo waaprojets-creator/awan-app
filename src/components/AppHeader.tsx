@@ -34,7 +34,7 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
               fontFamily: 'var(--font-mono)',
               fontSize: '13px',
               fontWeight: 900,
-              letterSpacing: '0.25em',
+              letterSpacing: '0.29em',
               color: isOn('Analyse') ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)',
               textTransform: 'uppercase',
               transition: 'color 0.2s',

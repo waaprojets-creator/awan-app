@@ -1,7 +1,9 @@
 import React from 'react';
 import { motion } from 'motion/react';
+import { Info } from 'lucide-react';
 import type { AwanScore, ScoreStatus } from '@/hooks/useAwanScore';
 import type { TemporalState } from '@/hooks/useTemporalMode';
+import { Touch } from './ui/Touch';
 
 // ── Résolution token → var CSS ─────────────────────────────────────────────────
 // Pas de couleur hardcodée — toute couleur passe par un token CSS
@@ -75,9 +77,10 @@ interface AwanScoreDisplayProps {
   score:    AwanScore;
   temporal: TemporalState;
   className?: string;
+  onInfo?: () => void;
 }
 
-export function AwanScoreDisplay({ score, temporal, className = '' }: AwanScoreDisplayProps) {
+export function AwanScoreDisplay({ score, temporal, className = '', onInfo }: AwanScoreDisplayProps) {
   const scoreColor  = STATUS_VAR[score.status];
   const modeColor   = STATUS_VAR[temporal.status];
 
@@ -89,7 +92,7 @@ export function AwanScoreDisplay({ score, temporal, className = '' }: AwanScoreD
         borderColor: 'rgba(255,255,255,0.06)',
       }}
     >
-      {/* Ligne supérieure : mode temporel */}
+      {/* Ligne supérieure : mode temporel + ⓘ */}
       <div className="flex justify-between items-center mb-4">
         <span
           style={{
@@ -103,17 +106,24 @@ export function AwanScoreDisplay({ score, temporal, className = '' }: AwanScoreD
         >
           {temporal.label}
         </span>
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '7px',
-            fontWeight: 400,
-            color: 'var(--color-awan-tx-mute)',
-            opacity: 0.5,
-          }}
-        >
-          {String(temporal.hour).padStart(2, '0')}H
-        </span>
+        <div className="flex flex-row items-center gap-3">
+          <span
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '7px',
+              fontWeight: 400,
+              color: 'var(--color-awan-tx-mute)',
+              opacity: 0.5,
+            }}
+          >
+            {String(temporal.hour).padStart(2, '0')}H
+          </span>
+          {onInfo && (
+            <Touch onPress={onInfo} className="p-1">
+              <Info size={12} color="var(--color-awan-tx-mute)" />
+            </Touch>
+          )}
+        </div>
       </div>
 
       {/* Score global — Cairo 900 display */}

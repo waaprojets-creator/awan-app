@@ -15,29 +15,35 @@ function useWindowDimensions() {
 interface Node { id: string; label: string; sub: string; x: number; y: number; tier: 0 | 1 | 2; }
 
 const nav = (L as any).nav as Record<string, string | undefined>;
-
 const n = (k: string): string => nav[k] ?? k;
 
 const NODES: Node[] = [
-  { id: 'Dashboard',   label: n('hub'),         sub: n('hubSub'),         x: 50, y: 42, tier: 0 },
-  { id: 'Islam',       label: n('spirit'),       sub: n('spiritSub'),      x: 80, y: 16, tier: 1 },
-  { id: 'Sante',       label: n('sante'),        sub: n('santeSub'),       x: 76, y: 36, tier: 1 },
-  { id: 'Sport',       label: n('sport'),        sub: n('sportSub'),       x: 88, y: 54, tier: 2 },
-  { id: 'Nutrition',   label: n('nutrition'),    sub: n('nutritionSub'),   x: 82, y: 68, tier: 2 },
-  { id: 'Mensuration', label: n('mensuration'),  sub: n('mensurationSub'), x: 70, y: 78, tier: 2 },
-  { id: 'Planning',    label: n('planning'),     sub: n('planningSub'),    x: 22, y: 16, tier: 1 },
-  { id: 'Tasks',       label: n('tasks'),        sub: n('tasksSub'),       x: 12, y: 32, tier: 2 },
-  { id: 'Journal',     label: n('journal'),      sub: n('journalSub'),     x: 18, y: 50, tier: 1 },
-  { id: 'Trajet',      label: n('trajet'),       sub: n('trajetSub'),      x: 26, y: 70, tier: 1 },
-  { id: 'Reglages',    label: n('reglages'),     sub: n('reglagesSub'),    x: 38, y: 82, tier: 2 },
-  { id: 'Coach',       label: n('coach'),        sub: n('coachSub'),       x: 52, y: 64, tier: 2 },
+  { id: 'Dashboard',   label: n('hub'),         sub: n('hubSub'),         x: 50, y: 40, tier: 0 },
+  { id: 'Islam',       label: n('spirit'),       sub: n('spiritSub'),      x: 80, y: 13, tier: 1 },
+  { id: 'Sante',       label: n('sante'),        sub: n('santeSub'),       x: 20, y: 13, tier: 1 },
+  { id: 'Sport',       label: n('sport'),        sub: n('sportSub'),       x:  7, y: 27, tier: 2 },
+  { id: 'Nutrition',   label: n('nutrition'),    sub: n('nutritionSub'),   x:  7, y: 43, tier: 2 },
+  { id: 'Mensuration', label: n('mensuration'),  sub: n('mensurationSub'), x:  7, y: 59, tier: 2 },
+  { id: 'Reglages',    label: n('reglages'),     sub: n('reglagesSub'),    x: 84, y: 36, tier: 2 },
+  { id: 'Coach',       label: n('coach'),        sub: n('coachSub'),       x: 22, y: 70, tier: 2 },
+  { id: 'Journal',     label: n('journal'),      sub: n('journalSub'),     x: 28, y: 82, tier: 1 },
+  { id: 'Planning',    label: n('planning'),     sub: n('planningSub'),    x: 50, y: 86, tier: 1 },
+  { id: 'Tasks',       label: n('tasks'),        sub: n('tasksSub'),       x: 64, y: 74, tier: 2 },
+  { id: 'Trajet',      label: n('trajet'),       sub: n('trajetSub'),      x: 74, y: 82, tier: 1 },
 ];
 
 const EDGES: [string, string][] = [
-  ['Dashboard', 'Islam'], ['Dashboard', 'Sante'], ['Dashboard', 'Planning'],
-  ['Dashboard', 'Journal'], ['Dashboard', 'Trajet'], ['Dashboard', 'Coach'],
-  ['Sante', 'Sport'], ['Sante', 'Nutrition'], ['Sante', 'Mensuration'],
-  ['Planning', 'Tasks'], ['Journal', 'Reglages'],
+  ['Dashboard', 'Islam'],
+  ['Dashboard', 'Sante'],
+  ['Dashboard', 'Reglages'],
+  ['Dashboard', 'Coach'],
+  ['Dashboard', 'Journal'],
+  ['Dashboard', 'Planning'],
+  ['Dashboard', 'Trajet'],
+  ['Sante', 'Sport'],
+  ['Sante', 'Nutrition'],
+  ['Sante', 'Mensuration'],
+  ['Planning', 'Tasks'],
 ];
 
 function FullMoon({ color }: { color: string }) {
@@ -59,13 +65,18 @@ function FullMoon({ color }: { color: string }) {
 function CrescentMoon({ color }: { color: string }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 5.5 5.5 0 0 0 21 12.79z" stroke={color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      <circle cx="10" cy="10" r="0.35" fill={color} opacity={0.28} />
-      <circle cx="9"  cy="14" r="0.28" fill={color} opacity={0.20} />
-      <circle cx="12" cy="8"  r="0.22" fill={color} opacity={0.18} />
+      <path
+        d="M 12 3 A 9 9 0 0 0 12 21 A 9.85 9.85 0 0 0 12 3 Z"
+        stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+      />
+      <circle cx="4.5" cy="10" r="0.4" fill={color} opacity={0.28} />
+      <circle cx="4"   cy="14" r="0.3" fill={color} opacity={0.22} />
+      <circle cx="5.5" cy="8"  r="0.25" fill={color} opacity={0.18} />
     </svg>
   );
 }
+
+const MARGIN = 14;
 
 interface MoonMenuProps { onNavigate: (route: string) => void; currentRoute: string; }
 
@@ -91,15 +102,33 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
     const cx = (node.x / 100) * W;
     const cy = (node.y / 100) * CH;
     const r  = node.tier === 0 ? 5 : node.tier === 1 ? 3.5 : 2.5;
+
+    // Bottom nodes: label above
+    if (node.y > 72) {
+      return { textX: cx, textY: cy - r - 8, anchor: 'middle', subY: cy - r - 18 };
+    }
+    // Near-right edge: label to the left
+    if (node.x > 72) {
+      const tx = Math.min(W - MARGIN, cx - r - 6);
+      return { textX: tx, textY: cy - 2, anchor: 'end', subY: cy + 9 };
+    }
+    // Near-left edge: label to the right
+    if (node.x < 18) {
+      const tx = Math.max(MARGIN, cx + r + 6);
+      return { textX: tx, textY: cy - 2, anchor: 'start', subY: cy + 9 };
+    }
+    // Tier 0 center: above
+    if (node.tier === 0) {
+      return { textX: cx, textY: cy - r - 12, anchor: 'middle', subY: cy - r - 22 };
+    }
+    // Left zone
     if (node.x < 40) {
-      const above = node.y < 55;
-      return { textX: cx - r - 6, textY: above ? cy - r - 10 : cy + r + 14, anchor: 'end', subY: above ? cy - r - 20 : cy + r + 24 };
+      return { textX: cx - r - 6, textY: cy - 2, anchor: 'end', subY: cy + 9 };
     }
+    // Right zone
     if (node.x > 60) {
-      const above = node.y < 55;
-      return { textX: cx + r + 6, textY: above ? cy - r - 10 : cy + r + 14, anchor: 'start', subY: above ? cy - r - 20 : cy + r + 24 };
+      return { textX: cx + r + 6, textY: cy - 2, anchor: 'start', subY: cy + 9 };
     }
-    if (node.tier === 0) return { textX: cx, textY: cy - r - 12, anchor: 'middle', subY: cy - r - 22 };
     return { textX: cx, textY: cy + r + 15, anchor: 'middle', subY: cy + r + 26 };
   }
 
@@ -115,14 +144,14 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
           >
             <svg width={W} height={H} style={{ position: 'absolute', inset: 0 }} onClick={(e) => e.stopPropagation()}>
               {EDGES.map(([fromId, toId], i) => {
-                const from = NODES.find((n) => n.id === fromId)!;
-                const to   = NODES.find((n) => n.id === toId)!;
+                const from = NODES.find((nd) => nd.id === fromId)!;
+                const to   = NODES.find((nd) => nd.id === toId)!;
                 return (
                   <motion.line key={`${fromId}-${toId}`}
                     x1={(from.x/100)*W} y1={(from.y/100)*CH} x2={(to.x/100)*W} y2={(to.y/100)*CH}
                     stroke="rgba(212,175,55,0.22)" strokeWidth={1.6} strokeDasharray="3 5"
                     initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
-                    transition={{ duration: 0.5, delay: 0.08 + i * 0.04, ease: 'easeOut' }}
+                    transition={{ duration: 0.3, delay: 0.05 + i * 0.024, ease: 'easeOut' }}
                   />
                 );
               })}

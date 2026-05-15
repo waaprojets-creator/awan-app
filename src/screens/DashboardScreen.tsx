@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { ScrollView, TextInput as RNTextInput } from 'react-native';
-import { Upload, X, Info } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 import { L, DATE_FORMAT_BANNER, TRANSPORT_OPTIONS } from '../constants/labels';
 import { TRANSPORT_ICONS } from '../constants/icons';
 import { ds } from '../utils/storage';
@@ -124,15 +124,9 @@ export default function DashboardScreen({ navigate }: NavProps) {
         </span>
       </div>
 
-      {/* Score AWAN — widget principal avec ⓘ */}
-      <div className="mb-4 relative">
-        <AwanScoreDisplay score={score} temporal={temporal} />
-        <Touch
-          onPress={() => setShowScoreInfo(v => !v)}
-          className="absolute top-3 right-3 p-1"
-        >
-          <Info size={14} color="var(--color-awan-tx-mute)" />
-        </Touch>
+      {/* Score AWAN — widget principal avec ⓘ intégré */}
+      <div className="mb-4">
+        <AwanScoreDisplay score={score} temporal={temporal} onInfo={() => setShowScoreInfo(v => !v)} />
         {showScoreInfo && (
           <div
             className="mt-2 p-3 border"
@@ -318,10 +312,26 @@ export default function DashboardScreen({ navigate }: NavProps) {
               </Touch>
             </div>
             <div className="p-4 flex flex-col gap-3">
-              <TextInput value={importText} onChangeText={(v: string) => setImportText(v)} multiline numberOfLines={10}
+              {/* File upload */}
+              <label className="flex flex-row items-center gap-3 p-3 border cursor-pointer hover:bg-white/5 transition-all"
+                style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)', borderRadius: 8 }}>
+                <Upload size={16} color="var(--color-awan-gold)" />
+                <span className="font-mono font-bold uppercase flex-1" style={{ fontSize: '11px', color: 'var(--color-awan-gold)', letterSpacing: '0.2em' }}>
+                  CHARGER UN FICHIER .JSON
+                </span>
+                <input type="file" accept=".json,application/json" className="hidden"
+                  onChange={(e: any) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => { if (ev.target?.result) setImportText(ev.target.result as string); };
+                    reader.readAsText(file);
+                  }} />
+              </label>
+              <TextInput value={importText} onChangeText={(v: string) => setImportText(v)} multiline numberOfLines={6}
                 placeholder={'{ "type": "sport.routine", "data": { ... } }'}
                 placeholderTextColor="rgba(255,255,255,0.25)"
-                style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-awan-tx)', backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: 12, minHeight: 200, textAlignVertical: 'top' }} />
+                style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-awan-tx)', backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: 12, minHeight: 140, textAlignVertical: 'top' }} />
               {importResult && (
                 <div className="p-3 border" style={{ backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.05)' }}>
                   <span className="font-mono" style={{ fontSize: '11px', color: importResult.success ? 'var(--color-awan-status-ok)' : 'var(--color-awan-status-error)' }}>

@@ -2,8 +2,8 @@ export const L = {
   header: { latin: 'AWAN', arabic: 'أوان' },
 
   nav: {
-    hub:            'ACCUEIL',
-    spirit:         'VIGIE',
+    hub:            'DASHBOARD',
+    spirit:         'ISLAM',
     sante:          'SANTÉ',
     planning:       'PLANNING',
     journal:        'JOURNAL',
