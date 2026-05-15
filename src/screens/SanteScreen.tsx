@@ -104,8 +104,8 @@ export default function SanteScreen({ navigate }: any) {
 
   return (
     <ScrollView
-      style={{ flex: 1 }}
-      contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}
+      style={{ flex: 1, width: '100%', maxWidth: '100%' }}
+      contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100, width: '100%', maxWidth: '100%' }}
       showsVerticalScrollIndicator={false}
     >
       <ScreenHeader tag="BODY" title="SANTÉ" />

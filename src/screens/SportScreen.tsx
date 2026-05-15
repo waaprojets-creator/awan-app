@@ -1294,9 +1294,9 @@ function ActiveWorkout({
         </div>
       </div>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 160, padding: 24 }} style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 160, paddingHorizontal: 16, paddingVertical: 16, maxWidth: '100%' }} style={{ flex: 1, width: '100%', maxWidth: '100%' }}>
         {session.exercises.map((ex, exIdx) => (
-          <Card key={ex.rid} className="mb-6 p-5 border-white/10 bg-white/5">
+          <Card key={ex.rid} className="mb-6 p-3 border-white/10 bg-white/5">
             <div className="mb-4">
               <span className="text-base font-bold text-awan-tx uppercase tracking-tight block">{ex.name}</span>
               <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-widest">
@@ -1304,13 +1304,13 @@ function ActiveWorkout({
               </span>
             </div>
 
-            <div className="flex flex-row mb-3 px-1 gap-2">
-              <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest w-10 text-center">N°</span>
-              <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest w-20 text-center">TYPE</span>
+            <div className="flex flex-row mb-3 px-1 gap-1">
+              <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest w-6 text-center">N°</span>
+              <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest w-14 text-center">TYPE</span>
               <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest flex-1 text-center">KG</span>
               <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest flex-1 text-center">REPS</span>
-              <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest w-12 text-center">RIR</span>
-              <span className="w-10" />
+              <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest w-8 text-center">RIR</span>
+              <span className="w-8" />
             </div>
 
             {ex.sets.map((set, setIdx) => (
@@ -1364,11 +1364,11 @@ function SetRow({
   const completed = set.completed;
 
   return (
-    <div className={`flex flex-row items-center gap-2 mb-2 ${completed ? 'opacity-50' : ''}`}>
-      <div className="w-10 text-center">
+    <div className={`flex flex-row items-center gap-1 mb-2 ${completed ? 'opacity-50' : ''}`}>
+      <div className="w-6 text-center">
         <span className="text-xs font-mono font-black text-awan-tx-mute">{index + 1}</span>
       </div>
-      <Touch onPress={() => setKindMenu(v => !v)} className="w-20 h-10 bg-black/30 rounded-lg flex items-center justify-center relative">
+      <Touch onPress={() => setKindMenu(v => !v)} className="w-14 h-10 bg-black/30 rounded-lg flex items-center justify-center relative">
         <span className={`text-[9px] font-black tracking-widest ${SET_KIND_COLOR[set.kind]}`}>{SET_KIND_LABEL[set.kind]}</span>
         {kindMenu && (
           <div className="absolute top-full left-0 mt-1 bg-awan-surface border border-white/10 rounded-lg z-10 min-w-[100px]">
@@ -1409,7 +1409,7 @@ function SetRow({
         editable={!completed}
       />
       <TextInput
-        className="w-12 bg-black/40 border border-white/5 rounded-lg h-10 text-center text-awan-tx-mute font-mono font-bold text-sm"
+        className="w-8 bg-black/40 border border-white/5 rounded-lg h-10 text-center text-awan-tx-mute font-mono font-bold text-sm"
         keyboardType="number-pad"
         value={set.rir !== undefined ? String(set.rir) : ''}
         onChangeText={(v: string) => {
@@ -1425,7 +1425,7 @@ function SetRow({
         <Touch
           onPress={onComplete}
           disabled={completed}
-          className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+          className={`w-8 h-10 rounded-lg flex items-center justify-center ${
             completed ? 'bg-awan-status-ok/20' : 'bg-awan-gold/20 border border-awan-gold/30'
           }`}
         >

@@ -120,8 +120,8 @@ export default function DashboardScreen({ navigate }: NavProps) {
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <ScrollView
-      style={{ flex: 1 }}
-      contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}
+      style={{ flex: 1, width: '100%', maxWidth: '100%' }}
+      contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100, width: '100%', maxWidth: '100%' }}
       showsVerticalScrollIndicator={false}
     >
       {/* ── Header sobre — date + statut ─────────────────────────────────────── */}

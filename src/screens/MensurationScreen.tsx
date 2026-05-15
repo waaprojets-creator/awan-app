@@ -432,7 +432,7 @@ export default function MensurationScreen() {
             </Card>
           </div>
 
-          <div className="flex flex-row gap-6 mb-10">
+          <div className="flex flex-row gap-3 mb-8">
              {/* Anatomical Map */}
              <div className="flex-[3]">
                 <div className="flex flex-row justify-between items-end mb-4 px-1">
@@ -554,7 +554,7 @@ export default function MensurationScreen() {
             <Heading level={4} mono subtitle="Récupération Chrono" className="mb-6">HISTORIQUE DES CAPTURES</Heading>
             <div className="space-y-3">
               {measureStore.history.slice(-5).reverse().map((h) => (
-                <Card key={h.date} className="flex-row items-center gap-6 p-5 bg-white/3 border-white/5" variant="flat">
+                <Card key={h.date} className="flex-row items-center gap-3 p-4 bg-white/3 border-white/5" variant="flat">
                    <div className="w-10 h-10 rounded-full border border-white/10 items-center justify-center">
                       <span className="text-[8px] font-mono text-awan-tx-mute">{h.date.split('-').slice(1).join('/')}</span>
                    </div>

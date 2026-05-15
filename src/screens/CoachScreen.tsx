@@ -89,8 +89,8 @@ export default function CoachScreen(_props: NavProps): React.ReactElement {
 
   return (
     <ScrollView
-      style={{ flex: 1 }}
-      contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}
+      style={{ flex: 1, width: '100%', maxWidth: '100%' }}
+      contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100, width: '100%', maxWidth: '100%' }}
       showsVerticalScrollIndicator={false}
     >
       <ScreenHeader tag="SYSTÈME · COACH" title="CONSEILLER IA" />

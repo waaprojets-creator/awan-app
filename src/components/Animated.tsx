@@ -14,7 +14,7 @@ export const PageWrapper = ({ children, style, ...props }: any) => (
     initial="initial"
     animate="animate"
     exit="exit"
-    style={{ flex: 1, ...StyleSheet.flatten(style || {}) }}
+    style={{ flex: 1, width: '100%', maxWidth: '100%', ...StyleSheet.flatten(style || {}) }}
     {...props}
   >
     {children}

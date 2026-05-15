@@ -222,7 +222,7 @@ export default function TrajetScreen() {
           </div>
 
           {route && (
-            <Card className="border-awan-gold/40 bg-awan-gold/5 p-8 mb-10 shadow-xl shadow-awan-gold/5">
+            <Card className="border-awan-gold/40 bg-awan-gold/5 p-6 mb-8 shadow-xl shadow-awan-gold/5">
               <div className="flex flex-row justify-between mb-6">
                  <div className="flex flex-row items-center gap-2">
                     <Zap size={14} className="text-awan-gold" />
@@ -230,7 +230,7 @@ export default function TrajetScreen() {
                  </div>
                  <div className="w-2 h-2 rounded-full bg-awan-gold animate-pulse" />
               </div>
-              <div className="grid grid-cols-2 gap-8">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest mb-2 block">Distance de Projection</span>
                   <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">{(route.summary.distance / 1000).toFixed(1)}<span className="text-sm ml-1 text-awan-gold">KM</span></span>

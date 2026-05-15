@@ -322,7 +322,7 @@ export default function TasksScreen() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-8">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <span className="text-[10px] font-black text-awan-tx-mute tracking-[0.4em] uppercase mb-4 block">Heure H</span>
                   <TextInput 
@@ -366,7 +366,7 @@ export default function TasksScreen() {
                 </div>
               </div>
 
-              <div className="flex flex-row gap-6 pt-10">
+              <div className="flex flex-row gap-3 pt-6">
                 <Touch 
                   className="flex-1 h-20 bg-white/5 rounded-[24px] flex items-center justify-center border border-white/5"
                   onPress={() => { setShowModal(false); setTitle(''); setCat('perso'); setReminder(0); }}
