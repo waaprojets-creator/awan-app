@@ -17,25 +17,26 @@ interface Node { id: string; label: string; x: number; y: number; tier: 0 | 1 | 
 const nav = (L as any).nav as Record<string, string | undefined>;
 const n = (k: string): string => nav[k] ?? k;
 
-// Dashboard at (50,52) — center-ish
-// Islam (82,14) top-right, Sante (22,14) top-left
-// Sport/Nutrition/Mensuration far-left column, equidistant y=28/44/60
-// Reglages (88,52) horizontal right of Dashboard
-// Coach (12,52) horizontal left of Dashboard
-// Journal/Planning/Trajet spread at bottom, Tasks below Planning
+// Constellation layout — Dashboard centre, 5 branches rayonnantes
+// Sante (NW) avec ses 3 enfants en éventail, Islam (NE), Trajet (E),
+// Reglages (SE), Journal (S-gauche), Planning (S-centre), Trajet (S-droite)
 const NODES: Node[] = [
-  { id: 'Dashboard',   label: n('hub'),        x: 50, y: 52, tier: 0 },
-  { id: 'Islam',       label: n('spirit'),     x: 82, y: 14, tier: 1 },
-  { id: 'Sante',       label: n('sante'),      x: 22, y: 14, tier: 1 },
-  { id: 'Sport',       label: n('sport'),      x:  8, y: 28, tier: 2 },
-  { id: 'Nutrition',   label: n('nutrition'),  x:  8, y: 44, tier: 2 },
-  { id: 'Mensuration', label: n('mensuration'),x:  8, y: 60, tier: 2 },
-  { id: 'Reglages',    label: n('reglages'),   x: 88, y: 52, tier: 2 },
-  { id: 'Coach',       label: n('coach'),      x: 12, y: 52, tier: 2 },
-  { id: 'Journal',     label: n('journal'),    x: 18, y: 80, tier: 1 },
-  { id: 'Planning',    label: n('planning'),   x: 50, y: 82, tier: 1 },
-  { id: 'Tasks',       label: n('tasks'),      x: 62, y: 90, tier: 2 },
-  { id: 'Trajet',      label: n('trajet'),     x: 82, y: 80, tier: 1 },
+  { id: 'Dashboard',   label: n('hub'),         x: 50, y: 50, tier: 0 },
+
+  // Tier 1 — nœuds principaux en couronne
+  { id: 'Islam',       label: n('spirit'),      x: 80, y: 14, tier: 1 },
+  { id: 'Sante',       label: n('sante'),       x: 22, y: 30, tier: 1 },
+  { id: 'Trajet',      label: n('trajet'),      x: 86, y: 54, tier: 1 },
+  { id: 'Journal',     label: n('journal'),     x: 20, y: 76, tier: 1 },
+  { id: 'Planning',    label: n('planning'),    x: 54, y: 84, tier: 1 },
+
+  // Tier 2 — sous-nœuds
+  { id: 'Sport',       label: n('sport'),       x:  8, y: 14, tier: 2 },
+  { id: 'Nutrition',   label: n('nutrition'),   x:  6, y: 36, tier: 2 },
+  { id: 'Mensuration', label: n('mensuration'), x: 14, y: 52, tier: 2 },
+  { id: 'Coach',       label: n('coach'),       x: 70, y: 30, tier: 2 },
+  { id: 'Reglages',    label: n('reglages'),    x: 90, y: 62, tier: 2 },
+  { id: 'Tasks',       label: n('tasks'),       x: 70, y: 86, tier: 2 },
 ];
 
 const EDGES: [string, string][] = [
@@ -64,15 +65,14 @@ function FullMoon({ color }: { color: string }) {
   );
 }
 
-// Thin crescent (first-day C shape) — outer circle r=9 center (12,12),
-// inner circle r=7 center (14,12), evenodd fill creates crescent on left opening right
 function CrescentMoon({ color }: { color: string }) {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
       <path
-        fillRule="evenodd"
+        d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
         fill={color}
-        d="M 3 12 A 9 9 0 1 0 21 12 A 9 9 0 1 1 3 12 Z M 7 12 A 7 7 0 1 0 21 12 A 7 7 0 1 1 7 12 Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );
