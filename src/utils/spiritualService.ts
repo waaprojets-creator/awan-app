@@ -1,11 +1,4 @@
-// Stub — sera remplacé par le module Islam (Sprint islamique)
-
-/** Retourne un objet Date pour aujourd'hui à l'heure et minute indiquées. */
-function todayAt(h: number, m: number): Date {
-  const d = new Date();
-  d.setHours(h, m, 0, 0);
-  return d;
-}
+import { Coordinates, PrayerTimes, CalculationMethod, Qibla } from 'adhan';
 
 export type PrayerTimesResult = {
   next: string;
@@ -18,19 +11,65 @@ export type PrayerTimesResult = {
   isha: Date;
 };
 
+const PRAYER_FR: Record<string, string> = {
+  fajr:    'FAJR',
+  sunrise: 'CHOUROUK',
+  dhuhr:   'DHOHR',
+  asr:     'ASR',
+  maghrib: 'MAGHRIB',
+  isha:    'ICHAA',
+  none:    'FAJR',
+};
+
+function fallbackTimes(): PrayerTimesResult {
+  const d = new Date();
+  const at = (h: number, m: number) => { const r = new Date(d); r.setHours(h, m, 0, 0); return r; };
+  return {
+    next: 'dhuhr', timeForNext: at(12, 30),
+    fajr: at(5, 15), sunrise: at(6, 45), dhuhr: at(12, 30),
+    asr: at(15, 45), maghrib: at(19, 0), isha: at(20, 30),
+  };
+}
+
 export const SpiritualService = {
-  getPrayerTimes: (_lat?: number, _lon?: number): PrayerTimesResult => ({
-    next: 'dhuhr',
-    timeForNext: todayAt(12, 30),
-    fajr:    todayAt(5,  15),
-    sunrise: todayAt(6,  45),
-    dhuhr:   todayAt(12, 30),
-    asr:     todayAt(15, 45),
-    maghrib: todayAt(19, 0),
-    isha:    todayAt(20, 30),
-  }),
-  translatePrayer: (p: string): string => p,
-  getQiblaAngle: (_lat?: number, _lon?: number): number => 0,
-  generateZenSummary: (_entries?: unknown[], _kcal?: number, _tdee?: number): string =>
-    'Données insuffisantes pour analyse.',
+  getCachedLocation(): { lat: number; lon: number } {
+    try {
+      const s = localStorage.getItem('awan.user.location');
+      if (s) return JSON.parse(s);
+    } catch { /* ignore */ }
+    return { lat: 48.8566, lon: 2.3522 };
+  },
+
+  getPrayerTimes(lat?: number, lon?: number): PrayerTimesResult {
+    try {
+      const loc = lat != null && lon != null ? { lat, lon } : this.getCachedLocation();
+      const coords = new Coordinates(loc.lat, loc.lon);
+      const params = CalculationMethod.MuslimWorldLeague();
+      const t = new PrayerTimes(coords, new Date(), params);
+      const next = t.nextPrayer() ?? 'none';
+      const nextDate = t.timeForPrayer(next as any) ?? t.fajr;
+      return {
+        next: next === 'none' ? 'fajr' : next,
+        timeForNext: nextDate,
+        fajr: t.fajr, sunrise: t.sunrise, dhuhr: t.dhuhr,
+        asr: t.asr, maghrib: t.maghrib, isha: t.isha,
+      };
+    } catch {
+      return fallbackTimes();
+    }
+  },
+
+  translatePrayer(p: string): string {
+    return PRAYER_FR[p] ?? p.toUpperCase();
+  },
+
+  getQiblaAngle(lat?: number, lon?: number): number {
+    try {
+      const loc = lat != null && lon != null ? { lat, lon } : this.getCachedLocation();
+      const coords = new Coordinates(loc.lat, loc.lon);
+      return Qibla(coords);
+    } catch {
+      return 119; // Paris fallback bearing toward Mecca
+    }
+  },
 };

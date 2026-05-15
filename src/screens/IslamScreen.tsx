@@ -26,10 +26,12 @@ export default function IslamScreen() {
   const insets = useSafeAreaInsets();
   const { navigate } = useAppState() as any;
   const { addEntry } = useDaily();
-  
-  const [prayerTimes, setPrayerTimes] = useState<any>(SpiritualService.getPrayerTimes());
+
+  const [prayerTimes, setPrayerTimes] = useState<any>(() => SpiritualService.getPrayerTimes());
   const [showQibla, setShowQibla] = useState(false);
   const [qiblaAngle, setQiblaAngle] = useState(0);
+  const [compassHeading, setCompassHeading] = useState<number | null>(null);
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'ok' | 'cached' | 'denied'>('idle');
   const [currentWord, setCurrentWord] = useState<any>(null);
   const [showAnswer, setShowAnswer] = useState(false);
 
@@ -51,9 +53,14 @@ export default function IslamScreen() {
   };
 
   useEffect(() => {
+    // Refresh prayer times with real location if available
+    const { lat, lon } = SpiritualService.getCachedLocation();
+    setPrayerTimes(SpiritualService.getPrayerTimes(lat, lon));
+
     const timer = setInterval(() => {
-      setPrayerTimes(SpiritualService.getPrayerTimes());
-    }, 60000);
+      const loc = SpiritualService.getCachedLocation();
+      setPrayerTimes(SpiritualService.getPrayerTimes(loc.lat, loc.lon));
+    }, 60_000);
     return () => clearInterval(timer);
   }, []);
 
@@ -68,10 +75,56 @@ export default function IslamScreen() {
   };
 
   const activateQibla = () => {
-    const angle = SpiritualService.getQiblaAngle();
-    setQiblaAngle(angle);
+    if (!navigator.geolocation) {
+      const angle = SpiritualService.getQiblaAngle();
+      setQiblaAngle(angle);
+      setLocationStatus('cached');
+      setShowQibla(true);
+      return;
+    }
+    setLocationStatus('loading');
     setShowQibla(true);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const { latitude: lat, longitude: lon } = coords;
+        localStorage.setItem('awan.user.location', JSON.stringify({ lat, lon }));
+        const angle = SpiritualService.getQiblaAngle(lat, lon);
+        setQiblaAngle(angle);
+        setPrayerTimes(SpiritualService.getPrayerTimes(lat, lon));
+        setLocationStatus('ok');
+      },
+      () => {
+        const angle = SpiritualService.getQiblaAngle();
+        setQiblaAngle(angle);
+        const cached = localStorage.getItem('awan.user.location');
+        setLocationStatus(cached ? 'cached' : 'denied');
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 3_600_000 },
+    );
   };
+
+  useEffect(() => {
+    if (!showQibla) return;
+    const handler = (e: DeviceOrientationEvent) => {
+      const wch = (e as any).webkitCompassHeading;
+      const heading = wch != null ? wch : e.alpha != null ? (360 - e.alpha) % 360 : null;
+      if (heading != null) setCompassHeading(heading);
+    };
+    const attach = () => {
+      window.addEventListener('deviceorientationabsolute', handler as EventListener, true);
+      window.addEventListener('deviceorientation', handler as EventListener, true);
+    };
+    const DOE = DeviceOrientationEvent as any;
+    if (typeof DOE.requestPermission === 'function') {
+      DOE.requestPermission().then((s: string) => { if (s === 'granted') attach(); });
+    } else {
+      attach();
+    }
+    return () => {
+      window.removeEventListener('deviceorientationabsolute', handler as EventListener, true);
+      window.removeEventListener('deviceorientation', handler as EventListener, true);
+    };
+  }, [showQibla]);
 
   const prayers = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
@@ -166,37 +219,69 @@ export default function IslamScreen() {
                 <ChevronRight size={20} className="text-awan-gold" />
               </Card>
             </Touch>
-            
+
             <AnimatePresence>
               {showQibla && (
-                <motion.div 
+                <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   className="mt-4 bg-black/40 rounded-awan-2xl border border-white/5 overflow-hidden flex flex-col items-center p-10 shadow-inner"
                 >
-                  <div className="w-48 h-48 rounded-full border border-white/5 flex items-center justify-center relative bg-white/2">
-                    {/* Compass Rings */}
-                    <div className="absolute inset-2 rounded-full border border-white/5 border-dashed opacity-20" />
-                    <div className="absolute inset-8 rounded-full border border-white/10 opacity-10" />
-                    
-                    <motion.div 
-                      animate={{ rotate: -qiblaAngle }}
-                      className="absolute w-1 h-[140px] flex flex-col items-center z-10"
-                      transition={{ type: 'spring', stiffness: 60, damping: 15 }}
-                    >
-                       <div className="w-2 h-[70px] bg-awan-gold rounded-t-full shadow-[0_0_20px_#D4AF37]" />
-                       <div className="w-2 h-[70px] bg-white/20 rounded-b-full" />
-                    </motion.div>
-
-                    <div className="w-16 h-16 rounded-full bg-awan-bg border-2 border-awan-gold flex items-center justify-center z-20 shadow-2xl">
-                      <span className="text-sm font-black font-mono text-awan-gold">{Math.round(qiblaAngle)}°</span>
+                  {locationStatus === 'loading' ? (
+                    <div className="flex flex-col items-center gap-4 py-8">
+                      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}>
+                        <Compass size={32} className="text-awan-gold opacity-60" />
+                      </motion.div>
+                      <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-[0.3em]">Acquisition GPS...</span>
                     </div>
-                  </div>
-                  <div className="mt-8 flex flex-row items-center gap-3">
-                     <Shield size={12} className="text-awan-gold opacity-50" />
-                     <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-[0.3em]">Alignement Vectoriel Actif</span>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="w-52 h-52 rounded-full border border-white/5 flex items-center justify-center relative bg-white/2">
+                        {/* N S E W cardinal marks */}
+                        {(['N','E','S','O'] as const).map((dir, i) => {
+                          const angle = i * 90;
+                          const rad = (angle - 90) * Math.PI / 180;
+                          const r = 92;
+                          return (
+                            <span key={dir} className="absolute text-[8px] font-black font-mono text-white/20"
+                              style={{ left: `calc(50% + ${r * Math.cos(rad)}px - 5px)`, top: `calc(50% + ${r * Math.sin(rad)}px - 7px)` }}>
+                              {dir}
+                            </span>
+                          );
+                        })}
+                        <div className="absolute inset-2 rounded-full border border-white/5 border-dashed opacity-20" />
+                        <div className="absolute inset-8 rounded-full border border-white/10 opacity-10" />
+
+                        <motion.div
+                          animate={{ rotate: compassHeading !== null ? qiblaAngle - compassHeading : qiblaAngle }}
+                          className="absolute w-1 h-[144px] flex flex-col items-center z-10"
+                          transition={{ type: 'spring', stiffness: 80, damping: 18 }}
+                        >
+                          <div className="w-2 h-[72px] bg-awan-gold rounded-t-full shadow-[0_0_20px_#D4AF37]" />
+                          <div className="w-2 h-[72px] bg-white/20 rounded-b-full" />
+                        </motion.div>
+
+                        <div className="w-16 h-16 rounded-full bg-awan-bg border-2 border-awan-gold flex items-center justify-center z-20 shadow-2xl">
+                          <span className="text-sm font-black font-mono text-awan-gold">{Math.round(qiblaAngle)}°</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-8 flex flex-row items-center gap-3">
+                        <div className={`w-1.5 h-1.5 rounded-full ${locationStatus === 'ok' ? 'bg-awan-status-ok' : locationStatus === 'cached' ? 'bg-awan-gold' : 'bg-awan-status-warn'}`} />
+                        <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-[0.3em]">
+                          {locationStatus === 'ok' ? 'Position GPS Active'
+                            : locationStatus === 'cached' ? 'Position Mémorisée'
+                            : 'Position Par Défaut'}
+                        </span>
+                      </div>
+                      {compassHeading !== null && (
+                        <span className="mt-2 text-[9px] font-black text-awan-gold/40 uppercase tracking-widest font-mono">
+                          CAP {Math.round(compassHeading)}° · BOUSSOLE ACTIVE
+                        </span>
+                      )}
+                    </>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
