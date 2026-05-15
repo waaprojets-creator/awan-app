@@ -886,6 +886,22 @@ export default function NutritionScreen() {
  .catch(() => setFoodsReady(true));
  }, []);
 
+ // Skip onboarding if seed data exists — initialize default profile (179cm, 22/09/1996, 82kg)
+ useEffect(() => {
+ if (!showOnboarding) return;
+ import('@/data/storage/storageService').then(({ getStorage }) =>
+   getStorage().then(async (storage) => {
+     const keys = await storage.list('nutrition.meal');
+     if (keys.length > 0) {
+       const defaultProfile = computeProfile(82, 179, 29, 'moderate', 'maintain');
+       saveProfile(defaultProfile);
+       setProfile(defaultProfile);
+       setShowOnboarding(false);
+     }
+   })
+ );
+ }, [showOnboarding]);
+
  const canGoNext = selectedDate < today;
 
  const handlePrevDay = () => setSelectedDate(shiftDate(selectedDate, -1));

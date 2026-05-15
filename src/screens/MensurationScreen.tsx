@@ -124,6 +124,19 @@ export default function MensurationScreen() {
     return { target, current, status, pct, diff };
   }, [targetWeightKg, currentEntry.weight, weeklyTrend]);
 
+  // Dernière pesée connue (quand entrée du jour vide)
+  const lastKnownWeight = useMemo(() => {
+    if (currentEntry.weight > 0) return null;
+    const sorted = measureStore.history
+      .filter(e => e.weight > 0 && e.date < selectedDate)
+      .sort((a, b) => b.date.localeCompare(a.date));
+    if (!sorted.length || !sorted[0]) return null;
+    const last = sorted[0];
+    const diffMs = new Date(selectedDate).getTime() - new Date(last.date).getTime();
+    const diffDays = Math.round(diffMs / (24 * 60 * 60 * 1000));
+    return { weight: last.weight, daysAgo: diffDays };
+  }, [measureStore.history, currentEntry.weight, selectedDate]);
+
   // S2.4 — Suppression mesure
   const handleDeleteMeasurement = (date: string) => {
     Alert.alert('Suppression', `Supprimer la mesure du ${date} ?`, [
@@ -227,16 +240,21 @@ export default function MensurationScreen() {
          <div className="flex-1 items-center border-r border-white/5">
             <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase mb-2">Poids</span>
             <div className="flex flex-row items-baseline gap-1">
-              <TextInput 
+              <TextInput
                 className="text-3xl font-black text-awan-tx font-mono w-20 text-center outline-none"
-                keyboardType="numeric" 
-                value={currentEntry.weight?.toString()} 
+                keyboardType="numeric"
+                value={currentEntry.weight > 0 ? currentEntry.weight.toString() : ''}
                 onChangeText={updateWeight}
-                placeholder="00.0"
-                placeholderTextColor="rgba(255,255,255,0.1)"
+                placeholder={lastKnownWeight ? lastKnownWeight.weight.toString() : '00.0'}
+                placeholderTextColor={lastKnownWeight ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.1)'}
               />
               <span className="text-[10px] font-bold text-awan-tx-mute font-mono">KG</span>
             </div>
+            {lastKnownWeight && (
+              <span className="text-[8px] font-black text-awan-tx-mute tracking-widest uppercase mt-1">
+                DERNIÈRE PESÉE — J-{lastKnownWeight.daysAgo}
+              </span>
+            )}
          </div>
          <div className="flex-1 items-center border-r border-white/5">
             <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase mb-2">BPM Repos</span>

@@ -37,7 +37,7 @@ export const SpiritualService = {
       const s = localStorage.getItem('awan.user.location');
       if (s) return JSON.parse(s);
     } catch { /* ignore */ }
-    return { lat: 48.8566, lon: 2.3522 };
+    return { lat: 45.7640, lon: 4.8357 }; // Lyon (fallback si GPS absent)
   },
 
   getPrayerTimes(lat?: number, lon?: number): PrayerTimesResult {
