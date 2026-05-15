@@ -1,179 +1,7454 @@
 [
-  {"id":"f001","n":"Poulet rôti","kcal":165,"p":31,"c":0,"f":3.6,"halal":true},
-  {"id":"f002","n":"Blanc de poulet grillé","kcal":157,"p":32,"c":0,"f":3.2,"halal":true},
-  {"id":"f003","n":"Cuisse de poulet","kcal":209,"p":26,"c":0,"f":11,"halal":true},
-  {"id":"f004","n":"Escalope de dinde","kcal":135,"p":30,"c":0,"f":1.5,"halal":true},
-  {"id":"f005","n":"Dinde rôtie","kcal":189,"p":29,"c":0,"f":7.4,"halal":true},
-  {"id":"f006","n":"Agneau (gigot)","kcal":258,"p":25,"c":0,"f":17,"halal":true},
-  {"id":"f007","n":"Côtelette d'agneau","kcal":294,"p":25,"c":0,"f":21,"halal":true},
-  {"id":"f008","n":"Bœuf haché 5%","kcal":137,"p":21,"c":0,"f":5,"halal":true},
-  {"id":"f009","n":"Bœuf haché 15%","kcal":216,"p":19,"c":0,"f":15,"halal":true},
-  {"id":"f010","n":"Steak de bœuf","kcal":250,"p":26,"c":0,"f":17,"halal":true},
-  {"id":"f011","n":"Entrecôte","kcal":271,"p":25,"c":0,"f":19,"halal":true},
-  {"id":"f012","n":"Filet de bœuf","kcal":206,"p":29,"c":0,"f":10,"halal":true},
-  {"id":"f013","n":"Veau escalope","kcal":172,"p":31,"c":0,"f":5,"halal":true},
-  {"id":"f014","n":"Foie de veau","kcal":192,"p":29,"c":4,"f":6,"halal":true},
-  {"id":"f015","n":"Merguez halal","kcal":280,"p":15,"c":2,"f":24,"halal":true},
-  {"id":"f016","n":"Kefta","kcal":230,"p":19,"c":3,"f":16,"halal":true},
-  {"id":"f017","n":"Brochette poulet","kcal":175,"p":28,"c":1,"f":6,"halal":true},
-  {"id":"f018","n":"Saumon frais","kcal":208,"p":20,"c":0,"f":13,"halal":true},
-  {"id":"f019","n":"Saumon fumé","kcal":117,"p":18,"c":0,"f":4.3,"halal":true},
-  {"id":"f020","n":"Thon en conserve nature","kcal":116,"p":26,"c":0,"f":1,"halal":true},
-  {"id":"f021","n":"Thon frais","kcal":144,"p":23,"c":0,"f":5,"halal":true},
-  {"id":"f022","n":"Cabillaud","kcal":82,"p":18,"c":0,"f":0.7,"halal":true},
-  {"id":"f023","n":"Colin","kcal":80,"p":17,"c":0,"f":0.9,"halal":true},
-  {"id":"f024","n":"Sardine à l'huile","kcal":208,"p":24,"c":0,"f":12,"halal":true},
-  {"id":"f025","n":"Maquereau","kcal":205,"p":19,"c":0,"f":14,"halal":true},
-  {"id":"f026","n":"Truite","kcal":148,"p":21,"c":0,"f":7,"halal":true},
-  {"id":"f027","n":"Bar","kcal":97,"p":18,"c":0,"f":2.5,"halal":true},
-  {"id":"f028","n":"Dorade","kcal":96,"p":20,"c":0,"f":1.5,"halal":true},
-  {"id":"f029","n":"Crevettes cuites","kcal":99,"p":24,"c":0.2,"f":0.3,"halal":true},
-  {"id":"f030","n":"Moules cuites","kcal":172,"p":24,"c":7,"f":4.5,"halal":true},
-  {"id":"f031","n":"Œuf entier","kcal":143,"p":13,"c":1.1,"f":9.5,"halal":true},
-  {"id":"f032","n":"Blanc d'œuf","kcal":52,"p":11,"c":0.7,"f":0.2,"halal":true},
-  {"id":"f033","n":"Jaune d'œuf","kcal":322,"p":16,"c":3.6,"f":27,"halal":true},
-  {"id":"f034","n":"Omelette nature","kcal":154,"p":11,"c":0.6,"f":12,"halal":true},
-  {"id":"f035","n":"Riz blanc cuit","kcal":130,"p":2.7,"c":28,"f":0.3,"halal":true},
-  {"id":"f036","n":"Riz complet cuit","kcal":123,"p":2.7,"c":26,"f":1,"halal":true},
-  {"id":"f037","n":"Riz basmati cuit","kcal":121,"p":3,"c":25,"f":0.4,"halal":true},
-  {"id":"f038","n":"Pâtes cuites","kcal":131,"p":5,"c":25,"f":1.1,"halal":true},
-  {"id":"f039","n":"Pâtes complètes cuites","kcal":124,"p":5,"c":25,"f":1.4,"halal":true},
-  {"id":"f040","n":"Spaghetti cuit","kcal":158,"p":5.8,"c":31,"f":0.9,"halal":true},
-  {"id":"f041","n":"Couscous cuit","kcal":112,"p":3.8,"c":23,"f":0.2,"halal":true},
-  {"id":"f042","n":"Quinoa cuit","kcal":120,"p":4.4,"c":21,"f":1.9,"halal":true},
-  {"id":"f043","n":"Boulgour cuit","kcal":83,"p":3,"c":19,"f":0.2,"halal":true},
-  {"id":"f044","n":"Semoule cuite","kcal":112,"p":3.8,"c":23,"f":0.2,"halal":true},
-  {"id":"f045","n":"Pomme de terre cuite","kcal":87,"p":1.9,"c":20,"f":0.1,"halal":true},
-  {"id":"f046","n":"Patate douce cuite","kcal":86,"p":1.6,"c":20,"f":0.1,"halal":true},
-  {"id":"f047","n":"Purée de pomme de terre","kcal":94,"p":1.9,"c":15,"f":3.2,"halal":true},
-  {"id":"f048","n":"Frites","kcal":312,"p":3.4,"c":41,"f":15,"halal":true},
-  {"id":"f049","n":"Pain blanc","kcal":265,"p":9,"c":49,"f":3.2,"halal":true},
-  {"id":"f050","n":"Pain complet","kcal":247,"p":13,"c":41,"f":3.4,"halal":true},
-  {"id":"f051","n":"Pain de seigle","kcal":259,"p":8.5,"c":48,"f":3.3,"halal":true},
-  {"id":"f052","n":"Baguette","kcal":274,"p":9.4,"c":56,"f":1.3,"halal":true},
-  {"id":"f053","n":"Pain pita","kcal":275,"p":9,"c":55,"f":1.2,"halal":true},
-  {"id":"f054","n":"Tortilla blé","kcal":304,"p":8,"c":50,"f":7.5,"halal":true},
-  {"id":"f055","n":"Biscotte","kcal":407,"p":11,"c":75,"f":7,"halal":true},
-  {"id":"f056","n":"Flocons d'avoine","kcal":379,"p":13,"c":68,"f":7,"halal":true},
-  {"id":"f057","n":"Muesli","kcal":367,"p":10,"c":65,"f":7.5,"halal":true},
-  {"id":"f058","n":"Corn flakes","kcal":378,"p":7.5,"c":84,"f":0.9,"halal":true},
-  {"id":"f059","n":"Lentilles cuites","kcal":116,"p":9,"c":20,"f":0.4,"halal":true},
-  {"id":"f060","n":"Lentilles corail cuites","kcal":120,"p":9,"c":21,"f":0.4,"halal":true},
-  {"id":"f061","n":"Pois chiches cuits","kcal":164,"p":8.9,"c":27,"f":2.6,"halal":true},
-  {"id":"f062","n":"Haricots rouges cuits","kcal":127,"p":8.7,"c":23,"f":0.5,"halal":true},
-  {"id":"f063","n":"Haricots blancs cuits","kcal":139,"p":9.7,"c":25,"f":0.5,"halal":true},
-  {"id":"f064","n":"Haricots verts cuits","kcal":31,"p":1.8,"c":7,"f":0.2,"halal":true},
-  {"id":"f065","n":"Pois cassés cuits","kcal":118,"p":8.3,"c":21,"f":0.4,"halal":true},
-  {"id":"f066","n":"Fèves cuites","kcal":110,"p":7.6,"c":19,"f":0.4,"halal":true},
-  {"id":"f067","n":"Soja edamame","kcal":121,"p":12,"c":9,"f":5,"halal":true},
-  {"id":"f068","n":"Tofu nature","kcal":76,"p":8,"c":1.9,"f":4.8,"halal":true},
-  {"id":"f069","n":"Tomate","kcal":18,"p":0.9,"c":3.9,"f":0.2,"halal":true},
-  {"id":"f070","n":"Tomate cerise","kcal":18,"p":0.9,"c":3.9,"f":0.2,"halal":true},
-  {"id":"f071","n":"Concombre","kcal":15,"p":0.7,"c":3.6,"f":0.1,"halal":true},
-  {"id":"f072","n":"Carotte crue","kcal":41,"p":0.9,"c":10,"f":0.2,"halal":true},
-  {"id":"f073","n":"Carotte cuite","kcal":35,"p":0.8,"c":8.2,"f":0.2,"halal":true},
-  {"id":"f074","n":"Courgette","kcal":17,"p":1.2,"c":3.1,"f":0.3,"halal":true},
-  {"id":"f075","n":"Aubergine","kcal":25,"p":1,"c":6,"f":0.2,"halal":true},
-  {"id":"f076","n":"Poivron rouge","kcal":31,"p":1,"c":6,"f":0.3,"halal":true},
-  {"id":"f077","n":"Poivron vert","kcal":20,"p":0.9,"c":4.6,"f":0.2,"halal":true},
-  {"id":"f078","n":"Oignon","kcal":40,"p":1.1,"c":9.3,"f":0.1,"halal":true},
-  {"id":"f079","n":"Ail","kcal":149,"p":6.4,"c":33,"f":0.5,"halal":true},
-  {"id":"f080","n":"Échalote","kcal":72,"p":2.5,"c":17,"f":0.1,"halal":true},
-  {"id":"f081","n":"Salade verte (laitue)","kcal":15,"p":1.4,"c":2.9,"f":0.2,"halal":true},
-  {"id":"f082","n":"Mâche","kcal":21,"p":2,"c":3.6,"f":0.4,"halal":true},
-  {"id":"f083","n":"Roquette","kcal":25,"p":2.6,"c":3.7,"f":0.7,"halal":true},
-  {"id":"f084","n":"Épinards cuits","kcal":23,"p":2.9,"c":3.6,"f":0.4,"halal":true},
-  {"id":"f085","n":"Brocoli cuit","kcal":35,"p":2.4,"c":7,"f":0.4,"halal":true},
-  {"id":"f086","n":"Chou-fleur cuit","kcal":23,"p":1.8,"c":4,"f":0.5,"halal":true},
-  {"id":"f087","n":"Chou rouge","kcal":31,"p":1.4,"c":7.4,"f":0.2,"halal":true},
-  {"id":"f088","n":"Choux de Bruxelles","kcal":43,"p":3.4,"c":9,"f":0.3,"halal":true},
-  {"id":"f089","n":"Champignons de Paris","kcal":22,"p":3.1,"c":3.3,"f":0.3,"halal":true},
-  {"id":"f090","n":"Asperges cuites","kcal":22,"p":2.4,"c":4.1,"f":0.2,"halal":true},
-  {"id":"f091","n":"Betterave cuite","kcal":44,"p":1.7,"c":10,"f":0.2,"halal":true},
-  {"id":"f092","n":"Maïs doux","kcal":86,"p":3.3,"c":19,"f":1.4,"halal":true},
-  {"id":"f093","n":"Petits pois cuits","kcal":81,"p":5.4,"c":14,"f":0.4,"halal":true},
-  {"id":"f094","n":"Avocat","kcal":160,"p":2,"c":9,"f":15,"halal":true},
-  {"id":"f095","n":"Olives noires","kcal":115,"p":0.8,"c":6.3,"f":11,"halal":true},
-  {"id":"f096","n":"Olives vertes","kcal":145,"p":1,"c":4,"f":15,"halal":true},
-  {"id":"f097","n":"Pomme","kcal":52,"p":0.3,"c":14,"f":0.2,"halal":true},
-  {"id":"f098","n":"Poire","kcal":57,"p":0.4,"c":15,"f":0.1,"halal":true},
-  {"id":"f099","n":"Banane","kcal":89,"p":1.1,"c":23,"f":0.3,"halal":true},
-  {"id":"f100","n":"Orange","kcal":47,"p":0.9,"c":12,"f":0.1,"halal":true},
-  {"id":"f101","n":"Clémentine","kcal":47,"p":0.9,"c":12,"f":0.2,"halal":true},
-  {"id":"f102","n":"Pamplemousse","kcal":42,"p":0.8,"c":11,"f":0.1,"halal":true},
-  {"id":"f103","n":"Citron","kcal":29,"p":1.1,"c":9,"f":0.3,"halal":true},
-  {"id":"f104","n":"Fraise","kcal":32,"p":0.7,"c":7.7,"f":0.3,"halal":true},
-  {"id":"f105","n":"Framboise","kcal":52,"p":1.2,"c":12,"f":0.7,"halal":true},
-  {"id":"f106","n":"Myrtille","kcal":57,"p":0.7,"c":14,"f":0.3,"halal":true},
-  {"id":"f107","n":"Cassis","kcal":63,"p":1.4,"c":15,"f":0.4,"halal":true},
-  {"id":"f108","n":"Raisin","kcal":69,"p":0.7,"c":18,"f":0.2,"halal":true},
-  {"id":"f109","n":"Cerise","kcal":63,"p":1.1,"c":16,"f":0.2,"halal":true},
-  {"id":"f110","n":"Pêche","kcal":39,"p":0.9,"c":10,"f":0.3,"halal":true},
-  {"id":"f111","n":"Abricot","kcal":48,"p":1.4,"c":11,"f":0.4,"halal":true},
-  {"id":"f112","n":"Prune","kcal":46,"p":0.7,"c":11,"f":0.3,"halal":true},
-  {"id":"f113","n":"Kiwi","kcal":61,"p":1.1,"c":15,"f":0.5,"halal":true},
-  {"id":"f114","n":"Ananas","kcal":50,"p":0.5,"c":13,"f":0.1,"halal":true},
-  {"id":"f115","n":"Mangue","kcal":60,"p":0.8,"c":15,"f":0.4,"halal":true},
-  {"id":"f116","n":"Pastèque","kcal":30,"p":0.6,"c":7.5,"f":0.2,"halal":true},
-  {"id":"f117","n":"Melon","kcal":34,"p":0.8,"c":8.2,"f":0.2,"halal":true},
-  {"id":"f118","n":"Figue","kcal":74,"p":0.8,"c":19,"f":0.3,"halal":true},
-  {"id":"f119","n":"Datte Medjool","kcal":277,"p":1.8,"c":75,"f":0.2,"halal":true},
-  {"id":"f120","n":"Datte deglet nour","kcal":282,"p":2.5,"c":75,"f":0.4,"halal":true},
-  {"id":"f121","n":"Raisin sec","kcal":299,"p":3.1,"c":79,"f":0.5,"halal":true},
-  {"id":"f122","n":"Abricot sec","kcal":241,"p":3.4,"c":63,"f":0.5,"halal":true},
-  {"id":"f123","n":"Pruneau","kcal":240,"p":2.2,"c":64,"f":0.4,"halal":true},
-  {"id":"f124","n":"Lait demi-écrémé","kcal":46,"p":3.3,"c":4.8,"f":1.6,"halal":true},
-  {"id":"f125","n":"Lait entier","kcal":61,"p":3.2,"c":4.8,"f":3.3,"halal":true},
-  {"id":"f126","n":"Lait écrémé","kcal":34,"p":3.4,"c":5,"f":0.1,"halal":true},
-  {"id":"f127","n":"Yaourt nature","kcal":61,"p":3.5,"c":4.7,"f":3.3,"halal":true},
-  {"id":"f128","n":"Yaourt grec","kcal":97,"p":9,"c":3.6,"f":5,"halal":true},
-  {"id":"f129","n":"Yaourt 0%","kcal":42,"p":4.3,"c":6,"f":0.1,"halal":true},
-  {"id":"f130","n":"Skyr","kcal":63,"p":11,"c":4,"f":0.2,"halal":true},
-  {"id":"f131","n":"Fromage blanc 0%","kcal":45,"p":8,"c":3.5,"f":0.1,"halal":true},
-  {"id":"f132","n":"Fromage blanc 20%","kcal":78,"p":7.5,"c":3.5,"f":3.2,"halal":true},
-  {"id":"f133","n":"Cottage cheese","kcal":98,"p":11,"c":3.4,"f":4.3,"halal":true},
-  {"id":"f134","n":"Mozzarella","kcal":280,"p":18,"c":3,"f":22,"halal":true},
-  {"id":"f135","n":"Feta","kcal":264,"p":14,"c":4,"f":21,"halal":true},
-  {"id":"f136","n":"Emmental","kcal":380,"p":29,"c":0.5,"f":29,"halal":true},
-  {"id":"f137","n":"Comté","kcal":401,"p":26,"c":1,"f":33,"halal":true},
-  {"id":"f138","n":"Camembert","kcal":299,"p":20,"c":0.5,"f":24,"halal":true},
-  {"id":"f139","n":"Chèvre frais","kcal":268,"p":18,"c":2.5,"f":21,"halal":true},
-  {"id":"f140","n":"Ricotta","kcal":174,"p":11,"c":3,"f":13,"halal":true},
-  {"id":"f141","n":"Parmesan","kcal":431,"p":38,"c":4,"f":29,"halal":true},
-  {"id":"f142","n":"Beurre","kcal":717,"p":0.9,"c":0.1,"f":81,"halal":true},
-  {"id":"f143","n":"Margarine","kcal":628,"p":0.2,"c":0.7,"f":70,"halal":true},
-  {"id":"f144","n":"Huile d'olive","kcal":884,"p":0,"c":0,"f":100,"halal":true},
-  {"id":"f145","n":"Huile de colza","kcal":884,"p":0,"c":0,"f":100,"halal":true},
-  {"id":"f146","n":"Huile de tournesol","kcal":884,"p":0,"c":0,"f":100,"halal":true},
-  {"id":"f147","n":"Huile de coco","kcal":862,"p":0,"c":0,"f":100,"halal":true},
-  {"id":"f148","n":"Amande","kcal":579,"p":21,"c":22,"f":50,"halal":true},
-  {"id":"f149","n":"Noix","kcal":654,"p":15,"c":14,"f":65,"halal":true},
-  {"id":"f150","n":"Noisette","kcal":628,"p":15,"c":17,"f":61,"halal":true},
-  {"id":"f151","n":"Pistache","kcal":562,"p":20,"c":28,"f":45,"halal":true},
-  {"id":"f152","n":"Cacahuète","kcal":567,"p":26,"c":16,"f":49,"halal":true},
-  {"id":"f153","n":"Noix de cajou","kcal":553,"p":18,"c":30,"f":44,"halal":true},
-  {"id":"f154","n":"Graines de chia","kcal":486,"p":17,"c":42,"f":31,"halal":true},
-  {"id":"f155","n":"Graines de lin","kcal":534,"p":18,"c":29,"f":42,"halal":true},
-  {"id":"f156","n":"Graines de courge","kcal":559,"p":30,"c":11,"f":49,"halal":true},
-  {"id":"f157","n":"Graines de tournesol","kcal":584,"p":21,"c":20,"f":51,"halal":true},
-  {"id":"f158","n":"Beurre de cacahuète","kcal":588,"p":25,"c":20,"f":50,"halal":true},
-  {"id":"f159","n":"Sucre blanc","kcal":387,"p":0,"c":100,"f":0,"halal":true},
-  {"id":"f160","n":"Miel","kcal":304,"p":0.3,"c":82,"f":0,"halal":true},
-  {"id":"f161","n":"Sirop d'érable","kcal":260,"p":0,"c":67,"f":0.1,"halal":true},
-  {"id":"f162","n":"Chocolat noir 70%","kcal":598,"p":7.8,"c":46,"f":43,"halal":true},
-  {"id":"f163","n":"Chocolat au lait","kcal":535,"p":7.6,"c":59,"f":30,"halal":true},
-  {"id":"f164","n":"Pâte à tartiner choco","kcal":541,"p":6.3,"c":58,"f":31,"halal":true},
-  {"id":"f165","n":"Confiture","kcal":250,"p":0.4,"c":62,"f":0.1,"halal":true},
-  {"id":"f166","n":"Hummus","kcal":166,"p":7.9,"c":14,"f":10,"halal":true},
-  {"id":"f167","n":"Falafel","kcal":333,"p":13,"c":31,"f":17,"halal":true},
-  {"id":"f168","n":"Sauce tomate","kcal":29,"p":1.6,"c":7,"f":0.2,"halal":true},
-  {"id":"f169","n":"Ketchup","kcal":112,"p":1.7,"c":27,"f":0.1,"halal":true},
-  {"id":"f170","n":"Mayonnaise","kcal":680,"p":1.1,"c":2.6,"f":75,"halal":true},
-  {"id":"f171","n":"Moutarde","kcal":66,"p":4.4,"c":5.3,"f":4,"halal":true},
-  {"id":"f172","n":"Vinaigre balsamique","kcal":88,"p":0.5,"c":17,"f":0,"halal":true},
-  {"id":"f173","n":"Eau","kcal":0,"p":0,"c":0,"f":0,"halal":true},
-  {"id":"f174","n":"Café noir","kcal":2,"p":0.3,"c":0,"f":0,"halal":true},
-  {"id":"f175","n":"Thé vert","kcal":1,"p":0,"c":0.2,"f":0,"halal":true},
-  {"id":"f176","n":"Jus d'orange","kcal":45,"p":0.7,"c":10,"f":0.2,"halal":true},
-  {"id":"f177","n":"Jus de pomme","kcal":46,"p":0.1,"c":11,"f":0.1,"halal":true}
+  {
+    "id": "f001",
+    "n": "Poulet rôti",
+    "kcal": 165,
+    "p": 31,
+    "c": 0,
+    "f": 3.6,
+    "halal": true
+  },
+  {
+    "id": "f002",
+    "n": "Blanc de poulet grillé",
+    "kcal": 157,
+    "p": 32,
+    "c": 0,
+    "f": 3.2,
+    "halal": true
+  },
+  {
+    "id": "f003",
+    "n": "Cuisse de poulet",
+    "kcal": 209,
+    "p": 26,
+    "c": 0,
+    "f": 11,
+    "halal": true
+  },
+  {
+    "id": "f004",
+    "n": "Escalope de dinde",
+    "kcal": 135,
+    "p": 30,
+    "c": 0,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f005",
+    "n": "Dinde rôtie",
+    "kcal": 189,
+    "p": 29,
+    "c": 0,
+    "f": 7.4,
+    "halal": true
+  },
+  {
+    "id": "f006",
+    "n": "Agneau (gigot)",
+    "kcal": 258,
+    "p": 25,
+    "c": 0,
+    "f": 17,
+    "halal": true
+  },
+  {
+    "id": "f007",
+    "n": "Côtelette d'agneau",
+    "kcal": 294,
+    "p": 25,
+    "c": 0,
+    "f": 21,
+    "halal": true
+  },
+  {
+    "id": "f008",
+    "n": "Bœuf haché 5%",
+    "kcal": 137,
+    "p": 21,
+    "c": 0,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f009",
+    "n": "Bœuf haché 15%",
+    "kcal": 216,
+    "p": 19,
+    "c": 0,
+    "f": 15,
+    "halal": true
+  },
+  {
+    "id": "f010",
+    "n": "Steak de bœuf",
+    "kcal": 250,
+    "p": 26,
+    "c": 0,
+    "f": 17,
+    "halal": true
+  },
+  {
+    "id": "f011",
+    "n": "Entrecôte",
+    "kcal": 271,
+    "p": 25,
+    "c": 0,
+    "f": 19,
+    "halal": true
+  },
+  {
+    "id": "f012",
+    "n": "Filet de bœuf",
+    "kcal": 206,
+    "p": 29,
+    "c": 0,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f013",
+    "n": "Veau escalope",
+    "kcal": 172,
+    "p": 31,
+    "c": 0,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f014",
+    "n": "Foie de veau",
+    "kcal": 192,
+    "p": 29,
+    "c": 4,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f015",
+    "n": "Merguez halal",
+    "kcal": 280,
+    "p": 15,
+    "c": 2,
+    "f": 24,
+    "halal": true
+  },
+  {
+    "id": "f016",
+    "n": "Kefta",
+    "kcal": 230,
+    "p": 19,
+    "c": 3,
+    "f": 16,
+    "halal": true
+  },
+  {
+    "id": "f017",
+    "n": "Brochette poulet",
+    "kcal": 175,
+    "p": 28,
+    "c": 1,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f018",
+    "n": "Saumon frais",
+    "kcal": 208,
+    "p": 20,
+    "c": 0,
+    "f": 13,
+    "halal": true
+  },
+  {
+    "id": "f019",
+    "n": "Saumon fumé",
+    "kcal": 117,
+    "p": 18,
+    "c": 0,
+    "f": 4.3,
+    "halal": true
+  },
+  {
+    "id": "f020",
+    "n": "Thon en conserve nature",
+    "kcal": 116,
+    "p": 26,
+    "c": 0,
+    "f": 1,
+    "halal": true
+  },
+  {
+    "id": "f021",
+    "n": "Thon frais",
+    "kcal": 144,
+    "p": 23,
+    "c": 0,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f022",
+    "n": "Cabillaud",
+    "kcal": 82,
+    "p": 18,
+    "c": 0,
+    "f": 0.7,
+    "halal": true
+  },
+  {
+    "id": "f023",
+    "n": "Colin",
+    "kcal": 80,
+    "p": 17,
+    "c": 0,
+    "f": 0.9,
+    "halal": true
+  },
+  {
+    "id": "f024",
+    "n": "Sardine à l'huile",
+    "kcal": 208,
+    "p": 24,
+    "c": 0,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f025",
+    "n": "Maquereau",
+    "kcal": 205,
+    "p": 19,
+    "c": 0,
+    "f": 14,
+    "halal": true
+  },
+  {
+    "id": "f026",
+    "n": "Truite",
+    "kcal": 148,
+    "p": 21,
+    "c": 0,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f027",
+    "n": "Bar",
+    "kcal": 97,
+    "p": 18,
+    "c": 0,
+    "f": 2.5,
+    "halal": true
+  },
+  {
+    "id": "f028",
+    "n": "Dorade",
+    "kcal": 96,
+    "p": 20,
+    "c": 0,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f029",
+    "n": "Crevettes cuites",
+    "kcal": 99,
+    "p": 24,
+    "c": 0.2,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f030",
+    "n": "Moules cuites",
+    "kcal": 172,
+    "p": 24,
+    "c": 7,
+    "f": 4.5,
+    "halal": true
+  },
+  {
+    "id": "f031",
+    "n": "Œuf entier",
+    "kcal": 143,
+    "p": 13,
+    "c": 1.1,
+    "f": 9.5,
+    "halal": true
+  },
+  {
+    "id": "f032",
+    "n": "Blanc d'œuf",
+    "kcal": 52,
+    "p": 11,
+    "c": 0.7,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f033",
+    "n": "Jaune d'œuf",
+    "kcal": 322,
+    "p": 16,
+    "c": 3.6,
+    "f": 27,
+    "halal": true
+  },
+  {
+    "id": "f034",
+    "n": "Omelette nature",
+    "kcal": 154,
+    "p": 11,
+    "c": 0.6,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f035",
+    "n": "Riz blanc cuit",
+    "kcal": 130,
+    "p": 2.7,
+    "c": 28,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f036",
+    "n": "Riz complet cuit",
+    "kcal": 123,
+    "p": 2.7,
+    "c": 26,
+    "f": 1,
+    "halal": true
+  },
+  {
+    "id": "f037",
+    "n": "Riz basmati cuit",
+    "kcal": 121,
+    "p": 3,
+    "c": 25,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f038",
+    "n": "Pâtes cuites",
+    "kcal": 131,
+    "p": 5,
+    "c": 25,
+    "f": 1.1,
+    "halal": true
+  },
+  {
+    "id": "f039",
+    "n": "Pâtes complètes cuites",
+    "kcal": 124,
+    "p": 5,
+    "c": 25,
+    "f": 1.4,
+    "halal": true
+  },
+  {
+    "id": "f040",
+    "n": "Spaghetti cuit",
+    "kcal": 158,
+    "p": 5.8,
+    "c": 31,
+    "f": 0.9,
+    "halal": true
+  },
+  {
+    "id": "f041",
+    "n": "Couscous cuit",
+    "kcal": 112,
+    "p": 3.8,
+    "c": 23,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f042",
+    "n": "Quinoa cuit",
+    "kcal": 120,
+    "p": 4.4,
+    "c": 21,
+    "f": 1.9,
+    "halal": true
+  },
+  {
+    "id": "f043",
+    "n": "Boulgour cuit",
+    "kcal": 83,
+    "p": 3,
+    "c": 19,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f044",
+    "n": "Semoule cuite",
+    "kcal": 112,
+    "p": 3.8,
+    "c": 23,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f045",
+    "n": "Pomme de terre cuite",
+    "kcal": 87,
+    "p": 1.9,
+    "c": 20,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f046",
+    "n": "Patate douce cuite",
+    "kcal": 86,
+    "p": 1.6,
+    "c": 20,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f047",
+    "n": "Purée de pomme de terre",
+    "kcal": 94,
+    "p": 1.9,
+    "c": 15,
+    "f": 3.2,
+    "halal": true
+  },
+  {
+    "id": "f048",
+    "n": "Frites",
+    "kcal": 312,
+    "p": 3.4,
+    "c": 41,
+    "f": 15,
+    "halal": true
+  },
+  {
+    "id": "f049",
+    "n": "Pain blanc",
+    "kcal": 265,
+    "p": 9,
+    "c": 49,
+    "f": 3.2,
+    "halal": true
+  },
+  {
+    "id": "f050",
+    "n": "Pain complet",
+    "kcal": 247,
+    "p": 13,
+    "c": 41,
+    "f": 3.4,
+    "halal": true
+  },
+  {
+    "id": "f051",
+    "n": "Pain de seigle",
+    "kcal": 259,
+    "p": 8.5,
+    "c": 48,
+    "f": 3.3,
+    "halal": true
+  },
+  {
+    "id": "f052",
+    "n": "Baguette",
+    "kcal": 274,
+    "p": 9.4,
+    "c": 56,
+    "f": 1.3,
+    "halal": true
+  },
+  {
+    "id": "f053",
+    "n": "Pain pita",
+    "kcal": 275,
+    "p": 9,
+    "c": 55,
+    "f": 1.2,
+    "halal": true
+  },
+  {
+    "id": "f054",
+    "n": "Tortilla blé",
+    "kcal": 304,
+    "p": 8,
+    "c": 50,
+    "f": 7.5,
+    "halal": true
+  },
+  {
+    "id": "f055",
+    "n": "Biscotte",
+    "kcal": 407,
+    "p": 11,
+    "c": 75,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f056",
+    "n": "Flocons d'avoine",
+    "kcal": 379,
+    "p": 13,
+    "c": 68,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f057",
+    "n": "Muesli",
+    "kcal": 367,
+    "p": 10,
+    "c": 65,
+    "f": 7.5,
+    "halal": true
+  },
+  {
+    "id": "f058",
+    "n": "Corn flakes",
+    "kcal": 378,
+    "p": 7.5,
+    "c": 84,
+    "f": 0.9,
+    "halal": true
+  },
+  {
+    "id": "f059",
+    "n": "Lentilles cuites",
+    "kcal": 116,
+    "p": 9,
+    "c": 20,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f060",
+    "n": "Lentilles corail cuites",
+    "kcal": 120,
+    "p": 9,
+    "c": 21,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f061",
+    "n": "Pois chiches cuits",
+    "kcal": 164,
+    "p": 8.9,
+    "c": 27,
+    "f": 2.6,
+    "halal": true
+  },
+  {
+    "id": "f062",
+    "n": "Haricots rouges cuits",
+    "kcal": 127,
+    "p": 8.7,
+    "c": 23,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f063",
+    "n": "Haricots blancs cuits",
+    "kcal": 139,
+    "p": 9.7,
+    "c": 25,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f064",
+    "n": "Haricots verts cuits",
+    "kcal": 31,
+    "p": 1.8,
+    "c": 7,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f065",
+    "n": "Pois cassés cuits",
+    "kcal": 118,
+    "p": 8.3,
+    "c": 21,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f066",
+    "n": "Fèves cuites",
+    "kcal": 110,
+    "p": 7.6,
+    "c": 19,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f067",
+    "n": "Soja edamame",
+    "kcal": 121,
+    "p": 12,
+    "c": 9,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f068",
+    "n": "Tofu nature",
+    "kcal": 76,
+    "p": 8,
+    "c": 1.9,
+    "f": 4.8,
+    "halal": true
+  },
+  {
+    "id": "f069",
+    "n": "Tomate",
+    "kcal": 18,
+    "p": 0.9,
+    "c": 3.9,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f070",
+    "n": "Tomate cerise",
+    "kcal": 18,
+    "p": 0.9,
+    "c": 3.9,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f071",
+    "n": "Concombre",
+    "kcal": 15,
+    "p": 0.7,
+    "c": 3.6,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f072",
+    "n": "Carotte crue",
+    "kcal": 41,
+    "p": 0.9,
+    "c": 10,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f073",
+    "n": "Carotte cuite",
+    "kcal": 35,
+    "p": 0.8,
+    "c": 8.2,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f074",
+    "n": "Courgette",
+    "kcal": 17,
+    "p": 1.2,
+    "c": 3.1,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f075",
+    "n": "Aubergine",
+    "kcal": 25,
+    "p": 1,
+    "c": 6,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f076",
+    "n": "Poivron rouge",
+    "kcal": 31,
+    "p": 1,
+    "c": 6,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f077",
+    "n": "Poivron vert",
+    "kcal": 20,
+    "p": 0.9,
+    "c": 4.6,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f078",
+    "n": "Oignon",
+    "kcal": 40,
+    "p": 1.1,
+    "c": 9.3,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f079",
+    "n": "Ail",
+    "kcal": 149,
+    "p": 6.4,
+    "c": 33,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f080",
+    "n": "Échalote",
+    "kcal": 72,
+    "p": 2.5,
+    "c": 17,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f081",
+    "n": "Salade verte (laitue)",
+    "kcal": 15,
+    "p": 1.4,
+    "c": 2.9,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f082",
+    "n": "Mâche",
+    "kcal": 21,
+    "p": 2,
+    "c": 3.6,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f083",
+    "n": "Roquette",
+    "kcal": 25,
+    "p": 2.6,
+    "c": 3.7,
+    "f": 0.7,
+    "halal": true
+  },
+  {
+    "id": "f084",
+    "n": "Épinards cuits",
+    "kcal": 23,
+    "p": 2.9,
+    "c": 3.6,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f085",
+    "n": "Brocoli cuit",
+    "kcal": 35,
+    "p": 2.4,
+    "c": 7,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f086",
+    "n": "Chou-fleur cuit",
+    "kcal": 23,
+    "p": 1.8,
+    "c": 4,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f087",
+    "n": "Chou rouge",
+    "kcal": 31,
+    "p": 1.4,
+    "c": 7.4,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f088",
+    "n": "Choux de Bruxelles",
+    "kcal": 43,
+    "p": 3.4,
+    "c": 9,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f089",
+    "n": "Champignons de Paris",
+    "kcal": 22,
+    "p": 3.1,
+    "c": 3.3,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f090",
+    "n": "Asperges cuites",
+    "kcal": 22,
+    "p": 2.4,
+    "c": 4.1,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f091",
+    "n": "Betterave cuite",
+    "kcal": 44,
+    "p": 1.7,
+    "c": 10,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f092",
+    "n": "Maïs doux",
+    "kcal": 86,
+    "p": 3.3,
+    "c": 19,
+    "f": 1.4,
+    "halal": true
+  },
+  {
+    "id": "f093",
+    "n": "Petits pois cuits",
+    "kcal": 81,
+    "p": 5.4,
+    "c": 14,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f094",
+    "n": "Avocat",
+    "kcal": 160,
+    "p": 2,
+    "c": 9,
+    "f": 15,
+    "halal": true
+  },
+  {
+    "id": "f095",
+    "n": "Olives noires",
+    "kcal": 115,
+    "p": 0.8,
+    "c": 6.3,
+    "f": 11,
+    "halal": true
+  },
+  {
+    "id": "f096",
+    "n": "Olives vertes",
+    "kcal": 145,
+    "p": 1,
+    "c": 4,
+    "f": 15,
+    "halal": true
+  },
+  {
+    "id": "f097",
+    "n": "Pomme",
+    "kcal": 52,
+    "p": 0.3,
+    "c": 14,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f098",
+    "n": "Poire",
+    "kcal": 57,
+    "p": 0.4,
+    "c": 15,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f099",
+    "n": "Banane",
+    "kcal": 89,
+    "p": 1.1,
+    "c": 23,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f100",
+    "n": "Orange",
+    "kcal": 47,
+    "p": 0.9,
+    "c": 12,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f101",
+    "n": "Clémentine",
+    "kcal": 47,
+    "p": 0.9,
+    "c": 12,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f102",
+    "n": "Pamplemousse",
+    "kcal": 42,
+    "p": 0.8,
+    "c": 11,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f103",
+    "n": "Citron",
+    "kcal": 29,
+    "p": 1.1,
+    "c": 9,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f104",
+    "n": "Fraise",
+    "kcal": 32,
+    "p": 0.7,
+    "c": 7.7,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f105",
+    "n": "Framboise",
+    "kcal": 52,
+    "p": 1.2,
+    "c": 12,
+    "f": 0.7,
+    "halal": true
+  },
+  {
+    "id": "f106",
+    "n": "Myrtille",
+    "kcal": 57,
+    "p": 0.7,
+    "c": 14,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f107",
+    "n": "Cassis",
+    "kcal": 63,
+    "p": 1.4,
+    "c": 15,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f108",
+    "n": "Raisin",
+    "kcal": 69,
+    "p": 0.7,
+    "c": 18,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f109",
+    "n": "Cerise",
+    "kcal": 63,
+    "p": 1.1,
+    "c": 16,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f110",
+    "n": "Pêche",
+    "kcal": 39,
+    "p": 0.9,
+    "c": 10,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f111",
+    "n": "Abricot",
+    "kcal": 48,
+    "p": 1.4,
+    "c": 11,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f112",
+    "n": "Prune",
+    "kcal": 46,
+    "p": 0.7,
+    "c": 11,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f113",
+    "n": "Kiwi",
+    "kcal": 61,
+    "p": 1.1,
+    "c": 15,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f114",
+    "n": "Ananas",
+    "kcal": 50,
+    "p": 0.5,
+    "c": 13,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f115",
+    "n": "Mangue",
+    "kcal": 60,
+    "p": 0.8,
+    "c": 15,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f116",
+    "n": "Pastèque",
+    "kcal": 30,
+    "p": 0.6,
+    "c": 7.5,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f117",
+    "n": "Melon",
+    "kcal": 34,
+    "p": 0.8,
+    "c": 8.2,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f118",
+    "n": "Figue",
+    "kcal": 74,
+    "p": 0.8,
+    "c": 19,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f119",
+    "n": "Datte Medjool",
+    "kcal": 277,
+    "p": 1.8,
+    "c": 75,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f120",
+    "n": "Datte deglet nour",
+    "kcal": 282,
+    "p": 2.5,
+    "c": 75,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f121",
+    "n": "Raisin sec",
+    "kcal": 299,
+    "p": 3.1,
+    "c": 79,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f122",
+    "n": "Abricot sec",
+    "kcal": 241,
+    "p": 3.4,
+    "c": 63,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f123",
+    "n": "Pruneau",
+    "kcal": 240,
+    "p": 2.2,
+    "c": 64,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f124",
+    "n": "Lait demi-écrémé",
+    "kcal": 46,
+    "p": 3.3,
+    "c": 4.8,
+    "f": 1.6,
+    "halal": true
+  },
+  {
+    "id": "f125",
+    "n": "Lait entier",
+    "kcal": 61,
+    "p": 3.2,
+    "c": 4.8,
+    "f": 3.3,
+    "halal": true
+  },
+  {
+    "id": "f126",
+    "n": "Lait écrémé",
+    "kcal": 34,
+    "p": 3.4,
+    "c": 5,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f127",
+    "n": "Yaourt nature",
+    "kcal": 61,
+    "p": 3.5,
+    "c": 4.7,
+    "f": 3.3,
+    "halal": true
+  },
+  {
+    "id": "f128",
+    "n": "Yaourt grec",
+    "kcal": 97,
+    "p": 9,
+    "c": 3.6,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f129",
+    "n": "Yaourt 0%",
+    "kcal": 42,
+    "p": 4.3,
+    "c": 6,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f130",
+    "n": "Skyr",
+    "kcal": 63,
+    "p": 11,
+    "c": 4,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f131",
+    "n": "Fromage blanc 0%",
+    "kcal": 45,
+    "p": 8,
+    "c": 3.5,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f132",
+    "n": "Fromage blanc 20%",
+    "kcal": 78,
+    "p": 7.5,
+    "c": 3.5,
+    "f": 3.2,
+    "halal": true
+  },
+  {
+    "id": "f133",
+    "n": "Cottage cheese",
+    "kcal": 98,
+    "p": 11,
+    "c": 3.4,
+    "f": 4.3,
+    "halal": true
+  },
+  {
+    "id": "f134",
+    "n": "Mozzarella",
+    "kcal": 280,
+    "p": 18,
+    "c": 3,
+    "f": 22,
+    "halal": true
+  },
+  {
+    "id": "f135",
+    "n": "Feta",
+    "kcal": 264,
+    "p": 14,
+    "c": 4,
+    "f": 21,
+    "halal": true
+  },
+  {
+    "id": "f136",
+    "n": "Emmental",
+    "kcal": 380,
+    "p": 29,
+    "c": 0.5,
+    "f": 29,
+    "halal": true
+  },
+  {
+    "id": "f137",
+    "n": "Comté",
+    "kcal": 401,
+    "p": 26,
+    "c": 1,
+    "f": 33,
+    "halal": true
+  },
+  {
+    "id": "f138",
+    "n": "Camembert",
+    "kcal": 299,
+    "p": 20,
+    "c": 0.5,
+    "f": 24,
+    "halal": true
+  },
+  {
+    "id": "f139",
+    "n": "Chèvre frais",
+    "kcal": 268,
+    "p": 18,
+    "c": 2.5,
+    "f": 21,
+    "halal": true
+  },
+  {
+    "id": "f140",
+    "n": "Ricotta",
+    "kcal": 174,
+    "p": 11,
+    "c": 3,
+    "f": 13,
+    "halal": true
+  },
+  {
+    "id": "f141",
+    "n": "Parmesan",
+    "kcal": 431,
+    "p": 38,
+    "c": 4,
+    "f": 29,
+    "halal": true
+  },
+  {
+    "id": "f142",
+    "n": "Beurre",
+    "kcal": 717,
+    "p": 0.9,
+    "c": 0.1,
+    "f": 81,
+    "halal": true
+  },
+  {
+    "id": "f143",
+    "n": "Margarine",
+    "kcal": 628,
+    "p": 0.2,
+    "c": 0.7,
+    "f": 70,
+    "halal": true
+  },
+  {
+    "id": "f144",
+    "n": "Huile d'olive",
+    "kcal": 884,
+    "p": 0,
+    "c": 0,
+    "f": 100,
+    "halal": true
+  },
+  {
+    "id": "f145",
+    "n": "Huile de colza",
+    "kcal": 884,
+    "p": 0,
+    "c": 0,
+    "f": 100,
+    "halal": true
+  },
+  {
+    "id": "f146",
+    "n": "Huile de tournesol",
+    "kcal": 884,
+    "p": 0,
+    "c": 0,
+    "f": 100,
+    "halal": true
+  },
+  {
+    "id": "f147",
+    "n": "Huile de coco",
+    "kcal": 862,
+    "p": 0,
+    "c": 0,
+    "f": 100,
+    "halal": true
+  },
+  {
+    "id": "f148",
+    "n": "Amande",
+    "kcal": 579,
+    "p": 21,
+    "c": 22,
+    "f": 50,
+    "halal": true
+  },
+  {
+    "id": "f149",
+    "n": "Noix",
+    "kcal": 654,
+    "p": 15,
+    "c": 14,
+    "f": 65,
+    "halal": true
+  },
+  {
+    "id": "f150",
+    "n": "Noisette",
+    "kcal": 628,
+    "p": 15,
+    "c": 17,
+    "f": 61,
+    "halal": true
+  },
+  {
+    "id": "f151",
+    "n": "Pistache",
+    "kcal": 562,
+    "p": 20,
+    "c": 28,
+    "f": 45,
+    "halal": true
+  },
+  {
+    "id": "f152",
+    "n": "Cacahuète",
+    "kcal": 567,
+    "p": 26,
+    "c": 16,
+    "f": 49,
+    "halal": true
+  },
+  {
+    "id": "f153",
+    "n": "Noix de cajou",
+    "kcal": 553,
+    "p": 18,
+    "c": 30,
+    "f": 44,
+    "halal": true
+  },
+  {
+    "id": "f154",
+    "n": "Graines de chia",
+    "kcal": 486,
+    "p": 17,
+    "c": 42,
+    "f": 31,
+    "halal": true
+  },
+  {
+    "id": "f155",
+    "n": "Graines de lin",
+    "kcal": 534,
+    "p": 18,
+    "c": 29,
+    "f": 42,
+    "halal": true
+  },
+  {
+    "id": "f156",
+    "n": "Graines de courge",
+    "kcal": 559,
+    "p": 30,
+    "c": 11,
+    "f": 49,
+    "halal": true
+  },
+  {
+    "id": "f157",
+    "n": "Graines de tournesol",
+    "kcal": 584,
+    "p": 21,
+    "c": 20,
+    "f": 51,
+    "halal": true
+  },
+  {
+    "id": "f158",
+    "n": "Beurre de cacahuète",
+    "kcal": 588,
+    "p": 25,
+    "c": 20,
+    "f": 50,
+    "halal": true
+  },
+  {
+    "id": "f159",
+    "n": "Sucre blanc",
+    "kcal": 387,
+    "p": 0,
+    "c": 100,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f160",
+    "n": "Miel",
+    "kcal": 304,
+    "p": 0.3,
+    "c": 82,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f161",
+    "n": "Sirop d'érable",
+    "kcal": 260,
+    "p": 0,
+    "c": 67,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f162",
+    "n": "Chocolat noir 70%",
+    "kcal": 598,
+    "p": 7.8,
+    "c": 46,
+    "f": 43,
+    "halal": true
+  },
+  {
+    "id": "f163",
+    "n": "Chocolat au lait",
+    "kcal": 535,
+    "p": 7.6,
+    "c": 59,
+    "f": 30,
+    "halal": true
+  },
+  {
+    "id": "f164",
+    "n": "Pâte à tartiner choco",
+    "kcal": 541,
+    "p": 6.3,
+    "c": 58,
+    "f": 31,
+    "halal": true
+  },
+  {
+    "id": "f165",
+    "n": "Confiture",
+    "kcal": 250,
+    "p": 0.4,
+    "c": 62,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f166",
+    "n": "Hummus",
+    "kcal": 166,
+    "p": 7.9,
+    "c": 14,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f167",
+    "n": "Falafel",
+    "kcal": 333,
+    "p": 13,
+    "c": 31,
+    "f": 17,
+    "halal": true
+  },
+  {
+    "id": "f168",
+    "n": "Sauce tomate",
+    "kcal": 29,
+    "p": 1.6,
+    "c": 7,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f169",
+    "n": "Ketchup",
+    "kcal": 112,
+    "p": 1.7,
+    "c": 27,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f170",
+    "n": "Mayonnaise",
+    "kcal": 680,
+    "p": 1.1,
+    "c": 2.6,
+    "f": 75,
+    "halal": true
+  },
+  {
+    "id": "f171",
+    "n": "Moutarde",
+    "kcal": 66,
+    "p": 4.4,
+    "c": 5.3,
+    "f": 4,
+    "halal": true
+  },
+  {
+    "id": "f172",
+    "n": "Vinaigre balsamique",
+    "kcal": 88,
+    "p": 0.5,
+    "c": 17,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f173",
+    "n": "Eau",
+    "kcal": 0,
+    "p": 0,
+    "c": 0,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f174",
+    "n": "Café noir",
+    "kcal": 2,
+    "p": 0.3,
+    "c": 0,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f175",
+    "n": "Thé vert",
+    "kcal": 1,
+    "p": 0,
+    "c": 0.2,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f176",
+    "n": "Jus d'orange",
+    "kcal": 45,
+    "p": 0.7,
+    "c": 10,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f177",
+    "n": "Jus de pomme",
+    "kcal": 46,
+    "p": 0.1,
+    "c": 11,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f178",
+    "n": "Bœuf bourguignon",
+    "kcal": 185,
+    "p": 22,
+    "c": 2,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f179",
+    "n": "Côte de bœuf",
+    "kcal": 261,
+    "p": 27,
+    "c": 0,
+    "f": 17,
+    "halal": true
+  },
+  {
+    "id": "f180",
+    "n": "Rôti de bœuf",
+    "kcal": 218,
+    "p": 26,
+    "c": 0,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f181",
+    "n": "Rumsteak",
+    "kcal": 175,
+    "p": 28,
+    "c": 0,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f182",
+    "n": "Bavette de bœuf",
+    "kcal": 180,
+    "p": 27,
+    "c": 0,
+    "f": 7.5,
+    "halal": true
+  },
+  {
+    "id": "f183",
+    "n": "Onglet de bœuf",
+    "kcal": 155,
+    "p": 26,
+    "c": 0,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f184",
+    "n": "Paleron de bœuf",
+    "kcal": 178,
+    "p": 20,
+    "c": 0,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f185",
+    "n": "Joue de bœuf braisée",
+    "kcal": 158,
+    "p": 22,
+    "c": 0,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f186",
+    "n": "Langue de bœuf",
+    "kcal": 235,
+    "p": 19,
+    "c": 0,
+    "f": 17,
+    "halal": true
+  },
+  {
+    "id": "f187",
+    "n": "Foie de bœuf",
+    "kcal": 175,
+    "p": 26,
+    "c": 5,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f188",
+    "n": "Bifteck",
+    "kcal": 172,
+    "p": 28,
+    "c": 0,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f189",
+    "n": "Bœuf braisé",
+    "kcal": 190,
+    "p": 23,
+    "c": 0,
+    "f": 11,
+    "halal": true
+  },
+  {
+    "id": "f190",
+    "n": "Pot-au-feu (bœuf)",
+    "kcal": 168,
+    "p": 22,
+    "c": 0,
+    "f": 8,
+    "halal": true
+  },
+  {
+    "id": "f191",
+    "n": "Épaule d'agneau",
+    "kcal": 236,
+    "p": 24,
+    "c": 0,
+    "f": 15,
+    "halal": true
+  },
+  {
+    "id": "f192",
+    "n": "Collier d'agneau",
+    "kcal": 245,
+    "p": 22,
+    "c": 0,
+    "f": 17,
+    "halal": true
+  },
+  {
+    "id": "f193",
+    "n": "Souris d'agneau",
+    "kcal": 210,
+    "p": 23,
+    "c": 0,
+    "f": 13,
+    "halal": true
+  },
+  {
+    "id": "f194",
+    "n": "Filet d'agneau",
+    "kcal": 150,
+    "p": 26,
+    "c": 0,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f195",
+    "n": "Foie d'agneau",
+    "kcal": 168,
+    "p": 26,
+    "c": 2.9,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f196",
+    "n": "Rôti de veau",
+    "kcal": 165,
+    "p": 28,
+    "c": 0,
+    "f": 5.5,
+    "halal": true
+  },
+  {
+    "id": "f197",
+    "n": "Côte de veau",
+    "kcal": 195,
+    "p": 28,
+    "c": 0,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f198",
+    "n": "Blanquette de veau",
+    "kcal": 150,
+    "p": 20,
+    "c": 3,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f199",
+    "n": "Ailes de poulet grillées",
+    "kcal": 225,
+    "p": 27,
+    "c": 0,
+    "f": 13,
+    "halal": true
+  },
+  {
+    "id": "f200",
+    "n": "Cuisses de dinde",
+    "kcal": 175,
+    "p": 27,
+    "c": 0,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f201",
+    "n": "Canard rôti (halal)",
+    "kcal": 337,
+    "p": 19,
+    "c": 0,
+    "f": 28,
+    "halal": true
+  },
+  {
+    "id": "f202",
+    "n": "Caille rôtie (halal)",
+    "kcal": 192,
+    "p": 28,
+    "c": 0,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f203",
+    "n": "Mortadelle halal",
+    "kcal": 311,
+    "p": 14,
+    "c": 2,
+    "f": 28,
+    "halal": true
+  },
+  {
+    "id": "f204",
+    "n": "Saucisse de poulet halal",
+    "kcal": 215,
+    "p": 13,
+    "c": 5,
+    "f": 17,
+    "halal": true
+  },
+  {
+    "id": "f205",
+    "n": "Jambon de dinde halal",
+    "kcal": 107,
+    "p": 16,
+    "c": 1.5,
+    "f": 4,
+    "halal": true
+  },
+  {
+    "id": "f206",
+    "n": "Saucisson sec halal",
+    "kcal": 420,
+    "p": 22,
+    "c": 2,
+    "f": 37,
+    "halal": true
+  },
+  {
+    "id": "f207",
+    "n": "Chorizo halal",
+    "kcal": 380,
+    "p": 24,
+    "c": 2,
+    "f": 31,
+    "halal": true
+  },
+  {
+    "id": "f208",
+    "n": "Knack de volaille halal",
+    "kcal": 260,
+    "p": 12,
+    "c": 3,
+    "f": 23,
+    "halal": true
+  },
+  {
+    "id": "f209",
+    "n": "Rouget",
+    "kcal": 109,
+    "p": 18,
+    "c": 0,
+    "f": 4,
+    "halal": true
+  },
+  {
+    "id": "f210",
+    "n": "Hareng frais",
+    "kcal": 217,
+    "p": 18,
+    "c": 0,
+    "f": 16,
+    "halal": true
+  },
+  {
+    "id": "f211",
+    "n": "Hareng fumé",
+    "kcal": 217,
+    "p": 23,
+    "c": 0,
+    "f": 13,
+    "halal": true
+  },
+  {
+    "id": "f212",
+    "n": "Sole",
+    "kcal": 83,
+    "p": 18,
+    "c": 0,
+    "f": 1.2,
+    "halal": true
+  },
+  {
+    "id": "f213",
+    "n": "Turbot",
+    "kcal": 95,
+    "p": 17,
+    "c": 0,
+    "f": 2.7,
+    "halal": true
+  },
+  {
+    "id": "f214",
+    "n": "Lieu noir",
+    "kcal": 87,
+    "p": 19,
+    "c": 0,
+    "f": 1,
+    "halal": true
+  },
+  {
+    "id": "f215",
+    "n": "Tilapia",
+    "kcal": 96,
+    "p": 20,
+    "c": 0,
+    "f": 1.7,
+    "halal": true
+  },
+  {
+    "id": "f216",
+    "n": "Gambas cuites",
+    "kcal": 85,
+    "p": 18,
+    "c": 0.5,
+    "f": 0.9,
+    "halal": true
+  },
+  {
+    "id": "f217",
+    "n": "Calamar",
+    "kcal": 92,
+    "p": 16,
+    "c": 3.1,
+    "f": 1.4,
+    "halal": true
+  },
+  {
+    "id": "f218",
+    "n": "Poulpe cuit",
+    "kcal": 164,
+    "p": 30,
+    "c": 4,
+    "f": 2.1,
+    "halal": true
+  },
+  {
+    "id": "f219",
+    "n": "Sardines fraîches",
+    "kcal": 185,
+    "p": 21,
+    "c": 0,
+    "f": 11,
+    "halal": true
+  },
+  {
+    "id": "f220",
+    "n": "Anchois en boîte",
+    "kcal": 210,
+    "p": 29,
+    "c": 0,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f221",
+    "n": "Saint-Jacques",
+    "kcal": 92,
+    "p": 17,
+    "c": 2.4,
+    "f": 0.8,
+    "halal": true
+  },
+  {
+    "id": "f222",
+    "n": "Crabe cuit",
+    "kcal": 97,
+    "p": 18,
+    "c": 0,
+    "f": 1.8,
+    "halal": true
+  },
+  {
+    "id": "f223",
+    "n": "Homard cuit",
+    "kcal": 97,
+    "p": 20,
+    "c": 0.5,
+    "f": 0.6,
+    "halal": true
+  },
+  {
+    "id": "f224",
+    "n": "Sandre",
+    "kcal": 96,
+    "p": 20,
+    "c": 0,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f225",
+    "n": "Carpe",
+    "kcal": 127,
+    "p": 18,
+    "c": 0,
+    "f": 5.6,
+    "halal": true
+  },
+  {
+    "id": "f226",
+    "n": "Soja cuit",
+    "kcal": 173,
+    "p": 17,
+    "c": 10,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f227",
+    "n": "Lentilles vertes cuites",
+    "kcal": 116,
+    "p": 9,
+    "c": 20,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f228",
+    "n": "Lupin cuit",
+    "kcal": 119,
+    "p": 16,
+    "c": 10,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f229",
+    "n": "Poireau cuit",
+    "kcal": 31,
+    "p": 1.5,
+    "c": 7.6,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f230",
+    "n": "Fenouil",
+    "kcal": 31,
+    "p": 1.2,
+    "c": 7,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f231",
+    "n": "Céleri branche",
+    "kcal": 16,
+    "p": 0.7,
+    "c": 3,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f232",
+    "n": "Radis",
+    "kcal": 16,
+    "p": 0.7,
+    "c": 3.4,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f233",
+    "n": "Artichaut cuit",
+    "kcal": 53,
+    "p": 3.5,
+    "c": 11,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f234",
+    "n": "Endive",
+    "kcal": 17,
+    "p": 0.9,
+    "c": 4,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f235",
+    "n": "Chou blanc",
+    "kcal": 25,
+    "p": 1.3,
+    "c": 6,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f236",
+    "n": "Navet cuit",
+    "kcal": 21,
+    "p": 0.8,
+    "c": 4.5,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f237",
+    "n": "Panais cuit",
+    "kcal": 71,
+    "p": 1.6,
+    "c": 17,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f238",
+    "n": "Courge butternut cuite",
+    "kcal": 45,
+    "p": 1,
+    "c": 11,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f239",
+    "n": "Potiron cuit",
+    "kcal": 26,
+    "p": 1,
+    "c": 6,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f240",
+    "n": "Chou vert cuit",
+    "kcal": 28,
+    "p": 1.9,
+    "c": 6.2,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f241",
+    "n": "Bette à carde",
+    "kcal": 20,
+    "p": 1.8,
+    "c": 4,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f242",
+    "n": "Poivron jaune",
+    "kcal": 27,
+    "p": 1,
+    "c": 6.3,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f243",
+    "n": "Topinambour",
+    "kcal": 73,
+    "p": 2,
+    "c": 17,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f244",
+    "n": "Broccolini",
+    "kcal": 35,
+    "p": 3.5,
+    "c": 5,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f245",
+    "n": "Cresson",
+    "kcal": 22,
+    "p": 2.3,
+    "c": 3.7,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f246",
+    "n": "Pissenlit",
+    "kcal": 45,
+    "p": 2.7,
+    "c": 9.2,
+    "f": 0.7,
+    "halal": true
+  },
+  {
+    "id": "f247",
+    "n": "Shiitake",
+    "kcal": 34,
+    "p": 2.2,
+    "c": 6.8,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f248",
+    "n": "Champignons shiitake séchés",
+    "kcal": 296,
+    "p": 10,
+    "c": 75,
+    "f": 1,
+    "halal": true
+  },
+  {
+    "id": "f249",
+    "n": "Girolles",
+    "kcal": 38,
+    "p": 2.1,
+    "c": 6.8,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f250",
+    "n": "Pleurotes",
+    "kcal": 33,
+    "p": 3.3,
+    "c": 6.1,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f251",
+    "n": "Mandarine",
+    "kcal": 53,
+    "p": 0.8,
+    "c": 13,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f252",
+    "n": "Nectarine",
+    "kcal": 44,
+    "p": 1.1,
+    "c": 11,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f253",
+    "n": "Figue fraîche",
+    "kcal": 74,
+    "p": 0.8,
+    "c": 19,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f254",
+    "n": "Figue sèche",
+    "kcal": 249,
+    "p": 3.3,
+    "c": 64,
+    "f": 0.9,
+    "halal": true
+  },
+  {
+    "id": "f255",
+    "n": "Noix de coco fraîche",
+    "kcal": 354,
+    "p": 3.3,
+    "c": 15,
+    "f": 33,
+    "halal": true
+  },
+  {
+    "id": "f256",
+    "n": "Noix de coco râpée séchée",
+    "kcal": 660,
+    "p": 6.9,
+    "c": 24,
+    "f": 65,
+    "halal": true
+  },
+  {
+    "id": "f257",
+    "n": "Litchi",
+    "kcal": 66,
+    "p": 0.8,
+    "c": 17,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f258",
+    "n": "Grenade",
+    "kcal": 83,
+    "p": 1.7,
+    "c": 19,
+    "f": 1.2,
+    "halal": true
+  },
+  {
+    "id": "f259",
+    "n": "Papaye",
+    "kcal": 43,
+    "p": 0.5,
+    "c": 11,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f260",
+    "n": "Goyave",
+    "kcal": 68,
+    "p": 2.6,
+    "c": 14,
+    "f": 1,
+    "halal": true
+  },
+  {
+    "id": "f261",
+    "n": "Mûre",
+    "kcal": 43,
+    "p": 1.4,
+    "c": 10,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f262",
+    "n": "Groseille",
+    "kcal": 56,
+    "p": 1.4,
+    "c": 14,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f263",
+    "n": "Crème fraîche épaisse",
+    "kcal": 292,
+    "p": 2.3,
+    "c": 2.7,
+    "f": 30,
+    "halal": true
+  },
+  {
+    "id": "f264",
+    "n": "Crème liquide entière",
+    "kcal": 295,
+    "p": 2.3,
+    "c": 3,
+    "f": 30,
+    "halal": true
+  },
+  {
+    "id": "f265",
+    "n": "Lait de coco",
+    "kcal": 197,
+    "p": 2,
+    "c": 6,
+    "f": 21,
+    "halal": true
+  },
+  {
+    "id": "f266",
+    "n": "Lait d'amande non sucré",
+    "kcal": 17,
+    "p": 0.6,
+    "c": 0.7,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f267",
+    "n": "Lait de soja nature",
+    "kcal": 33,
+    "p": 3.3,
+    "c": 2.4,
+    "f": 1.8,
+    "halal": true
+  },
+  {
+    "id": "f268",
+    "n": "Lait d'avoine",
+    "kcal": 44,
+    "p": 1,
+    "c": 8.5,
+    "f": 0.9,
+    "halal": true
+  },
+  {
+    "id": "f269",
+    "n": "Crème de coco",
+    "kcal": 330,
+    "p": 3.5,
+    "c": 10,
+    "f": 34,
+    "halal": true
+  },
+  {
+    "id": "f270",
+    "n": "Kéfir",
+    "kcal": 61,
+    "p": 3.3,
+    "c": 4.8,
+    "f": 3.5,
+    "halal": true
+  },
+  {
+    "id": "f271",
+    "n": "Lassi nature",
+    "kcal": 62,
+    "p": 3.5,
+    "c": 7,
+    "f": 2.5,
+    "halal": true
+  },
+  {
+    "id": "f272",
+    "n": "Yaourt aux fruits",
+    "kcal": 95,
+    "p": 3.5,
+    "c": 17,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f273",
+    "n": "Gruyère",
+    "kcal": 413,
+    "p": 30,
+    "c": 0.4,
+    "f": 32,
+    "halal": true
+  },
+  {
+    "id": "f274",
+    "n": "Brie",
+    "kcal": 334,
+    "p": 20,
+    "c": 0.5,
+    "f": 28,
+    "halal": true
+  },
+  {
+    "id": "f275",
+    "n": "Raclette",
+    "kcal": 367,
+    "p": 24,
+    "c": 0.5,
+    "f": 29,
+    "halal": true
+  },
+  {
+    "id": "f276",
+    "n": "Edam",
+    "kcal": 357,
+    "p": 25,
+    "c": 1.4,
+    "f": 28,
+    "halal": true
+  },
+  {
+    "id": "f277",
+    "n": "Gouda",
+    "kcal": 356,
+    "p": 25,
+    "c": 2.2,
+    "f": 27,
+    "halal": true
+  },
+  {
+    "id": "f278",
+    "n": "Reblochon",
+    "kcal": 335,
+    "p": 21,
+    "c": 0.5,
+    "f": 27,
+    "halal": true
+  },
+  {
+    "id": "f279",
+    "n": "Munster",
+    "kcal": 300,
+    "p": 21,
+    "c": 0,
+    "f": 24,
+    "halal": true
+  },
+  {
+    "id": "f280",
+    "n": "Tomme de vache",
+    "kcal": 347,
+    "p": 22,
+    "c": 0.3,
+    "f": 28,
+    "halal": true
+  },
+  {
+    "id": "f281",
+    "n": "Saint-Nectaire",
+    "kcal": 357,
+    "p": 22,
+    "c": 0.3,
+    "f": 29,
+    "halal": true
+  },
+  {
+    "id": "f282",
+    "n": "Œuf à la coque",
+    "kcal": 143,
+    "p": 13,
+    "c": 1.1,
+    "f": 9.5,
+    "halal": true
+  },
+  {
+    "id": "f283",
+    "n": "Œuf dur",
+    "kcal": 155,
+    "p": 13,
+    "c": 1.1,
+    "f": 11,
+    "halal": true
+  },
+  {
+    "id": "f284",
+    "n": "Œuf poché",
+    "kcal": 147,
+    "p": 12,
+    "c": 0.9,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f285",
+    "n": "Œufs brouillés nature",
+    "kcal": 149,
+    "p": 10,
+    "c": 1,
+    "f": 11,
+    "halal": true
+  },
+  {
+    "id": "f286",
+    "n": "Riz jasmin cuit",
+    "kcal": 129,
+    "p": 2.7,
+    "c": 28,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f287",
+    "n": "Riz sauvage cuit",
+    "kcal": 101,
+    "p": 4,
+    "c": 21,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f288",
+    "n": "Pain aux céréales",
+    "kcal": 254,
+    "p": 10,
+    "c": 46,
+    "f": 3.5,
+    "halal": true
+  },
+  {
+    "id": "f289",
+    "n": "Pain de mie",
+    "kcal": 267,
+    "p": 9,
+    "c": 48,
+    "f": 3.2,
+    "halal": true
+  },
+  {
+    "id": "f290",
+    "n": "Crackers nature",
+    "kcal": 432,
+    "p": 9,
+    "c": 68,
+    "f": 15,
+    "halal": true
+  },
+  {
+    "id": "f291",
+    "n": "Brioche",
+    "kcal": 385,
+    "p": 9,
+    "c": 50,
+    "f": 18,
+    "halal": true
+  },
+  {
+    "id": "f292",
+    "n": "Pain au chocolat halal",
+    "kcal": 395,
+    "p": 7.5,
+    "c": 45,
+    "f": 20,
+    "halal": true
+  },
+  {
+    "id": "f293",
+    "n": "Croissant halal",
+    "kcal": 406,
+    "p": 7.5,
+    "c": 46,
+    "f": 22,
+    "halal": true
+  },
+  {
+    "id": "f294",
+    "n": "Granola",
+    "kcal": 420,
+    "p": 9,
+    "c": 60,
+    "f": 16,
+    "halal": true
+  },
+  {
+    "id": "f295",
+    "n": "Farine de blé T55",
+    "kcal": 364,
+    "p": 10,
+    "c": 76,
+    "f": 1.2,
+    "halal": true
+  },
+  {
+    "id": "f296",
+    "n": "Farine complète T150",
+    "kcal": 340,
+    "p": 12,
+    "c": 72,
+    "f": 2,
+    "halal": true
+  },
+  {
+    "id": "f297",
+    "n": "Farine de riz",
+    "kcal": 366,
+    "p": 6,
+    "c": 80,
+    "f": 1.4,
+    "halal": true
+  },
+  {
+    "id": "f298",
+    "n": "Farine de pois chiche",
+    "kcal": 387,
+    "p": 22,
+    "c": 58,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f299",
+    "n": "Fécule de maïs (Maïzena)",
+    "kcal": 381,
+    "p": 0.3,
+    "c": 91,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f300",
+    "n": "Gnocchi nature",
+    "kcal": 169,
+    "p": 4,
+    "c": 33,
+    "f": 2,
+    "halal": true
+  },
+  {
+    "id": "f301",
+    "n": "Polenta cuite",
+    "kcal": 70,
+    "p": 1.8,
+    "c": 15,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f302",
+    "n": "Galette de riz",
+    "kcal": 387,
+    "p": 7,
+    "c": 82,
+    "f": 2.8,
+    "halal": true
+  },
+  {
+    "id": "f303",
+    "n": "Graines de sésame",
+    "kcal": 573,
+    "p": 18,
+    "c": 23,
+    "f": 50,
+    "halal": true
+  },
+  {
+    "id": "f304",
+    "n": "Noix du Brésil",
+    "kcal": 659,
+    "p": 14,
+    "c": 12,
+    "f": 67,
+    "halal": true
+  },
+  {
+    "id": "f305",
+    "n": "Noix de macadamia",
+    "kcal": 718,
+    "p": 8,
+    "c": 14,
+    "f": 76,
+    "halal": true
+  },
+  {
+    "id": "f306",
+    "n": "Pignons de pin",
+    "kcal": 673,
+    "p": 14,
+    "c": 13,
+    "f": 68,
+    "halal": true
+  },
+  {
+    "id": "f307",
+    "n": "Tahini (purée de sésame)",
+    "kcal": 595,
+    "p": 17,
+    "c": 21,
+    "f": 54,
+    "halal": true
+  },
+  {
+    "id": "f308",
+    "n": "Purée d'amande blanche",
+    "kcal": 614,
+    "p": 21,
+    "c": 20,
+    "f": 55,
+    "halal": true
+  },
+  {
+    "id": "f309",
+    "n": "Purée de noisette",
+    "kcal": 636,
+    "p": 15,
+    "c": 17,
+    "f": 62,
+    "halal": true
+  },
+  {
+    "id": "f310",
+    "n": "Huile d'argan",
+    "kcal": 884,
+    "p": 0,
+    "c": 0,
+    "f": 100,
+    "halal": true
+  },
+  {
+    "id": "f311",
+    "n": "Huile de sésame",
+    "kcal": 884,
+    "p": 0,
+    "c": 0,
+    "f": 100,
+    "halal": true
+  },
+  {
+    "id": "f312",
+    "n": "Huile d'avocat",
+    "kcal": 884,
+    "p": 0,
+    "c": 0,
+    "f": 100,
+    "halal": true
+  },
+  {
+    "id": "f313",
+    "n": "Ghee (beurre clarifié)",
+    "kcal": 900,
+    "p": 0.3,
+    "c": 0,
+    "f": 100,
+    "halal": true
+  },
+  {
+    "id": "f314",
+    "n": "Couscous royal (poulet+agneau+merguez)",
+    "kcal": 178,
+    "p": 13,
+    "c": 18,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f315",
+    "n": "Couscous végétarien aux légumes",
+    "kcal": 120,
+    "p": 4.5,
+    "c": 22,
+    "f": 2,
+    "halal": true
+  },
+  {
+    "id": "f316",
+    "n": "Couscous au poulet",
+    "kcal": 152,
+    "p": 12,
+    "c": 19,
+    "f": 4,
+    "halal": true
+  },
+  {
+    "id": "f317",
+    "n": "Tajine de poulet aux olives",
+    "kcal": 145,
+    "p": 16,
+    "c": 6,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f318",
+    "n": "Tajine d'agneau aux pruneaux",
+    "kcal": 200,
+    "p": 18,
+    "c": 14,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f319",
+    "n": "Pastilla au poulet",
+    "kcal": 270,
+    "p": 15,
+    "c": 22,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f320",
+    "n": "Brick à l'œuf",
+    "kcal": 238,
+    "p": 8,
+    "c": 22,
+    "f": 13,
+    "halal": true
+  },
+  {
+    "id": "f321",
+    "n": "Harira",
+    "kcal": 68,
+    "p": 4.5,
+    "c": 10,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f322",
+    "n": "Chorba frik",
+    "kcal": 72,
+    "p": 5,
+    "c": 11,
+    "f": 1.8,
+    "halal": true
+  },
+  {
+    "id": "f323",
+    "n": "Msemen (feuilleté marocain)",
+    "kcal": 310,
+    "p": 8,
+    "c": 50,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f324",
+    "n": "Baghrir (crêpe semoule)",
+    "kcal": 180,
+    "p": 5.5,
+    "c": 36,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f325",
+    "n": "Rfissa au poulet",
+    "kcal": 175,
+    "p": 13,
+    "c": 17,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f326",
+    "n": "Chebakia (miel sésame)",
+    "kcal": 428,
+    "p": 6,
+    "c": 62,
+    "f": 19,
+    "halal": true
+  },
+  {
+    "id": "f327",
+    "n": "Loubia (haricots blancs tomate)",
+    "kcal": 105,
+    "p": 6.5,
+    "c": 18,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f328",
+    "n": "Méchoui (agneau entier rôti)",
+    "kcal": 220,
+    "p": 26,
+    "c": 0,
+    "f": 13,
+    "halal": true
+  },
+  {
+    "id": "f329",
+    "n": "Maklouba (riz viande légumes)",
+    "kcal": 148,
+    "p": 9,
+    "c": 18,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f330",
+    "n": "Mansaf (agneau riz yaourt)",
+    "kcal": 188,
+    "p": 16,
+    "c": 16,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f331",
+    "n": "Kabsa (riz viande aromatique)",
+    "kcal": 168,
+    "p": 12,
+    "c": 20,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f332",
+    "n": "Biryani au poulet",
+    "kcal": 180,
+    "p": 12,
+    "c": 22,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f333",
+    "n": "Riz au poulet baharat",
+    "kcal": 160,
+    "p": 12,
+    "c": 19,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f334",
+    "n": "Mujaddara (lentilles riz)",
+    "kcal": 130,
+    "p": 5.5,
+    "c": 24,
+    "f": 2,
+    "halal": true
+  },
+  {
+    "id": "f335",
+    "n": "Fatteh (pita pois chiches yaourt)",
+    "kcal": 165,
+    "p": 7,
+    "c": 23,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f336",
+    "n": "Shakshuka (tomate œufs)",
+    "kcal": 98,
+    "p": 6.5,
+    "c": 7,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f337",
+    "n": "Mulukhiya (poulet légume)",
+    "kcal": 68,
+    "p": 5.5,
+    "c": 7,
+    "f": 2,
+    "halal": true
+  },
+  {
+    "id": "f338",
+    "n": "Khobz (pain marocain)",
+    "kcal": 255,
+    "p": 9,
+    "c": 50,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f339",
+    "n": "Gratin dauphinois",
+    "kcal": 152,
+    "p": 4.5,
+    "c": 14,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f340",
+    "n": "Ratatouille",
+    "kcal": 62,
+    "p": 1.8,
+    "c": 10,
+    "f": 2.5,
+    "halal": true
+  },
+  {
+    "id": "f341",
+    "n": "Soupe de légumes",
+    "kcal": 41,
+    "p": 1.5,
+    "c": 8,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f342",
+    "n": "Soupe de potiron",
+    "kcal": 38,
+    "p": 1.2,
+    "c": 8,
+    "f": 0.8,
+    "halal": true
+  },
+  {
+    "id": "f343",
+    "n": "Taboulé (semoule, persil, tomate)",
+    "kcal": 110,
+    "p": 3.5,
+    "c": 19,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f344",
+    "n": "Fattoush (salade levantine)",
+    "kcal": 70,
+    "p": 1.5,
+    "c": 10,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f345",
+    "n": "Zaalouk (aubergine tomate)",
+    "kcal": 65,
+    "p": 1.8,
+    "c": 8,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f346",
+    "n": "Taktouka (poivron tomate)",
+    "kcal": 58,
+    "p": 1.5,
+    "c": 7,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f347",
+    "n": "Salade de carottes chermoula",
+    "kcal": 70,
+    "p": 1.3,
+    "c": 10,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f348",
+    "n": "Salade de betterave citron",
+    "kcal": 50,
+    "p": 1.5,
+    "c": 11,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f349",
+    "n": "Harissa",
+    "kcal": 49,
+    "p": 2,
+    "c": 7.2,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f350",
+    "n": "Chermoula",
+    "kcal": 120,
+    "p": 1.5,
+    "c": 4,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f351",
+    "n": "Tapenade",
+    "kcal": 274,
+    "p": 1.5,
+    "c": 4,
+    "f": 29,
+    "halal": true
+  },
+  {
+    "id": "f352",
+    "n": "Sauce soja",
+    "kcal": 60,
+    "p": 5.8,
+    "c": 5.6,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f353",
+    "n": "Sauce tahini diluée",
+    "kcal": 255,
+    "p": 9,
+    "c": 10,
+    "f": 21,
+    "halal": true
+  },
+  {
+    "id": "f354",
+    "n": "Baba ganoush",
+    "kcal": 95,
+    "p": 2,
+    "c": 7,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f355",
+    "n": "Za'atar (mélange d'épices)",
+    "kcal": 319,
+    "p": 10,
+    "c": 57,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f356",
+    "n": "Cumin en poudre",
+    "kcal": 375,
+    "p": 18,
+    "c": 44,
+    "f": 22,
+    "halal": true
+  },
+  {
+    "id": "f357",
+    "n": "Curcuma en poudre",
+    "kcal": 354,
+    "p": 8,
+    "c": 65,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f358",
+    "n": "Paprika",
+    "kcal": 282,
+    "p": 14,
+    "c": 54,
+    "f": 13,
+    "halal": true
+  },
+  {
+    "id": "f359",
+    "n": "Cannelle en poudre",
+    "kcal": 247,
+    "p": 4,
+    "c": 81,
+    "f": 1.2,
+    "halal": true
+  },
+  {
+    "id": "f360",
+    "n": "Coriandre en poudre",
+    "kcal": 298,
+    "p": 12,
+    "c": 55,
+    "f": 18,
+    "halal": true
+  },
+  {
+    "id": "f361",
+    "n": "Ras-el-hanout",
+    "kcal": 380,
+    "p": 12,
+    "c": 62,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f362",
+    "n": "Vinaigrette",
+    "kcal": 271,
+    "p": 0.2,
+    "c": 3,
+    "f": 29,
+    "halal": true
+  },
+  {
+    "id": "f363",
+    "n": "Sauce yaourt menthe",
+    "kcal": 65,
+    "p": 3.5,
+    "c": 5,
+    "f": 3.5,
+    "halal": true
+  },
+  {
+    "id": "f364",
+    "n": "Chermoula verte",
+    "kcal": 115,
+    "p": 1.5,
+    "c": 4,
+    "f": 11,
+    "halal": true
+  },
+  {
+    "id": "f365",
+    "n": "Ajvar (poivron grillé)",
+    "kcal": 85,
+    "p": 1.5,
+    "c": 12,
+    "f": 4,
+    "halal": true
+  },
+  {
+    "id": "f366",
+    "n": "Eau minérale",
+    "kcal": 0,
+    "p": 0,
+    "c": 0,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f367",
+    "n": "Jus de raisin",
+    "kcal": 60,
+    "p": 0.5,
+    "c": 15,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f368",
+    "n": "Jus d'ananas",
+    "kcal": 53,
+    "p": 0.4,
+    "c": 13,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f369",
+    "n": "Nectar de pêche",
+    "kcal": 55,
+    "p": 0.3,
+    "c": 14,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f370",
+    "n": "Smoothie banane lait",
+    "kcal": 75,
+    "p": 2.5,
+    "c": 15,
+    "f": 1.2,
+    "halal": true
+  },
+  {
+    "id": "f371",
+    "n": "Lait de poule sans alcool",
+    "kcal": 93,
+    "p": 4,
+    "c": 13,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f372",
+    "n": "Thé à la menthe sucré",
+    "kcal": 30,
+    "p": 0,
+    "c": 7.5,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f373",
+    "n": "Café latte",
+    "kcal": 52,
+    "p": 1.9,
+    "c": 5.2,
+    "f": 2.9,
+    "halal": true
+  },
+  {
+    "id": "f374",
+    "n": "Tisane (infusion nature)",
+    "kcal": 2,
+    "p": 0,
+    "c": 0.4,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f375",
+    "n": "Sirop de fraise dilué",
+    "kcal": 42,
+    "p": 0,
+    "c": 10.5,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f376",
+    "n": "Ayran (yaourt drink)",
+    "kcal": 36,
+    "p": 1.8,
+    "c": 2.7,
+    "f": 2,
+    "halal": true
+  },
+  {
+    "id": "f377",
+    "n": "Jus de carotte",
+    "kcal": 40,
+    "p": 0.9,
+    "c": 9.3,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f378",
+    "n": "Jus de grenade",
+    "kcal": 54,
+    "p": 0.2,
+    "c": 13,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f379",
+    "n": "Jus de mangue",
+    "kcal": 60,
+    "p": 0.4,
+    "c": 15,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f380",
+    "n": "Eau de coco",
+    "kcal": 19,
+    "p": 0.7,
+    "c": 3.7,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f381",
+    "n": "Lait de datte",
+    "kcal": 75,
+    "p": 1.5,
+    "c": 17,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f382",
+    "n": "Qahwa (café arabe à la cardamome)",
+    "kcal": 5,
+    "p": 0.2,
+    "c": 1,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f383",
+    "n": "Confiture de fraise",
+    "kcal": 250,
+    "p": 0.4,
+    "c": 62,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f384",
+    "n": "Confiture d'abricot",
+    "kcal": 246,
+    "p": 0.4,
+    "c": 62,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f385",
+    "n": "Nutella halal",
+    "kcal": 541,
+    "p": 6.3,
+    "c": 58,
+    "f": 31,
+    "halal": true
+  },
+  {
+    "id": "f386",
+    "n": "Carrés de chocolat noir 72%",
+    "kcal": 598,
+    "p": 7.8,
+    "c": 46,
+    "f": 43,
+    "halal": true
+  },
+  {
+    "id": "f387",
+    "n": "Carrés de chocolat au lait halal",
+    "kcal": 535,
+    "p": 7.6,
+    "c": 59,
+    "f": 30,
+    "halal": true
+  },
+  {
+    "id": "f388",
+    "n": "Gâteau au miel et amandes",
+    "kcal": 350,
+    "p": 7,
+    "c": 48,
+    "f": 16,
+    "halal": true
+  },
+  {
+    "id": "f389",
+    "n": "Cornes de gazelle",
+    "kcal": 415,
+    "p": 7.5,
+    "c": 57,
+    "f": 18,
+    "halal": true
+  },
+  {
+    "id": "f390",
+    "n": "Makrout (semoule datte)",
+    "kcal": 380,
+    "p": 5,
+    "c": 60,
+    "f": 15,
+    "halal": true
+  },
+  {
+    "id": "f391",
+    "n": "Ghribia (sablé amandes)",
+    "kcal": 490,
+    "p": 8,
+    "c": 55,
+    "f": 27,
+    "halal": true
+  },
+  {
+    "id": "f392",
+    "n": "Sablés halal",
+    "kcal": 480,
+    "p": 6.5,
+    "c": 60,
+    "f": 24,
+    "halal": true
+  },
+  {
+    "id": "f393",
+    "n": "Pain d'épice",
+    "kcal": 330,
+    "p": 5.5,
+    "c": 72,
+    "f": 2.5,
+    "halal": true
+  },
+  {
+    "id": "f394",
+    "n": "Halva de sésame",
+    "kcal": 516,
+    "p": 12,
+    "c": 57,
+    "f": 30,
+    "halal": true
+  },
+  {
+    "id": "f395",
+    "n": "Loukoum",
+    "kcal": 320,
+    "p": 0.5,
+    "c": 79,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f396",
+    "n": "Mlawi (crêpe tunisienne feuilletée)",
+    "kcal": 290,
+    "p": 7,
+    "c": 45,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f397",
+    "n": "Sellou (sésame amande farine)",
+    "kcal": 557,
+    "p": 13,
+    "c": 57,
+    "f": 31,
+    "halal": true
+  },
+  {
+    "id": "f398",
+    "n": "Kenafeh au sirop",
+    "kcal": 287,
+    "p": 8,
+    "c": 36,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f399",
+    "n": "Zlabia (beignet halal)",
+    "kcal": 365,
+    "p": 5,
+    "c": 57,
+    "f": 14,
+    "halal": true
+  },
+  {
+    "id": "f400",
+    "n": "Basbousa (gâteau semoule)",
+    "kcal": 330,
+    "p": 5.5,
+    "c": 52,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f401",
+    "n": "Mhancha (serpent amandes)",
+    "kcal": 400,
+    "p": 8,
+    "c": 53,
+    "f": 19,
+    "halal": true
+  },
+  {
+    "id": "f402",
+    "n": "Kaab el ghzal",
+    "kcal": 415,
+    "p": 8,
+    "c": 56,
+    "f": 18,
+    "halal": true
+  },
+  {
+    "id": "f403",
+    "n": "Crème caramel halal",
+    "kcal": 130,
+    "p": 4,
+    "c": 21,
+    "f": 3.5,
+    "halal": true
+  },
+  {
+    "id": "f404",
+    "n": "Riz au lait halal",
+    "kcal": 130,
+    "p": 3.5,
+    "c": 22,
+    "f": 3.2,
+    "halal": true
+  },
+  {
+    "id": "f405",
+    "n": "Mousse au chocolat halal",
+    "kcal": 220,
+    "p": 5,
+    "c": 20,
+    "f": 14,
+    "halal": true
+  },
+  {
+    "id": "f406",
+    "n": "Tarte aux pommes halal",
+    "kcal": 220,
+    "p": 3,
+    "c": 33,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f407",
+    "n": "Moelleux au chocolat halal",
+    "kcal": 380,
+    "p": 7,
+    "c": 40,
+    "f": 22,
+    "halal": true
+  },
+  {
+    "id": "f408",
+    "n": "Panna cotta halal",
+    "kcal": 190,
+    "p": 3.5,
+    "c": 17,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f409",
+    "n": "Crème brûlée halal",
+    "kcal": 207,
+    "p": 3.5,
+    "c": 16,
+    "f": 15,
+    "halal": true
+  },
+  {
+    "id": "f410",
+    "n": "Chips de pomme de terre",
+    "kcal": 536,
+    "p": 7,
+    "c": 53,
+    "f": 35,
+    "halal": true
+  },
+  {
+    "id": "f411",
+    "n": "Pop-corn nature",
+    "kcal": 375,
+    "p": 11,
+    "c": 74,
+    "f": 4.5,
+    "halal": true
+  },
+  {
+    "id": "f412",
+    "n": "Barres de céréales halal",
+    "kcal": 380,
+    "p": 8,
+    "c": 65,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f413",
+    "n": "Gressins (grissini)",
+    "kcal": 412,
+    "p": 11,
+    "c": 75,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f414",
+    "n": "Tarama (sans alcool)",
+    "kcal": 210,
+    "p": 12,
+    "c": 2,
+    "f": 17,
+    "halal": true
+  },
+  {
+    "id": "f415",
+    "n": "Œufs de lump",
+    "kcal": 78,
+    "p": 15,
+    "c": 1.5,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f416",
+    "n": "Houmous maison",
+    "kcal": 177,
+    "p": 8,
+    "c": 14,
+    "f": 11,
+    "halal": true
+  },
+  {
+    "id": "f417",
+    "n": "Guacamole",
+    "kcal": 160,
+    "p": 2,
+    "c": 9,
+    "f": 15,
+    "halal": true
+  },
+  {
+    "id": "f418",
+    "n": "Tzatziki",
+    "kcal": 68,
+    "p": 4.5,
+    "c": 4,
+    "f": 4,
+    "halal": true
+  },
+  {
+    "id": "f419",
+    "n": "Caviar d'aubergine",
+    "kcal": 87,
+    "p": 1.8,
+    "c": 7,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f420",
+    "n": "Brouet d'épinards (saag)",
+    "kcal": 72,
+    "p": 3.5,
+    "c": 7,
+    "f": 4,
+    "halal": true
+  },
+  {
+    "id": "f421",
+    "n": "Dal de lentilles",
+    "kcal": 110,
+    "p": 7,
+    "c": 17,
+    "f": 2,
+    "halal": true
+  },
+  {
+    "id": "f422",
+    "n": "Chana masala",
+    "kcal": 130,
+    "p": 7.5,
+    "c": 19,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f423",
+    "n": "Palak paneer (sans paneer halal)",
+    "kcal": 145,
+    "p": 6,
+    "c": 10,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f424",
+    "n": "Aloo gobi (pomme de terre chou-fleur)",
+    "kcal": 85,
+    "p": 2.5,
+    "c": 14,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f425",
+    "n": "Samoussa au poulet halal",
+    "kcal": 245,
+    "p": 10,
+    "c": 27,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f426",
+    "n": "Spring roll légumes",
+    "kcal": 165,
+    "p": 4,
+    "c": 24,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f427",
+    "n": "Börek halal (feuille filo viande)",
+    "kcal": 265,
+    "p": 11,
+    "c": 28,
+    "f": 13,
+    "halal": true
+  },
+  {
+    "id": "f428",
+    "n": "Bœuf bourguignon",
+    "kcal": 185,
+    "p": 22,
+    "c": 2,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f429",
+    "n": "Côte de bœuf",
+    "kcal": 261,
+    "p": 27,
+    "c": 0,
+    "f": 17,
+    "halal": true
+  },
+  {
+    "id": "f430",
+    "n": "Rôti de bœuf",
+    "kcal": 218,
+    "p": 26,
+    "c": 0,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f431",
+    "n": "Rumsteak",
+    "kcal": 175,
+    "p": 28,
+    "c": 0,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f432",
+    "n": "Bavette de bœuf",
+    "kcal": 180,
+    "p": 27,
+    "c": 0,
+    "f": 7.5,
+    "halal": true
+  },
+  {
+    "id": "f433",
+    "n": "Onglet de bœuf",
+    "kcal": 155,
+    "p": 26,
+    "c": 0,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f434",
+    "n": "Paleron de bœuf",
+    "kcal": 178,
+    "p": 20,
+    "c": 0,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f435",
+    "n": "Joue de bœuf braisée",
+    "kcal": 158,
+    "p": 22,
+    "c": 0,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f436",
+    "n": "Langue de bœuf",
+    "kcal": 235,
+    "p": 19,
+    "c": 0,
+    "f": 17,
+    "halal": true
+  },
+  {
+    "id": "f437",
+    "n": "Foie de bœuf",
+    "kcal": 175,
+    "p": 26,
+    "c": 5,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f438",
+    "n": "Bifteck",
+    "kcal": 172,
+    "p": 28,
+    "c": 0,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f439",
+    "n": "Bœuf braisé",
+    "kcal": 190,
+    "p": 23,
+    "c": 0,
+    "f": 11,
+    "halal": true
+  },
+  {
+    "id": "f440",
+    "n": "Pot-au-feu (bœuf)",
+    "kcal": 168,
+    "p": 22,
+    "c": 0,
+    "f": 8,
+    "halal": true
+  },
+  {
+    "id": "f441",
+    "n": "Épaule d'agneau",
+    "kcal": 236,
+    "p": 24,
+    "c": 0,
+    "f": 15,
+    "halal": true
+  },
+  {
+    "id": "f442",
+    "n": "Collier d'agneau",
+    "kcal": 245,
+    "p": 22,
+    "c": 0,
+    "f": 17,
+    "halal": true
+  },
+  {
+    "id": "f443",
+    "n": "Souris d'agneau",
+    "kcal": 210,
+    "p": 23,
+    "c": 0,
+    "f": 13,
+    "halal": true
+  },
+  {
+    "id": "f444",
+    "n": "Filet d'agneau",
+    "kcal": 150,
+    "p": 26,
+    "c": 0,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f445",
+    "n": "Foie d'agneau",
+    "kcal": 168,
+    "p": 26,
+    "c": 2.9,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f446",
+    "n": "Rôti de veau",
+    "kcal": 165,
+    "p": 28,
+    "c": 0,
+    "f": 5.5,
+    "halal": true
+  },
+  {
+    "id": "f447",
+    "n": "Côte de veau",
+    "kcal": 195,
+    "p": 28,
+    "c": 0,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f448",
+    "n": "Blanquette de veau",
+    "kcal": 150,
+    "p": 20,
+    "c": 3,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f449",
+    "n": "Ailes de poulet grillées",
+    "kcal": 225,
+    "p": 27,
+    "c": 0,
+    "f": 13,
+    "halal": true
+  },
+  {
+    "id": "f450",
+    "n": "Cuisses de dinde",
+    "kcal": 175,
+    "p": 27,
+    "c": 0,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f451",
+    "n": "Canard rôti (halal)",
+    "kcal": 337,
+    "p": 19,
+    "c": 0,
+    "f": 28,
+    "halal": true
+  },
+  {
+    "id": "f452",
+    "n": "Caille rôtie (halal)",
+    "kcal": 192,
+    "p": 28,
+    "c": 0,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f453",
+    "n": "Mortadelle halal",
+    "kcal": 311,
+    "p": 14,
+    "c": 2,
+    "f": 28,
+    "halal": true
+  },
+  {
+    "id": "f454",
+    "n": "Saucisse de poulet halal",
+    "kcal": 215,
+    "p": 13,
+    "c": 5,
+    "f": 17,
+    "halal": true
+  },
+  {
+    "id": "f455",
+    "n": "Jambon de dinde halal",
+    "kcal": 107,
+    "p": 16,
+    "c": 1.5,
+    "f": 4,
+    "halal": true
+  },
+  {
+    "id": "f456",
+    "n": "Saucisson sec halal",
+    "kcal": 420,
+    "p": 22,
+    "c": 2,
+    "f": 37,
+    "halal": true
+  },
+  {
+    "id": "f457",
+    "n": "Chorizo halal",
+    "kcal": 380,
+    "p": 24,
+    "c": 2,
+    "f": 31,
+    "halal": true
+  },
+  {
+    "id": "f458",
+    "n": "Knack de volaille halal",
+    "kcal": 260,
+    "p": 12,
+    "c": 3,
+    "f": 23,
+    "halal": true
+  },
+  {
+    "id": "f459",
+    "n": "Rouget",
+    "kcal": 109,
+    "p": 18,
+    "c": 0,
+    "f": 4,
+    "halal": true
+  },
+  {
+    "id": "f460",
+    "n": "Hareng frais",
+    "kcal": 217,
+    "p": 18,
+    "c": 0,
+    "f": 16,
+    "halal": true
+  },
+  {
+    "id": "f461",
+    "n": "Hareng fumé",
+    "kcal": 217,
+    "p": 23,
+    "c": 0,
+    "f": 13,
+    "halal": true
+  },
+  {
+    "id": "f462",
+    "n": "Sole",
+    "kcal": 83,
+    "p": 18,
+    "c": 0,
+    "f": 1.2,
+    "halal": true
+  },
+  {
+    "id": "f463",
+    "n": "Turbot",
+    "kcal": 95,
+    "p": 17,
+    "c": 0,
+    "f": 2.7,
+    "halal": true
+  },
+  {
+    "id": "f464",
+    "n": "Lieu noir",
+    "kcal": 87,
+    "p": 19,
+    "c": 0,
+    "f": 1,
+    "halal": true
+  },
+  {
+    "id": "f465",
+    "n": "Tilapia",
+    "kcal": 96,
+    "p": 20,
+    "c": 0,
+    "f": 1.7,
+    "halal": true
+  },
+  {
+    "id": "f466",
+    "n": "Gambas cuites",
+    "kcal": 85,
+    "p": 18,
+    "c": 0.5,
+    "f": 0.9,
+    "halal": true
+  },
+  {
+    "id": "f467",
+    "n": "Calamar",
+    "kcal": 92,
+    "p": 16,
+    "c": 3.1,
+    "f": 1.4,
+    "halal": true
+  },
+  {
+    "id": "f468",
+    "n": "Poulpe cuit",
+    "kcal": 164,
+    "p": 30,
+    "c": 4,
+    "f": 2.1,
+    "halal": true
+  },
+  {
+    "id": "f469",
+    "n": "Sardines fraîches",
+    "kcal": 185,
+    "p": 21,
+    "c": 0,
+    "f": 11,
+    "halal": true
+  },
+  {
+    "id": "f470",
+    "n": "Anchois en boîte",
+    "kcal": 210,
+    "p": 29,
+    "c": 0,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f471",
+    "n": "Saint-Jacques",
+    "kcal": 92,
+    "p": 17,
+    "c": 2.4,
+    "f": 0.8,
+    "halal": true
+  },
+  {
+    "id": "f472",
+    "n": "Crabe cuit",
+    "kcal": 97,
+    "p": 18,
+    "c": 0,
+    "f": 1.8,
+    "halal": true
+  },
+  {
+    "id": "f473",
+    "n": "Homard cuit",
+    "kcal": 97,
+    "p": 20,
+    "c": 0.5,
+    "f": 0.6,
+    "halal": true
+  },
+  {
+    "id": "f474",
+    "n": "Sandre",
+    "kcal": 96,
+    "p": 20,
+    "c": 0,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f475",
+    "n": "Carpe",
+    "kcal": 127,
+    "p": 18,
+    "c": 0,
+    "f": 5.6,
+    "halal": true
+  },
+  {
+    "id": "f476",
+    "n": "Soja cuit",
+    "kcal": 173,
+    "p": 17,
+    "c": 10,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f477",
+    "n": "Lentilles vertes cuites",
+    "kcal": 116,
+    "p": 9,
+    "c": 20,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f478",
+    "n": "Lupin cuit",
+    "kcal": 119,
+    "p": 16,
+    "c": 10,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f479",
+    "n": "Poireau cuit",
+    "kcal": 31,
+    "p": 1.5,
+    "c": 7.6,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f480",
+    "n": "Fenouil",
+    "kcal": 31,
+    "p": 1.2,
+    "c": 7,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f481",
+    "n": "Céleri branche",
+    "kcal": 16,
+    "p": 0.7,
+    "c": 3,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f482",
+    "n": "Radis",
+    "kcal": 16,
+    "p": 0.7,
+    "c": 3.4,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f483",
+    "n": "Artichaut cuit",
+    "kcal": 53,
+    "p": 3.5,
+    "c": 11,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f484",
+    "n": "Endive",
+    "kcal": 17,
+    "p": 0.9,
+    "c": 4,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f485",
+    "n": "Chou blanc",
+    "kcal": 25,
+    "p": 1.3,
+    "c": 6,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f486",
+    "n": "Navet cuit",
+    "kcal": 21,
+    "p": 0.8,
+    "c": 4.5,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f487",
+    "n": "Panais cuit",
+    "kcal": 71,
+    "p": 1.6,
+    "c": 17,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f488",
+    "n": "Courge butternut cuite",
+    "kcal": 45,
+    "p": 1,
+    "c": 11,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f489",
+    "n": "Potiron cuit",
+    "kcal": 26,
+    "p": 1,
+    "c": 6,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f490",
+    "n": "Chou vert cuit",
+    "kcal": 28,
+    "p": 1.9,
+    "c": 6.2,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f491",
+    "n": "Bette à carde",
+    "kcal": 20,
+    "p": 1.8,
+    "c": 4,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f492",
+    "n": "Poivron jaune",
+    "kcal": 27,
+    "p": 1,
+    "c": 6.3,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f493",
+    "n": "Topinambour",
+    "kcal": 73,
+    "p": 2,
+    "c": 17,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f494",
+    "n": "Broccolini",
+    "kcal": 35,
+    "p": 3.5,
+    "c": 5,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f495",
+    "n": "Cresson",
+    "kcal": 22,
+    "p": 2.3,
+    "c": 3.7,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f496",
+    "n": "Pissenlit",
+    "kcal": 45,
+    "p": 2.7,
+    "c": 9.2,
+    "f": 0.7,
+    "halal": true
+  },
+  {
+    "id": "f497",
+    "n": "Shiitake",
+    "kcal": 34,
+    "p": 2.2,
+    "c": 6.8,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f498",
+    "n": "Champignons shiitake séchés",
+    "kcal": 296,
+    "p": 10,
+    "c": 75,
+    "f": 1,
+    "halal": true
+  },
+  {
+    "id": "f499",
+    "n": "Girolles",
+    "kcal": 38,
+    "p": 2.1,
+    "c": 6.8,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f500",
+    "n": "Pleurotes",
+    "kcal": 33,
+    "p": 3.3,
+    "c": 6.1,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f501",
+    "n": "Mandarine",
+    "kcal": 53,
+    "p": 0.8,
+    "c": 13,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f502",
+    "n": "Nectarine",
+    "kcal": 44,
+    "p": 1.1,
+    "c": 11,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f503",
+    "n": "Figue fraîche",
+    "kcal": 74,
+    "p": 0.8,
+    "c": 19,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f504",
+    "n": "Figue sèche",
+    "kcal": 249,
+    "p": 3.3,
+    "c": 64,
+    "f": 0.9,
+    "halal": true
+  },
+  {
+    "id": "f505",
+    "n": "Noix de coco fraîche",
+    "kcal": 354,
+    "p": 3.3,
+    "c": 15,
+    "f": 33,
+    "halal": true
+  },
+  {
+    "id": "f506",
+    "n": "Noix de coco râpée séchée",
+    "kcal": 660,
+    "p": 6.9,
+    "c": 24,
+    "f": 65,
+    "halal": true
+  },
+  {
+    "id": "f507",
+    "n": "Litchi",
+    "kcal": 66,
+    "p": 0.8,
+    "c": 17,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f508",
+    "n": "Grenade",
+    "kcal": 83,
+    "p": 1.7,
+    "c": 19,
+    "f": 1.2,
+    "halal": true
+  },
+  {
+    "id": "f509",
+    "n": "Papaye",
+    "kcal": 43,
+    "p": 0.5,
+    "c": 11,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f510",
+    "n": "Goyave",
+    "kcal": 68,
+    "p": 2.6,
+    "c": 14,
+    "f": 1,
+    "halal": true
+  },
+  {
+    "id": "f511",
+    "n": "Mûre",
+    "kcal": 43,
+    "p": 1.4,
+    "c": 10,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f512",
+    "n": "Groseille",
+    "kcal": 56,
+    "p": 1.4,
+    "c": 14,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f513",
+    "n": "Crème fraîche épaisse",
+    "kcal": 292,
+    "p": 2.3,
+    "c": 2.7,
+    "f": 30,
+    "halal": true
+  },
+  {
+    "id": "f514",
+    "n": "Crème liquide entière",
+    "kcal": 295,
+    "p": 2.3,
+    "c": 3,
+    "f": 30,
+    "halal": true
+  },
+  {
+    "id": "f515",
+    "n": "Lait de coco",
+    "kcal": 197,
+    "p": 2,
+    "c": 6,
+    "f": 21,
+    "halal": true
+  },
+  {
+    "id": "f516",
+    "n": "Lait d'amande non sucré",
+    "kcal": 17,
+    "p": 0.6,
+    "c": 0.7,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f517",
+    "n": "Lait de soja nature",
+    "kcal": 33,
+    "p": 3.3,
+    "c": 2.4,
+    "f": 1.8,
+    "halal": true
+  },
+  {
+    "id": "f518",
+    "n": "Lait d'avoine",
+    "kcal": 44,
+    "p": 1,
+    "c": 8.5,
+    "f": 0.9,
+    "halal": true
+  },
+  {
+    "id": "f519",
+    "n": "Crème de coco",
+    "kcal": 330,
+    "p": 3.5,
+    "c": 10,
+    "f": 34,
+    "halal": true
+  },
+  {
+    "id": "f520",
+    "n": "Kéfir",
+    "kcal": 61,
+    "p": 3.3,
+    "c": 4.8,
+    "f": 3.5,
+    "halal": true
+  },
+  {
+    "id": "f521",
+    "n": "Lassi nature",
+    "kcal": 62,
+    "p": 3.5,
+    "c": 7,
+    "f": 2.5,
+    "halal": true
+  },
+  {
+    "id": "f522",
+    "n": "Yaourt aux fruits",
+    "kcal": 95,
+    "p": 3.5,
+    "c": 17,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f523",
+    "n": "Gruyère",
+    "kcal": 413,
+    "p": 30,
+    "c": 0.4,
+    "f": 32,
+    "halal": true
+  },
+  {
+    "id": "f524",
+    "n": "Brie",
+    "kcal": 334,
+    "p": 20,
+    "c": 0.5,
+    "f": 28,
+    "halal": true
+  },
+  {
+    "id": "f525",
+    "n": "Raclette",
+    "kcal": 367,
+    "p": 24,
+    "c": 0.5,
+    "f": 29,
+    "halal": true
+  },
+  {
+    "id": "f526",
+    "n": "Edam",
+    "kcal": 357,
+    "p": 25,
+    "c": 1.4,
+    "f": 28,
+    "halal": true
+  },
+  {
+    "id": "f527",
+    "n": "Gouda",
+    "kcal": 356,
+    "p": 25,
+    "c": 2.2,
+    "f": 27,
+    "halal": true
+  },
+  {
+    "id": "f528",
+    "n": "Reblochon",
+    "kcal": 335,
+    "p": 21,
+    "c": 0.5,
+    "f": 27,
+    "halal": true
+  },
+  {
+    "id": "f529",
+    "n": "Munster",
+    "kcal": 300,
+    "p": 21,
+    "c": 0,
+    "f": 24,
+    "halal": true
+  },
+  {
+    "id": "f530",
+    "n": "Tomme de vache",
+    "kcal": 347,
+    "p": 22,
+    "c": 0.3,
+    "f": 28,
+    "halal": true
+  },
+  {
+    "id": "f531",
+    "n": "Saint-Nectaire",
+    "kcal": 357,
+    "p": 22,
+    "c": 0.3,
+    "f": 29,
+    "halal": true
+  },
+  {
+    "id": "f532",
+    "n": "Œuf à la coque",
+    "kcal": 143,
+    "p": 13,
+    "c": 1.1,
+    "f": 9.5,
+    "halal": true
+  },
+  {
+    "id": "f533",
+    "n": "Œuf dur",
+    "kcal": 155,
+    "p": 13,
+    "c": 1.1,
+    "f": 11,
+    "halal": true
+  },
+  {
+    "id": "f534",
+    "n": "Œuf poché",
+    "kcal": 147,
+    "p": 12,
+    "c": 0.9,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f535",
+    "n": "Œufs brouillés nature",
+    "kcal": 149,
+    "p": 10,
+    "c": 1,
+    "f": 11,
+    "halal": true
+  },
+  {
+    "id": "f536",
+    "n": "Riz jasmin cuit",
+    "kcal": 129,
+    "p": 2.7,
+    "c": 28,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f537",
+    "n": "Riz sauvage cuit",
+    "kcal": 101,
+    "p": 4,
+    "c": 21,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f538",
+    "n": "Pain aux céréales",
+    "kcal": 254,
+    "p": 10,
+    "c": 46,
+    "f": 3.5,
+    "halal": true
+  },
+  {
+    "id": "f539",
+    "n": "Pain de mie",
+    "kcal": 267,
+    "p": 9,
+    "c": 48,
+    "f": 3.2,
+    "halal": true
+  },
+  {
+    "id": "f540",
+    "n": "Crackers nature",
+    "kcal": 432,
+    "p": 9,
+    "c": 68,
+    "f": 15,
+    "halal": true
+  },
+  {
+    "id": "f541",
+    "n": "Brioche",
+    "kcal": 385,
+    "p": 9,
+    "c": 50,
+    "f": 18,
+    "halal": true
+  },
+  {
+    "id": "f542",
+    "n": "Pain au chocolat halal",
+    "kcal": 395,
+    "p": 7.5,
+    "c": 45,
+    "f": 20,
+    "halal": true
+  },
+  {
+    "id": "f543",
+    "n": "Croissant halal",
+    "kcal": 406,
+    "p": 7.5,
+    "c": 46,
+    "f": 22,
+    "halal": true
+  },
+  {
+    "id": "f544",
+    "n": "Granola",
+    "kcal": 420,
+    "p": 9,
+    "c": 60,
+    "f": 16,
+    "halal": true
+  },
+  {
+    "id": "f545",
+    "n": "Farine de blé T55",
+    "kcal": 364,
+    "p": 10,
+    "c": 76,
+    "f": 1.2,
+    "halal": true
+  },
+  {
+    "id": "f546",
+    "n": "Farine complète T150",
+    "kcal": 340,
+    "p": 12,
+    "c": 72,
+    "f": 2,
+    "halal": true
+  },
+  {
+    "id": "f547",
+    "n": "Farine de riz",
+    "kcal": 366,
+    "p": 6,
+    "c": 80,
+    "f": 1.4,
+    "halal": true
+  },
+  {
+    "id": "f548",
+    "n": "Farine de pois chiche",
+    "kcal": 387,
+    "p": 22,
+    "c": 58,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f549",
+    "n": "Fécule de maïs (Maïzena)",
+    "kcal": 381,
+    "p": 0.3,
+    "c": 91,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f550",
+    "n": "Gnocchi nature",
+    "kcal": 169,
+    "p": 4,
+    "c": 33,
+    "f": 2,
+    "halal": true
+  },
+  {
+    "id": "f551",
+    "n": "Polenta cuite",
+    "kcal": 70,
+    "p": 1.8,
+    "c": 15,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f552",
+    "n": "Galette de riz",
+    "kcal": 387,
+    "p": 7,
+    "c": 82,
+    "f": 2.8,
+    "halal": true
+  },
+  {
+    "id": "f553",
+    "n": "Graines de sésame",
+    "kcal": 573,
+    "p": 18,
+    "c": 23,
+    "f": 50,
+    "halal": true
+  },
+  {
+    "id": "f554",
+    "n": "Noix du Brésil",
+    "kcal": 659,
+    "p": 14,
+    "c": 12,
+    "f": 67,
+    "halal": true
+  },
+  {
+    "id": "f555",
+    "n": "Noix de macadamia",
+    "kcal": 718,
+    "p": 8,
+    "c": 14,
+    "f": 76,
+    "halal": true
+  },
+  {
+    "id": "f556",
+    "n": "Pignons de pin",
+    "kcal": 673,
+    "p": 14,
+    "c": 13,
+    "f": 68,
+    "halal": true
+  },
+  {
+    "id": "f557",
+    "n": "Tahini (purée de sésame)",
+    "kcal": 595,
+    "p": 17,
+    "c": 21,
+    "f": 54,
+    "halal": true
+  },
+  {
+    "id": "f558",
+    "n": "Purée d'amande blanche",
+    "kcal": 614,
+    "p": 21,
+    "c": 20,
+    "f": 55,
+    "halal": true
+  },
+  {
+    "id": "f559",
+    "n": "Purée de noisette",
+    "kcal": 636,
+    "p": 15,
+    "c": 17,
+    "f": 62,
+    "halal": true
+  },
+  {
+    "id": "f560",
+    "n": "Huile d'argan",
+    "kcal": 884,
+    "p": 0,
+    "c": 0,
+    "f": 100,
+    "halal": true
+  },
+  {
+    "id": "f561",
+    "n": "Huile de sésame",
+    "kcal": 884,
+    "p": 0,
+    "c": 0,
+    "f": 100,
+    "halal": true
+  },
+  {
+    "id": "f562",
+    "n": "Huile d'avocat",
+    "kcal": 884,
+    "p": 0,
+    "c": 0,
+    "f": 100,
+    "halal": true
+  },
+  {
+    "id": "f563",
+    "n": "Ghee (beurre clarifié)",
+    "kcal": 900,
+    "p": 0.3,
+    "c": 0,
+    "f": 100,
+    "halal": true
+  },
+  {
+    "id": "f564",
+    "n": "Couscous royal (poulet+agneau+merguez)",
+    "kcal": 178,
+    "p": 13,
+    "c": 18,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f565",
+    "n": "Couscous végétarien aux légumes",
+    "kcal": 120,
+    "p": 4.5,
+    "c": 22,
+    "f": 2,
+    "halal": true
+  },
+  {
+    "id": "f566",
+    "n": "Couscous au poulet",
+    "kcal": 152,
+    "p": 12,
+    "c": 19,
+    "f": 4,
+    "halal": true
+  },
+  {
+    "id": "f567",
+    "n": "Tajine de poulet aux olives",
+    "kcal": 145,
+    "p": 16,
+    "c": 6,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f568",
+    "n": "Tajine d'agneau aux pruneaux",
+    "kcal": 200,
+    "p": 18,
+    "c": 14,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f569",
+    "n": "Pastilla au poulet",
+    "kcal": 270,
+    "p": 15,
+    "c": 22,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f570",
+    "n": "Brick à l'œuf",
+    "kcal": 238,
+    "p": 8,
+    "c": 22,
+    "f": 13,
+    "halal": true
+  },
+  {
+    "id": "f571",
+    "n": "Harira",
+    "kcal": 68,
+    "p": 4.5,
+    "c": 10,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f572",
+    "n": "Chorba frik",
+    "kcal": 72,
+    "p": 5,
+    "c": 11,
+    "f": 1.8,
+    "halal": true
+  },
+  {
+    "id": "f573",
+    "n": "Msemen (feuilleté marocain)",
+    "kcal": 310,
+    "p": 8,
+    "c": 50,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f574",
+    "n": "Baghrir (crêpe semoule)",
+    "kcal": 180,
+    "p": 5.5,
+    "c": 36,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f575",
+    "n": "Rfissa au poulet",
+    "kcal": 175,
+    "p": 13,
+    "c": 17,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f576",
+    "n": "Chebakia (miel sésame)",
+    "kcal": 428,
+    "p": 6,
+    "c": 62,
+    "f": 19,
+    "halal": true
+  },
+  {
+    "id": "f577",
+    "n": "Loubia (haricots blancs tomate)",
+    "kcal": 105,
+    "p": 6.5,
+    "c": 18,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f578",
+    "n": "Méchoui (agneau entier rôti)",
+    "kcal": 220,
+    "p": 26,
+    "c": 0,
+    "f": 13,
+    "halal": true
+  },
+  {
+    "id": "f579",
+    "n": "Maklouba (riz viande légumes)",
+    "kcal": 148,
+    "p": 9,
+    "c": 18,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f580",
+    "n": "Mansaf (agneau riz yaourt)",
+    "kcal": 188,
+    "p": 16,
+    "c": 16,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f581",
+    "n": "Kabsa (riz viande aromatique)",
+    "kcal": 168,
+    "p": 12,
+    "c": 20,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f582",
+    "n": "Biryani au poulet",
+    "kcal": 180,
+    "p": 12,
+    "c": 22,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f583",
+    "n": "Riz au poulet baharat",
+    "kcal": 160,
+    "p": 12,
+    "c": 19,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f584",
+    "n": "Mujaddara (lentilles riz)",
+    "kcal": 130,
+    "p": 5.5,
+    "c": 24,
+    "f": 2,
+    "halal": true
+  },
+  {
+    "id": "f585",
+    "n": "Fatteh (pita pois chiches yaourt)",
+    "kcal": 165,
+    "p": 7,
+    "c": 23,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f586",
+    "n": "Shakshuka (tomate œufs)",
+    "kcal": 98,
+    "p": 6.5,
+    "c": 7,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f587",
+    "n": "Mulukhiya (poulet légume)",
+    "kcal": 68,
+    "p": 5.5,
+    "c": 7,
+    "f": 2,
+    "halal": true
+  },
+  {
+    "id": "f588",
+    "n": "Khobz (pain marocain)",
+    "kcal": 255,
+    "p": 9,
+    "c": 50,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f589",
+    "n": "Gratin dauphinois",
+    "kcal": 152,
+    "p": 4.5,
+    "c": 14,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f590",
+    "n": "Ratatouille",
+    "kcal": 62,
+    "p": 1.8,
+    "c": 10,
+    "f": 2.5,
+    "halal": true
+  },
+  {
+    "id": "f591",
+    "n": "Soupe de légumes",
+    "kcal": 41,
+    "p": 1.5,
+    "c": 8,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f592",
+    "n": "Soupe de potiron",
+    "kcal": 38,
+    "p": 1.2,
+    "c": 8,
+    "f": 0.8,
+    "halal": true
+  },
+  {
+    "id": "f593",
+    "n": "Taboulé (semoule, persil, tomate)",
+    "kcal": 110,
+    "p": 3.5,
+    "c": 19,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f594",
+    "n": "Fattoush (salade levantine)",
+    "kcal": 70,
+    "p": 1.5,
+    "c": 10,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f595",
+    "n": "Zaalouk (aubergine tomate)",
+    "kcal": 65,
+    "p": 1.8,
+    "c": 8,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f596",
+    "n": "Taktouka (poivron tomate)",
+    "kcal": 58,
+    "p": 1.5,
+    "c": 7,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f597",
+    "n": "Salade de carottes chermoula",
+    "kcal": 70,
+    "p": 1.3,
+    "c": 10,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f598",
+    "n": "Salade de betterave citron",
+    "kcal": 50,
+    "p": 1.5,
+    "c": 11,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f599",
+    "n": "Harissa",
+    "kcal": 49,
+    "p": 2,
+    "c": 7.2,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f600",
+    "n": "Chermoula",
+    "kcal": 120,
+    "p": 1.5,
+    "c": 4,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f601",
+    "n": "Tapenade",
+    "kcal": 274,
+    "p": 1.5,
+    "c": 4,
+    "f": 29,
+    "halal": true
+  },
+  {
+    "id": "f602",
+    "n": "Sauce soja",
+    "kcal": 60,
+    "p": 5.8,
+    "c": 5.6,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f603",
+    "n": "Sauce tahini diluée",
+    "kcal": 255,
+    "p": 9,
+    "c": 10,
+    "f": 21,
+    "halal": true
+  },
+  {
+    "id": "f604",
+    "n": "Baba ganoush",
+    "kcal": 95,
+    "p": 2,
+    "c": 7,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f605",
+    "n": "Za'atar (mélange d'épices)",
+    "kcal": 319,
+    "p": 10,
+    "c": 57,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f606",
+    "n": "Cumin en poudre",
+    "kcal": 375,
+    "p": 18,
+    "c": 44,
+    "f": 22,
+    "halal": true
+  },
+  {
+    "id": "f607",
+    "n": "Curcuma en poudre",
+    "kcal": 354,
+    "p": 8,
+    "c": 65,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f608",
+    "n": "Paprika",
+    "kcal": 282,
+    "p": 14,
+    "c": 54,
+    "f": 13,
+    "halal": true
+  },
+  {
+    "id": "f609",
+    "n": "Cannelle en poudre",
+    "kcal": 247,
+    "p": 4,
+    "c": 81,
+    "f": 1.2,
+    "halal": true
+  },
+  {
+    "id": "f610",
+    "n": "Coriandre en poudre",
+    "kcal": 298,
+    "p": 12,
+    "c": 55,
+    "f": 18,
+    "halal": true
+  },
+  {
+    "id": "f611",
+    "n": "Ras-el-hanout",
+    "kcal": 380,
+    "p": 12,
+    "c": 62,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f612",
+    "n": "Vinaigrette",
+    "kcal": 271,
+    "p": 0.2,
+    "c": 3,
+    "f": 29,
+    "halal": true
+  },
+  {
+    "id": "f613",
+    "n": "Sauce yaourt menthe",
+    "kcal": 65,
+    "p": 3.5,
+    "c": 5,
+    "f": 3.5,
+    "halal": true
+  },
+  {
+    "id": "f614",
+    "n": "Chermoula verte",
+    "kcal": 115,
+    "p": 1.5,
+    "c": 4,
+    "f": 11,
+    "halal": true
+  },
+  {
+    "id": "f615",
+    "n": "Ajvar (poivron grillé)",
+    "kcal": 85,
+    "p": 1.5,
+    "c": 12,
+    "f": 4,
+    "halal": true
+  },
+  {
+    "id": "f616",
+    "n": "Eau minérale",
+    "kcal": 0,
+    "p": 0,
+    "c": 0,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f617",
+    "n": "Jus de raisin",
+    "kcal": 60,
+    "p": 0.5,
+    "c": 15,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f618",
+    "n": "Jus d'ananas",
+    "kcal": 53,
+    "p": 0.4,
+    "c": 13,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f619",
+    "n": "Nectar de pêche",
+    "kcal": 55,
+    "p": 0.3,
+    "c": 14,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f620",
+    "n": "Smoothie banane lait",
+    "kcal": 75,
+    "p": 2.5,
+    "c": 15,
+    "f": 1.2,
+    "halal": true
+  },
+  {
+    "id": "f621",
+    "n": "Lait de poule sans alcool",
+    "kcal": 93,
+    "p": 4,
+    "c": 13,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f622",
+    "n": "Thé à la menthe sucré",
+    "kcal": 30,
+    "p": 0,
+    "c": 7.5,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f623",
+    "n": "Café latte",
+    "kcal": 52,
+    "p": 1.9,
+    "c": 5.2,
+    "f": 2.9,
+    "halal": true
+  },
+  {
+    "id": "f624",
+    "n": "Tisane (infusion nature)",
+    "kcal": 2,
+    "p": 0,
+    "c": 0.4,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f625",
+    "n": "Sirop de fraise dilué",
+    "kcal": 42,
+    "p": 0,
+    "c": 10.5,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f626",
+    "n": "Ayran (yaourt drink)",
+    "kcal": 36,
+    "p": 1.8,
+    "c": 2.7,
+    "f": 2,
+    "halal": true
+  },
+  {
+    "id": "f627",
+    "n": "Jus de carotte",
+    "kcal": 40,
+    "p": 0.9,
+    "c": 9.3,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f628",
+    "n": "Jus de grenade",
+    "kcal": 54,
+    "p": 0.2,
+    "c": 13,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f629",
+    "n": "Jus de mangue",
+    "kcal": 60,
+    "p": 0.4,
+    "c": 15,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f630",
+    "n": "Eau de coco",
+    "kcal": 19,
+    "p": 0.7,
+    "c": 3.7,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f631",
+    "n": "Lait de datte",
+    "kcal": 75,
+    "p": 1.5,
+    "c": 17,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f632",
+    "n": "Qahwa (café arabe à la cardamome)",
+    "kcal": 5,
+    "p": 0.2,
+    "c": 1,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f633",
+    "n": "Confiture de fraise",
+    "kcal": 250,
+    "p": 0.4,
+    "c": 62,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f634",
+    "n": "Confiture d'abricot",
+    "kcal": 246,
+    "p": 0.4,
+    "c": 62,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f635",
+    "n": "Nutella halal",
+    "kcal": 541,
+    "p": 6.3,
+    "c": 58,
+    "f": 31,
+    "halal": true
+  },
+  {
+    "id": "f636",
+    "n": "Carrés de chocolat noir 72%",
+    "kcal": 598,
+    "p": 7.8,
+    "c": 46,
+    "f": 43,
+    "halal": true
+  },
+  {
+    "id": "f637",
+    "n": "Carrés de chocolat au lait halal",
+    "kcal": 535,
+    "p": 7.6,
+    "c": 59,
+    "f": 30,
+    "halal": true
+  },
+  {
+    "id": "f638",
+    "n": "Gâteau au miel et amandes",
+    "kcal": 350,
+    "p": 7,
+    "c": 48,
+    "f": 16,
+    "halal": true
+  },
+  {
+    "id": "f639",
+    "n": "Cornes de gazelle",
+    "kcal": 415,
+    "p": 7.5,
+    "c": 57,
+    "f": 18,
+    "halal": true
+  },
+  {
+    "id": "f640",
+    "n": "Makrout (semoule datte)",
+    "kcal": 380,
+    "p": 5,
+    "c": 60,
+    "f": 15,
+    "halal": true
+  },
+  {
+    "id": "f641",
+    "n": "Ghribia (sablé amandes)",
+    "kcal": 490,
+    "p": 8,
+    "c": 55,
+    "f": 27,
+    "halal": true
+  },
+  {
+    "id": "f642",
+    "n": "Sablés halal",
+    "kcal": 480,
+    "p": 6.5,
+    "c": 60,
+    "f": 24,
+    "halal": true
+  },
+  {
+    "id": "f643",
+    "n": "Pain d'épice",
+    "kcal": 330,
+    "p": 5.5,
+    "c": 72,
+    "f": 2.5,
+    "halal": true
+  },
+  {
+    "id": "f644",
+    "n": "Halva de sésame",
+    "kcal": 516,
+    "p": 12,
+    "c": 57,
+    "f": 30,
+    "halal": true
+  },
+  {
+    "id": "f645",
+    "n": "Loukoum",
+    "kcal": 320,
+    "p": 0.5,
+    "c": 79,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f646",
+    "n": "Mlawi (crêpe tunisienne feuilletée)",
+    "kcal": 290,
+    "p": 7,
+    "c": 45,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f647",
+    "n": "Sellou (sésame amande farine)",
+    "kcal": 557,
+    "p": 13,
+    "c": 57,
+    "f": 31,
+    "halal": true
+  },
+  {
+    "id": "f648",
+    "n": "Kenafeh au sirop",
+    "kcal": 287,
+    "p": 8,
+    "c": 36,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f649",
+    "n": "Zlabia (beignet halal)",
+    "kcal": 365,
+    "p": 5,
+    "c": 57,
+    "f": 14,
+    "halal": true
+  },
+  {
+    "id": "f650",
+    "n": "Basbousa (gâteau semoule)",
+    "kcal": 330,
+    "p": 5.5,
+    "c": 52,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f651",
+    "n": "Mhancha (serpent amandes)",
+    "kcal": 400,
+    "p": 8,
+    "c": 53,
+    "f": 19,
+    "halal": true
+  },
+  {
+    "id": "f652",
+    "n": "Kaab el ghzal",
+    "kcal": 415,
+    "p": 8,
+    "c": 56,
+    "f": 18,
+    "halal": true
+  },
+  {
+    "id": "f653",
+    "n": "Crème caramel halal",
+    "kcal": 130,
+    "p": 4,
+    "c": 21,
+    "f": 3.5,
+    "halal": true
+  },
+  {
+    "id": "f654",
+    "n": "Riz au lait halal",
+    "kcal": 130,
+    "p": 3.5,
+    "c": 22,
+    "f": 3.2,
+    "halal": true
+  },
+  {
+    "id": "f655",
+    "n": "Mousse au chocolat halal",
+    "kcal": 220,
+    "p": 5,
+    "c": 20,
+    "f": 14,
+    "halal": true
+  },
+  {
+    "id": "f656",
+    "n": "Tarte aux pommes halal",
+    "kcal": 220,
+    "p": 3,
+    "c": 33,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f657",
+    "n": "Moelleux au chocolat halal",
+    "kcal": 380,
+    "p": 7,
+    "c": 40,
+    "f": 22,
+    "halal": true
+  },
+  {
+    "id": "f658",
+    "n": "Panna cotta halal",
+    "kcal": 190,
+    "p": 3.5,
+    "c": 17,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f659",
+    "n": "Crème brûlée halal",
+    "kcal": 207,
+    "p": 3.5,
+    "c": 16,
+    "f": 15,
+    "halal": true
+  },
+  {
+    "id": "f660",
+    "n": "Chips de pomme de terre",
+    "kcal": 536,
+    "p": 7,
+    "c": 53,
+    "f": 35,
+    "halal": true
+  },
+  {
+    "id": "f661",
+    "n": "Pop-corn nature",
+    "kcal": 375,
+    "p": 11,
+    "c": 74,
+    "f": 4.5,
+    "halal": true
+  },
+  {
+    "id": "f662",
+    "n": "Barres de céréales halal",
+    "kcal": 380,
+    "p": 8,
+    "c": 65,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f663",
+    "n": "Gressins (grissini)",
+    "kcal": 412,
+    "p": 11,
+    "c": 75,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f664",
+    "n": "Tarama (sans alcool)",
+    "kcal": 210,
+    "p": 12,
+    "c": 2,
+    "f": 17,
+    "halal": true
+  },
+  {
+    "id": "f665",
+    "n": "Œufs de lump",
+    "kcal": 78,
+    "p": 15,
+    "c": 1.5,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f666",
+    "n": "Houmous maison",
+    "kcal": 177,
+    "p": 8,
+    "c": 14,
+    "f": 11,
+    "halal": true
+  },
+  {
+    "id": "f667",
+    "n": "Guacamole",
+    "kcal": 160,
+    "p": 2,
+    "c": 9,
+    "f": 15,
+    "halal": true
+  },
+  {
+    "id": "f668",
+    "n": "Tzatziki",
+    "kcal": 68,
+    "p": 4.5,
+    "c": 4,
+    "f": 4,
+    "halal": true
+  },
+  {
+    "id": "f669",
+    "n": "Caviar d'aubergine",
+    "kcal": 87,
+    "p": 1.8,
+    "c": 7,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f670",
+    "n": "Brouet d'épinards (saag)",
+    "kcal": 72,
+    "p": 3.5,
+    "c": 7,
+    "f": 4,
+    "halal": true
+  },
+  {
+    "id": "f671",
+    "n": "Dal de lentilles",
+    "kcal": 110,
+    "p": 7,
+    "c": 17,
+    "f": 2,
+    "halal": true
+  },
+  {
+    "id": "f672",
+    "n": "Chana masala",
+    "kcal": 130,
+    "p": 7.5,
+    "c": 19,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f673",
+    "n": "Palak paneer (sans paneer halal)",
+    "kcal": 145,
+    "p": 6,
+    "c": 10,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f674",
+    "n": "Aloo gobi (pomme de terre chou-fleur)",
+    "kcal": 85,
+    "p": 2.5,
+    "c": 14,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f675",
+    "n": "Samoussa au poulet halal",
+    "kcal": 245,
+    "p": 10,
+    "c": 27,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f676",
+    "n": "Spring roll légumes",
+    "kcal": 165,
+    "p": 4,
+    "c": 24,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f677",
+    "n": "Börek halal (feuille filo viande)",
+    "kcal": 265,
+    "p": 11,
+    "c": 28,
+    "f": 13,
+    "halal": true
+  },
+  {
+    "id": "f678",
+    "n": "Lapin rôti (halal)",
+    "kcal": 173,
+    "p": 29,
+    "c": 0,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f679",
+    "n": "Chapon rôti (halal)",
+    "kcal": 210,
+    "p": 27,
+    "c": 0,
+    "f": 11,
+    "halal": true
+  },
+  {
+    "id": "f680",
+    "n": "Poulet en sauce tomate",
+    "kcal": 160,
+    "p": 22,
+    "c": 5,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f681",
+    "n": "Poulet tikka masala (halal)",
+    "kcal": 148,
+    "p": 15,
+    "c": 8,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f682",
+    "n": "Kebab de bœuf (döner)",
+    "kcal": 265,
+    "p": 17,
+    "c": 18,
+    "f": 14,
+    "halal": true
+  },
+  {
+    "id": "f683",
+    "n": "Kebab de poulet (döner)",
+    "kcal": 220,
+    "p": 18,
+    "c": 17,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f684",
+    "n": "Côte d'agneau grillée",
+    "kcal": 285,
+    "p": 26,
+    "c": 0,
+    "f": 20,
+    "halal": true
+  },
+  {
+    "id": "f685",
+    "n": "Tajine de kefta aux œufs",
+    "kcal": 210,
+    "p": 17,
+    "c": 4,
+    "f": 14,
+    "halal": true
+  },
+  {
+    "id": "f686",
+    "n": "Sauté de veau aux champignons",
+    "kcal": 145,
+    "p": 20,
+    "c": 3,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f687",
+    "n": "Foie de poulet sauté",
+    "kcal": 174,
+    "p": 27,
+    "c": 1.5,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f688",
+    "n": "Gésiers de poulet confits",
+    "kcal": 155,
+    "p": 18,
+    "c": 0,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f689",
+    "n": "Rognons de veau",
+    "kcal": 163,
+    "p": 27,
+    "c": 0.5,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f690",
+    "n": "Saumon cuit vapeur",
+    "kcal": 195,
+    "p": 21,
+    "c": 0,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f691",
+    "n": "Thon grillé",
+    "kcal": 184,
+    "p": 30,
+    "c": 0,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f692",
+    "n": "Filet de cabillaud pané",
+    "kcal": 180,
+    "p": 15,
+    "c": 14,
+    "f": 8,
+    "halal": true
+  },
+  {
+    "id": "f693",
+    "n": "Brandade de morue",
+    "kcal": 175,
+    "p": 15,
+    "c": 10,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f694",
+    "n": "Bouillabaisse (soupe de poisson)",
+    "kcal": 72,
+    "p": 8,
+    "c": 4,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f695",
+    "n": "Crevettes sautées à l'ail",
+    "kcal": 105,
+    "p": 20,
+    "c": 1,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f696",
+    "n": "Calamars frits",
+    "kcal": 175,
+    "p": 14,
+    "c": 12,
+    "f": 8,
+    "halal": true
+  },
+  {
+    "id": "f697",
+    "n": "Homard grillé",
+    "kcal": 95,
+    "p": 20,
+    "c": 0,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f698",
+    "n": "Huîtres (sans alcool)",
+    "kcal": 68,
+    "p": 9,
+    "c": 4.9,
+    "f": 2,
+    "halal": true
+  },
+  {
+    "id": "f699",
+    "n": "Palourdes",
+    "kcal": 74,
+    "p": 13,
+    "c": 3,
+    "f": 1,
+    "halal": true
+  },
+  {
+    "id": "f700",
+    "n": "Anguille fumée",
+    "kcal": 289,
+    "p": 21,
+    "c": 0,
+    "f": 23,
+    "halal": true
+  },
+  {
+    "id": "f701",
+    "n": "Saumon teriyaki (halal)",
+    "kcal": 195,
+    "p": 20,
+    "c": 8,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f702",
+    "n": "Pak-choï cuit",
+    "kcal": 12,
+    "p": 1.5,
+    "c": 2,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f703",
+    "n": "Épinards crus",
+    "kcal": 23,
+    "p": 2.9,
+    "c": 3.6,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f704",
+    "n": "Kale (chou frisé)",
+    "kcal": 49,
+    "p": 4.3,
+    "c": 9,
+    "f": 0.9,
+    "halal": true
+  },
+  {
+    "id": "f705",
+    "n": "Butternut rôtie",
+    "kcal": 72,
+    "p": 1.5,
+    "c": 17,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f706",
+    "n": "Poivron rôti mariné",
+    "kcal": 40,
+    "p": 1,
+    "c": 8,
+    "f": 0.8,
+    "halal": true
+  },
+  {
+    "id": "f707",
+    "n": "Aubergine grillée",
+    "kcal": 33,
+    "p": 1.2,
+    "c": 7,
+    "f": 0.8,
+    "halal": true
+  },
+  {
+    "id": "f708",
+    "n": "Courgette grillée",
+    "kcal": 25,
+    "p": 1.5,
+    "c": 4,
+    "f": 0.8,
+    "halal": true
+  },
+  {
+    "id": "f709",
+    "n": "Tomate séchée à l'huile",
+    "kcal": 213,
+    "p": 5,
+    "c": 23,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f710",
+    "n": "Tomate concassée en boîte",
+    "kcal": 17,
+    "p": 0.8,
+    "c": 3.5,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f711",
+    "n": "Haricots verts surgelés cuits",
+    "kcal": 28,
+    "p": 1.8,
+    "c": 6,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f712",
+    "n": "Pois gourmands (snow peas)",
+    "kcal": 42,
+    "p": 2.8,
+    "c": 8,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f713",
+    "n": "Flageolets cuits",
+    "kcal": 100,
+    "p": 7,
+    "c": 17,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f714",
+    "n": "Taro cuit",
+    "kcal": 112,
+    "p": 1.5,
+    "c": 26,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f715",
+    "n": "Manioc cuit",
+    "kcal": 155,
+    "p": 1.4,
+    "c": 36,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f716",
+    "n": "Igname cuit",
+    "kcal": 118,
+    "p": 1.5,
+    "c": 28,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f717",
+    "n": "Plantain cuit",
+    "kcal": 122,
+    "p": 1.3,
+    "c": 31,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f718",
+    "n": "Maïs en épi cuit",
+    "kcal": 96,
+    "p": 3.3,
+    "c": 21,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f719",
+    "n": "Edamame (soja vert)",
+    "kcal": 121,
+    "p": 11,
+    "c": 9,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f720",
+    "n": "Brocoli cru",
+    "kcal": 34,
+    "p": 2.8,
+    "c": 7,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f721",
+    "n": "Chou-fleur cru",
+    "kcal": 25,
+    "p": 1.9,
+    "c": 5,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f722",
+    "n": "Fruit de la passion",
+    "kcal": 97,
+    "p": 2.2,
+    "c": 23,
+    "f": 0.7,
+    "halal": true
+  },
+  {
+    "id": "f723",
+    "n": "Carambole",
+    "kcal": 31,
+    "p": 1.1,
+    "c": 7,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f724",
+    "n": "Ramboutan",
+    "kcal": 82,
+    "p": 0.9,
+    "c": 21,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f725",
+    "n": "Longane",
+    "kcal": 60,
+    "p": 1.3,
+    "c": 15,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f726",
+    "n": "Fruit du dragon (pitaya)",
+    "kcal": 60,
+    "p": 1.2,
+    "c": 13,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f727",
+    "n": "Kumquat",
+    "kcal": 71,
+    "p": 1.9,
+    "c": 16,
+    "f": 0.9,
+    "halal": true
+  },
+  {
+    "id": "f728",
+    "n": "Coing",
+    "kcal": 57,
+    "p": 0.4,
+    "c": 15,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f729",
+    "n": "Nèfle",
+    "kcal": 47,
+    "p": 0.4,
+    "c": 12,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f730",
+    "n": "Jujube (datte chinoise)",
+    "kcal": 79,
+    "p": 1.2,
+    "c": 20,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f731",
+    "n": "Baobab poudre",
+    "kcal": 227,
+    "p": 2.6,
+    "c": 75,
+    "f": 0.5,
+    "halal": true
+  },
+  {
+    "id": "f732",
+    "n": "Açaï séché poudre",
+    "kcal": 534,
+    "p": 9,
+    "c": 52,
+    "f": 33,
+    "halal": true
+  },
+  {
+    "id": "f733",
+    "n": "Cranberry séchée sucrée",
+    "kcal": 308,
+    "p": 0,
+    "c": 83,
+    "f": 1,
+    "halal": true
+  },
+  {
+    "id": "f734",
+    "n": "Tamarin pâte",
+    "kcal": 239,
+    "p": 2.8,
+    "c": 63,
+    "f": 0.6,
+    "halal": true
+  },
+  {
+    "id": "f735",
+    "n": "Anone (corossol)",
+    "kcal": 66,
+    "p": 1,
+    "c": 17,
+    "f": 0.3,
+    "halal": true
+  },
+  {
+    "id": "f736",
+    "n": "Orge perlée cuite",
+    "kcal": 123,
+    "p": 2.3,
+    "c": 28,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f737",
+    "n": "Épeautre cuit",
+    "kcal": 127,
+    "p": 5,
+    "c": 26,
+    "f": 1,
+    "halal": true
+  },
+  {
+    "id": "f738",
+    "n": "Seigle en grains cuit",
+    "kcal": 110,
+    "p": 4,
+    "c": 24,
+    "f": 0.7,
+    "halal": true
+  },
+  {
+    "id": "f739",
+    "n": "Millet cuit",
+    "kcal": 119,
+    "p": 3.5,
+    "c": 24,
+    "f": 1,
+    "halal": true
+  },
+  {
+    "id": "f740",
+    "n": "Sarrasin cuit",
+    "kcal": 92,
+    "p": 3.4,
+    "c": 20,
+    "f": 0.6,
+    "halal": true
+  },
+  {
+    "id": "f741",
+    "n": "Amarante cuite",
+    "kcal": 102,
+    "p": 3.8,
+    "c": 19,
+    "f": 1.6,
+    "halal": true
+  },
+  {
+    "id": "f742",
+    "n": "Macaroni cuit",
+    "kcal": 158,
+    "p": 5.8,
+    "c": 31,
+    "f": 0.9,
+    "halal": true
+  },
+  {
+    "id": "f743",
+    "n": "Fusilli cuit",
+    "kcal": 158,
+    "p": 5.8,
+    "c": 31,
+    "f": 0.9,
+    "halal": true
+  },
+  {
+    "id": "f744",
+    "n": "Penne rigate cuites",
+    "kcal": 158,
+    "p": 5.8,
+    "c": 31,
+    "f": 0.9,
+    "halal": true
+  },
+  {
+    "id": "f745",
+    "n": "Lasagnes cuites",
+    "kcal": 165,
+    "p": 6,
+    "c": 33,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f746",
+    "n": "Tagliatelles cuites",
+    "kcal": 130,
+    "p": 5,
+    "c": 25,
+    "f": 1.2,
+    "halal": true
+  },
+  {
+    "id": "f747",
+    "n": "Nouilles de riz cuites",
+    "kcal": 109,
+    "p": 2,
+    "c": 25,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f748",
+    "n": "Vermicelles de blé cuits",
+    "kcal": 148,
+    "p": 5,
+    "c": 29,
+    "f": 1,
+    "halal": true
+  },
+  {
+    "id": "f749",
+    "n": "Vermicelles de soja cuits",
+    "kcal": 88,
+    "p": 0.2,
+    "c": 22,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f750",
+    "n": "Blé dur (semoule fine crue)",
+    "kcal": 339,
+    "p": 13,
+    "c": 70,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f751",
+    "n": "Müesli aux fruits secs",
+    "kcal": 370,
+    "p": 10,
+    "c": 60,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f752",
+    "n": "Porridge (bouillie avoine lait)",
+    "kcal": 75,
+    "p": 3.5,
+    "c": 12,
+    "f": 1.8,
+    "halal": true
+  },
+  {
+    "id": "f753",
+    "n": "Pain naan (halal)",
+    "kcal": 289,
+    "p": 9,
+    "c": 51,
+    "f": 5.5,
+    "halal": true
+  },
+  {
+    "id": "f754",
+    "n": "Chapati (pain indien sans alcool)",
+    "kcal": 298,
+    "p": 9,
+    "c": 55,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f755",
+    "n": "Pain lavash",
+    "kcal": 280,
+    "p": 9,
+    "c": 53,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f756",
+    "n": "Galette de blé (wrap)",
+    "kcal": 305,
+    "p": 8,
+    "c": 52,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f757",
+    "n": "Wasa (crackers seigle)",
+    "kcal": 338,
+    "p": 10,
+    "c": 72,
+    "f": 2,
+    "halal": true
+  },
+  {
+    "id": "f758",
+    "n": "Pain de maïs",
+    "kcal": 276,
+    "p": 5.5,
+    "c": 52,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f759",
+    "n": "Tacos shell (halal)",
+    "kcal": 480,
+    "p": 7,
+    "c": 60,
+    "f": 25,
+    "halal": true
+  },
+  {
+    "id": "f760",
+    "n": "Omelette aux légumes",
+    "kcal": 145,
+    "p": 10,
+    "c": 4,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f761",
+    "n": "Frittata poulet épinards",
+    "kcal": 152,
+    "p": 13,
+    "c": 3,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f762",
+    "n": "Shakshuka aux tomates",
+    "kcal": 98,
+    "p": 6.5,
+    "c": 7,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f763",
+    "n": "Crêpes halal (farine œuf lait)",
+    "kcal": 189,
+    "p": 5.7,
+    "c": 26,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f764",
+    "n": "Gaufres halal",
+    "kcal": 291,
+    "p": 6.5,
+    "c": 45,
+    "f": 10,
+    "halal": true
+  },
+  {
+    "id": "f765",
+    "n": "Pancakes halal",
+    "kcal": 230,
+    "p": 6,
+    "c": 36,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f766",
+    "n": "Quiche lorraine halal (sans lardons porc)",
+    "kcal": 260,
+    "p": 9,
+    "c": 16,
+    "f": 18,
+    "halal": true
+  },
+  {
+    "id": "f767",
+    "n": "Riz cantonnais poulet halal",
+    "kcal": 168,
+    "p": 8,
+    "c": 24,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f768",
+    "n": "Noodles sautés au bœuf",
+    "kcal": 185,
+    "p": 11,
+    "c": 24,
+    "f": 5.5,
+    "halal": true
+  },
+  {
+    "id": "f769",
+    "n": "Soupe miso (dashi légumes)",
+    "kcal": 40,
+    "p": 2.5,
+    "c": 5,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f770",
+    "n": "Pad thaï poulet halal",
+    "kcal": 190,
+    "p": 12,
+    "c": 26,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f771",
+    "n": "Curry vert poulet halal (lait de coco)",
+    "kcal": 155,
+    "p": 14,
+    "c": 8,
+    "f": 8,
+    "halal": true
+  },
+  {
+    "id": "f772",
+    "n": "Curry rouge bœuf halal",
+    "kcal": 148,
+    "p": 13,
+    "c": 8,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f773",
+    "n": "Rendang bœuf halal",
+    "kcal": 210,
+    "p": 20,
+    "c": 5,
+    "f": 13,
+    "halal": true
+  },
+  {
+    "id": "f774",
+    "n": "Satay poulet halal",
+    "kcal": 215,
+    "p": 20,
+    "c": 4,
+    "f": 14,
+    "halal": true
+  },
+  {
+    "id": "f775",
+    "n": "Bao vapeur poulet halal",
+    "kcal": 230,
+    "p": 12,
+    "c": 32,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f776",
+    "n": "Bibimbap (riz légumes bœuf)",
+    "kcal": 170,
+    "p": 10,
+    "c": 25,
+    "f": 4,
+    "halal": true
+  },
+  {
+    "id": "f777",
+    "n": "Miso soup avec tofu",
+    "kcal": 50,
+    "p": 3.5,
+    "c": 5.5,
+    "f": 2,
+    "halal": true
+  },
+  {
+    "id": "f778",
+    "n": "Gyoza poulet halal vapeur",
+    "kcal": 195,
+    "p": 10,
+    "c": 24,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f779",
+    "n": "Onigiri saumon",
+    "kcal": 180,
+    "p": 6,
+    "c": 33,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f780",
+    "n": "Jollof rice (riz épicé africain)",
+    "kcal": 160,
+    "p": 5,
+    "c": 30,
+    "f": 4,
+    "halal": true
+  },
+  {
+    "id": "f781",
+    "n": "Thiéboudienne (riz poisson sénégalais)",
+    "kcal": 188,
+    "p": 12,
+    "c": 24,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f782",
+    "n": "Ndolé (plat camerounais halal)",
+    "kcal": 145,
+    "p": 12,
+    "c": 8,
+    "f": 8,
+    "halal": true
+  },
+  {
+    "id": "f783",
+    "n": "Maafe (arachide légumes viande)",
+    "kcal": 178,
+    "p": 12,
+    "c": 12,
+    "f": 9,
+    "halal": true
+  },
+  {
+    "id": "f784",
+    "n": "Tagine de légumes (végétarien)",
+    "kcal": 95,
+    "p": 3,
+    "c": 16,
+    "f": 3,
+    "halal": true
+  },
+  {
+    "id": "f785",
+    "n": "Ful medames (fèves)",
+    "kcal": 85,
+    "p": 6,
+    "c": 13,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f786",
+    "n": "Kibbeh halal (bœuf agneau)",
+    "kcal": 230,
+    "p": 14,
+    "c": 17,
+    "f": 12,
+    "halal": true
+  },
+  {
+    "id": "f787",
+    "n": "Moussaka grecque (sans porc)",
+    "kcal": 145,
+    "p": 9,
+    "c": 11,
+    "f": 8,
+    "halal": true
+  },
+  {
+    "id": "f788",
+    "n": "Dolmas (feuilles vigne riz viande)",
+    "kcal": 165,
+    "p": 6,
+    "c": 18,
+    "f": 8,
+    "halal": true
+  },
+  {
+    "id": "f789",
+    "n": "Maqlooba (riz viande légumes)",
+    "kcal": 175,
+    "p": 11,
+    "c": 22,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f790",
+    "n": "Hawawshi (pain farce bœuf)",
+    "kcal": 285,
+    "p": 15,
+    "c": 28,
+    "f": 13,
+    "halal": true
+  },
+  {
+    "id": "f791",
+    "n": "Mugrabiyeh (couscous libanais)",
+    "kcal": 195,
+    "p": 9,
+    "c": 30,
+    "f": 4,
+    "halal": true
+  },
+  {
+    "id": "f792",
+    "n": "Freekeh au poulet",
+    "kcal": 170,
+    "p": 13,
+    "c": 22,
+    "f": 4,
+    "halal": true
+  },
+  {
+    "id": "f793",
+    "n": "Riz pilaf aux pignons",
+    "kcal": 178,
+    "p": 4,
+    "c": 28,
+    "f": 7,
+    "halal": true
+  },
+  {
+    "id": "f794",
+    "n": "Spiruline poudre",
+    "kcal": 290,
+    "p": 57,
+    "c": 24,
+    "f": 8,
+    "halal": true
+  },
+  {
+    "id": "f795",
+    "n": "Pollen de fleur",
+    "kcal": 315,
+    "p": 22,
+    "c": 61,
+    "f": 3.5,
+    "halal": true
+  },
+  {
+    "id": "f796",
+    "n": "Gelée royale",
+    "kcal": 128,
+    "p": 3.5,
+    "c": 20,
+    "f": 5,
+    "halal": true
+  },
+  {
+    "id": "f797",
+    "n": "Graine de nigelle (habba sawda)",
+    "kcal": 345,
+    "p": 16,
+    "c": 44,
+    "f": 21,
+    "halal": true
+  },
+  {
+    "id": "f798",
+    "n": "Sidr honey (miel de Sidre)",
+    "kcal": 325,
+    "p": 0.3,
+    "c": 82,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f799",
+    "n": "Sumac (épice)",
+    "kcal": 314,
+    "p": 3.5,
+    "c": 72,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f800",
+    "n": "Fenugrec graines",
+    "kcal": 323,
+    "p": 23,
+    "c": 58,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f801",
+    "n": "Moringa poudre",
+    "kcal": 205,
+    "p": 27,
+    "c": 38,
+    "f": 2,
+    "halal": true
+  },
+  {
+    "id": "f802",
+    "n": "Nigelle en grains",
+    "kcal": 345,
+    "p": 16,
+    "c": 44,
+    "f": 21,
+    "halal": true
+  },
+  {
+    "id": "f803",
+    "n": "Substitut de protéines (whey halal)",
+    "kcal": 380,
+    "p": 75,
+    "c": 8,
+    "f": 6,
+    "halal": true
+  },
+  {
+    "id": "f804",
+    "n": "Protéines de pois (isolat)",
+    "kcal": 360,
+    "p": 80,
+    "c": 5,
+    "f": 4,
+    "halal": true
+  },
+  {
+    "id": "f805",
+    "n": "Jus de citron pressé",
+    "kcal": 22,
+    "p": 0.4,
+    "c": 6.9,
+    "f": 0.2,
+    "halal": true
+  },
+  {
+    "id": "f806",
+    "n": "Jus de tomate",
+    "kcal": 17,
+    "p": 0.8,
+    "c": 3.5,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f807",
+    "n": "Lait de noisette",
+    "kcal": 28,
+    "p": 0.5,
+    "c": 2.8,
+    "f": 1.8,
+    "halal": true
+  },
+  {
+    "id": "f808",
+    "n": "Boisson au gingembre",
+    "kcal": 15,
+    "p": 0,
+    "c": 3.5,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f809",
+    "n": "Lait d'amande sucré",
+    "kcal": 30,
+    "p": 0.6,
+    "c": 3.5,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f810",
+    "n": "Karkadé (hibiscus)",
+    "kcal": 3,
+    "p": 0.1,
+    "c": 0.7,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f811",
+    "n": "Jus de betterave",
+    "kcal": 42,
+    "p": 1.6,
+    "c": 10,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f812",
+    "n": "Laban (babeurre)",
+    "kcal": 40,
+    "p": 3.3,
+    "c": 4.8,
+    "f": 0.9,
+    "halal": true
+  },
+  {
+    "id": "f813",
+    "n": "Jus de gingembre citron miel",
+    "kcal": 35,
+    "p": 0.2,
+    "c": 8.5,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f814",
+    "n": "Boisson protéinée chocolat halal",
+    "kcal": 58,
+    "p": 5,
+    "c": 7,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f815",
+    "n": "Café noisette",
+    "kcal": 25,
+    "p": 0.9,
+    "c": 2.5,
+    "f": 1.4,
+    "halal": true
+  },
+  {
+    "id": "f816",
+    "n": "Sucre roux (cassonade)",
+    "kcal": 377,
+    "p": 0,
+    "c": 98,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f817",
+    "n": "Sucre de coco",
+    "kcal": 375,
+    "p": 0,
+    "c": 98,
+    "f": 0,
+    "halal": true
+  },
+  {
+    "id": "f818",
+    "n": "Sirop d'agave",
+    "kcal": 310,
+    "p": 0,
+    "c": 76,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f819",
+    "n": "Caramel liquide halal",
+    "kcal": 355,
+    "p": 0.4,
+    "c": 88,
+    "f": 0.6,
+    "halal": true
+  },
+  {
+    "id": "f820",
+    "n": "Pâte de datte",
+    "kcal": 282,
+    "p": 2.5,
+    "c": 75,
+    "f": 0.4,
+    "halal": true
+  },
+  {
+    "id": "f821",
+    "n": "Compote de pommes sans sucre",
+    "kcal": 44,
+    "p": 0.3,
+    "c": 11,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f822",
+    "n": "Compote d'abricot",
+    "kcal": 52,
+    "p": 0.4,
+    "c": 13,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f823",
+    "n": "Crème de marrons",
+    "kcal": 255,
+    "p": 2,
+    "c": 58,
+    "f": 1.5,
+    "halal": true
+  },
+  {
+    "id": "f824",
+    "n": "Sorbet citron",
+    "kcal": 105,
+    "p": 0.5,
+    "c": 26,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f825",
+    "n": "Sorbet framboise",
+    "kcal": 113,
+    "p": 0.5,
+    "c": 28,
+    "f": 0.1,
+    "halal": true
+  },
+  {
+    "id": "f826",
+    "n": "Glace vanille halal",
+    "kcal": 207,
+    "p": 3.5,
+    "c": 24,
+    "f": 11,
+    "halal": true
+  },
+  {
+    "id": "f827",
+    "n": "Glace chocolat halal",
+    "kcal": 216,
+    "p": 4,
+    "c": 26,
+    "f": 11,
+    "halal": true
+  },
+  {
+    "id": "f828",
+    "n": "Esquimau chocolat halal",
+    "kcal": 270,
+    "p": 4,
+    "c": 33,
+    "f": 14,
+    "halal": true
+  }
 ]

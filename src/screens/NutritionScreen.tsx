@@ -34,6 +34,8 @@ import { Touch } from '../components/ui/Touch';
 import {
  loadFoodDatabase,
  searchFoods,
+ getRecentFoods,
+ recordRecentFood,
  type FoodEntry,
 } from '../utils/nutritionData';
 import type {
@@ -458,7 +460,7 @@ function AddMealModal({
 
  const results = useMemo<FoodEntry[]>(() => {
  if (!foodsReady) return [];
- if (!query.trim()) return [];
+ if (!query.trim()) return getRecentFoods().slice(0, 10);
  return searchFoods(query).slice(0, 30);
  }, [query, foodsReady]);
 
@@ -540,6 +542,18 @@ function AddMealModal({
  </div>
  )}
 
+ {foodsReady && !query.trim() && results.length > 0 && (
+ <div className="mb-2">
+ <span className="text-[8px] font-black uppercase tracking-widest text-awan-gold block mb-1">RÉCENTS</span>
+ </div>
+ )}
+ {foodsReady && !query.trim() && results.length === 0 && (
+ <div className="text-center py-8">
+ <span className="text-[10px] font-black uppercase tracking-widest text-awan-tx-mute">
+ TAPEZ POUR RECHERCHER
+ </span>
+ </div>
+ )}
  {foodsReady && query.trim() && results.length === 0 && (
  <div className="text-center py-8">
  <span className="text-[10px] font-black uppercase tracking-widest text-awan-tx-mute">
@@ -941,6 +955,7 @@ export default function NutritionScreen() {
  ...(timeHHMM !== undefined ? { timeHHMM } : {}),
  };
  void mealStore.add(entry);
+ recordRecentFood(food.id);
  addEntry(selectedDate, {
  id: entryId,
  timestamp: now,

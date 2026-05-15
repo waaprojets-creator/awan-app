@@ -110,6 +110,26 @@ export default function DashboardScreen({ navigate }: NavProps) {
 
   const dateLabel = new Date().toLocaleDateString('fr-FR', DATE_FORMAT_BANNER as Intl.DateTimeFormatOptions);
 
+  // Weekly retrospective computations
+  const kcalTarget = useMemo(() => {
+    try { const p = JSON.parse(localStorage.getItem('awan.nutrition.profile') ?? '{}'); return p.targetKcal ?? KCAL_TARGET_DEFAULT; }
+    catch { return KCAL_TARGET_DEFAULT; }
+  }, []);
+
+  const weeklyWeightDelta = useMemo(() => {
+    const sorted = measureStore.history.filter(e => e.weight > 0).sort((a, b) => a.date.localeCompare(b.date));
+    if (sorted.length < 2) return null;
+    const last = sorted.at(-1)!;
+    const sevenDaysAgo = new Date(last.date);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const sevenStr = sevenDaysAgo.toISOString().slice(0, 10);
+    const baseline = [...sorted].reverse().find(e => e.date <= sevenStr);
+    if (!baseline) return null;
+    return last.weight - baseline.weight;
+  }, [measureStore.history]);
+
+  const isEarlyMorning = useMemo(() => new Date().getHours() < 10, []);
+
   return (
     <ScrollView
       style={{ flex: 1, width: '100%', maxWidth: '100%' }}
@@ -175,12 +195,71 @@ export default function DashboardScreen({ navigate }: NavProps) {
           <span className="font-mono font-bold uppercase" style={{ fontSize: '10px', color: HEALTH_COLOR[health.scoreLabel], letterSpacing: '0.2em' }}>
             {health.scoreLabel}
           </span>
+          {health.scoreLabel === 'CRITIQUE' && isEarlyMorning && (
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', marginTop: 2 }}>
+              Normal en début de journée
+            </span>
+          )}
         </div>
         <div className="flex items-baseline gap-1">
           <span className="font-mono font-bold" style={{ fontSize: '32px', color: 'var(--color-awan-tx)', letterSpacing: '-0.02em', lineHeight: 1 }}>
             {health.score}
           </span>
           <span className="font-mono" style={{ fontSize: '10px', color: 'var(--color-awan-tx-mute)' }}>/100</span>
+        </div>
+      </div>
+
+      {/* Rétrospective semaine + Objectifs jour */}
+      <div className="p-4 border mb-4" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'rgba(255,255,255,0.06)' }}>
+        <div className="flex flex-row justify-between items-baseline mb-3">
+          <span className="uppercase" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+            SEMAINE EN COURS
+          </span>
+          {isEarlyMorning && (
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-mute)' }}>
+              données d'hier
+            </span>
+          )}
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {/* Sport */}
+          <div className="flex flex-col">
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>SPORT</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '20px', fontWeight: 700, color: sessionsCount >= 3 ? 'var(--color-awan-status-ok)' : sessionsCount >= 1 ? 'var(--color-awan-gold)' : 'var(--color-awan-status-error)', letterSpacing: '-0.02em' }}>
+              {sessionsCount}<span style={{ fontSize: '10px', opacity: 0.5, marginLeft: 2 }}>/4</span>
+            </span>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-mute)' }}>séances</span>
+          </div>
+          {/* Poids */}
+          <div className="flex flex-col">
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>POIDS</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '20px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '-0.02em' }}>
+              {weeklyWeightDelta != null
+                ? `${weeklyWeightDelta >= 0 ? '+' : ''}${weeklyWeightDelta.toFixed(1)}`
+                : latestMeasure?.weight?.toFixed(1) ?? '—'}
+              <span style={{ fontSize: '10px', opacity: 0.5, marginLeft: 2 }}>{weeklyWeightDelta != null ? 'kg' : 'kg'}</span>
+            </span>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-mute)' }}>
+              {weeklyWeightDelta != null ? '7 derniers j.' : 'dernière mesure'}
+            </span>
+          </div>
+          {/* Nutrition objectif */}
+          <div className="flex flex-col">
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>KCAL</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '20px', fontWeight: 700, color: mealStore.totals.kcal > 0 ? 'var(--color-awan-tx)' : 'var(--color-awan-tx-mute)', letterSpacing: '-0.02em' }}>
+              {mealStore.totals.kcal > 0 ? mealStore.totals.kcal : '—'}
+            </span>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-mute)' }}>
+              objectif {kcalTarget}
+            </span>
+          </div>
+        </div>
+        {/* Objectifs jour */}
+        <div className="mt-3 pt-3 border-t flex flex-row gap-4" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em', textTransform: 'uppercase', marginRight: 4 }}>OBJECTIFS JOUR ·</span>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-dim)' }}>
+            {prayerStore.doneCount}/{prayerStore.total} prières · {kcalTarget} kcal · séance {sessionsCount < 4 ? 'conseillée' : 'facultative'}
+          </span>
         </div>
       </div>
 

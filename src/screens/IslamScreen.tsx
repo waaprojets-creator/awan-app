@@ -335,15 +335,10 @@ export default function IslamScreen() {
         <div className="mb-4 border" style={{ borderColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
           <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>CHRONO PRIÈRES</span>
-            {canEdit && (
-              <Touch onPress={() => setEditMode(e => !e)}>
-                <div className="flex flex-row items-center gap-2 px-3 py-1 border" style={{ borderColor: 'var(--color-awan-gold)', backgroundColor: editMode ? 'rgba(212,175,55,0.12)' : 'transparent' }}>
-                  {editMode ? <Save size={12} color="var(--color-awan-gold)" /> : <Edit2 size={12} color="var(--color-awan-gold)" />}
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', fontWeight: 700, color: 'var(--color-awan-gold)', letterSpacing: '0.2em' }}>
-                    {editMode ? 'SAUVEGARDER' : 'MODIFIER'}
-                  </span>
-                </div>
-              </Touch>
+            {isPast && (
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-mute)' }}>
+                tap pour modifier
+              </span>
             )}
           </div>
           {prayers.map((key) => {
@@ -354,7 +349,7 @@ export default function IslamScreen() {
             const timeLabel = time instanceof Date
               ? `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`
               : '--:--';
-            const canToggle = !isSunrise && (isToday || (isPast && editMode));
+            const canToggle = !isSunrise && (isToday || isPast);
 
             return (
               <Touch
