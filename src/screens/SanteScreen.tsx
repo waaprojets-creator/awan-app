@@ -5,6 +5,7 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useWorkoutStore } from '../hooks/useWorkoutStore';
 import { useMealStore } from '../hooks/useMealStore';
 import { useMeasurementStore } from '../hooks/useMeasurementStore';
+import { usePrayerStore } from '../hooks/usePrayerStore';
 import { ds } from '../utils/storage';
 import { sessionsThisWeek } from '../hooks/useAwanScore';
 import { MealService } from '../services/mealService';
@@ -16,9 +17,11 @@ function toStatus(pct: number) {
 }
 
 export default function SanteScreen({ navigate }: any) {
+  const today = ds(new Date());
   const workoutStore  = useWorkoutStore();
-  const mealStore     = useMealStore(ds(new Date()));
+  const mealStore     = useMealStore(today);
   const measureStore  = useMeasurementStore();
+  const prayerStore   = usePrayerStore(today);
 
   const KCAL_TARGET = useMemo(() => {
     try {
@@ -108,7 +111,7 @@ export default function SanteScreen({ navigate }: any) {
       contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100, width: '100%', maxWidth: '100%' }}
       showsVerticalScrollIndicator={false}
     >
-      <ScreenHeader tag="BODY" title="SANTÉ" />
+      <ScreenHeader tag="SANTÉ" title="SANTÉ" />
 
       {/* ── 2×2 modules ────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-3 mb-6">
@@ -140,6 +143,15 @@ export default function SanteScreen({ navigate }: any) {
           index={3}
           onPress={() => navigate('Mensuration')}
           {...(weightDelta ? { delta: weightDelta } : {})}
+        />
+        <InstrumentCard
+          label="ISLAM"
+          value={prayerStore.doneCount}
+          unit={`/${prayerStore.total}`}
+          status={prayerStore.doneCount > 0 ? 'ok' : 'mute'}
+          progress={prayerStore.total > 0 ? Math.round((prayerStore.doneCount / prayerStore.total) * 100) : 0}
+          index={4}
+          onPress={() => navigate('Islam')}
         />
       </div>
 

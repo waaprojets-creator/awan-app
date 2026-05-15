@@ -4,7 +4,6 @@ import { MealService } from '@/services/mealService';
 import { useWorkoutStore } from './useWorkoutStore';
 import { useMeasurementStore } from './useMeasurementStore';
 import { usePrayerStore } from './usePrayerStore';
-import { useJournalStore } from './useJournalStore';
 import { sessionsThisWeek } from './useAwanScore';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -15,12 +14,11 @@ export interface HealthScoreBreakdown {
   sport:       number; // 0–30
   nutrition:   number; // 0–25
   mensuration: number; // 0–20
-  mental:      number; // 0–15
-  islam:       number; // 0–10
+  islam:       number; // 0–25
 }
 
 export interface HealthScore {
-  score:      number;           // 0–100
+  score:      number;
   scoreLabel: HealthScoreLabel;
   breakdown:  HealthScoreBreakdown;
   loading:    boolean;
@@ -60,7 +58,6 @@ export function useHealthScore(): HealthScore {
   const workoutStore = useWorkoutStore();
   const measureStore = useMeasurementStore();
   const prayerStore  = usePrayerStore(today);
-  const journalStore = useJournalStore();
 
   const [kcalToday, setKcalToday] = useState<number>(0);
   const [mealsLoading, setMealsLoading] = useState<boolean>(true);
@@ -69,8 +66,7 @@ export function useHealthScore(): HealthScore {
     let active = true;
     MealService.getByDate(today).then(entries => {
       if (!active) return;
-      const totals = MealService.totals(entries);
-      setKcalToday(totals.kcal);
+      setKcalToday(MealService.totals(entries).kcal);
       setMealsLoading(false);
     });
     return () => { active = false; };
@@ -80,11 +76,11 @@ export function useHealthScore(): HealthScore {
     const targetKcal = readTargetKcal();
     const now = new Date();
 
-    // Sport 30% — min(sessionsThisWeek / 4, 1) × 30
+    // Sport 30%
     const sessCount = sessionsThisWeek(workoutStore.sessions as Array<{ date?: string; startTime?: number }>);
     const sport = Math.min(sessCount / 4, 1) * 30;
 
-    // Nutrition 25% — ±20% target = 25, sinon proportionnel
+    // Nutrition 25%
     let nutrition = 0;
     if (targetKcal > 0 && kcalToday > 0) {
       const ratio = kcalToday / targetKcal;
@@ -93,32 +89,21 @@ export function useHealthScore(): HealthScore {
       } else if (ratio < 0.8) {
         nutrition = (ratio / 0.8) * 25;
       } else {
-        // ratio > 1.2 — pénalité proportionnelle, à 2× target = 0
         const over = Math.min(1, (ratio - 1.2) / 0.8);
         nutrition = (1 - over) * 25;
       }
     }
 
-    // Mensuration 20% — présence d'une mesure cette semaine
+    // Mensuration 20%
     const hasMeasureThisWeek = measureStore.history.some(m => withinWeek(m.date, now));
     const mensuration = hasMeasureThisWeek ? 20 : 0;
 
-    // Mental 15% — moyenne mood semaine ∈ [1..5]
-    const moodsThisWeek = journalStore.entries
-      .filter(e => withinWeek(e.date, now))
-      .map(e => e.mood);
-    const avgMood = moodsThisWeek.length > 0
-      ? moodsThisWeek.reduce((s, v) => s + v, 0) / moodsThisWeek.length
-      : 0;
-    const mental = avgMood > 0 ? (avgMood / 5) * 15 : 0;
-
-    // Islam 10% — prayersDoneToday / 5 × 10
+    // Islam 25%
     const islam = prayerStore.total > 0
-      ? (prayerStore.doneCount / prayerStore.total) * 10
+      ? (prayerStore.doneCount / prayerStore.total) * 25
       : 0;
 
-    const total = sport + nutrition + mensuration + mental + islam;
-    const score = Math.round(Math.max(0, Math.min(100, total)));
+    const score = Math.round(Math.max(0, Math.min(100, sport + nutrition + mensuration + islam)));
 
     return {
       score,
@@ -127,10 +112,9 @@ export function useHealthScore(): HealthScore {
         sport:       Math.round(sport),
         nutrition:   Math.round(nutrition),
         mensuration: Math.round(mensuration),
-        mental:      Math.round(mental),
         islam:       Math.round(islam),
       },
-      loading: mealsLoading || workoutStore.loading || measureStore.loading || journalStore.loading,
+      loading: mealsLoading || workoutStore.loading || measureStore.loading,
     };
   }, [
     workoutStore.sessions,
@@ -139,8 +123,6 @@ export function useHealthScore(): HealthScore {
     measureStore.loading,
     prayerStore.doneCount,
     prayerStore.total,
-    journalStore.entries,
-    journalStore.loading,
     kcalToday,
     mealsLoading,
   ]);

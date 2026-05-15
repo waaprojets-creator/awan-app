@@ -227,7 +227,7 @@ export default function PlanningScreen() {
 
   function renderMonthly() {
     return (
-      <View style={{ flex: 1 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
         <div className="flex flex-row items-center justify-between px-6 mb-8">
           <Touch onPress={() => setCalDate(new Date(calDate.getFullYear(), calDate.getMonth()-1, 1))} className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center">
             <ChevronLeft size={20} className="text-awan-tx-mute" />
@@ -247,24 +247,36 @@ export default function PlanningScreen() {
             </div>
           ))}
         </div>
-        <div className="flex flex-row flex-wrap px-4 mb-10">
+        <div className="flex flex-row flex-wrap px-4 mb-6">
           {monthlyCells.map((cell, i) => {
             const isSel = cell.dstr && cell.dstr === ds(selDate);
+            const isToday = cell.isToday;
+            // Couleur du chiffre : sélectionné → noir gras sur fond doré, aujourd'hui → doré fin, autre → texte normal
+            const numClass = !cell.cur
+              ? 'opacity-10 text-awan-tx font-normal'
+              : isSel
+                ? 'text-black font-black'
+                : isToday
+                  ? 'text-awan-gold font-normal'
+                  : 'text-awan-tx font-normal';
             return (
-              <Touch key={i} className={`w-[14.28%] h-16 items-center justify-center rounded-2xl relative ${cell.isToday ? 'bg-awan-gold/10' : ''} ${isSel ? 'bg-awan-gold' : ''}`} onPress={() => cell.dstr && selectDate(cell.dstr)}>
-                <span className={`text-sm font-black ${!cell.cur ? 'opacity-10' : (isSel ? 'text-black' : 'text-awan-tx')}`}>{cell.day}</span>
-                <div className="flex flex-row gap-0.5 mt-2">
-                  {cell.evs.slice(0, 3).map((ev: any, idx: number) => <div key={idx} className={`w-1 h-1 rounded-full ${isSel ? 'bg-black' : (ev.color || categories[ev.category]?.c || theme.title)}`} />)}
+              <Touch key={i} className={`w-[14.28%] h-16 items-center justify-center rounded-2xl relative ${isSel ? 'bg-awan-gold' : ''}`} onPress={() => cell.dstr && selectDate(cell.dstr)}>
+                <span className={`text-sm ${numClass}`}>{cell.day}</span>
+                <div className="flex flex-row gap-0.5 mt-1">
+                  {cell.evs.slice(0, 3).map((ev: any, idx: number) => <div key={idx} className={`w-1 h-1 rounded-full ${isSel ? 'bg-black/60' : 'bg-awan-gold/60'}`} />)}
                 </div>
               </Touch>
             );
           })}
         </div>
-        <div className="px-6 pb-20">
-          <Heading level={4} mono subtitle="Opérations">ORDRE DE MARCHE</Heading>
+        {/* Événements du jour sélectionné */}
+        <div className="px-4 pb-6">
+          <span className="uppercase block mb-3" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 700, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+            {new Date(selDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
+          </span>
           <EvListSection events={eventsForDate(db, ds(selDate))} categories={categories} onAdd={() => setShowEvModal(true)} onAddRt={() => setShowRtModal(true)} onEdit={(ev: any) => { setEditEv(ev); setShowEvModal(true); }} />
         </div>
-      </View>
+      </ScrollView>
     );
   }
 

@@ -160,12 +160,11 @@ export function AwanScoreDisplay({ score, temporal, className = '' }: AwanScoreD
         AWAN SCORE
       </span>
 
-      {/* 4 barres de domaine */}
+      {/* 3 barres de domaine */}
       <div className="flex flex-col gap-3">
         <DomainBar label={score.spirit.label} value={score.spirit.value} status={score.spirit.status} index={0} />
         <DomainBar label={score.body.label}   value={score.body.value}   status={score.body.status}   index={1} />
-        <DomainBar label={score.mind.label}   value={score.mind.value}   status={score.mind.status}   index={2} />
-        <DomainBar label={score.time.label}   value={score.time.value}   status={score.time.status}   index={3} />
+        <DomainBar label={score.time.label}   value={score.time.value}   status={score.time.status}   index={2} />
       </div>
 
       {/* Angle actif bas-droite */}

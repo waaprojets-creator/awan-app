@@ -71,7 +71,7 @@ export default function SettingsScreen() {
           className="px-6 pt-4 pb-4 border-b"
           style={{ borderBottomColor: 'rgba(255,255,255,0.06)' }}
         >
-          <ScreenHeader tag="SYSTÈME" title="RÉGLAGES" statusText={`● v${AV}`} />
+          <ScreenHeader tag="SYS" title="SYSTÈME" statusText={`v${AV}`} />
           <div
             className="flex flex-row items-center gap-4 p-4 border"
             style={{

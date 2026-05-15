@@ -22,7 +22,7 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
         backgroundColor: 'var(--color-awan-bg)',
       }}
     >
-      {/* Left — AWAN latin, navigue vers Analyse */}
+      {/* AWAN latin → Analyse */}
       <div className="flex-1">
         <Touch
           onPress={() => onNavigate('Analyse')}
@@ -32,8 +32,8 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
           <span
             style={{
               fontFamily: 'var(--font-mono)',
-              fontSize: '11px',
-              fontWeight: 700,
+              fontSize: '13px',
+              fontWeight: 900,
               letterSpacing: '0.25em',
               color: isOn('Analyse') ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)',
               textTransform: 'uppercase',
@@ -45,7 +45,7 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
         </Touch>
       </div>
 
-      {/* Center — Logo hexagonal, navigue vers Dashboard */}
+      {/* Logo hexagone → Dashboard — rotation uniquement, pas de scale */}
       <div className="flex justify-center items-center px-4">
         <Touch
           onPress={() => onNavigate('Dashboard')}
@@ -53,10 +53,7 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
           disabled={isOn('Dashboard')}
         >
           <motion.div
-            animate={{
-              rotate: isOn('Dashboard') ? 0 : -30,
-              scale: isOn('Dashboard') ? 1.1 : 1,
-            }}
+            animate={{ rotate: isOn('Dashboard') ? 0 : -30 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
           >
             <HexagonLogo
@@ -68,7 +65,7 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
         </Touch>
       </div>
 
-      {/* Right — texte arabe, navigue vers Islam */}
+      {/* AWAN arabe → Islam — style identique au latin */}
       <div className="flex-1 flex justify-end">
         <Touch
           onPress={() => onNavigate('Islam')}
@@ -78,8 +75,9 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
           <span
             style={{
               fontFamily: 'Cairo, sans-serif',
-              fontSize: '18px',
-              fontWeight: 700,
+              fontSize: '14px',
+              fontWeight: 900,
+              letterSpacing: '0.25em',
               color: isOn('Islam') ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)',
               transition: 'color 0.2s',
             }}

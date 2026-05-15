@@ -20,6 +20,8 @@ import {
 
 import { useTheme } from '../hooks/useTheme';
 import { ds, uid } from '../utils/storage';
+import { TRANSPORT_ICONS } from '../constants/icons';
+import { L as LABELS, TRANSPORT_OPTIONS } from '../constants/labels';
 import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
 import { ORSService } from '../services/orsService';
@@ -55,6 +57,8 @@ export default function TrajetScreen() {
   const [route, setRoute] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState('driving-car');
+  const ORS_MODE: Record<string, string> = { car: 'driving-car', moto: 'driving-car', bike: 'cycling-regular', foot: 'foot-walking', transit: 'foot-walking' };
+  const activeKey = (TRANSPORT_OPTIONS as Array<{ key: string }>).find(o => ORS_MODE[o.key] === mode)?.key ?? 'car';
   const [showPois, setShowPois] = useState(true);
   const [mapType, setMapType] = useState('light');
   const [selPoi, setSelPoi] = useState<any>(null);
@@ -243,28 +247,31 @@ export default function TrajetScreen() {
             </Card>
           )}
 
-          <Heading level={4} mono subtitle="Tactique">PARAMÈTRES RÉSEAU</Heading>
-          <div className="space-y-4">
-            <Card className="flex-row items-center justify-between p-5 bg-white/5 border-white/5">
-              <div className="flex flex-row items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-white/5 items-center justify-center border border-white/10">
-                   <Navigation size={18} className="text-awan-tx-mute" />
-                </div>
-                <span className="text-xs font-black text-awan-tx uppercase tracking-wider">VECTEUR DE TRANSIT</span>
-              </div>
-              <div className="flex flex-row gap-1 bg-black/40 p-1.5 rounded-xl border border-white/5">
-                {['driving-car', 'cycling-regular', 'foot-walking'].map(m => (
-                  <Touch 
-                      key={m} 
-                      className={`w-9 h-9 rounded-lg items-center justify-center transition-all ${mode === m ? 'bg-awan-gold shadow-lg shadow-awan-gold/20' : ''}`}
-                      onPress={() => setMode(m)}
-                  >
-                    <MapIcon size={16} color={mode === m ? 'black' : 'rgba(255,255,255,0.3)'} />
+          {/* Widget choix de véhicule */}
+          <div className="p-4 border mb-6" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'rgba(255,255,255,0.06)' }}>
+            <span className="uppercase block mb-3" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 700, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+              {(LABELS as any).dash.widgets.transport}
+            </span>
+            <div className="flex flex-row gap-2">
+              {(TRANSPORT_OPTIONS as Array<{ key: string; label: string }>).map((opt) => {
+                const icons  = TRANSPORT_ICONS as Record<string, React.ComponentType<{ size: number; color: string }>>;
+                const Icon   = icons[opt.key];
+                const active = activeKey === opt.key;
+                return (
+                  <Touch key={opt.key} className="flex-1 flex flex-col items-center p-3 border transition-all"
+                    style={{ backgroundColor: active ? 'rgba(212,175,55,0.08)' : 'transparent', borderColor: active ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.06)' }}
+                    onPress={() => setMode(ORS_MODE[opt.key] ?? 'driving-car')}>
+                    {Icon && <Icon size={18} color={active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)'} />}
+                    <span className="mt-1 uppercase" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: active ? 700 : 400, color: active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>
+                      {opt.label}
+                    </span>
                   </Touch>
-                ))}
-              </div>
-            </Card>
+                );
+              })}
+            </div>
+          </div>
 
+          <div className="space-y-4">
             <Card className="flex-row items-center justify-between p-5 bg-white/5 border-white/5">
               <div className="flex flex-row items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-white/5 items-center justify-center border border-white/10">

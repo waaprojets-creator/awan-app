@@ -1,6 +1,33 @@
 export const L = {
   header: { latin: 'AWAN', arabic: 'أوان' },
 
+  nav: {
+    hub:            'ACCUEIL',
+    spirit:         'VIGIE',
+    sante:          'SANTÉ',
+    planning:       'PLANNING',
+    journal:        'JOURNAL',
+    trajet:         'TRAJET',
+    sport:          'SPORT',
+    nutrition:      'NUTRITION',
+    mensuration:    'SCAN',
+    reglages:       'SYSTÈME',
+    tasks:          'TÂCHES',
+    coach:          'COACH',
+    hubSub:         'HUB',
+    spiritSub:      'VIGIE',
+    santeSub:       'SANTÉ',
+    planningSub:    'ORG',
+    journalSub:     'LOG',
+    trajetSub:      'GPS',
+    sportSub:       'CORPS.1',
+    nutritionSub:   'CORPS.2',
+    mensurationSub: 'CORPS.3',
+    reglagesSub:    'SYS',
+    tasksSub:       'OPS',
+    coachSub:       'IA',
+  },
+
   tabs: {
     planning: 'Planning',
     trajet:   'Trajet',
@@ -53,6 +80,7 @@ export const L = {
       week:      'CETTE SEMAINE',
       biometrics:'MESURES',
       islam:     'VIGIE SPIRITUELLE',
+      scoreInfo: 'Prières · Sport · Nutrition · Mesures',
       tacticalDep: 'DEPART TACTIQUE',
       activeMission: 'MISSION ACTIVE',
       noMission: 'AUCUNE MISSION CHANTIER DÉTECTÉE',
@@ -213,7 +241,7 @@ export const L = {
   },
 
   settings: {
-    title: 'RÉGLAGES SYSTÈME',
+    title: 'SYSTÈME',
     api: 'RELAIS DE CALCUL (ORS)',
     orsKey: 'CLÉ API OPENROUTESERVICE',
     keyStored: 'Clé stockée localement dans le coffre-fort.',

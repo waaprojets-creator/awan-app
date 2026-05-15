@@ -16,9 +16,9 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  isUnlocked: true, // TODO: PIN lock à implémenter Sprint 1
+  isUnlocked: false,
   ready: true,
-  theme: 'dark',
+  theme: 'light',
   isOfflineForced: false,
   unlock: () => set({ isUnlocked: true }),
   lock:   () => set({ isUnlocked: false }),
