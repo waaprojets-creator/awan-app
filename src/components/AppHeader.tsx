@@ -74,10 +74,10 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
         >
           <span
             style={{
-              fontFamily: 'Cairo, sans-serif',
+              fontFamily: 'var(--font-sans)',
               fontSize: '14px',
               fontWeight: 900,
-              letterSpacing: '0.25em',
+              letterSpacing: '0.29em',
               color: isOn('Islam') ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)',
               transition: 'color 0.2s',
             }}
