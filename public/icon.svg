@@ -1,21 +1,66 @@
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Dark background -->
-  <rect width="512" height="512" fill="#0D0D0D"/>
-  <!-- Hexagon -->
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1024" height="1024" fill="#0D0D0D"/>
+
+  <!-- Outer hexagon -->
   <polygon
-    points="256,64 416,160 416,352 256,448 96,352 96,160"
+    points="512,100 844,292 844,732 512,924 180,732 180,292"
     stroke="#D4AF37"
-    stroke-width="8"
+    stroke-width="12"
     fill="none"
   />
-  <!-- Inner hexagon -->
+
+  <!-- Inner hexagon subtle -->
   <polygon
-    points="256,100 388,172 388,340 256,412 124,340 124,172"
+    points="512,168 776,316 776,708 512,856 248,708 248,316"
     stroke="#D4AF37"
-    stroke-width="2"
+    stroke-width="2.5"
     fill="none"
-    opacity="0.25"
+    opacity="0.18"
   />
-  <!-- AWAN text -->
-  <text x="256" y="284" text-anchor="middle" font-family="serif" font-size="80" font-weight="900" fill="#D4AF37" letter-spacing="12">AWAN</text>
+
+  <!--
+    Crescent moon: drawn as stroke contour with exaggerated tips.
+    Two circles approach:
+      - Large circle centred at (512, 512) radius 220
+      - Offset circle centred at (572, 512) radius 196
+    The crescent = large circle minus offset circle, rendered as path.
+  -->
+  <path
+    d="
+      M512,292
+      C648,292 760,392 760,512
+      C760,632 648,732 512,732
+      C440,732 376,700 332,650
+      C370,668 412,678 456,678
+      C588,678 696,574 696,444
+      C696,340 628,252 534,224
+      C526,222 519,220 512,220
+      Z
+    "
+    stroke="#D4AF37"
+    stroke-width="18"
+    stroke-linejoin="round"
+    fill="none"
+  />
+
+  <!-- Tip top (pointe haute exagérée) -->
+  <line x1="760" y1="360" x2="760" y2="272" stroke="#D4AF37" stroke-width="16" stroke-linecap="round"/>
+  <!-- Tip bottom (pointe basse exagérée) -->
+  <line x1="760" y1="664" x2="760" y2="752" stroke="#D4AF37" stroke-width="16" stroke-linecap="round"/>
+
+  <!-- AWAN lettering — geometric paths, no font dependency -->
+  <!-- A -->
+  <path d="M196,870 L256,700 L316,870" stroke="#D4AF37" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <line x1="216" y1="820" x2="296" y2="820" stroke="#D4AF37" stroke-width="14" stroke-linecap="round"/>
+
+  <!-- W -->
+  <path d="M332,700 L368,830 L412,730 L456,830 L492,700" stroke="#D4AF37" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- A -->
+  <path d="M512,870 L572,700 L632,870" stroke="#D4AF37" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <line x1="532" y1="820" x2="612" y2="820" stroke="#D4AF37" stroke-width="14" stroke-linecap="round"/>
+
+  <!-- N -->
+  <path d="M648,870 L648,700 L748,870 L748,700" stroke="#D4AF37" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg>
