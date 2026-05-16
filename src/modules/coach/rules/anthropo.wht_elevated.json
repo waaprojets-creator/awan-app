@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "id": "anthropo.wht_elevated",
+  "domain": "anthropo",
+  "name": "Rapport taille/hauteur élevé (≥ 0,50)",
+  "signals": [
+    { "type": "last", "source": "anthropo.measurement", "field": "whtr" }
+  ],
+  "condition": { "op": "gte", "value": 0.50 },
+  "signalIndex": 0,
+  "severity": "warn",
+  "adviceKey": "coach.anthropo.wht_elevated",
+  "enabled": true
+}

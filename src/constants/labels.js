@@ -80,7 +80,7 @@ export const L = {
       week:      'CETTE SEMAINE',
       biometrics:'MESURES',
       islam:     'VIGIE SPIRITUELLE',
-      scoreInfo: 'Prières · Sport · Nutrition · Mesures',
+      scoreInfo: 'ISLAM 25 % · SPORT 30 % · NUTRITION 25 % · CORPS 20 %',
       tacticalDep: 'DEPART TACTIQUE',
       activeMission: 'MISSION ACTIVE',
       noMission: 'AUCUNE MISSION CHANTIER DÉTECTÉE',

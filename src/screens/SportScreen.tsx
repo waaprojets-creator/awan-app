@@ -39,6 +39,7 @@ import { Touch } from '../components/ui/Touch';
 import { useWorkoutStore } from '../hooks/useWorkoutStore';
 import { sessionsThisWeek } from '../hooks/useAwanScore';
 import { WorkoutService } from '../services/workoutService';
+import { PeriodizationService } from '../services/periodizationService';
 import {
  DEFAULT_PLANNED_SETS,
  DEFAULT_PLANNED_REPS,
@@ -51,7 +52,7 @@ import {
 } from '../data/schemas/sport/routine';
 import type { ExerciseSetV1, SetKind } from '../data/schemas/sport/exerciseSet';
 
-type ViewMode = 'list' | 'create' | 'edit' | 'active' | 'history' | 'finish';
+type ViewMode = 'list' | 'create' | 'edit' | 'active' | 'history' | 'finish' | 'recovery';
 
 const CYCLE_LETTERS: (CycleLetter | null)[] = [null, 'A', 'B', 'C', 'D'];
 
@@ -134,6 +135,8 @@ export default function SportScreen() {
  const [view, setView] = useState<ViewMode>('list');
  const [editingRoutine, setEditingRoutine] = useState<RoutineLatest | null>(null);
  const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
+ const [pendingRoutine, setPendingRoutine] = useState<{ routine: RoutineLatest; opts?: { isException?: boolean } } | null>(null);
+ const [recoveryScore, setRecoveryScore] = useState<number | null>(null);
  const [resumeModal, setResumeModal] = useState<ActiveSession | null>(null);
  const [draftResumeModal, setDraftResumeModal] = useState<RoutineDraft | null>(null);
  const [draftToResume, setDraftToResume] = useState<RoutineDraft | null>(null);
@@ -305,6 +308,7 @@ export default function SportScreen() {
  availableTimeMin: activeSession.availableTimeMin,
  feeling: summary.feeling,
  sessionRPE: summary.sessionRPE,
+ recoveryScore: activeSession.recoveryScore,
  note: summary.note,
  isException: activeSession.isException,
  exercises: exercisesLog,
@@ -340,6 +344,65 @@ export default function SportScreen() {
  { text: 'Supprimer', style: 'destructive', onPress: () => workoutStore.deleteRoutine(r.id) },
  ]);
  }, [workoutStore]);
+
+ if (view === 'recovery' && pendingRoutine) {
+ return (
+   <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
+     <div className="px-6 pt-4 pb-2">
+       <ScreenHeader tag="SPORT · RÉCUPÉRATION" title={pendingRoutine.routine.name} />
+     </div>
+     <div className="flex-1 flex flex-col items-center justify-center px-6 gap-8">
+       <div className="w-full">
+         <span className="block text-center text-[9px] font-black text-awan-tx-mute tracking-widest uppercase mb-6">
+           SCORE DE RÉCUPÉRATION DU JOUR
+         </span>
+         <div className="flex flex-row flex-wrap justify-center gap-3">
+           {[1,2,3,4,5,6,7,8,9,10].map(n => (
+             <button
+               key={n}
+               onClick={() => setRecoveryScore(n)}
+               style={{
+                 width: 44, height: 44,
+                 fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700,
+                 background: recoveryScore === n ? 'var(--color-awan-gold)' : 'var(--color-awan-surface)',
+                 color: recoveryScore === n ? '#000' : 'var(--color-awan-tx)',
+                 border: recoveryScore === n ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                 cursor: 'pointer',
+               }}
+             >
+               {n}
+             </button>
+           ))}
+         </div>
+         <div className="flex flex-row justify-between mt-4 px-2">
+           <span className="text-[9px] text-awan-tx-mute font-bold uppercase tracking-widest">épuisé</span>
+           <span className="text-[9px] text-awan-tx-mute font-bold uppercase tracking-widest">parfait</span>
+         </div>
+       </div>
+       <div className="flex flex-col gap-3 w-full">
+         <Touch
+           onPress={async () => {
+             if (!pendingRoutine) return;
+             await startWorkout(pendingRoutine.routine, pendingRoutine.opts);
+             // Store recovery score to be saved in session via handleSessionUpdate
+             if (recoveryScore !== null) {
+               handleSessionUpdate(s => ({ ...s, recoveryScore }));
+             }
+           }}
+           className="bg-awan-gold p-4 items-center"
+         >
+           <span className="text-[11px] font-black text-black uppercase tracking-widest">
+             {recoveryScore !== null ? `DÉMARRER — RÉCUP ${recoveryScore}/10` : 'DÉMARRER SANS NOTER'}
+           </span>
+         </Touch>
+         <Touch onPress={() => { setPendingRoutine(null); setView('list'); }} className="p-4 items-center border border-white/10">
+           <span className="text-[10px] font-bold text-awan-tx-mute uppercase tracking-widest">ANNULER</span>
+         </Touch>
+       </div>
+     </div>
+   </PageWrapper>
+ );
+ }
 
  if (view === 'create' || view === 'edit') {
  return (
@@ -453,6 +516,16 @@ export default function SportScreen() {
  <ScrollView contentContainerStyle={{ paddingBottom: 120 }} style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
  <div className="px-6 pt-4 pb-6">
  <ScreenHeader tag="BODY · SPORT" title="SPORT" />
+ {(() => {
+   const p = PeriodizationService.getOrInit();
+   return (
+     <div className="mb-4 px-1">
+       <span className="text-[9px] font-black text-awan-tx-mute tracking-widest uppercase">
+         PHASE {p.phase} · SEMAINE {p.mesoWeek} · {PeriodizationService.getPhaseLabel(p.phase)}
+       </span>
+     </div>
+   );
+ })()}
 
  <div className="grid grid-cols-2 gap-3 mb-6">
  {(() => {
@@ -481,7 +554,7 @@ export default function SportScreen() {
  </div>
 
  {nextRoutine && (
- <Card className="p-6 bg-awan-gold/5 border-awan-gold/20 mb-6" onPress={() => startWorkout(nextRoutine)}>
+ <Card className="p-6 bg-awan-gold/5 border-awan-gold/20 mb-6" onPress={() => { setPendingRoutine({ routine: nextRoutine }); setRecoveryScore(null); setView('recovery'); }}>
  <div className="flex flex-row items-center justify-between">
  <div className="flex-1">
  <span className="awan-label text-awan-gold mb-1 block">PROCHAINE SÉANCE</span>
@@ -533,7 +606,7 @@ export default function SportScreen() {
  <StaggerList>
  {workoutStore.routines.map(r => (
  <StaggerItem key={r.id} className="mb-4">
- <Card className="p-6 bg-awan-surface" onPress={() => startWorkout(r)}>
+ <Card className="p-6 bg-awan-surface" onPress={() => { setPendingRoutine({ routine: r }); setRecoveryScore(null); setView('recovery'); }}>
  <div className="flex flex-row justify-between items-center mb-2">
  <span className="text-lg font-bold text-awan-tx uppercase tracking-tight flex-1">{r.name}</span>
  <div className="flex flex-row gap-2">
@@ -609,6 +682,7 @@ interface ActiveSession {
  solo: boolean;
  availableTimeMin?: number | undefined;
  isException: boolean;
+ recoveryScore?: number | undefined;
  exercises: ActiveExercise[];
  currentExerciseIdx: number;
  restEndAt: number | null;

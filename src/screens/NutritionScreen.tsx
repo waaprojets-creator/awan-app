@@ -1188,6 +1188,17 @@ export default function NutritionScreen() {
  {totals.f}g
  </span>
  </div>
+ {totals.fiberG > 0 && (
+ <div className="bg-awan-surface p-3 border border-white/5">
+   <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">
+     FIBRES
+   </span>
+   <div className="flex flex-row items-baseline gap-1">
+     <span className="text-lg font-bold font-mono text-awan-tx">{Math.round(totals.fiberG)}g</span>
+     <span className="text-[8px] font-bold text-awan-tx-mute">/ 35g</span>
+   </div>
+ </div>
+ )}
  </>
  )}
  </div>

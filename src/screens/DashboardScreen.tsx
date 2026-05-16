@@ -205,25 +205,33 @@ export default function DashboardScreen({ navigate }: NavProps) {
       {/* Health Score */}
       <div className="p-4 border mb-4 flex flex-row items-center justify-between"
         style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'rgba(255,255,255,0.06)' }}>
-        <div className="flex flex-col">
-          <span className="uppercase block mb-1" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
-            HEALTH SCORE
-          </span>
-          <span className="font-mono font-bold uppercase" style={{ fontSize: '10px', color: HEALTH_COLOR[health.scoreLabel], letterSpacing: '0.2em' }}>
-            {health.scoreLabel}
-          </span>
-          {health.scoreLabel === 'CRITIQUE' && isEarlyMorning && (
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', marginTop: 2 }}>
-              Normal en début de journée
-            </span>
-          )}
-        </div>
-        <div className="flex items-baseline gap-1">
-          <span className="font-mono font-bold" style={{ fontSize: '32px', color: 'var(--color-awan-tx)', letterSpacing: '-0.02em', lineHeight: 1 }}>
-            {health.score}
-          </span>
-          <span className="font-mono" style={{ fontSize: '10px', color: 'var(--color-awan-tx-mute)' }}>/100</span>
-        </div>
+        {health.loading ? (
+          <div style={{ height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--color-awan-tx-dim)' }}>—</span>
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-col">
+              <span className="uppercase block mb-1" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+                HEALTH SCORE
+              </span>
+              <span className="font-mono font-bold uppercase" style={{ fontSize: '10px', color: HEALTH_COLOR[health.scoreLabel], letterSpacing: '0.2em' }}>
+                {health.scoreLabel}
+              </span>
+              {health.scoreLabel === 'CRITIQUE' && isEarlyMorning && (
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', marginTop: 2 }}>
+                  Normal en début de journée
+                </span>
+              )}
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="font-mono font-bold" style={{ fontSize: '32px', color: 'var(--color-awan-tx)', letterSpacing: '-0.02em', lineHeight: 1 }}>
+                {health.score}
+              </span>
+              <span className="font-mono" style={{ fontSize: '10px', color: 'var(--color-awan-tx-mute)' }}>/100</span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Rétrospective semaine + Objectifs jour */}

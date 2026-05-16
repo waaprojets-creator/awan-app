@@ -85,6 +85,7 @@ export const WorkoutSessionV1Schema = z.object({
   availableTimeMin: z.number().int().positive().optional(),
   feeling: z.number().int().min(1).max(5).optional(),
   sessionRPE: z.number().int().min(1).max(10).optional(),
+  recoveryScore: z.number().int().min(1).max(10).optional(),
   note: z.string().optional(),
   isException: z.boolean(),
   exercises: z.array(WorkoutExerciseLogSchema),

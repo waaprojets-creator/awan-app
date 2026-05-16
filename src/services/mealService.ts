@@ -28,15 +28,16 @@ export const MealService = {
     await storage.delete(mealKey(id));
   },
 
-  totals(entries: MealEntryLatest[]): { kcal: number; p: number; c: number; f: number } {
+  totals(entries: MealEntryLatest[]): { kcal: number; p: number; c: number; f: number; fiberG: number } {
     return entries.reduce(
       (acc, e) => ({
         kcal: acc.kcal + e.kcal,
         p: acc.p + e.p,
         c: acc.c + e.c,
         f: acc.f + e.f,
+        fiberG: acc.fiberG + (e.fiberG ?? 0),
       }),
-      { kcal: 0, p: 0, c: 0, f: 0 },
+      { kcal: 0, p: 0, c: 0, f: 0, fiberG: 0 },
     );
   },
 };

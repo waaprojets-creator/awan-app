@@ -73,6 +73,27 @@ const ADVICE_TEXTS: Record<string, AdviceText> = {
     advice: 'Gain > 1 kg/sem détecté sur 14 jours. Réduis légèrement le surplus calorique pour limiter la prise de graisse.',
   },
 
+  'coach.sport.low_recovery': {
+    title: 'Récupération insuffisante',
+    advice: 'Score de récupération < 6/10. Réduis le volume de 30% aujourd\'hui et priorise le sommeil ce soir — protocole Halson 2014.',
+  },
+  'coach.sport.deload_due': {
+    title: 'Décharge planifiée',
+    advice: 'Semaine 6 du mésocycle atteinte. Réduis le volume de 40–50% tout en maintenant la fréquence pour une récupération optimale.',
+  },
+
+  // ── Nutrition ─────────────────────────────────────────────────────────────
+  'coach.nutrition.fat_low': {
+    title: 'Lipides insuffisants',
+    advice: 'Apport lipidique < 74 g/j (0,9 g/kg). Les lipides sont essentiels à la production de testostérone — ajoute huile d\'olive, noix ou avocat. Source : Hamalainen 1984.',
+  },
+
+  // ── Anthropométrie ────────────────────────────────────────────────────────
+  'coach.anthropo.wht_elevated': {
+    title: 'WHtR élevé',
+    advice: 'Rapport taille/hauteur ≥ 0,50. Cible < 0,50 pour réduire le risque cardiovasculaire. Source : Ashwell 2012.',
+  },
+
   // ── Sommeil ───────────────────────────────────────────────────────────────
   'coach.sleep.short_avg': {
     title: 'Sommeil insuffisant',
@@ -81,8 +102,8 @@ const ADVICE_TEXTS: Record<string, AdviceText> = {
 
   // ── Cross-module ──────────────────────────────────────────────────────────
   'coach.cross.sleep_workout': {
-    title: 'Fatigue croisée',
-    advice: 'Sommeil court combiné à des entraînements fréquents. Priorise la récupération — dors avant de t\'entraîner.',
+    title: 'Dette de sommeil',
+    advice: 'Moyenne < 7h/nuit sur 14 jours. Le manque de sommeil réduit la MPS de 18% et la testostérone de 24% (Lamon 2021). Vise 7–9h par nuit pour une récupération optimale.',
   },
   'coach.cross.underfueled_training': {
     title: 'Entraînement sous-alimenté',

@@ -25,6 +25,7 @@ export const MealEntryV1Schema = z.object({
   grams: z.number().positive().optional(),
   timeHHMM: z.string().regex(/^\d{2}:\d{2}$/).optional(),
   foodId: z.string().optional(),
+  fiberG: z.number().nonnegative().optional(),
 });
 
 export type MealEntryV1 = z.infer<typeof MealEntryV1Schema>;

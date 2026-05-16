@@ -133,12 +133,6 @@ export function InstrumentCard({
  />
  </div>
  )}
-
- {/* Coin actif — angle supérieur gauche */}
- <div
- className="absolute top-0 left-0 w-2 h-2 border-t border-l"
- style={{ borderColor: statusColor, opacity: status === 'mute' ? 0.2 : 0.6 }}
- />
  </div>
  );
 

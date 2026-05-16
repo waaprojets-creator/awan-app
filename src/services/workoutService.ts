@@ -58,6 +58,23 @@ export const WorkoutService = {
     eventBus.emit('workout.completed', { workoutId: session.id, date: session.date });
   },
 
+  getWeeklyVolumeByMuscle(sessions: WorkoutSessionLatest[], weekStart: Date): Record<string, number> {
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    const volume: Record<string, number> = {};
+    for (const session of sessions) {
+      const d = new Date(session.date);
+      if (d < weekStart || d >= weekEnd) continue;
+      for (const exercise of session.exercises) {
+        const muscle = exercise.primaryMuscle;
+        if (!muscle) continue;
+        const workingSets = exercise.sets.filter(s => s.kind === 'working').length;
+        volume[muscle] = (volume[muscle] ?? 0) + workingSets;
+      }
+    }
+    return volume;
+  },
+
   async computeNextRoutine(
     routines: RoutineLatest[],
     sessions: WorkoutSessionLatest[],

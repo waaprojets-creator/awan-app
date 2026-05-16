@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "id": "sport.low_recovery",
+  "domain": "sport",
+  "name": "Score de récupération bas avant séance",
+  "signals": [
+    { "type": "last", "source": "sport.workoutLog", "field": "recoveryScore" }
+  ],
+  "condition": { "op": "lt", "value": 6 },
+  "signalIndex": 0,
+  "severity": "alert",
+  "adviceKey": "coach.sport.low_recovery",
+  "enabled": true
+}

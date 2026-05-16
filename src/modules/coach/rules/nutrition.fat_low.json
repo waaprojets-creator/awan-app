@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "id": "nutrition.fat_low",
+  "domain": "nutrition",
+  "name": "Apport lipidique insuffisant (< 74 g/j)",
+  "signals": [
+    { "type": "sum", "source": "nutrition.meal", "field": "f", "window": { "days": 1 } }
+  ],
+  "condition": { "op": "lt", "value": 74 },
+  "signalIndex": 0,
+  "severity": "warn",
+  "adviceKey": "coach.nutrition.fat_low",
+  "enabled": true
+}

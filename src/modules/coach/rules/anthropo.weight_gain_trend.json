@@ -6,9 +6,9 @@
   "signals": [
     { "type": "trend", "source": "anthropo.measurement", "field": "weightKg", "window": { "days": 14 } }
   ],
-  "condition": { "op": "gt", "value": 0.05 },
+  "condition": { "op": "gt", "value": 0.15 },
   "signalIndex": 0,
-  "severity": "info",
+  "severity": "warn",
   "adviceKey": "coach.anthropo.weight_gain_trend",
   "enabled": true
 }

@@ -57,6 +57,7 @@ export default function AnalyseScreen() {
   const [aiSummary, setAiSummary] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [mealsByDay, setMealsByDay] = useState<Array<{ label: string; kcal: number; p: number }>>([]);
+  const [mealsLoading, setMealsLoading] = useState(false);
 
   const workoutStore = useWorkoutStore();
   const measureStore = useMeasurementStore();
@@ -113,6 +114,8 @@ export default function AnalyseScreen() {
   }, [workoutStore.sessions, interval]);
 
   useEffect(() => {
+    let active = true;
+    setMealsLoading(true);
     const days = eachDayOfInterval(interval);
     Promise.all(
       days.map(async day => {
@@ -120,7 +123,12 @@ export default function AnalyseScreen() {
         const tot = MealService.totals(meals);
         return { label: format(day, 'dd/MM'), kcal: tot.kcal, p: tot.p };
       })
-    ).then(setMealsByDay);
+    ).then(results => {
+      if (!active) return;
+      setMealsByDay(results);
+      setMealsLoading(false);
+    }).catch(() => { if (active) setMealsLoading(false); });
+    return () => { active = false; };
   }, [interval]);
 
   // Courbe poids — restreinte à l'intervalle sélectionné
@@ -252,7 +260,9 @@ export default function AnalyseScreen() {
 
              {tab === 'nutrition' && (
                 <div className="space-y-8">
-                   {nutritionStats.count === 0 && mealsByDay.length > 0 ? (
+                   {mealsLoading ? (
+                     <div style={{ height: 120, background: 'var(--color-awan-surface)', borderRadius: 0, opacity: 0.5 }} />
+                   ) : nutritionStats.count === 0 && mealsByDay.length > 0 ? (
                      <EmptyState Icon={Flame} label="Aucun repas enregistré sur la période" />
                    ) : (
                      <>

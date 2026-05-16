@@ -7,6 +7,8 @@ import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
 import { ds, uid } from '../utils/storage';
 import { BiometricsService } from '../services/biometricsService';
+import { safeStorage } from '../utils/safeStorage';
+import { useWeightStore } from '../hooks/useWeightStore';
 import { useMeasurementStore } from '../hooks/useMeasurementStore';
 import { BodyMeasureSvg, BODY_MEASURES } from '../components/BodyMeasureSvg';
 import { ChevronLeft, ChevronRight, Target, Plus, X, Database } from 'lucide-react';
@@ -22,6 +24,8 @@ export default function MensurationScreen() {
   const { getEntriesByDate, addEntry, removeEntry, moveEntry } = useDaily();
 
   const measureStore = useMeasurementStore();
+  const weightStore = useWeightStore();
+  const [weightInput, setWeightInput] = useState('');
 
   const [selectedPart, setSelectedPart] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');
@@ -123,6 +127,31 @@ export default function MensurationScreen() {
     const pct = Math.min(100, Math.max(0, (1 - ratio) * 100));
     return { target, current, status, pct, diff };
   }, [targetWeightKg, currentEntry.weight, weeklyTrend]);
+
+  // Indices corporels (FFMI, WHR, WHtR, Navy BF%)
+  const indices = useMemo(() => {
+    const sorted = measureStore.history.slice().sort((a, b) => b.date.localeCompare(a.date));
+    const last = sorted[0];
+    if (!last) return null;
+    const profileRaw = safeStorage.get('awan.nutrition.profile');
+    const profile = profileRaw ? (() => { try { return JSON.parse(profileRaw); } catch { return {}; } })() : {};
+    const heightCm: number = typeof profile.heightCm === 'number' ? profile.heightCm : 0;
+    if (!heightCm) return null;
+    const hm = heightCm / 100;
+    const waist: number | undefined = last.measurements?.['waist'] ?? last.measurements?.['taille'];
+    const hip: number | undefined = last.measurements?.['hip'] ?? last.measurements?.['hanches'];
+    const neck: number | undefined = last.measurements?.['neck'] ?? last.measurements?.['cou'];
+    const weight: number = last.weight;
+    const bfPct: number = last.body_fat_pct;
+    const lbm = (weight > 0 && bfPct > 0) ? weight * (1 - bfPct / 100) : null;
+    const ffmi = lbm ? parseFloat((lbm / (hm * hm)).toFixed(1)) : null;
+    const whr = (waist && hip) ? parseFloat((waist / hip).toFixed(2)) : null;
+    const whtr = waist ? parseFloat((waist / heightCm).toFixed(2)) : null;
+    const navyBF = (neck && waist && !isNaN(BiometricsService.navyBFPct({ heightCm, waistCm: waist, neckCm: neck, sex: 'male' })))
+      ? BiometricsService.navyBFPct({ heightCm, waistCm: waist, neckCm: neck, sex: 'male' })
+      : null;
+    return { ffmi, whr, whtr, navyBF, lbm };
+  }, [measureStore.history]);
 
   // Dernière pesée connue (quand entrée du jour vide)
   const lastKnownWeight = useMemo(() => {
@@ -436,6 +465,93 @@ export default function MensurationScreen() {
               </Card>
             )}
           </div>
+
+          {/* Log poids quotidien */}
+          <div className="mb-10">
+            <Heading level={4} mono subtitle="Suivi quotidien" className="mb-6">POIDS DU JOUR</Heading>
+            <Card className="p-5 bg-white/3 border-white/5" variant="flat">
+              <div className="flex flex-row items-center gap-4 mb-4">
+                <TextInput
+                  className="text-3xl font-black text-awan-tx font-mono w-24 outline-none"
+                  keyboardType="numeric"
+                  value={weightInput}
+                  onChangeText={setWeightInput}
+                  placeholder={weightStore.todayEntry ? String(weightStore.todayEntry.weightKg) : '00.0'}
+                  placeholderTextColor="rgba(255,255,255,0.2)"
+                />
+                <span className="text-[10px] font-bold text-awan-tx-mute font-mono">KG</span>
+                <Touch
+                  onPress={async () => {
+                    const w = parseFloat(weightInput.replace(',', '.'));
+                    if (isNaN(w) || w <= 0) return;
+                    const today = ds(new Date());
+                    const existing = weightStore.todayEntry;
+                    const entry = existing
+                      ? { ...existing, weightKg: w, timestamp: Date.now() }
+                      : { v: 1 as const, id: uid(), date: today, timestamp: Date.now(), weightKg: w };
+                    await weightStore.add(entry);
+                    setWeightInput('');
+                  }}
+                  className="bg-awan-gold px-4 py-2"
+                >
+                  <span className="text-[10px] font-black text-black uppercase tracking-widest">ENREGISTRER</span>
+                </Touch>
+              </div>
+              {weightStore.avg7d > 0 && (
+                <div className="pt-3 border-t border-white/5">
+                  <div className="flex flex-row justify-between items-center">
+                    <span className="text-[9px] font-black text-awan-tx-mute tracking-widest uppercase">Moyenne 7j</span>
+                    <span className="text-sm font-mono font-bold text-awan-tx">{weightStore.avg7d.toFixed(1)} kg</span>
+                  </div>
+                </div>
+              )}
+            </Card>
+          </div>
+
+          {/* Indices corporels */}
+          {indices && (
+            <div className="mb-10">
+              <Heading level={4} mono subtitle="Métriques dérivées" className="mb-6">INDICES</Heading>
+              <div className="grid grid-cols-2 gap-3">
+                {indices.ffmi !== null && (
+                  <Card className="p-4 bg-white/3 border-white/5" variant="flat">
+                    <span className="text-[9px] font-black text-awan-gold tracking-widest mb-1 block uppercase">FFMI</span>
+                    <span className="text-2xl font-black text-awan-tx font-mono">{indices.ffmi}</span>
+                    <span className="text-[8px] font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">
+                      plafond naturel 25,0
+                    </span>
+                  </Card>
+                )}
+                {indices.navyBF !== null && (
+                  <Card className="p-4 bg-white/3 border-white/5" variant="flat">
+                    <span className="text-[9px] font-black text-awan-gold tracking-widest mb-1 block uppercase">BF% Navy</span>
+                    <span className="text-2xl font-black text-awan-tx font-mono">{indices.navyBF}<span className="text-sm ml-1 text-awan-tx-mute">%</span></span>
+                    <span className="text-[8px] font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">Formule US Navy</span>
+                  </Card>
+                )}
+                {indices.whtr !== null && (
+                  <Card className="p-4 bg-white/3 border-white/5" variant="flat">
+                    <span className="text-[9px] font-black text-awan-gold tracking-widest mb-1 block uppercase">WHtR</span>
+                    <span className="text-2xl font-black font-mono"
+                      style={{ color: indices.whtr < 0.50 ? 'var(--color-awan-status-ok)' : indices.whtr < 0.55 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-error)' }}>
+                      {indices.whtr}
+                    </span>
+                    <span className="text-[8px] font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">cible &lt; 0,50</span>
+                  </Card>
+                )}
+                {indices.whr !== null && (
+                  <Card className="p-4 bg-white/3 border-white/5" variant="flat">
+                    <span className="text-[9px] font-black text-awan-gold tracking-widest mb-1 block uppercase">WHR</span>
+                    <span className="text-2xl font-black font-mono"
+                      style={{ color: indices.whr < 0.90 ? 'var(--color-awan-status-ok)' : indices.whr < 0.95 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-error)' }}>
+                      {indices.whr}
+                    </span>
+                    <span className="text-[8px] font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">cible &lt; 0,90</span>
+                  </Card>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Quick Log Input */}
           <div className="mb-10">

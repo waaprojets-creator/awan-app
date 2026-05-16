@@ -36,4 +36,25 @@ export const BiometricsService = {
     const density = 1.0994921 - 0.0009929 * s + 0.0000023 * s * s - 0.0001392 * age;
     return parseFloat(densityToBf(density).toFixed(1));
   },
+
+  // US Navy BF% formula
+  // Men : BF% = 495 / (1.0324 − 0.19077·log10(waist−neck) + 0.15456·log10(height)) − 450
+  // Women: BF% = 495 / (1.29579 − 0.35004·log10(waist+hip−neck) + 0.22100·log10(height)) − 450
+  navyBFPct({ heightCm, waistCm, neckCm, hipCm, sex }: {
+    heightCm: number;
+    waistCm: number;
+    neckCm: number;
+    hipCm?: number;
+    sex: 'male' | 'female';
+  }): number {
+    if (sex === 'male') {
+      const diff = waistCm - neckCm;
+      if (diff <= 0) return NaN;
+      return parseFloat((495 / (1.0324 - 0.19077 * Math.log10(diff) + 0.15456 * Math.log10(heightCm)) - 450).toFixed(1));
+    }
+    if (!hipCm) return NaN;
+    const sum = waistCm + hipCm - neckCm;
+    if (sum <= 0) return NaN;
+    return parseFloat((495 / (1.29579 - 0.35004 * Math.log10(sum) + 0.22100 * Math.log10(heightCm)) - 450).toFixed(1));
+  },
 };

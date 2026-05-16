@@ -6,7 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemeMode } from '../hooks/useTheme';
 import { useAppStore } from '../store/appStore';
 import { useAppState } from '../context/AppStateContext';
-import { Shield, Database, Key, RefreshCw, Trash2 } from 'lucide-react';
+import { Shield, Database, Key, RefreshCw, Trash2, Navigation } from 'lucide-react';
+import { safeStorage } from '../utils/safeStorage';
 import { PageWrapper } from '../components/Animated';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
@@ -93,6 +94,23 @@ export default function SettingsScreen() {
  </div>
 
  <div className="p-6">
+
+ {/* PERSONNALISATION */}
+ <div className="mb-10">
+ <Heading level={4} mono subtitle="Interface" className="mb-6">PERSONNALISATION</Heading>
+ <Touch
+   onPress={() => { safeStorage.set('awan.moonmenu.pending-edit', '1'); }}
+   className="bg-white/3 border border-white/5 p-6 flex-row items-center gap-5 mb-3"
+ >
+   <div className="w-10 h-10 bg-white/5 flex items-center justify-center">
+     <Navigation size={18} className="text-awan-tx-mute" />
+   </div>
+   <div className="flex-1">
+     <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">MODIFIER MOONMENU</span>
+     <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-tighter">Repositionner les nœuds de navigation · Ouvrir le menu lune</span>
+   </div>
+ </Touch>
+ </div>
 
  {/* THÈME */}
  <div className="mb-10">
