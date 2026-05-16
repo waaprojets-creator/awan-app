@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { ScrollView } from 'react-native';
-import { ChevronRight, Activity, Utensils, Ruler, Brain } from 'lucide-react';
+import { ChevronRight, Activity, Utensils, Ruler, Brain, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Card } from '../components/ui/Card';
 import { Touch } from '../components/ui/Touch';
@@ -10,6 +10,7 @@ import { useMeasurementStore } from '../hooks/useMeasurementStore';
 import { useCoach } from '../hooks/useCoach';
 import { ds } from '../utils/storage';
 import { sessionsThisWeek } from '../hooks/useAwanScore';
+import { getAdviceText } from '../constants/coachAdvice';
 import type { Severity } from '../data/schemas/coach/rule';
 import type { Advice } from '../data/schemas/coach/assessment';
 
@@ -51,6 +52,16 @@ export default function SanteScreen({ navigate }: any) {
 
  const sessCount = sessionsThisWeek(workoutStore.sessions as Array<{ date?: string; startTime?: number }>);
 
+ // Tendance sport : sessions cette semaine vs semaine précédente
+ const sessCountPrevWeek = useMemo(() => {
+   const now = Date.now();
+   const twoWeeksAgo = now - 14 * 24 * 60 * 60 * 1000;
+   const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+   return (workoutStore.sessions as Array<{ startTime?: number }>)
+     .filter(s => { const t = s.startTime ?? 0; return t >= twoWeeksAgo && t < oneWeekAgo; }).length;
+ }, [workoutStore.sessions]);
+ const sportDelta = sessCount - sessCountPrevWeek;
+
  const lastSession = useMemo(() =>
  [...(workoutStore.sessions as Array<{ startTime?: number }>)]
  .sort((a, b) => (b.startTime ?? 0) - (a.startTime ?? 0))[0],
@@ -67,6 +78,18 @@ export default function SanteScreen({ navigate }: any) {
  .slice()
  .sort((a, b) => a.date.localeCompare(b.date))
  .at(-1);
+
+ // Tendance poids : delta 7 jours
+ const weightDelta = useMemo(() => {
+   const sorted = measureStore.history.filter(e => e.weight > 0).sort((a, b) => a.date.localeCompare(b.date));
+   if (sorted.length < 2) return null;
+   const last = sorted.at(-1)!;
+   const sevenDaysAgo = new Date(last.date); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+   const sevenStr = sevenDaysAgo.toISOString().slice(0, 10);
+   const baseline = [...sorted].reverse().find(e => e.date <= sevenStr);
+   if (!baseline) return null;
+   return last.weight - baseline.weight;
+ }, [measureStore.history]);
 
  const topAdvice = useMemo<Advice | null>(() => {
  const order: Record<Severity, number> = { alert: 0, warn: 1, good: 2, info: 3 };
@@ -95,10 +118,17 @@ export default function SanteScreen({ navigate }: any) {
  </div>
  <ChevronRight size={16} className="text-awan-tx-mute" />
  </div>
- <div className="flex flex-row gap-8">
+ <div className="flex flex-row gap-8 items-end">
  <div>
  <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">SÉANCES / SEM</span>
- <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">{sessCount}</span>
+ <div className="flex flex-row items-baseline gap-2">
+   <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">{sessCount}</span>
+   {sportDelta !== 0 && (
+     <span className="text-[9px] font-black font-mono" style={{ color: sportDelta > 0 ? 'var(--color-awan-status-ok)' : 'var(--color-awan-status-error)' }}>
+       {sportDelta > 0 ? '▲' : '▼'} {Math.abs(sportDelta)} vs S-1
+     </span>
+   )}
+ </div>
  </div>
  {daysSince !== null && (
  <div>
@@ -175,9 +205,16 @@ export default function SanteScreen({ navigate }: any) {
  <>
  <div>
  <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-0.5">POIDS</span>
- <span className="text-2xl font-black text-awan-tx font-mono tracking-tighter">
- {latestMeasure.weight}<span className="text-xs ml-1 text-awan-gold">kg</span>
- </span>
+ <div className="flex flex-row items-baseline gap-2">
+   <span className="text-2xl font-black text-awan-tx font-mono tracking-tighter">
+     {latestMeasure.weight}<span className="text-xs ml-1 text-awan-gold">kg</span>
+   </span>
+   {weightDelta !== null && (
+     <span className="text-[9px] font-black font-mono" style={{ color: weightDelta < 0 ? 'var(--color-awan-status-ok)' : weightDelta > 0 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-tx-mute)' }}>
+       {weightDelta > 0 ? '▲' : weightDelta < 0 ? '▼' : '–'} {Math.abs(weightDelta).toFixed(1)} kg/sem
+     </span>
+   )}
+ </div>
  </div>
  {latestMeasure.body_fat_pct > 0 && (
  <div>
@@ -220,7 +257,8 @@ export default function SanteScreen({ navigate }: any) {
  style={{ color: COACH_COLOR[topAdvice.severity] }}>
  {topAdvice.severity.toUpperCase()}
  </span>
- <span className="text-xs font-bold text-awan-tx">{topAdvice.key}</span>
+ <span className="text-sm font-bold text-awan-tx block">{getAdviceText(topAdvice.key).title}</span>
+ <span className="text-xs text-awan-tx-dim mt-0.5 block leading-relaxed">{getAdviceText(topAdvice.key).advice}</span>
  </div>
  ) : (
  <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest opacity-40">Analyse non effectuée</span>

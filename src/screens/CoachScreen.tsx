@@ -5,6 +5,7 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 import { useCoach } from '../hooks/useCoach';
 import { ds } from '../utils/storage';
+import { getAdviceText } from '../constants/coachAdvice';
 import type { AssessmentLatest, Advice, RuleResult } from '../data/schemas/coach/assessment';
 import type { Domain, Severity } from '../data/schemas/coach/rule';
 import type { NavProps } from '../types/nav';
@@ -40,21 +41,25 @@ const SEVERITY_STYLES: Record<Severity, SeverityStyle> = {
 function AdviceCard({ advice, ruleResult }: { advice: Advice; ruleResult: RuleResult | undefined }) {
   const style = SEVERITY_STYLES[advice.severity];
   const { Icon } = style;
+  const text = getAdviceText(advice.key);
   return (
-    <div className={`rounded-awan-xl border p-4 flex flex-row gap-3 ${style.className}`}>
+    <div className={`border p-4 flex flex-row gap-3 ${style.className}`}>
       <div className="flex-shrink-0 pt-0.5">
         <Icon size={20} color={style.color} />
       </div>
       <div className="flex-1 flex flex-col gap-1 min-w-0">
         <span className="awan-label" style={{ color: style.color }}>
-          {advice.severity.toUpperCase()} · {advice.ruleId}
+          {advice.severity.toUpperCase()}
         </span>
-        <span className="text-awan-tx text-sm leading-snug break-words">
-          {advice.key}
+        <span className="text-awan-tx font-bold text-sm leading-snug break-words">
+          {text.title}
         </span>
-        {ruleResult !== undefined && (
+        <span className="text-awan-tx-dim text-xs leading-relaxed break-words">
+          {text.advice}
+        </span>
+        {ruleResult !== undefined && Number.isFinite(ruleResult.signalValue) && (
           <span className="font-mono text-[10px] text-awan-tx-mute mt-1">
-            SIGNAL = {Number.isFinite(ruleResult.signalValue) ? ruleResult.signalValue.toFixed(2) : '—'}
+            VALEUR MESURÉE · {ruleResult.signalValue.toFixed(2)}
           </span>
         )}
       </div>

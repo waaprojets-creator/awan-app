@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { ScrollView, TextInput as RNTextInput } from 'react-native';
 import { Upload, X } from 'lucide-react';
+import { getAdviceText } from '../constants/coachAdvice';
 import { L, DATE_FORMAT_BANNER, TRANSPORT_OPTIONS } from '../constants/labels';
 import { TRANSPORT_ICONS } from '../constants/icons';
 import { ds } from '../utils/storage';
@@ -74,10 +75,15 @@ export default function DashboardScreen({ navigate }: NavProps) {
     [workoutStore.sessions],
   );
 
+  const kcalTargetScore = useMemo(() => {
+    try { const p = JSON.parse(localStorage.getItem('awan.nutrition.profile') ?? '{}'); return typeof p.targetKcal === 'number' ? p.targetKcal : KCAL_TARGET_DEFAULT; }
+    catch { return KCAL_TARGET_DEFAULT; }
+  }, []);
+
   const score = useAwanScore({
     prayersDone:      prayerStore.doneCount,
     kcalLogged:       mealStore.totals.kcal,
-    kcalTarget:       KCAL_TARGET_DEFAULT,
+    kcalTarget:       kcalTargetScore,
     sessionsThisWeek: sessionsCount,
     tasksDone:        0,
     tasksTotal:       0,
@@ -358,9 +364,20 @@ export default function DashboardScreen({ navigate }: NavProps) {
               </span>
             )}
           </div>
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', fontWeight: 'var(--fw-body)' as any, color: 'var(--color-awan-tx)' }}>
-            {topAdvice ? topAdvice.key : coachAnalyzed ? 'Aucune anomalie détectée.' : 'Analyse non effectuée'}
-          </span>
+          {topAdvice ? (
+            <>
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', fontWeight: 700, color: 'var(--color-awan-tx)' }}>
+                {getAdviceText(topAdvice.key).title}
+              </span>
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--color-awan-tx-dim)', marginTop: 2, lineHeight: 1.4 }}>
+                {getAdviceText(topAdvice.key).advice}
+              </span>
+            </>
+          ) : (
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', fontWeight: 'var(--fw-body)' as any, color: 'var(--color-awan-tx)' }}>
+              {coachAnalyzed ? 'Aucune anomalie détectée.' : 'Analyse non effectuée'}
+            </span>
+          )}
         </div>
       </Touch>
 
