@@ -48,4 +48,18 @@ export class MemoryStorage implements IStorage {
   async clear(): Promise<void> {
     this.store.clear();
   }
+
+  async exportAll(): Promise<string> {
+    const data: Record<string, unknown> = {};
+    for (const [key, value] of this.store.entries()) {
+      data[key] = value;
+    }
+    return JSON.stringify({ type: 'awan.backup', version: 1, exported: new Date().toISOString().slice(0, 10), data });
+  }
+
+  async importAll(data: Record<string, unknown>): Promise<void> {
+    for (const [key, value] of Object.entries(data)) {
+      this.store.set(key, value);
+    }
+  }
 }

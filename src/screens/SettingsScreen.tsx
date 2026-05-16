@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, ScrollView, TextInput as RNTextInput, Alert, Switch } from 'react-native';
 
 const TextInput = RNTextInput as React.ComponentType<any>;
@@ -25,6 +25,19 @@ const AWAN_LS_KEYS = [
   'awan.nutrition.profile',
   'awan.user.location',
 ];
+
+async function exportBackup(): Promise<void> {
+  const storage = await getStorage();
+  const json = await storage.exportAll();
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `awan-backup-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 async function purgeAllData() {
   try {
@@ -180,13 +193,13 @@ export default function SettingsScreen() {
  </div>
  </Touch>
 
- <Touch className="bg-white/3 border border-white/5 p-6 flex-row items-center gap-5">
+ <Touch onPress={() => void exportBackup()} className="bg-white/3 border border-white/5 p-6 flex-row items-center gap-5">
  <div className="w-10 h-10 bg-white/5 flex items-center justify-center">
  <Database size={18} className="text-awan-tx-mute" />
  </div>
  <div className="flex-1">
  <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">EXPORTATION NOYAU</span>
- <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-tighter">Dump SQL de la base locale</span>
+ <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-tighter">Télécharge awan-backup-YYYY-MM-DD.json</span>
  </div>
  </Touch>
 

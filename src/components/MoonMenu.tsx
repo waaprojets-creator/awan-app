@@ -35,6 +35,7 @@ const NODES: Node[] = [
   { id: 'Nutrition',   label: n('nutrition'),   x:  6, y: 36, tier: 2 },
   { id: 'Mensuration', label: n('mensuration'), x: 14, y: 52, tier: 2 },
   { id: 'Coach',       label: n('coach'),       x: 70, y: 30, tier: 2 },
+  { id: 'Sleep',       label: 'SOMMEIL',        x: 28, y: 14, tier: 2 },
   { id: 'Reglages',    label: n('reglages'),    x: 90, y: 62, tier: 2 },
   { id: 'Tasks',       label: n('tasks'),       x: 70, y: 86, tier: 2 },
 ];
@@ -50,6 +51,7 @@ const EDGES: [string, string][] = [
   ['Sante', 'Sport'],
   ['Sante', 'Nutrition'],
   ['Sante', 'Mensuration'],
+  ['Sante', 'Sleep'],
   ['Planning', 'Tasks'],
 ];
 

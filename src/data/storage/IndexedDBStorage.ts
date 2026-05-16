@@ -81,4 +81,21 @@ export class IndexedDBStorage implements IStorage {
     const s = await this.store('readwrite');
     await idbRequest(s.clear());
   }
+
+  async exportAll(): Promise<string> {
+    const s = await this.store('readonly');
+    const keys = await idbRequest(s.getAllKeys()) as string[];
+    const data: Record<string, unknown> = {};
+    for (const key of keys) {
+      data[key] = await idbRequest(s.get(key));
+    }
+    return JSON.stringify({ type: 'awan.backup', version: 1, exported: new Date().toISOString().slice(0, 10), data });
+  }
+
+  async importAll(data: Record<string, unknown>): Promise<void> {
+    const s = await this.store('readwrite');
+    for (const [key, value] of Object.entries(data)) {
+      await idbRequest(s.put(value, key));
+    }
+  }
 }

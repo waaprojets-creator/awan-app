@@ -98,4 +98,19 @@ export class SqliteStorage implements IStorage {
   async clear(): Promise<void> {
     await this.handle.run('DELETE FROM kv', []);
   }
+
+  async exportAll(): Promise<string> {
+    const res = await this.handle.query('SELECT key, value FROM kv', []);
+    const data: Record<string, unknown> = {};
+    for (const row of (res.values ?? []) as Array<{ key: string; value: string }>) {
+      try { data[row.key] = JSON.parse(row.value); } catch { data[row.key] = row.value; }
+    }
+    return JSON.stringify({ type: 'awan.backup', version: 1, exported: new Date().toISOString().slice(0, 10), data });
+  }
+
+  async importAll(data: Record<string, unknown>): Promise<void> {
+    for (const [key, value] of Object.entries(data)) {
+      await this.set(key, value);
+    }
+  }
 }

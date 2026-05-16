@@ -164,6 +164,49 @@ function HijriCalendar({
   );
 }
 
+// ─── Prayer notifications ────────────────────────────────────────────────────────
+
+async function schedulePrayerNotifications(times: Record<string, unknown>): Promise<void> {
+  try {
+    const { LocalNotifications } = await import('@capacitor/local-notifications');
+    const perm = await LocalNotifications.checkPermissions();
+    if (perm.display !== 'granted') {
+      const req = await LocalNotifications.requestPermissions();
+      if (req.display !== 'granted') return;
+    }
+    await LocalNotifications.cancel({ notifications: [
+      { id: 1001 }, { id: 1002 }, { id: 1003 }, { id: 1004 }, { id: 1005 },
+    ]});
+    const prayers = [
+      { id: 1001, name: 'Fajr',    time: times['fajr'] as Date },
+      { id: 1002, name: 'Dhuhr',   time: times['dhuhr'] as Date },
+      { id: 1003, name: 'Asr',     time: times['asr'] as Date },
+      { id: 1004, name: 'Maghrib', time: times['maghrib'] as Date },
+      { id: 1005, name: 'Isha',    time: times['isha'] as Date },
+    ];
+    const now = new Date();
+    const future = prayers.filter(p => p.time instanceof Date && p.time > now);
+    if (future.length === 0) return;
+    await LocalNotifications.schedule({
+      notifications: future.map(p => ({
+        id: p.id,
+        title: 'AWAN · ISLAM',
+        body: `${p.name} — heure de la prière`,
+        schedule: { at: p.time },
+      })),
+    });
+  } catch { /* notifications non supportées sur ce contexte */ }
+}
+
+async function cancelPrayerNotifications(): Promise<void> {
+  try {
+    const { LocalNotifications } = await import('@capacitor/local-notifications');
+    await LocalNotifications.cancel({ notifications: [
+      { id: 1001 }, { id: 1002 }, { id: 1003 }, { id: 1004 }, { id: 1005 },
+    ]});
+  } catch { /* ok */ }
+}
+
 // ─── Main component ─────────────────────────────────────────────────────────────
 
 export default function IslamScreen() {
@@ -180,6 +223,9 @@ export default function IslamScreen() {
   const [currentWord, setCurrentWord] = useState<any>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [calView, setCalView] = useState<'month' | 'year'>('month');
+  const [notifEnabled, setNotifEnabled] = useState(
+    () => safeStorage.get('awan.islam.notifications') !== '0',
+  );
 
   const prayerStore = usePrayerStore(selectedDate);
   const quranStore = useQuranStore();
@@ -197,12 +243,15 @@ export default function IslamScreen() {
 
   useEffect(() => {
     const loc = SpiritualService.getCachedLocation();
-    setPrayerTimesForDate(SpiritualService.getPrayerTimes(loc.lat, loc.lon));
+    const times = SpiritualService.getPrayerTimes(loc.lat, loc.lon);
+    setPrayerTimesForDate(times);
+    if (notifEnabled) void schedulePrayerNotifications(times);
     const timer = setInterval(() => {
       const l = SpiritualService.getCachedLocation();
       setPrayerTimesForDate(SpiritualService.getPrayerTimes(l.lat, l.lon));
     }, 60_000);
     return () => clearInterval(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -300,6 +349,31 @@ export default function IslamScreen() {
             onPress={activateQibla}
           />
         </div>
+
+        {/* ── Toggle notifications ──────────────────────────────────────────── */}
+        <Touch onPress={() => {
+          const next = !notifEnabled;
+          setNotifEnabled(next);
+          safeStorage.set('awan.islam.notifications', next ? '1' : '0');
+          if (next) void schedulePrayerNotifications(prayerTimesForDate as Record<string, unknown>);
+          else void cancelPrayerNotifications();
+        }}>
+          <div className="flex flex-row items-center justify-between mb-3 px-4 py-3 border" style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: 'var(--color-awan-surface)' }}>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>RAPPELS PRIÈRES</span>
+            <div style={{
+              width: 36, height: 20, borderRadius: 10, position: 'relative',
+              backgroundColor: notifEnabled ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.12)',
+              transition: 'background-color 0.2s',
+            }}>
+              <div style={{
+                position: 'absolute', top: 2, left: notifEnabled ? 18 : 2,
+                width: 16, height: 16, borderRadius: 8,
+                backgroundColor: 'var(--color-awan-bg)',
+                transition: 'left 0.2s',
+              }} />
+            </div>
+          </div>
+        </Touch>
 
         {/* ── Sélecteur de date ──────────────────────────────────────────────── */}
         <div className="flex flex-row items-center justify-between mb-3 p-3 border" style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: 'var(--color-awan-surface)' }}>

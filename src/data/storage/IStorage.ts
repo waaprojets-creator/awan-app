@@ -17,4 +17,8 @@ export interface IStorage {
   query<T>(table: string, where: Partial<T>, parse: ParseFn<T>): Promise<T[]>;
   transaction<T>(fn: (tx: ITransaction) => Promise<T>): Promise<T>;
   clear(): Promise<void>;
+  /** Export all key-value pairs as a JSON string (awan.backup format). */
+  exportAll(): Promise<string>;
+  /** Import key-value pairs from a raw record. */
+  importAll(data: Record<string, unknown>): Promise<void>;
 }

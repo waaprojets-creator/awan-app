@@ -83,4 +83,22 @@ export class LocalStorageAdapter implements IStorage {
   async clear(): Promise<void> {
     this.storage.clear();
   }
+
+  async exportAll(): Promise<string> {
+    const data: Record<string, unknown> = {};
+    for (let i = 0; i < this.storage.length; i++) {
+      const k = this.storage.key(i);
+      if (!k) continue;
+      const raw = this.storage.getItem(k);
+      if (raw === null) continue;
+      try { data[k] = JSON.parse(raw); } catch { data[k] = raw; }
+    }
+    return JSON.stringify({ type: 'awan.backup', version: 1, exported: new Date().toISOString().slice(0, 10), data });
+  }
+
+  async importAll(data: Record<string, unknown>): Promise<void> {
+    for (const [key, value] of Object.entries(data)) {
+      this.storage.setItem(key, JSON.stringify(value));
+    }
+  }
 }

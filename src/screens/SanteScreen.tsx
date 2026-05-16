@@ -1,12 +1,13 @@
 import React, { useMemo } from 'react';
 import { ScrollView } from 'react-native';
-import { ChevronRight, Activity, Utensils, Ruler, Brain, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { ChevronRight, Activity, Utensils, Ruler, Brain, Moon, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Card } from '../components/ui/Card';
 import { Touch } from '../components/ui/Touch';
 import { useWorkoutStore } from '../hooks/useWorkoutStore';
 import { useMealStore } from '../hooks/useMealStore';
 import { useMeasurementStore } from '../hooks/useMeasurementStore';
+import { useSleepStore } from '../hooks/useSleepStore';
 import { useCoach } from '../hooks/useCoach';
 import { ds } from '../utils/storage';
 import { sessionsThisWeek } from '../hooks/useAwanScore';
@@ -43,6 +44,7 @@ export default function SanteScreen({ navigate }: any) {
  const workoutStore = useWorkoutStore();
  const mealStore = useMealStore(today);
  const measureStore = useMeasurementStore();
+ const sleepStore = useSleepStore();
  const { assessments: coachAssessments } = useCoach(today);
 
  const KCAL_TARGET = useMemo(() => {
@@ -236,6 +238,35 @@ export default function SanteScreen({ navigate }: any) {
  ) : (
  <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest opacity-40">Aucune mesure</span>
  )}
+ </div>
+ </div>
+ </Card>
+ </Touch>
+
+ {/* SOMMEIL */}
+ <Touch onPress={() => navigate('Sleep')} className="mb-4 block">
+ <Card className="p-5 bg-white/3 border-white/5" variant="flat">
+ <div className="flex flex-row justify-between items-center mb-4">
+ <div className="flex flex-row items-center gap-3">
+ <div className="w-8 h-8 bg-awan-gold/10 flex items-center justify-center border border-awan-gold/20">
+ <Moon size={15} className="text-awan-gold" />
+ </div>
+ <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase">SOMMEIL</span>
+ </div>
+ <ChevronRight size={16} className="text-awan-tx-mute" />
+ </div>
+ <div className="flex flex-row gap-4">
+ <div className="flex flex-col">
+ <span className="text-[9px] font-black text-awan-tx-mute tracking-widest uppercase mb-1">MOY. 7J</span>
+ <span className="font-mono font-black text-2xl"
+ style={{ color: sleepStore.avgDurationH >= 7 ? 'var(--color-awan-status-ok)' : sleepStore.avgDurationH >= 6 ? 'var(--color-awan-status-warn)' : sleepStore.avgDurationH > 0 ? 'var(--color-awan-status-error)' : 'var(--color-awan-tx-mute)' }}>
+ {sleepStore.avgDurationH > 0 ? `${sleepStore.avgDurationH.toFixed(1)}h` : '—'}
+ </span>
+ <span className="text-[9px] text-awan-tx-mute mt-1">
+ {sleepStore.avgDurationH > 0
+ ? sleepStore.avgDurationH >= 7 ? 'objectif OMS atteint' : `${(7 - sleepStore.avgDurationH).toFixed(1)}h sous OMS`
+ : 'aucune donnée'}
+ </span>
  </div>
  </div>
  </Card>
