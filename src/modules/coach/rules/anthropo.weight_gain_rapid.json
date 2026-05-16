@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "id": "anthropo.weight_gain_rapid",
+  "domain": "anthropo",
+  "name": "Prise de masse rapide — tendance 14j > +1 kg/sem",
+  "signals": [
+    { "type": "trend", "source": "anthropo.measurement", "field": "weightKg", "window": { "days": 14 } }
+  ],
+  "condition": { "op": "gt", "value": 1 },
+  "signalIndex": 0,
+  "severity": "warn",
+  "adviceKey": "coach.anthropo.weight_gain_rapid",
+  "enabled": true
+}

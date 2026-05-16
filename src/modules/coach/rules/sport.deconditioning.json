@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "id": "sport.deconditioning",
+  "domain": "sport",
+  "name": "Déconditionnement — aucun entraînement depuis 14 jours",
+  "signals": [
+    { "type": "count", "source": "sport.workoutLog", "window": { "days": 14 } }
+  ],
+  "condition": { "op": "lt", "value": 1 },
+  "signalIndex": 0,
+  "severity": "alert",
+  "adviceKey": "coach.sport.deconditioning",
+  "enabled": true
+}

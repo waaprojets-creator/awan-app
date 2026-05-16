@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "id": "anthropo.no_measurement_21d",
+  "domain": "anthropo",
+  "name": "Pas de mesure depuis 21 jours",
+  "signals": [
+    { "type": "count", "source": "anthropo.measurement", "window": { "days": 21 } }
+  ],
+  "condition": { "op": "lt", "value": 1 },
+  "signalIndex": 0,
+  "severity": "info",
+  "adviceKey": "coach.anthropo.no_measurement_21d",
+  "enabled": true
+}

@@ -4,25 +4,41 @@ import type { RuleLatest } from '@/data/schemas/coach/rule';
 import sportNoWorkout from './rules/sport.no_workout_7d.json';
 import sportStagnationCharge from './rules/sport.stagnation_charge.json';
 import sportFatigueRpe from './rules/sport.fatigue_rpe.json';
+import sportDeconditioning from './rules/sport.deconditioning.json';
+import sportInsufficientFrequency from './rules/sport.insufficient_frequency.json';
+import sportConsecutiveDays from './rules/sport.consecutive_days.json';
 import nutritionProtein from './rules/nutrition.protein_low.json';
 import nutritionDeficitAgressif from './rules/nutrition.deficit_agressif.json';
 import nutritionProteinesFaibles from './rules/nutrition.proteines_faibles.json';
+import nutritionTdeeSurplus from './rules/nutrition.tdee_surplus.json';
+import nutritionMealRegularity from './rules/nutrition.meal_regularity.json';
 import anthropoWeight from './rules/anthropo.weight_gain_trend.json';
 import anthropoPerteRapide from './rules/anthropo.perte_rapide.json';
+import anthropoNoMeasurement from './rules/anthropo.no_measurement_21d.json';
+import anthropoWeightGainRapid from './rules/anthropo.weight_gain_rapid.json';
 import sleepShort from './rules/sleep.short_avg.json';
 import crossSleepWorkout from './rules/cross.sleep_workout.json';
+import crossUnderfueledTraining from './rules/cross.underfueled_training.json';
 
 const RAW_BUNDLED: unknown[] = [
   sportNoWorkout,
   sportStagnationCharge,
   sportFatigueRpe,
+  sportDeconditioning,
+  sportInsufficientFrequency,
+  sportConsecutiveDays,
   nutritionProtein,
   nutritionDeficitAgressif,
   nutritionProteinesFaibles,
+  nutritionTdeeSurplus,
+  nutritionMealRegularity,
   anthropoWeight,
   anthropoPerteRapide,
+  anthropoNoMeasurement,
+  anthropoWeightGainRapid,
   sleepShort,
   crossSleepWorkout,
+  crossUnderfueledTraining,
 ];
 
 /**

@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "id": "nutrition.meal_regularity",
+  "domain": "nutrition",
+  "name": "Repas irréguliers — moins de 2 entrées/jour en moyenne",
+  "signals": [
+    { "type": "avg", "source": "nutrition.meal", "field": "kcal", "window": { "days": 7 } }
+  ],
+  "condition": { "op": "lt", "value": 500 },
+  "signalIndex": 0,
+  "severity": "info",
+  "adviceKey": "coach.nutrition.meal_regularity",
+  "enabled": true
+}

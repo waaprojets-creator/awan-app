@@ -4,6 +4,9 @@ import {
   Modal, TextInput as RNTextInput, Alert,
 } from 'react-native';
 import { usePlanner } from '../hooks/usePlanner';
+import { useWorkoutStore } from '../hooks/useWorkoutStore';
+import { useMeasurementStore } from '../hooks/useMeasurementStore';
+import { ds as dsDate } from '../utils/storage';
 
 const TextInput = RNTextInput as React.ComponentType<any>;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -70,6 +73,7 @@ const STABS = [
   { id: 1, label: 'MENSUEL', Icon: Grid3X3 },
   { id: 2, label: 'ANNUEL', Icon: Calendar },
   { id: 4, label: 'FLUX IA', Icon: Target },
+  { id: 5, label: 'TOUT', Icon: Layers },
 ];
 
 function minToTime(min: number): string {
@@ -98,6 +102,8 @@ export default function PlanningScreen() {
   const gridStartPos = useRef<any>(null);
 
   const planner = usePlanner();
+  const workoutStore = useWorkoutStore();
+  const measureStore = useMeasurementStore();
   const [aiTitle, setAiTitle] = useState('');
   const [aiDuration, setAiDuration] = useState('30');
   const [aiEnergy, setAiEnergy] = useState<'low' | 'medium' | 'high'>('medium');
@@ -556,6 +562,108 @@ export default function PlanningScreen() {
     );
   }
 
+  function renderUnifiedTimeline() {
+    // Build a unified list of events from all modules, grouped by date, sorted descending (most recent first)
+    type TimelineItem = {
+      key: string;
+      type: 'workout' | 'measurement' | 'event';
+      label: string;
+      sub: string;
+      color: string;
+    };
+    type DayGroup = { date: string; dateLabel: string; isFuture: boolean; items: TimelineItem[] };
+
+    const today = dsDate(new Date());
+
+    // Collect dates with events (last 60 days + next 30 days)
+    const dayMap = new Map<string, TimelineItem[]>();
+    const addItem = (date: string, item: TimelineItem) => {
+      if (!dayMap.has(date)) dayMap.set(date, []);
+      dayMap.get(date)!.push(item);
+    };
+
+    // Workout sessions
+    for (const s of workoutStore.sessions) {
+      const date = (s as any).date ?? dsDate(new Date((s as any).startTime ?? 0));
+      addItem(date, {
+        key: `workout-${(s as any).id}`,
+        type: 'workout',
+        label: (s as any).name ?? 'SÉANCE',
+        sub: `${Math.round(((s as any).duration ?? 0) / 60)} min · ${((s as any).exercises ?? []).length} exercices`,
+        color: 'var(--color-awan-gold)',
+      });
+    }
+
+    // Measurements
+    for (const m of measureStore.history) {
+      const parts: string[] = [];
+      if ((m as any).weight > 0) parts.push(`${(m as any).weight}kg`);
+      if ((m as any).body_fat_pct > 0) parts.push(`${(m as any).body_fat_pct}% MG`);
+      addItem((m as any).date, {
+        key: `meas-${(m as any).date}`,
+        type: 'measurement',
+        label: 'MESURE CORPORELLE',
+        sub: parts.join(' · ') || 'Mesures enregistrées',
+        color: 'var(--color-awan-status-ok)',
+      });
+    }
+
+    // Planning events (last 30 + future)
+    const cutoffPast = new Date(); cutoffPast.setDate(cutoffPast.getDate() - 30);
+    const cutoffFuture = new Date(); cutoffFuture.setDate(cutoffFuture.getDate() + 30);
+    for (const ev of (db?.events ?? [])) {
+      const date = ev.date ?? today;
+      if (date >= dsDate(cutoffPast) && date <= dsDate(cutoffFuture)) {
+        addItem(date, {
+          key: `ev-${ev.id}`,
+          type: 'event',
+          label: ev.title ?? 'Événement',
+          sub: ev.time ? `${ev.time} · ${ev.category ?? ''}` : (ev.category ?? ''),
+          color: ev.color ?? 'rgba(255,255,255,0.4)',
+        });
+      }
+    }
+
+    const groups: DayGroup[] = Array.from(dayMap.entries())
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([date, items]) => ({
+        date,
+        dateLabel: new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase(),
+        isFuture: date > today,
+        items,
+      }));
+
+    return (
+      <ScrollView contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 24, paddingTop: 8 }} showsVerticalScrollIndicator={false}>
+        {groups.length === 0 && (
+          <div className="py-20 items-center">
+            <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest">AUCUNE DONNÉE</span>
+          </div>
+        )}
+        {groups.map(g => (
+          <div key={g.date} className="mb-6">
+            <div className="flex flex-row items-center gap-3 mb-3">
+              <span className={`text-[8px] font-black uppercase tracking-[0.3em] font-mono ${g.isFuture ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
+                {g.date === today ? 'AUJOURD\'HUI' : g.dateLabel}
+              </span>
+              {g.isFuture && <div className="h-px flex-1 bg-awan-gold/20" />}
+              {!g.isFuture && <div className="h-px flex-1 bg-white/5" />}
+            </div>
+            {g.items.map(item => (
+              <div key={item.key} className="flex flex-row gap-3 mb-2">
+                <div className="w-0.5 self-stretch rounded-full mt-1" style={{ backgroundColor: item.color }} />
+                <div className="flex-1 py-2">
+                  <span className="text-[10px] font-black text-awan-tx uppercase tracking-tight block">{item.label}</span>
+                  {item.sub && <span className="text-[9px] font-mono text-awan-tx-mute block mt-0.5">{item.sub}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </ScrollView>
+    );
+  }
+
   return (
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
       <div className="px-6 pt-4 pb-1">
@@ -583,6 +691,7 @@ export default function PlanningScreen() {
           {subTab === 2 && renderAnnual()}
           {subTab === 3 && renderDaily()}
           {subTab === 4 && renderAiSchedule()}
+          {subTab === 5 && renderUnifiedTimeline()}
         </motion.div>
       </AnimatePresence>
       <div className="px-6 pb-24 flex flex-row gap-4 mt-auto">

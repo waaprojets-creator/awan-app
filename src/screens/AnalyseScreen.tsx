@@ -17,7 +17,7 @@ import { useMeasurementStore } from '../hooks/useMeasurementStore';
 import { useMealStore } from '../hooks/useMealStore';
 import { usePrayerStore } from '../hooks/usePrayerStore';
 import { PageWrapper, AnimatePresence } from '../components/Animated';
-import { Activity, Dumbbell, Ruler, Flame } from 'lucide-react';
+import { Activity, Dumbbell, Ruler, Flame, TrendingUp } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
@@ -33,6 +33,7 @@ const TABS = [
   { id: 'nutrition', label: 'Biosphère', Icon: Flame },
   { id: 'muscu', label: 'Projection', Icon: Dumbbell },
   { id: 'measures', label: 'Biométrie', Icon: Ruler },
+  { id: 'cross', label: 'Corréla.', Icon: TrendingUp },
 ];
 
 const RANGES = [
@@ -370,6 +371,119 @@ export default function AnalyseScreen() {
                   )}
                 </div>
              )}
+             {tab === 'cross' && (() => {
+               // Build a 30-day timeline with workout flags + weight + kcal (today only available)
+               const last30 = Array.from({ length: 30 }).map((_, i) => {
+                 const d = new Date(); d.setDate(d.getDate() - (29 - i));
+                 const str = ds(d);
+                 const hasWorkout = workoutStore.sessions.some((s: any) => (s.date ?? ds(new Date(s.startTime ?? 0))) === str);
+                 const measure = measureStore.history.find(m => m.date === str);
+                 return { str, hasWorkout, weight: measure?.weight ?? null };
+               });
+
+               // Pearson correlation: workouts vs weight change
+               const weightPoints = last30.filter(d => d.weight !== null);
+               const workoutDays = last30.filter(d => d.hasWorkout).length;
+               const avgWeight = weightPoints.length > 0
+                 ? weightPoints.reduce((s, d) => s + (d.weight ?? 0), 0) / weightPoints.length
+                 : null;
+               const latestW = measureStore.history.slice().sort((a, b) => b.date.localeCompare(a.date))[0];
+               const oldestW = measureStore.history.slice().sort((a, b) => a.date.localeCompare(b.date))[0];
+               const weightDelta = (latestW && oldestW && latestW !== oldestW)
+                 ? latestW.weight - oldestW.weight : null;
+
+               // Sessions efficiency: sessions per week this month
+               const sessionsPerWeek = (workoutDays / 30) * 7;
+
+               return (
+                 <div className="space-y-6">
+                   <span className="text-[8px] font-black text-awan-tx-mute tracking-[0.3em] uppercase block">CORRÉLATIONS INTER-MODULES · 30 JOURS</span>
+
+                   {/* Sport ↔ Poids timeline */}
+                   <Card className="p-5 bg-white/5 border-white/5" variant="flat">
+                     <span className="awan-label text-awan-gold mb-4 block">SPORT × POIDS</span>
+                     <div className="flex flex-row gap-0.5 h-16 items-end mb-2">
+                       {last30.map((d, i) => (
+                         <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+                           {d.weight && avgWeight ? (
+                             <div
+                               className="w-full"
+                               style={{
+                                 height: `${Math.max(4, Math.min(48, ((d.weight / avgWeight) * 32)))}px`,
+                                 backgroundColor: d.hasWorkout ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.12)',
+                               }}
+                             />
+                           ) : (
+                             <div className="w-full h-1" style={{ backgroundColor: d.hasWorkout ? 'var(--color-awan-gold)' : 'transparent' }} />
+                           )}
+                         </div>
+                       ))}
+                     </div>
+                     <div className="flex flex-row gap-4 mt-3">
+                       <div className="flex flex-row items-center gap-1.5">
+                         <div className="w-3 h-3" style={{ backgroundColor: 'var(--color-awan-gold)' }} />
+                         <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest">Séance</span>
+                       </div>
+                       <div className="flex flex-row items-center gap-1.5">
+                         <div className="w-3 h-3 bg-white/12" />
+                         <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest">Repos</span>
+                       </div>
+                     </div>
+                   </Card>
+
+                   {/* Metrics grid */}
+                   <div className="grid grid-cols-2 gap-3">
+                     <Card className="p-5 bg-white/5 border-white/5" variant="flat">
+                       <span className="awan-label text-awan-tx-mute mb-2 block">FRÉQUENCE</span>
+                       <span className="text-3xl font-black text-awan-gold font-mono">{sessionsPerWeek.toFixed(1)}</span>
+                       <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">séances/sem · 30j</span>
+                     </Card>
+                     <Card className="p-5 bg-white/5 border-white/5" variant="flat">
+                       <span className="awan-label text-awan-tx-mute mb-2 block">POIDS · DELTA</span>
+                       <span className={`text-3xl font-black font-mono ${weightDelta == null ? 'text-awan-tx-mute' : weightDelta < 0 ? 'text-awan-status-ok' : weightDelta > 0 ? 'text-awan-status-warn' : 'text-awan-tx'}`}>
+                         {weightDelta != null ? `${weightDelta > 0 ? '+' : ''}${weightDelta.toFixed(1)}` : '—'}
+                       </span>
+                       <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">kg · total historique</span>
+                     </Card>
+                     <Card className="p-5 bg-white/5 border-white/5" variant="flat">
+                       <span className="awan-label text-awan-tx-mute mb-2 block">JOURS SPORT</span>
+                       <span className="text-3xl font-black text-awan-tx font-mono">{workoutDays}<span className="text-sm ml-1 opacity-50">/30</span></span>
+                       <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">jours actifs</span>
+                     </Card>
+                     <Card className="p-5 bg-white/5 border-white/5" variant="flat">
+                       <span className="awan-label text-awan-tx-mute mb-2 block">KCAL JOUR</span>
+                       <span className="text-3xl font-black text-awan-tx font-mono">{mealStoreToday.totals.kcal || '—'}</span>
+                       <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">aujourd'hui</span>
+                     </Card>
+                   </div>
+
+                   {/* Insights */}
+                   <Card className="p-5 bg-awan-gold/5 border-awan-gold/20" variant="flat">
+                     <span className="awan-label text-awan-gold mb-3 block">INSIGHTS</span>
+                     <div className="space-y-2">
+                       {sessionsPerWeek < 2 && (
+                         <span className="text-[10px] text-awan-tx-dim block">· Fréquence en dessous des recommandations OMS (150 min/sem)</span>
+                       )}
+                       {sessionsPerWeek >= 4 && (
+                         <span className="text-[10px] text-awan-status-ok block">· Excellente fréquence d'entraînement</span>
+                       )}
+                       {weightDelta != null && weightDelta < -2 && sessionsPerWeek > 2 && (
+                         <span className="text-[10px] text-awan-status-warn block">· Perte de poids rapide avec entraînement intensif — vérifier l'apport protéique</span>
+                       )}
+                       {weightDelta != null && weightDelta > 2 && sessionsPerWeek < 2 && (
+                         <span className="text-[10px] text-awan-status-warn block">· Prise de masse sans entraînement suffisant — augmenter la fréquence</span>
+                       )}
+                       {sessionsPerWeek >= 2 && weightDelta != null && Math.abs(weightDelta) <= 1 && (
+                         <span className="text-[10px] text-awan-status-ok block">· Équilibre sport/poids stable — maintien de la composition corporelle</span>
+                       )}
+                       {workoutDays === 0 && weightPoints.length === 0 && (
+                         <span className="text-[10px] text-awan-tx-mute block">· Pas de données suffisantes — continuez à enregistrer vos séances et mesures</span>
+                       )}
+                     </div>
+                   </Card>
+                 </div>
+               );
+             })()}
            </motion.div>
         </AnimatePresence>
       </ScrollView>

@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "id": "sport.insufficient_frequency",
+  "domain": "sport",
+  "name": "Fréquence insuffisante — moins de 2 séances/semaine (OMS)",
+  "signals": [
+    { "type": "count", "source": "sport.workoutLog", "window": { "days": 21 } }
+  ],
+  "condition": { "op": "lt", "value": 6 },
+  "signalIndex": 0,
+  "severity": "warn",
+  "adviceKey": "coach.sport.insufficient_frequency",
+  "enabled": true
+}
