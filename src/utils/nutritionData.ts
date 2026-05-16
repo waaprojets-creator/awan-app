@@ -5,6 +5,7 @@ export interface FoodEntry {
   p: number;       // protéines
   c: number;       // glucides
   f: number;       // lipides
+  fiberG?: number;
   halal: boolean;
   barcode?: string | undefined;
 }

@@ -183,7 +183,17 @@ export default function MensurationScreen() {
   }, [measureStore.loading, selectedDate]);
 
   const persistEntry = (entry: typeof blankEntry) => {
-    measureStore.save({ v: 1, id: uid(), savedAt: Date.now(), ...entry, date: selectedDate });
+    const profileRaw = safeStorage.get('awan.nutrition.profile');
+    const profileHeight = profileRaw ? (() => { try { return (JSON.parse(profileRaw) as any)?.heightCm as number | undefined; } catch { return undefined; } })() : undefined;
+    const waist = entry.measurements?.['waist'];
+    const hip = entry.measurements?.['hip'];
+    const whtr = waist && profileHeight ? waist / profileHeight : undefined;
+    const whr = waist && hip ? waist / hip : undefined;
+    measureStore.save({
+      v: 1, id: uid(), savedAt: Date.now(), ...entry, date: selectedDate,
+      ...(whtr !== undefined ? { whtr } : {}),
+      ...(whr !== undefined ? { whr } : {}),
+    });
   };
 
   const handleAddEntry = () => {
@@ -294,7 +304,7 @@ export default function MensurationScreen() {
                 value={currentEntry.bpm_rest?.toString()} 
                 onChangeText={updateBpm}
                 placeholder="00"
-                placeholderTextColor="rgba(255,255,255,0.1)"
+                placeholderTextColor="rgba(128,128,128,0.5)"
               />
                <span className="text-[10px] font-bold text-awan-tx-mute font-mono">BPM</span>
             </div>
@@ -411,7 +421,7 @@ export default function MensurationScreen() {
                     value={targetWeightKg}
                     onChangeText={setTargetWeightKg}
                     placeholder="00.0"
-                    placeholderTextColor="rgba(255,255,255,0.1)"
+                    placeholderTextColor="rgba(128,128,128,0.5)"
                   />
                   <span className="text-[10px] font-bold text-awan-tx-mute font-mono">KG</span>
                 </div>
@@ -425,7 +435,7 @@ export default function MensurationScreen() {
                     value={targetBodyFatPct}
                     onChangeText={setTargetBodyFatPct}
                     placeholder="00.0"
-                    placeholderTextColor="rgba(255,255,255,0.1)"
+                    placeholderTextColor="rgba(128,128,128,0.5)"
                   />
                   <span className="text-[10px] font-bold text-awan-tx-mute font-mono">%</span>
                 </div>

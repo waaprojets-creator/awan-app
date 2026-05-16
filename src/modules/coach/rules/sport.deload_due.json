@@ -2,11 +2,11 @@
   "v": 1,
   "id": "sport.deload_due",
   "domain": "sport",
-  "name": "Décharge requise — semaine mésocycle ≥ 6",
+  "name": "Décharge requise — charge élevée sur 6 semaines",
   "signals": [
-    { "type": "last", "source": "periodization.state", "field": "mesoWeek" }
+    { "type": "count", "source": "sport.session", "window": { "days": 42 } }
   ],
-  "condition": { "op": "gte", "value": 6 },
+  "condition": { "op": "gte", "value": 18 },
   "signalIndex": 0,
   "severity": "warn",
   "adviceKey": "coach.sport.deload_due",

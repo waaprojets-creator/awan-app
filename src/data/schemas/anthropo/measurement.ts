@@ -13,6 +13,8 @@ export const MeasurementV1Schema = z.object({
   measurements: z.record(z.string(), z.number()),
   skinfolds: z.record(z.string(), z.number()),
   savedAt: TimestampSchema,
+  whtr: z.number().nonnegative().optional(),
+  whr:  z.number().nonnegative().optional(),
 });
 
 export type MeasurementV1 = z.infer<typeof MeasurementV1Schema>;

@@ -39,6 +39,7 @@ import { Touch } from '../components/ui/Touch';
 import { useWorkoutStore } from '../hooks/useWorkoutStore';
 import { sessionsThisWeek } from '../hooks/useAwanScore';
 import { WorkoutService } from '../services/workoutService';
+import { VOLUME_LANDMARKS } from '../constants/volumeLandmarks';
 import { PeriodizationService } from '../services/periodizationService';
 import {
  DEFAULT_PLANNED_SETS,
@@ -125,6 +126,40 @@ async function notifyRestEnd() {
  osc.start(); osc.stop(ctx.currentTime + 0.4);
  } catch { /* silent */ }
  }
+}
+
+function VolumeWeekSection({ sessions }: { sessions: WorkoutSessionLatest[] }) {
+  const weekStart = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - d.getDay());
+    d.setHours(0, 0, 0, 0);
+    return d;
+  })();
+  const vol = WorkoutService.getWeeklyVolumeByMuscle(sessions, weekStart);
+  const entries = Object.entries(VOLUME_LANDMARKS).filter(([k]) => (vol[k] ?? 0) > 0 || true).slice(0, 6);
+  if (entries.every(([k]) => (vol[k] ?? 0) === 0)) return null;
+  return (
+    <div className="mb-6">
+      <span className="awan-label text-awan-tx-mute mb-3 block">VOLUME SEMAINE</span>
+      <div className="flex flex-col gap-2">
+        {entries.map(([muscle, lm]) => {
+          const sets = vol[muscle] ?? 0;
+          if (sets === 0) return null;
+          const pct = Math.min(100, (sets / lm.mrv) * 100);
+          const barColor = sets < lm.mev ? 'var(--color-awan-status-error)' : sets <= lm.mav[1] ? 'var(--color-awan-status-ok)' : sets >= lm.mrv * 0.8 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-ok)';
+          return (
+            <div key={muscle} className="flex flex-row items-center gap-3">
+              <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest w-20 shrink-0">{lm.label}</span>
+              <div className="flex-1 h-[3px] bg-white/5 relative">
+                <div className="absolute inset-y-0 left-0" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+              </div>
+              <span className="text-[10px] font-bold font-mono" style={{ color: barColor, minWidth: 32, textAlign: 'right' }}>{sets}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export default function SportScreen() {
@@ -316,6 +351,16 @@ export default function SportScreen() {
 
  workoutStore.saveSession(session);
 
+ // Advance meso week if current date is past the next week boundary
+ (() => {
+   const p = PeriodizationService.getOrInit();
+   const weekBoundary = new Date(p.startDate);
+   weekBoundary.setDate(weekBoundary.getDate() + p.mesoWeek * 7);
+   if (new Date() >= weekBoundary) {
+     PeriodizationService.advanceWeek();
+   }
+ })();
+
  const workingCount = exercisesLog.reduce(
  (acc, ex) => acc + ex.sets.filter(s => s.kind === 'working').length,
  0,
@@ -366,7 +411,7 @@ export default function SportScreen() {
                  fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700,
                  background: recoveryScore === n ? 'var(--color-awan-gold)' : 'var(--color-awan-surface)',
                  color: recoveryScore === n ? '#000' : 'var(--color-awan-tx)',
-                 border: recoveryScore === n ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                 border: recoveryScore === n ? 'none' : '1px solid rgba(128,128,128,0.25)',
                  cursor: 'pointer',
                }}
              >
@@ -384,6 +429,7 @@ export default function SportScreen() {
            onPress={async () => {
              if (!pendingRoutine) return;
              await startWorkout(pendingRoutine.routine, pendingRoutine.opts);
+             setPendingRoutine(null);
              // Store recovery score to be saved in session via handleSessionUpdate
              if (recoveryScore !== null) {
                handleSessionUpdate(s => ({ ...s, recoveryScore }));
@@ -395,7 +441,7 @@ export default function SportScreen() {
              {recoveryScore !== null ? `DÉMARRER — RÉCUP ${recoveryScore}/10` : 'DÉMARRER SANS NOTER'}
            </span>
          </Touch>
-         <Touch onPress={() => { setPendingRoutine(null); setView('list'); }} className="p-4 items-center border border-white/10">
+         <Touch onPress={() => { setPendingRoutine(null); setView('list'); }} className="p-4 items-center" style={{ border: '1px solid rgba(128,128,128,0.25)' }}>
            <span className="text-[10px] font-bold text-awan-tx-mute uppercase tracking-widest">ANNULER</span>
          </Touch>
        </div>
@@ -552,6 +598,8 @@ export default function SportScreen() {
  );
  })()}
  </div>
+
+ <VolumeWeekSection sessions={workoutStore.sessions as WorkoutSessionLatest[]} />
 
  {nextRoutine && (
  <Card className="p-6 bg-awan-gold/5 border-awan-gold/20 mb-6" onPress={() => { setPendingRoutine({ routine: nextRoutine }); setRecoveryScore(null); setView('recovery'); }}>

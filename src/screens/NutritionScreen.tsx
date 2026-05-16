@@ -143,15 +143,16 @@ function formatDayLabel(date: string): string {
 }
 
 function calcMacros(
- food: { kcal: number; p: number; c: number; f: number },
+ food: { kcal: number; p: number; c: number; f: number; fiberG?: number },
  grams: number,
-): { kcal: number; p: number; c: number; f: number } {
+): { kcal: number; p: number; c: number; f: number; fiberG?: number } {
  const ratio = grams / 100;
  return {
  kcal: Math.round(food.kcal * ratio),
  p: Math.round(food.p * ratio * 10) / 10,
  c: Math.round(food.c * ratio * 10) / 10,
  f: Math.round(food.f * ratio * 10) / 10,
+ ...(food.fiberG !== undefined ? { fiberG: Math.round(food.fiberG * ratio * 10) / 10 } : {}),
  };
 }
 
@@ -952,6 +953,7 @@ export default function NutritionScreen() {
  p: macros.p,
  c: macros.c,
  f: macros.f,
+ ...(macros.fiberG !== undefined ? { fiberG: macros.fiberG } : {}),
  timestamp: now,
  source: 'db',
  meal: selectedMeal,
