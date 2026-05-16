@@ -1,17 +1,25 @@
 import type { IStorage, ITransaction, ParseFn } from './IStorage';
 
-const DB_NAME = 'awan-kv';
 const STORE_NAME = 'kv';
 const DB_VERSION = 1;
 
-function openDB(): Promise<IDBDatabase> {
+function openDB(dbName: string): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    const req = indexedDB.open(dbName, DB_VERSION);
     req.onupgradeneeded = () => {
       req.result.createObjectStore(STORE_NAME);
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
+  });
+}
+
+export function deleteIndexedDB(dbName: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.deleteDatabase(dbName);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+    req.onblocked = () => resolve();
   });
 }
 
@@ -23,7 +31,11 @@ function idbRequest<T>(req: IDBRequest<T>): Promise<T> {
 }
 
 export class IndexedDBStorage implements IStorage {
-  private readonly dbPromise: Promise<IDBDatabase> = openDB();
+  private readonly dbPromise: Promise<IDBDatabase>;
+
+  constructor(dbName: string = 'awan-kv') {
+    this.dbPromise = openDB(dbName);
+  }
 
   private async store(mode: IDBTransactionMode): Promise<IDBObjectStore> {
     const db = await this.dbPromise;

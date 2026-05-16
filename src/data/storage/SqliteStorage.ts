@@ -1,7 +1,6 @@
 import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite';
 import type { IStorage, ITransaction, ParseFn } from './IStorage';
 
-const DB_NAME = 'awan';
 const DB_VERSION = 1;
 
 const CREATE_TABLES = `
@@ -11,24 +10,37 @@ const CREATE_TABLES = `
   );
 `;
 
+export interface SqliteStorageConfig {
+  dbName?: string;
+  encrypted?: boolean;
+}
+
 export class SqliteStorage implements IStorage {
   private db: SQLiteDBConnection | null = null;
   private readonly conn = new SQLiteConnection(CapacitorSQLite);
+  private readonly dbName: string;
+  private readonly encrypted: boolean;
+
+  constructor(config: SqliteStorageConfig = {}) {
+    this.dbName = config.dbName ?? 'awan';
+    this.encrypted = config.encrypted ?? false;
+  }
 
   async open(): Promise<void> {
-    const ret = await this.conn.checkConnectionsConsistency();
-    const isConn = (await this.conn.isConnection(DB_NAME, false)).result ?? false;
+    await this.conn.checkConnectionsConsistency();
+    const isConn = (await this.conn.isConnection(this.dbName, this.encrypted)).result ?? false;
+    const mode = this.encrypted ? 'secret' : 'no-encryption';
 
     this.db = isConn
-      ? await this.conn.retrieveConnection(DB_NAME, false)
-      : await this.conn.createConnection(DB_NAME, false, 'no-encryption', DB_VERSION, false);
+      ? await this.conn.retrieveConnection(this.dbName, this.encrypted)
+      : await this.conn.createConnection(this.dbName, this.encrypted, mode, DB_VERSION, false);
 
     await this.db.open();
     await this.db.execute(CREATE_TABLES);
   }
 
   async close(): Promise<void> {
-    await this.conn.closeConnection(DB_NAME, false);
+    await this.conn.closeConnection(this.dbName, this.encrypted);
     this.db = null;
   }
 
