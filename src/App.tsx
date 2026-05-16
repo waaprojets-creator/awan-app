@@ -9,6 +9,7 @@ import MainLayout from '@/components/MainLayout';
 import { importFromJson } from '@/utils/importJson';
 import { Coach } from '@/modules/coach/api';
 import { LocalStorageAdapter } from '@/modules/coach/localStorageAdapter';
+import { safeStorage } from '@/utils/safeStorage';
 
 const SEED_FLAG = 'awan.seed.loaded';
 const COACH_RUN_KEY = 'awan.coach.lastRun';
@@ -16,23 +17,23 @@ const COACH_RUN_KEY = 'awan.coach.lastRun';
 async function runCoachIfNeeded() {
   try {
     const today = new Date().toISOString().slice(0, 10);
-    if (localStorage.getItem(COACH_RUN_KEY) === today) return;
+    if (safeStorage.get(COACH_RUN_KEY) === today) return;
     const coach = new Coach({ storage: new LocalStorageAdapter() });
     coach.subscribe();
     await coach.runAll(today);
-    localStorage.setItem(COACH_RUN_KEY, today);
+    safeStorage.set(COACH_RUN_KEY, today);
   } catch { /* silencieux — ne bloque pas l'app */ }
 }
 
 async function autoLoadSeed() {
   try {
-    if (localStorage.getItem(SEED_FLAG)) return;
+    if (safeStorage.get(SEED_FLAG)) return;
     const res = await fetch('/data/seed-demo.json');
     if (!res.ok) return;
     const text = await res.text();
     const result = await importFromJson(text);
     if (result.success) {
-      localStorage.setItem(SEED_FLAG, '1');
+      safeStorage.set(SEED_FLAG, '1');
       window.location.reload(); // réinitialise tous les stores avec les données
     }
   } catch { /* silencieux */ }

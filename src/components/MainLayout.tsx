@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import React, { Component, lazy, Suspense } from 'react';
+import { ActivityIndicator } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 import { Switch, Route, useLocation } from 'wouter';
 import { AnimatePresence, motion } from 'motion/react';
@@ -8,19 +9,22 @@ import AppHeader from './AppHeader';
 import BottomNav from './BottomNav';
 import { useAndroidBack } from '../hooks/useAndroidBack';
 
-import DashboardScreen   from '../screens/DashboardScreen';
-import PlanningScreen    from '../screens/PlanningScreen';
-import TrajetScreen      from '../screens/TrajetScreen';
-import SanteScreen       from '../screens/SanteScreen';
-import SettingsScreen    from '../screens/SettingsScreen';
-import TasksScreen       from '../screens/TasksScreen';
-import AnalyseScreen     from '../screens/AnalyseScreen';
-import IslamScreen       from '../screens/IslamScreen';
-import SportScreen       from '../screens/SportScreen';
-import MensurationScreen from '../screens/MensurationScreen';
-import NutritionScreen   from '../screens/NutritionScreen';
-import JournalScreen     from '../screens/JournalScreen';
-import CoachScreen       from '../screens/CoachScreen';
+// Niveau 1 — toujours chargés (Dashboard = écran d'accueil, SanteScreen = hub)
+import DashboardScreen from '../screens/DashboardScreen';
+import SanteScreen     from '../screens/SanteScreen';
+
+// Niveau 2+ — chargés à la première navigation vers l'écran
+const PlanningScreen    = lazy(() => import('../screens/PlanningScreen'));
+const TrajetScreen      = lazy(() => import('../screens/TrajetScreen'));
+const SettingsScreen    = lazy(() => import('../screens/SettingsScreen'));
+const TasksScreen       = lazy(() => import('../screens/TasksScreen'));
+const AnalyseScreen     = lazy(() => import('../screens/AnalyseScreen'));
+const IslamScreen       = lazy(() => import('../screens/IslamScreen'));
+const SportScreen       = lazy(() => import('../screens/SportScreen'));
+const MensurationScreen = lazy(() => import('../screens/MensurationScreen'));
+const NutritionScreen   = lazy(() => import('../screens/NutritionScreen'));
+const JournalScreen     = lazy(() => import('../screens/JournalScreen'));
+const CoachScreen       = lazy(() => import('../screens/CoachScreen'));
 
 type ErrorState = { error: Error | null };
 
@@ -106,6 +110,11 @@ export default function MainLayout() {
       <AppHeader currentRoute={currentRoute} onNavigate={navigate} />
       <View style={s.body}>
         <ScreenErrorBoundary key={location}>
+          <Suspense fallback={
+            <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: 'var(--color-awan-bg)' }}>
+              <ActivityIndicator size="small" color="var(--color-awan-gold)" />
+            </div>
+          }>
           <AnimatePresence mode="wait">
             <Switch key={location}>
               <Route path="/">{wrap(DashboardScreen)}</Route>
@@ -126,6 +135,7 @@ export default function MainLayout() {
               <Route>{wrap(DashboardScreen)}</Route>
             </Switch>
           </AnimatePresence>
+          </Suspense>
         </ScreenErrorBoundary>
       </View>
       <ScreenErrorBoundary>

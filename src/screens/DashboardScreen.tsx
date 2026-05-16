@@ -1,7 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ScrollView, TextInput as RNTextInput } from 'react-native';
 import { Upload, X } from 'lucide-react';
 import { getAdviceText } from '../constants/coachAdvice';
+import { DEFAULT_KCAL_TARGET } from '../constants/app';
+import { safeStorage } from '../utils/safeStorage';
 import { L, DATE_FORMAT_BANNER, TRANSPORT_OPTIONS } from '../constants/labels';
 import { TRANSPORT_ICONS } from '../constants/icons';
 import { ds } from '../utils/storage';
@@ -16,6 +18,7 @@ import { useMeasurementStore } from '../hooks/useMeasurementStore';
 import { useWorkoutStore } from '../hooks/useWorkoutStore';
 import { usePrayerStore } from '../hooks/usePrayerStore';
 import { useAwanScore, sessionsThisWeek } from '../hooks/useAwanScore';
+import { WorkoutService } from '../services/workoutService';
 import { useHealthScore } from '../hooks/useHealthScore';
 import { useTemporalMode } from '../hooks/useTemporalMode';
 import { useCoach } from '../hooks/useCoach';
@@ -26,7 +29,7 @@ import type { NavProps } from '../types/nav';
 import arabicData from '../assets/data/1.json';
 import { useToast } from '../components/ui/Toast';
 
-const KCAL_TARGET_DEFAULT = 2000;
+const KCAL_TARGET_DEFAULT = DEFAULT_KCAL_TARGET;
 const TextInput = RNTextInput as React.ComponentType<any>;
 
 const dash = (L as any).dash as any;
@@ -76,7 +79,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
   );
 
   const kcalTargetScore = useMemo(() => {
-    try { const p = JSON.parse(localStorage.getItem('awan.nutrition.profile') ?? '{}'); return typeof p.targetKcal === 'number' ? p.targetKcal : KCAL_TARGET_DEFAULT; }
+    try { const p = JSON.parse(safeStorage.get('awan.nutrition.profile') ?? '{}'); return typeof p.targetKcal === 'number' ? p.targetKcal : KCAL_TARGET_DEFAULT; }
     catch { return KCAL_TARGET_DEFAULT; }
   }, []);
 
@@ -114,11 +117,19 @@ export default function DashboardScreen({ navigate }: NavProps) {
   const latestMeasure = measureStore.history.slice().sort((a, b) => a.date.localeCompare(b.date)).at(-1);
   const lastSession   = workoutStore.sessions.at(-1);
 
+  const [nextRoutine, setNextRoutine] = useState<{ id: string; name: string; cycleLetter: string | null } | null>(null);
+  useEffect(() => {
+    void WorkoutService.computeNextRoutine(
+      workoutStore.routines as Parameters<typeof WorkoutService.computeNextRoutine>[0],
+      workoutStore.sessions as Parameters<typeof WorkoutService.computeNextRoutine>[1],
+    ).then(r => setNextRoutine(r ? { id: r.id, name: r.name, cycleLetter: r.cycleLetter ?? null } : null));
+  }, [workoutStore.routines, workoutStore.sessions]);
+
   const dateLabel = new Date().toLocaleDateString('fr-FR', DATE_FORMAT_BANNER as Intl.DateTimeFormatOptions);
 
   // Weekly retrospective computations
   const kcalTarget = useMemo(() => {
-    try { const p = JSON.parse(localStorage.getItem('awan.nutrition.profile') ?? '{}'); return p.targetKcal ?? KCAL_TARGET_DEFAULT; }
+    try { const p = JSON.parse(safeStorage.get('awan.nutrition.profile') ?? '{}'); return p.targetKcal ?? KCAL_TARGET_DEFAULT; }
     catch { return KCAL_TARGET_DEFAULT; }
   }, []);
 
@@ -330,6 +341,24 @@ export default function DashboardScreen({ navigate }: NavProps) {
         <InstrumentCard label={dash.biometrics ?? 'POIDS'} value={latestMeasure?.weight ?? '—'} unit={latestMeasure ? 'kg' : ''} status={latestMeasure ? 'ok' : 'mute'} index={5} onPress={() => navigate('Mensuration')} />
         <InstrumentCard label={dash.sport?.last ?? 'SÉANCE'} value={lastSession?.name ? lastSession.name.slice(0, 8).toUpperCase() : '—'} status={lastSession ? 'spirit' : 'mute'} index={6} onPress={() => navigate('Sport')} />
       </div>
+
+      {/* Prochaine séance enregistrée — Niveau 2.b */}
+      {nextRoutine && (
+        <Touch onPress={() => navigate('Sport')} className="block w-full text-left mb-4">
+          <div className="p-4 border flex flex-row items-center justify-between"
+            style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'rgba(212,175,55,0.15)' }}>
+            <div className="flex flex-col gap-0.5">
+              <span className="uppercase" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+                PROCHAIN{nextRoutine.cycleLetter ? ` · ${nextRoutine.cycleLetter}` : ''}
+              </span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.05em' }}>
+                {nextRoutine.name.toUpperCase()}
+              </span>
+            </div>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', color: 'var(--color-awan-gold)' }}>▶</span>
+          </div>
+        </Touch>
+      )}
 
       {/* Macros */}
       {mealStore.totals.kcal > 0 && (

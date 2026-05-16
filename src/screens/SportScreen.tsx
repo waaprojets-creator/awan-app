@@ -139,12 +139,11 @@ export default function SportScreen() {
  const [draftToResume, setDraftToResume] = useState<RoutineDraft | null>(null);
  const [timer, setTimer] = useState(0);
  const timerRef = useRef<any>(null);
+ const prevSessionVolumeRef = useRef<number | null>(null);
 
  const today = ds(new Date());
 
- useEffect(() => {
- loadExerciseCatalog();
- }, []);
+ // Catalogue chargé à la demande (B.3) — pas au mount
 
  useEffect(() => {
  try {
@@ -207,6 +206,14 @@ export default function SportScreen() {
 
  const startWorkout = useCallback(async (routine: RoutineLatest, opts?: { isException?: boolean }) => {
  const lastSession = await WorkoutService.getLastSessionByRoutine(routine.id);
+ // Stocker le volume de la session précédente pour le delta post-séance
+ if (lastSession) {
+ const prevVol = lastSession.exercises.flatMap(e => e.sets.filter(s => s.kind === 'working'))
+ .reduce((acc, s) => acc + (s.weightKg ?? 0) * (s.reps ?? 0), 0);
+ prevSessionVolumeRef.current = prevVol;
+ } else {
+ prevSessionVolumeRef.current = null;
+ }
  const now = Date.now();
  const exercises: ActiveExercise[] = routine.exercises.map((re, idx) => {
  const lastExerciseLog = lastSession?.exercises.find(e => e.rid === re.rid);
@@ -365,6 +372,7 @@ export default function SportScreen() {
  return (
  <FinishWorkout
  session={activeSession}
+ prevVolume={prevSessionVolumeRef.current}
  onSave={handleFinishWorkout}
  onCancel={() => setView('active')}
  />
@@ -819,7 +827,7 @@ function RoutineEditor({
  </StaggerList>
  <Touch
  className="mt-4 h-14 bg-white/5 border border-dashed border-awan-gold/40 flex items-center justify-center"
- onPress={() => setIsPicking(true)}
+ onPress={() => { void loadExerciseCatalog().then(() => setIsPicking(true)); }}
  >
  <div className="flex flex-row items-center gap-3">
  <Plus size={18} className="text-awan-gold" />
@@ -1522,10 +1530,12 @@ function PreWorkout({
 
 function FinishWorkout({
  session,
+ prevVolume,
  onSave,
  onCancel,
 }: {
  session: ActiveSession;
+ prevVolume: number | null;
  onSave: (summary: SessionSummary) => void;
  onCancel: () => void;
 }) {
@@ -1561,6 +1571,15 @@ function FinishWorkout({
  <Card className="p-4 bg-white/5">
  <span className="awan-label mb-1 block">VOLUME (kg)</span>
  <span className="text-2xl font-mono font-bold text-awan-gold">{Math.round(stats.volume)}</span>
+ {prevVolume !== null && (
+ <span className="font-mono text-[10px] mt-1 block" style={{
+ color: stats.volume >= prevVolume
+ ? 'var(--color-awan-status-ok)'
+ : 'var(--color-awan-status-error)'
+ }}>
+ {stats.volume >= prevVolume ? '▲' : '▼'} {Math.abs(Math.round(stats.volume - prevVolume))} kg vs S-1
+ </span>
+ )}
  </Card>
  </div>
 

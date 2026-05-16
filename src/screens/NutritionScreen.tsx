@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import {
  View,
  ScrollView,
@@ -38,6 +38,7 @@ import {
  recordRecentFood,
  type FoodEntry,
 } from '../utils/nutritionData';
+import { safeStorage } from '../utils/safeStorage';
 import type {
  MealEntryLatest,
  MealType,
@@ -99,7 +100,7 @@ function computeProfile(
 
 function loadProfile(): NutritionProfile | null {
  try {
- const raw = localStorage.getItem(PROFILE_KEY);
+ const raw = safeStorage.get(PROFILE_KEY);
  if (!raw) return null;
  return JSON.parse(raw) as NutritionProfile;
  } catch {
@@ -108,7 +109,7 @@ function loadProfile(): NutritionProfile | null {
 }
 
 function saveProfile(p: NutritionProfile): void {
- localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+ safeStorage.set(PROFILE_KEY, JSON.stringify(p));
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -887,6 +888,7 @@ export default function NutritionScreen() {
  const mealStore = useMealStore(selectedDate);
 
  const [foodsReady, setFoodsReady] = useState(false);
+ const foodsLoadedRef = useRef(false);
  const [profile, setProfile] = useState<NutritionProfile | null>(() =>
  loadProfile(),
  );
@@ -894,10 +896,13 @@ export default function NutritionScreen() {
  const [showAdd, setShowAdd] = useState(false);
  const [editEntry, setEditEntry] = useState<MealEntryLatest | null>(null);
 
- useEffect(() => {
- loadFoodDatabase()
- .then(() => setFoodsReady(true))
- .catch(() => setFoodsReady(true));
+ const openAddMeal = useCallback(async () => {
+ if (!foodsLoadedRef.current) {
+ await loadFoodDatabase().catch(() => {});
+ foodsLoadedRef.current = true;
+ setFoodsReady(true);
+ }
+ setShowAdd(true);
  }, []);
 
  // Skip onboarding if seed data exists — initialize default profile (179cm, 22/09/1996, 82kg)
@@ -1271,7 +1276,7 @@ export default function NutritionScreen() {
  {/* Add Button */}
  <div className="px-6 mb-10">
  <Touch
- onPress={() => setShowAdd(true)}
+ onPress={() => void openAddMeal()}
  className="h-14 bg-awan-gold flex items-center justify-center shadow-lg shadow-awan-gold/10"
  >
  <div className="flex flex-row items-center gap-3">

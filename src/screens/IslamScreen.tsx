@@ -6,6 +6,7 @@ import { SpiritualService } from '../utils/spiritualService';
 import arabicData from '../assets/data/1.json';
 import { PageWrapper } from '../components/Animated';
 import { ds } from '../utils/storage';
+import { safeStorage } from '../utils/safeStorage';
 import { useAppState } from '../context/AppStateContext';
 import { usePrayerStore } from '../hooks/usePrayerStore';
 import { useQuranStore } from '../hooks/useQuranStore';
@@ -225,14 +226,14 @@ export default function IslamScreen() {
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
         const { latitude: lat, longitude: lon } = coords;
-        localStorage.setItem('awan.user.location', JSON.stringify({ lat, lon }));
+        safeStorage.set('awan.user.location', JSON.stringify({ lat, lon }));
         setQiblaAngle(SpiritualService.getQiblaAngle(lat, lon));
         setPrayerTimesForDate(SpiritualService.getPrayerTimes(lat, lon));
         setLocationStatus('ok');
       },
       () => {
         setQiblaAngle(SpiritualService.getQiblaAngle());
-        setLocationStatus(localStorage.getItem('awan.user.location') ? 'cached' : 'denied');
+        setLocationStatus(safeStorage.get('awan.user.location') ? 'cached' : 'denied');
       },
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 3_600_000 },
     );

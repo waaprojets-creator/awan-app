@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ds } from '@/utils/storage';
+import { DEFAULT_KCAL_TARGET } from '@/constants/app';
+import { safeStorage } from '@/utils/safeStorage';
 import { MealService } from '@/services/mealService';
 import { useWorkoutStore } from './useWorkoutStore';
 import { useMeasurementStore } from './useMeasurementStore';
@@ -29,12 +31,12 @@ export interface HealthScore {
 function readTargetKcal(): number {
   try {
     const raw = typeof localStorage !== 'undefined'
-      ? localStorage.getItem('awan.nutrition.profile')
+      ? safeStorage.get('awan.nutrition.profile')
       : null;
     const profile = JSON.parse(raw ?? '{}') as { targetKcal?: unknown };
-    return typeof profile.targetKcal === 'number' ? profile.targetKcal : 2000;
+    return typeof profile.targetKcal === 'number' ? profile.targetKcal : DEFAULT_KCAL_TARGET;
   } catch {
-    return 2000;
+    return DEFAULT_KCAL_TARGET;
   }
 }
 

@@ -46,7 +46,7 @@ export const NutritionService = {
     return Math.round(bmr * multiplier);
   },
 
-  calculateTargetMacros(tdee = 2000, goal = 'maintain', weight = 70): {
+  calculateTargetMacros(tdee = 2_000, goal = 'maintain', weight = 70): {
     kcal: number; p: number; c: number; f: number
   } {
     let targetKcal = tdee;
