@@ -12,18 +12,17 @@ const passthrough = (raw: unknown) => z.record(z.unknown()).parse(raw);
 const resolver = () => passthrough;
 
 describe('rulesLoader', () => {
-  it('loads 5 bundled rules through the migrator', () => {
+  it('loads all bundled rules through the migrator', () => {
     const rules = loadDefaultRules();
-    expect(rules).toHaveLength(5);
+    expect(rules).toHaveLength(22);
     for (const r of rules) expect(r.v).toBe(1);
-    const ids = rules.map((r) => r.id).sort();
-    expect(ids).toEqual([
-      'anthropo.weight_gain_trend',
-      'cross.sleep_workout',
-      'nutrition.protein_low',
-      'sleep.short_avg',
-      'sport.no_workout_7d',
-    ]);
+    const ids = rules.map((r) => r.id);
+    expect(ids).toContain('sport.no_workout_7d');
+    expect(ids).toContain('sport.low_recovery');
+    expect(ids).toContain('sport.deload_due');
+    expect(ids).toContain('nutrition.fat_low');
+    expect(ids).toContain('anthropo.wht_elevated');
+    expect(ids).toContain('cross.sleep_workout');
   });
 });
 
@@ -74,6 +73,37 @@ describe('Coach.run — sport.no_workout_7d', () => {
   });
 });
 
+describe('Coach.run — sport.low_recovery', () => {
+  let storage: MemoryStorage;
+  let coach: Coach;
+
+  beforeEach(() => {
+    storage = new MemoryStorage();
+    coach = new Coach({ storage, resolveSource: resolver });
+    eventBus.clear();
+  });
+
+  it('triggers when latest recoveryScore < 6', async () => {
+    await storage.set('sport.session.1', {
+      date: '2026-05-10', recoveryScore: 4,
+    });
+    const a = await coach.run('sport', '2026-05-10');
+    const r = a.ruleResults.find((x) => x.ruleId === 'sport.low_recovery');
+    expect(r?.triggered).toBe(true);
+    expect(r?.signalValue).toBe(4);
+  });
+
+  it('does not trigger when recoveryScore >= 6', async () => {
+    await storage.set('sport.session.1', {
+      date: '2026-05-10', recoveryScore: 8,
+    });
+    const a = await coach.run('sport', '2026-05-10');
+    const r = a.ruleResults.find((x) => x.ruleId === 'sport.low_recovery');
+    expect(r?.triggered).toBe(false);
+    expect(r?.signalValue).toBe(8);
+  });
+});
+
 describe('Coach.run — nutrition.protein_low', () => {
   let storage: MemoryStorage;
   let coach: Coach;
@@ -83,7 +113,7 @@ describe('Coach.run — nutrition.protein_low', () => {
     coach = new Coach({ storage, resolveSource: resolver });
   });
 
-  it('sums proteinG for the day and triggers when < 90 g', async () => {
+  it('triggers when proteinG sum < 131 g', async () => {
     await storage.set('nutrition.meal.1', { date: '2026-05-10', proteinG: 30 });
     await storage.set('nutrition.meal.2', { date: '2026-05-10', proteinG: 25 });
     const a = await coach.run('nutrition', '2026-05-10');
@@ -92,12 +122,40 @@ describe('Coach.run — nutrition.protein_low', () => {
     expect(r?.triggered).toBe(true);
   });
 
-  it('does not trigger when sum >= 90 g', async () => {
-    await storage.set('nutrition.meal.1', { date: '2026-05-10', proteinG: 50 });
-    await storage.set('nutrition.meal.2', { date: '2026-05-10', proteinG: 50 });
+  it('does not trigger when sum >= 131 g', async () => {
+    await storage.set('nutrition.meal.1', { date: '2026-05-10', proteinG: 70 });
+    await storage.set('nutrition.meal.2', { date: '2026-05-10', proteinG: 80 });
     const a = await coach.run('nutrition', '2026-05-10');
     const r = a.ruleResults.find((x) => x.ruleId === 'nutrition.protein_low');
-    expect(r?.signalValue).toBe(100);
+    expect(r?.signalValue).toBe(150);
+    expect(r?.triggered).toBe(false);
+  });
+});
+
+describe('Coach.run — nutrition.fat_low', () => {
+  let storage: MemoryStorage;
+  let coach: Coach;
+
+  beforeEach(() => {
+    storage = new MemoryStorage();
+    coach = new Coach({ storage, resolveSource: resolver });
+  });
+
+  it('triggers when fat sum < 74 g', async () => {
+    await storage.set('nutrition.meal.1', { date: '2026-05-10', f: 20 });
+    await storage.set('nutrition.meal.2', { date: '2026-05-10', f: 30 });
+    const a = await coach.run('nutrition', '2026-05-10');
+    const r = a.ruleResults.find((x) => x.ruleId === 'nutrition.fat_low');
+    expect(r?.signalValue).toBe(50);
+    expect(r?.triggered).toBe(true);
+  });
+
+  it('does not trigger when fat sum >= 74 g', async () => {
+    await storage.set('nutrition.meal.1', { date: '2026-05-10', f: 40 });
+    await storage.set('nutrition.meal.2', { date: '2026-05-10', f: 40 });
+    const a = await coach.run('nutrition', '2026-05-10');
+    const r = a.ruleResults.find((x) => x.ruleId === 'nutrition.fat_low');
+    expect(r?.signalValue).toBe(80);
     expect(r?.triggered).toBe(false);
   });
 });
@@ -106,18 +164,17 @@ describe('Coach.run — anthropo.weight_gain_trend', () => {
   it('detects positive trend in weight series', async () => {
     const storage = new MemoryStorage();
     const coach = new Coach({ storage, resolveSource: resolver });
-    // 14 daily measurements rising linearly
     for (let i = 0; i < 14; i++) {
       const d = new Date(Date.UTC(2026, 4, 10 - i));
       await storage.set(`anthropo.measurement.${i}`, {
         date: d.toISOString().slice(0, 10),
-        weightKg: 80 - i * 0.1, // older = lower → trend is positive when sorted asc
+        weightKg: 80 - i * 0.2, // slope ~0.2/day > threshold 0.15
       });
     }
     const a = await coach.run('anthropo', '2026-05-10');
     const r = a.ruleResults.find((x) => x.ruleId === 'anthropo.weight_gain_trend');
     expect(r?.triggered).toBe(true);
-    expect(r?.signalValue).toBeGreaterThan(0.05);
+    expect(r?.signalValue).toBeGreaterThan(0.15);
   });
 });
 
@@ -153,7 +210,6 @@ describe('Coach EventBus subscription', () => {
     const off = coach.subscribe();
 
     eventBus.emit('workout.completed', { workoutId: 'x', date: '2026-05-10' });
-    // Allow microtask queue to drain
     await new Promise((r) => setTimeout(r, 0));
 
     const stored = await coach.getAssessment('2026-05-10', 'sport');

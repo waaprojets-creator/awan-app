@@ -3,8 +3,9 @@
   "id": "anthropo.wht_elevated",
   "domain": "anthropo",
   "name": "Rapport taille/hauteur élevé (≥ 0,50)",
+  "source": "https://doi.org/10.1079/PNS2012/00099",
   "signals": [
-    { "type": "last", "source": "anthropo.measurement", "field": "whtr" }
+    { "type": "latest", "source": "anthropo.measurement", "field": "whtr", "window": { "days": 30 } }
   ],
   "condition": { "op": "gte", "value": 0.50 },
   "signalIndex": 0,

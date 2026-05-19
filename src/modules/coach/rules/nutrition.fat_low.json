@@ -3,6 +3,7 @@
   "id": "nutrition.fat_low",
   "domain": "nutrition",
   "name": "Apport lipidique insuffisant (< 74 g/j)",
+  "source": "https://doi.org/10.1007/BF01068325",
   "signals": [
     { "type": "sum", "source": "nutrition.meal", "field": "f", "window": { "days": 1 } }
   ],

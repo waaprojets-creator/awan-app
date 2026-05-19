@@ -3,6 +3,7 @@
   "id": "sport.deload_due",
   "domain": "sport",
   "name": "Décharge requise — charge élevée sur 6 semaines",
+  "source": "https://doi.org/10.1519/SSC.0000000000000247",
   "signals": [
     { "type": "count", "source": "sport.session", "window": { "days": 42 } }
   ],

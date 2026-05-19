@@ -19,6 +19,10 @@ import anthropoWeightGainRapid from './rules/anthropo.weight_gain_rapid.json';
 import sleepShort from './rules/sleep.short_avg.json';
 import crossSleepWorkout from './rules/cross.sleep_workout.json';
 import crossUnderfueledTraining from './rules/cross.underfueled_training.json';
+import sportLowRecovery from './rules/sport.low_recovery.json';
+import sportDeloadDue from './rules/sport.deload_due.json';
+import nutritionFatLow from './rules/nutrition.fat_low.json';
+import anthropoWhtElevated from './rules/anthropo.wht_elevated.json';
 
 const RAW_BUNDLED: unknown[] = [
   sportNoWorkout,
@@ -39,6 +43,10 @@ const RAW_BUNDLED: unknown[] = [
   sleepShort,
   crossSleepWorkout,
   crossUnderfueledTraining,
+  sportLowRecovery,
+  sportDeloadDue,
+  nutritionFatLow,
+  anthropoWhtElevated,
 ];
 
 /**

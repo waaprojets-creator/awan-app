@@ -30,3 +30,13 @@ npm run build && npx cap sync android
 ## Branche de développement
 
 Développer sur `claude/account-access-questions-dV31p` (ou toute branche désignée), merger dans `main` avant chaque build.
+
+## Règles anti-dérive Coach
+
+1. Chaque rule JSON Coach DOIT avoir un champ `"source"` avec URL DOI ou PMC (ex: `"source": "https://doi.org/10.xxxx/xxxxx"`) — même si Zod le strip au runtime, il sert de documentation auditée.
+2. Chaque seuil de règle Coach doit être justifié en commentaire dans `coachAdvice.ts`.
+3. Tout nouveau composant DOIT étendre un existant (`InstrumentCard`, `Card`, `Touch`, `Heading`, `ScreenHeader`, `StaggerList/StaggerItem`) — aucune primitive inventée.
+4. Zéro valeur inline (couleurs, polices, espacements) — uniquement variables CSS (`var(--color-awan-*)`, `var(--font-*)`) et constantes SP.
+5. Avant d'écrire une règle Coach, lire le schéma Zod de sa source de signal — vérifier le nom exact du champ (ex: `p` ≠ `proteinG`, `f` ≠ `fatG`, `whtr` ≠ `waist_height_ratio`).
+6. Tests obligatoires pour : toute règle Coach, le générateur de routine, tout nouveau service. Le test doit couvrir trigger=true ET trigger=false.
+7. Capture d'écran requise pour tout changement UI avant merge du sprint.

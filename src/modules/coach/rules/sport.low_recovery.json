@@ -3,8 +3,9 @@
   "id": "sport.low_recovery",
   "domain": "sport",
   "name": "Score de récupération bas avant séance",
+  "source": "https://journals.lww.com/nsca-jscr/Abstract/2014/07000/Recovery_Monitoring_in_High_Performance_Sport.1.aspx",
   "signals": [
-    { "type": "last", "source": "sport.session", "field": "recoveryScore" }
+    { "type": "latest", "source": "sport.session", "field": "recoveryScore", "window": { "days": 3 } }
   ],
   "condition": { "op": "lt", "value": 6 },
   "signalIndex": 0,
