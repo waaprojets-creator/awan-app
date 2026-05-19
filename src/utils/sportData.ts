@@ -10,6 +10,7 @@ export interface ExerciseEntry {
   cat: string;     // catégorie
   lvl: string;     // niveau
   force: string;   // type de force
+  images?: string[]; // [pos_départ, pos_arrivée] — raw.githubusercontent.com
 }
 
 export const MUSCLE_FR: Record<string, string> = {
