@@ -18,20 +18,27 @@ interface Node { id: string; label: string; x: number; y: number; tier: 0 | 1 | 
 const nav = (L as any).nav as Record<string, string | undefined>;
 const n = (k: string): string => nav[k] ?? k;
 
+// Orbital layout — two concentric rings (visual radii: 115px and 150px on a 390×726 canvas)
+// Center: (50%, 42.7%). Tier-1 at bearings 0°/72°/144°/216°/288° (clockwise from top).
+// Tier-2 clustered near their parent's bearing at the outer ring.
 const NODES: Node[] = [
-  { id: 'Dashboard',   label: n('hub'),         x: 50, y: 50, tier: 0 },
-  { id: 'Islam',       label: n('spirit'),      x: 80, y: 14, tier: 1 },
-  { id: 'Sante',       label: n('sante'),       x: 22, y: 30, tier: 1 },
-  { id: 'Trajet',      label: n('trajet'),      x: 86, y: 54, tier: 1 },
-  { id: 'Journal',     label: n('journal'),     x: 20, y: 76, tier: 1 },
-  { id: 'Planning',    label: n('planning'),    x: 54, y: 84, tier: 1 },
-  { id: 'Sport',       label: n('sport'),       x:  8, y: 14, tier: 2 },
-  { id: 'Nutrition',   label: n('nutrition'),   x:  6, y: 36, tier: 2 },
-  { id: 'Mensuration', label: n('mensuration'), x: 14, y: 52, tier: 2 },
-  { id: 'Coach',       label: n('coach'),       x: 70, y: 30, tier: 2 },
-  { id: 'Sleep',       label: 'SOMMEIL',        x: 28, y: 14, tier: 2 },
-  { id: 'Reglages',    label: n('reglages'),    x: 90, y: 62, tier: 2 },
-  { id: 'Tasks',       label: n('tasks'),       x: 70, y: 86, tier: 2 },
+  { id: 'Dashboard',   label: n('hub'),       x: 50.0, y: 42.7, tier: 0 },
+  // — Inner ring (tier 1) —
+  { id: 'Islam',       label: n('spirit'),    x: 50.0, y: 26.9, tier: 1 },  // bearing   0°
+  { id: 'Trajet',      label: n('trajet'),    x: 78.1, y: 37.8, tier: 1 },  // bearing  72°
+  { id: 'Planning',    label: n('planning'),  x: 67.3, y: 55.5, tier: 1 },  // bearing 144°
+  { id: 'Journal',     label: n('journal'),   x: 32.7, y: 55.5, tier: 1 },  // bearing 216°
+  { id: 'Sante',       label: n('sante'),     x: 21.9, y: 37.8, tier: 1 },  // bearing 288°
+  // — Outer ring (tier 2) — Sante cluster, bearings 255°–315°
+  { id: 'Sport',       label: n('sport'),     x: 12.8, y: 48.1, tier: 2 },  // bearing 255°
+  { id: 'Nutrition',   label: n('nutrition'), x: 11.6, y: 41.6, tier: 2 },  // bearing 273°
+  { id: 'Mensuration', label: n('mensuration'),x:14.1, y: 35.3, tier: 2 },  // bearing 291°
+  { id: 'Sleep',       label: 'SOMMEIL',      x: 20.1, y: 29.7, tier: 2 },  // bearing 309°
+  // — Outer ring (tier 2) — Dashboard direct children
+  { id: 'Coach',       label: n('coach'),     x: 72.1, y: 25.8, tier: 2 },  // bearing  35°
+  { id: 'Reglages',    label: n('reglages'),  x: 88.3, y: 44.5, tier: 2 },  // bearing  95°
+  // — Outer ring (tier 2) — Planning cluster
+  { id: 'Tasks',       label: n('tasks'),     x: 72.6, y: 59.4, tier: 2 },  // bearing 144°
 ];
 
 const EDGES: [string, string][] = [
@@ -48,6 +55,9 @@ const EDGES: [string, string][] = [
   ['Sante', 'Sleep'],
   ['Planning', 'Tasks'],
 ];
+
+// Tier lookup for edge stroke scaling
+const TIER_MAP: Record<string, number> = Object.fromEntries(NODES.map(n => [n.id, n.tier]));
 
 function FullMoon({ color }: { color: string }) {
   return (
@@ -97,7 +107,6 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
   const toggle = useCallback(() => {
     setIsOpen((v) => {
       if (!v) {
-        // Check if edit was requested from SettingsScreen
         if (safeStorage.get('awan.moonmenu.pending-edit') === '1') {
           safeStorage.set('awan.moonmenu.pending-edit', '0');
           setEditMode(true);
@@ -120,6 +129,14 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
   }, [isOpen]);
 
   const CH = H * 0.86;
+
+  // Orbital ring radii (responsive — computed from the canonical geometry)
+  // Ring 1: r_visual ≈ 115px at CH=726 → ratio 0.158
+  // Ring 2: r_visual ≈ 150px at CH=726 → ratio 0.207
+  const orbitCX = W * 0.5;
+  const orbitCY = CH * 0.427;
+  const ring1R  = CH * 0.158;
+  const ring2R  = CH * 0.207;
 
   const resolvedNodes = NODES.map(node => ({
     ...node,
@@ -213,18 +230,46 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
               </div>
             )}
             <svg width={W} height={H} style={{ position: 'absolute', inset: 0 }} onClick={(e) => e.stopPropagation()}>
+
+              {/* Orbital rings — structural guides, hidden in edit mode */}
+              {!editMode && (
+                <>
+                  <motion.circle
+                    cx={orbitCX} cy={orbitCY} r={ring1R}
+                    stroke="rgba(212,175,55,0.09)" strokeWidth={0.7} strokeDasharray="3 11"
+                    fill="none"
+                    initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.55, ease: 'easeOut' }}
+                  />
+                  <motion.circle
+                    cx={orbitCX} cy={orbitCY} r={ring2R}
+                    stroke="rgba(212,175,55,0.055)" strokeWidth={0.5} strokeDasharray="2 16"
+                    fill="none"
+                    initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.65, delay: 0.06, ease: 'easeOut' }}
+                  />
+                </>
+              )}
+
+              {/* Molecular bonds (edges) */}
               {EDGES.map(([fromId, toId], i) => {
                 const from = resolvedNodes.find((nd) => nd.id === fromId)!;
                 const to   = resolvedNodes.find((nd) => nd.id === toId)!;
+                // Primary bonds (tier 0→1) are thicker than secondary bonds (tier 1→2)
+                const isPrimary = TIER_MAP[fromId] === 0 && TIER_MAP[toId] === 1;
                 return (
                   <motion.line key={`${fromId}-${toId}`}
                     x1={(from.x/100)*W} y1={(from.y/100)*CH} x2={(to.x/100)*W} y2={(to.y/100)*CH}
-                    stroke={editMode ? 'rgba(212,175,55,0.15)' : 'rgba(212,175,55,0.22)'} strokeWidth={1.6} strokeDasharray="3 5"
+                    stroke={editMode ? 'rgba(212,175,55,0.15)' : 'rgba(212,175,55,0.22)'}
+                    strokeWidth={isPrimary ? 1.8 : 1.2}
+                    strokeDasharray={isPrimary ? '4 5' : '2 6'}
                     initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
                     transition={{ duration: 0.3, delay: editMode ? 0 : 0.05 + i * 0.024, ease: 'easeOut' }}
                   />
                 );
               })}
+
+              {/* Nodes */}
               {resolvedNodes.map((node, i) => {
                 const cx = (node.x/100)*W, cy = (node.y/100)*CH;
                 const isActive = currentRoute === node.id;

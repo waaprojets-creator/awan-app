@@ -57,9 +57,9 @@ function AdviceCard({ advice, ruleResult }: { advice: Advice; ruleResult: RuleRe
         <span className="text-awan-tx-dim text-xs leading-relaxed break-words">
           {text.advice}
         </span>
-        {ruleResult !== undefined && Number.isFinite(ruleResult.signalValue) && (
+        {ruleResult !== undefined && Number.isFinite(ruleResult.signalValue) && ruleResult.signalValue !== 0 && (
           <span className="font-mono text-awan-md text-awan-tx-mute mt-1">
-            VALEUR MESURÉE · {ruleResult.signalValue.toFixed(2)}
+            VALEUR MESURÉE · {Number.isInteger(ruleResult.signalValue) ? ruleResult.signalValue : ruleResult.signalValue.toFixed(2)}
           </span>
         )}
       </div>

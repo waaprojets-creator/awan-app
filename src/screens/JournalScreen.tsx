@@ -15,6 +15,19 @@ import { Touch } from '../components/ui/Touch';
 import { ChevronLeft, Plus, History, Layout, Filter, Terminal, BookMarked, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { TokenIcon, MODULE_ICON_KEY } from '../constants/tokenIcons';
+import { L } from '../constants/labels';
+
+const MODULE_LABELS: Record<string, string> = {
+  nutrition:   (L as any).modules.nutrition?.name ?? 'NUTRITION',
+  sport:       (L as any).modules.sport?.name     ?? 'SPORT',
+  trajet:      (L as any).modules.trajet?.name    ?? 'TRAJET',
+  islam:       (L as any).modules.spirit?.name    ?? 'ISLAM',
+  mesure:      'MESURE',
+  task:        'TÂCHE',
+  sante:       (L as any).modules.sante?.name     ?? 'SANTÉ',
+  mental:      'MENTAL',
+  mensuration: 'SCAN',
+};
 
 export default function JournalScreen() {
   const { navigate } = useAppState() as any;
@@ -113,7 +126,7 @@ export default function JournalScreen() {
                   >
                     <div className="flex flex-row items-center gap-2">
                        <TokenIcon iconKey={MODULE_ICON_KEY[mod.toLowerCase()] ?? 'file'} size={12} color={activeModule === mod ? '#000' : 'var(--color-awan-tx-mute)'} />
-                       <span className={`text-awan-md font-black uppercase tracking-widest ${activeModule === mod ? 'text-black' : 'text-awan-tx-mute'}`}>{mod}</span>
+                       <span className={`text-awan-md font-black uppercase tracking-widest ${activeModule === mod ? 'text-black' : 'text-awan-tx-mute'}`}>{MODULE_LABELS[mod] ?? mod.toUpperCase()}</span>
                     </div>
                   </Touch>
                 ))}

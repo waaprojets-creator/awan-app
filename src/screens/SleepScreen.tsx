@@ -144,22 +144,23 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
         {/* Durée */}
         <div className="mb-4">
           <span className="awan-label text-awan-tx-mute block mb-2">DURÉE</span>
-          <div className="flex flex-row items-center gap-3">
-            <div className="flex flex-row items-center gap-1">
+          <div className="flex flex-row items-center gap-2">
+            <div className="flex flex-row items-center gap-0.5">
               {[5, 6, 7, 8, 9].map(h => (
                 <Touch key={h} onPress={() => setHours(h)}
-                  className={`w-10 h-10 flex items-center justify-center border ${hours === h ? 'border-awan-gold bg-awan-gold/10' : 'border-white/10 bg-white/5'}`}>
-                  <span className="font-mono text-sm font-bold"
+                  className={`w-8 h-9 flex items-center justify-center border ${hours === h ? 'border-awan-gold bg-awan-gold/10' : 'border-white/10 bg-white/5'}`}>
+                  <span className="font-mono text-xs font-bold"
                     style={{ color: hours === h ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)' }}>
                     {h}h
                   </span>
                 </Touch>
               ))}
             </div>
-            <div className="flex flex-row items-center gap-1">
+            <div className="w-px h-6 self-center bg-white/10" />
+            <div className="flex flex-row items-center gap-0.5">
               {[0, 15, 30, 45].map(m => (
                 <Touch key={m} onPress={() => setMins(m)}
-                  className={`w-10 h-10 flex items-center justify-center border ${mins === m ? 'border-awan-gold bg-awan-gold/10' : 'border-white/10 bg-white/5'}`}>
+                  className={`w-8 h-9 flex items-center justify-center border ${mins === m ? 'border-awan-gold bg-awan-gold/10' : 'border-white/10 bg-white/5'}`}>
                   <span className="font-mono text-xs font-bold"
                     style={{ color: mins === m ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)' }}>
                     {String(m).padStart(2, '0')}

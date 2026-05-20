@@ -184,7 +184,7 @@ function ProgressBar({ label, actual, target, unit, accent }: ProgressBarProps) 
  const pct = target > 0 ? Math.min((actual / target) * 100, 120) : 0;
  return (
  <div className="bg-awan-surface p-3 border border-white/5">
- <div className="flex flex-row justify-between items-baseline mb-2">
+ <div className="flex flex-col gap-0.5 mb-2">
  <span
  className="text-awan-xs font-black uppercase tracking-widest"
  style={{ color: accent ?? color }}
