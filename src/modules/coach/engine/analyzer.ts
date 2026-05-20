@@ -61,6 +61,28 @@ export async function analyzeSignal(signal: Signal, ctx: CoachContext): Promise<
         .sort((a, b) => a.t.localeCompare(b.t));
       return linearSlope(series.map((p, i) => [i, p.y] as [number, number]));
     }
+
+    case 'ratio': {
+      const f = requireField(signal);
+      if (!signal.ratioWindow) throw new Error("Signal 'ratio' requires 'ratioWindow'");
+      const longDates = new Set(rangeBack(ctx.date, signal.ratioWindow.days));
+      let longSum = 0;
+      for (const key of allKeys) {
+        const raw = await ctx.storage.get(key, parse);
+        if (raw === null) continue;
+        const rec = raw as Record<string, unknown>;
+        const recDate = typeof rec['date'] === 'string' ? rec['date'] : null;
+        if (recDate === null || !longDates.has(recDate)) continue;
+        if (!matchesFilter(rec, signal.filter)) continue;
+        longSum += numberOrZero(rec[f]);
+      }
+      const shortSum = records.reduce((acc, r) => acc + numberOrZero(r.record[f]), 0);
+      // Normalize per-day: ACWR = (shortSum / shortDays) / (longSum / longDays)
+      const shortAvg = shortSum / signal.window.days;
+      const longAvg = longSum / signal.ratioWindow.days;
+      if (longAvg === 0) return 0;
+      return shortAvg / longAvg;
+    }
   }
 }
 

@@ -81,6 +81,16 @@ const ADVICE_TEXTS: Record<string, AdviceText> = {
     title: 'Décharge planifiée',
     advice: 'Semaine 6 du mésocycle atteinte. Réduis le volume de 40–50% tout en maintenant la fréquence pour une récupération optimale.',
   },
+  // Gabbett 2016 (doi:10.1136/bjsports-2015-095788) : ACWR > 1.5 → risque blessure ×2
+  'coach.sport.acwr_danger': {
+    title: 'Charge d\'entraînement dangereuse',
+    advice: 'Ratio charge aiguë/chronique > 1.5. Réduis le volume de 30% cette semaine. Zone optimale ACWR : 0,8–1,3 (Gabbett 2016).',
+  },
+  // Cheung 2003 (doi:10.1007/s00421-003-0879-y) : dommages musculaires max 24-48h post-séance
+  'coach.sport.insufficient_rest_48h': {
+    title: 'Récupération insuffisante (< 48h)',
+    advice: '2+ séances en 48h détectées. Accorde 48h minimum entre séances du même groupe musculaire (DOMS pic 24-48h, Cheung 2003).',
+  },
 
   // ── Nutrition ─────────────────────────────────────────────────────────────
   'coach.nutrition.fat_low': {

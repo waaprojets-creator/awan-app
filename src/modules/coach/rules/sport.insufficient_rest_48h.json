@@ -1,0 +1,15 @@
+{
+  "v": 1,
+  "id": "sport.insufficient_rest_48h",
+  "domain": "sport",
+  "name": "Moins de 48h de récupération entre séances",
+  "source": "https://doi.org/10.1007/s00421-003-0879-y",
+  "signals": [
+    { "type": "count", "source": "sport.session", "window": { "days": 2 } }
+  ],
+  "condition": { "op": "gt", "value": 2 },
+  "signalIndex": 0,
+  "severity": "warn",
+  "adviceKey": "coach.sport.insufficient_rest_48h",
+  "enabled": true
+}

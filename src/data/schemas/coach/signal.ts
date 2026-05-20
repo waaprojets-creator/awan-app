@@ -10,12 +10,15 @@ import { z } from 'zod';
  *   filter  Optional equality predicate on the parsed records
  */
 export const SignalSchema = z.object({
-  type: z.enum(['count', 'sum', 'avg', 'latest', 'trend']),
+  type: z.enum(['count', 'sum', 'avg', 'latest', 'trend', 'ratio']),
   source: z.string().min(1),
   field: z.string().optional(),
   window: z.object({
     days: z.number().int().positive(),
   }),
+  ratioWindow: z.object({
+    days: z.number().int().positive(),
+  }).optional(),
   filter: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
 });
 

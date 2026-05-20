@@ -1,0 +1,15 @@
+{
+  "v": 1,
+  "id": "sport.acwr_danger",
+  "domain": "sport",
+  "name": "ACWR dangereux — ratio charge 7j/28j > 1.5",
+  "source": "https://doi.org/10.1136/bjsports-2015-095788",
+  "signals": [
+    { "type": "ratio", "source": "sport.session", "field": "sessionRPE", "window": { "days": 7 }, "ratioWindow": { "days": 28 } }
+  ],
+  "condition": { "op": "gt", "value": 1.5 },
+  "signalIndex": 0,
+  "severity": "alert",
+  "adviceKey": "coach.sport.acwr_danger",
+  "enabled": true
+}
