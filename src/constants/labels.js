@@ -239,7 +239,6 @@ export const L = {
     noSess: 'Aucune séance enregistrée',
     source: 'Source: wger.de',
     myRoutines: 'MES ROUTINES',
-    myRoutinesArrow: 'MES ROUTINES →',
     routinesTag: 'SPORT · PROTOCOLES',
     coachBadge: 'PROPOSÉE · COACH',
     adoptRoutine: 'ADOPTER CETTE ROUTINE',

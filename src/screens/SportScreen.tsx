@@ -679,7 +679,7 @@ export default function SportScreen() {
  className="mb-6 h-12 bg-white/5 flex items-center justify-center border border-white/10"
  onPress={() => setView('workouts')}
  >
- <span className="awan-label text-awan-tx-mute">{L.sport.myRoutinesArrow}</span>
+ <span className="awan-label text-awan-tx-mute">{L.sport.myRoutines} →</span>
  </Touch>
 
  <div className="mb-20">
