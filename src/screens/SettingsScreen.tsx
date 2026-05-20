@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, ScrollView, TextInput as RNTextInput, Alert, Switch } from 'react-native';
 
 const TextInput = RNTextInput as React.ComponentType<any>;
@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemeMode } from '../hooks/useTheme';
 import { useAppStore } from '../store/appStore';
 import { useAppState } from '../context/AppStateContext';
-import { Shield, Database, Key, RefreshCw, Trash2, Navigation } from 'lucide-react';
+import { Shield, Database, Key, RefreshCw, Trash2, Navigation, Brain } from 'lucide-react';
 import { safeStorage } from '../utils/safeStorage';
 import { PageWrapper } from '../components/Animated';
 import { Card } from '../components/ui/Card';
@@ -25,7 +25,32 @@ const AWAN_LS_KEYS = [
   'awan.mensuration.goals',
   'awan.nutrition.profile',
   'awan.user.location',
+  'awan.coach.profiles',
 ];
+
+type CoachProfile = 'bodybuilding' | 'sports_medicine' | 'nutrition' | 'streetworkout';
+const COACH_PROFILES_KEY = 'awan.coach.profiles';
+const DEFAULT_PROFILES: CoachProfile[] = ['bodybuilding', 'sports_medicine', 'nutrition'];
+
+const PROFILE_OPTIONS: { id: CoachProfile; label: string; desc: string }[] = [
+  { id: 'bodybuilding',    label: 'BODYBUILDING',     desc: 'Musculation naturelle · Volume & intensité' },
+  { id: 'sports_medicine', label: 'MÉDECINE DU SPORT', desc: 'Récupération · Prévention · Charge ACWR' },
+  { id: 'nutrition',       label: 'NUTRITIONNISTE',   desc: 'Macros · Timing · Adhérence' },
+  { id: 'streetworkout',   label: 'STREETWORKOUT',    desc: 'Callisthénie · Poids du corps' },
+];
+
+function loadCoachProfiles(): CoachProfile[] {
+  const raw = safeStorage.get(COACH_PROFILES_KEY);
+  if (!raw) return DEFAULT_PROFILES;
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return DEFAULT_PROFILES;
+    const valid: CoachProfile[] = parsed.filter((p): p is CoachProfile =>
+      ['bodybuilding', 'sports_medicine', 'nutrition', 'streetworkout'].includes(p)
+    );
+    return valid;
+  } catch { return DEFAULT_PROFILES; }
+}
 
 async function exportBackup(): Promise<void> {
   const storage = await getStorage();
@@ -56,6 +81,17 @@ export default function SettingsScreen() {
  const setTheme = useAppStore((s: any) => s.setTheme);
  const [purgeModal, setPurgeModal] = useState(false);
  const [purging, setPurging] = useState(false);
+ const [coachProfiles, setCoachProfiles] = useState<CoachProfile[]>(loadCoachProfiles);
+
+ useEffect(() => {
+   safeStorage.set(COACH_PROFILES_KEY, JSON.stringify(coachProfiles));
+ }, [coachProfiles]);
+
+ const toggleCoachProfile = (id: CoachProfile) => {
+   setCoachProfiles(prev =>
+     prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+   );
+ };
 
  if (!db) return null;
  const config = db.config || { corsApiKey: '', jitFactor: 1.2 };
@@ -110,6 +146,46 @@ export default function SettingsScreen() {
      <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-tighter">Repositionner les nœuds de navigation · Ouvrir le menu lune</span>
    </div>
  </Touch>
+ </div>
+
+ {/* PROFIL COACH */}
+ <div className="mb-10">
+ <Heading level={4} mono subtitle="Expertises Activées" className="mb-6">PROFIL COACH</Heading>
+ <Card className="p-0 bg-white/3 border-white/5 overflow-hidden" variant="flat">
+ {PROFILE_OPTIONS.map((opt, idx) => {
+   const active = coachProfiles.includes(opt.id);
+   return (
+     <Touch
+       key={opt.id}
+       onPress={() => toggleCoachProfile(opt.id)}
+       className={`flex flex-row items-center gap-5 px-5 h-20 ${idx > 0 ? 'border-t' : ''}`}
+       style={{ borderTopColor: 'rgba(255,255,255,0.04)' }}
+     >
+       <div className="w-10 h-10 bg-white/5 flex items-center justify-center">
+         <Brain size={18} className={active ? 'text-awan-gold' : 'text-awan-tx-mute'} />
+       </div>
+       <div className="flex-1">
+         <span
+           className="text-xs font-black uppercase tracking-widest block mb-1"
+           style={{ color: active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)' }}
+         >
+           {opt.label}
+         </span>
+         <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-tighter">{opt.desc}</span>
+       </div>
+       <span
+         className="text-base font-black font-mono"
+         style={{ color: active ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.2)' }}
+       >
+         {active ? '◆' : '◇'}
+       </span>
+     </Touch>
+   );
+ })}
+ </Card>
+ <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest leading-relaxed px-1 mt-3 block">
+   Détermine les règles Coach activées et le ton des conseils.
+ </span>
  </div>
 
  {/* THÈME */}
