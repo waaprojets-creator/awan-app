@@ -24,6 +24,9 @@ const PROTECTED_FILES = [
 
 const INLINE_FONT_SIZE = /className=["'][^"']*text-\[\d+(?:\.\d+)?px\]/;
 const HARDCODED_SYMBOL = /['"]([◆◇])['"]/;
+// Empêche le retour de defaults type "niveau: 'intermediate'" / "objectif: 'force'"
+// inline dans le composant. Doit pointer vers GENERATOR_DEFAULTS.
+const HARDCODED_GENERATOR_DEFAULT = /(?:niveau|objectif|frequenceJours):\s*['"]?(?:intermediate|beginner|advanced|hypertrophie|force|endurance|recomposition|\d)['"]?/;
 
 describe('Design tokens drift — composants protégés', () => {
   for (const relPath of PROTECTED_FILES) {
@@ -45,5 +48,19 @@ describe('Design tokens drift — composants protégés', () => {
       });
       expect(matches, matches.join('\n')).toEqual([]);
     });
+
+    // Le check de defaults générateur ne s'applique qu'au composant UI qui les
+    // consomme — les .ts du module routine-generator définissent les types et
+    // les specs, donc contiennent légitimement ces valeurs.
+    if (relPath.endsWith('RoutineGeneratorView.tsx')) {
+      it(`${relPath} — aucun default générateur hardcodé inline (utiliser GENERATOR_DEFAULTS)`, () => {
+        const matches: string[] = [];
+        src.split('\n').forEach((line, idx) => {
+          if (line.includes('GENERATOR_DEFAULTS')) return; // ligne qui consomme la constante
+          if (HARDCODED_GENERATOR_DEFAULT.test(line)) matches.push(`L${idx + 1}: ${line.trim()}`);
+        });
+        expect(matches, matches.join('\n')).toEqual([]);
+      });
+    }
   }
 });

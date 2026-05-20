@@ -28,3 +28,13 @@ export function formatRepsRange(o: ObjectifType): string {
   const r = OBJECTIF_SPECS[o].repsRange;
   return r.min === r.max ? `${r.min} reps` : `${r.min}-${r.max} reps`;
 }
+
+// Defaults injectés dans l'UI du générateur. Centralisés ici pour qu'un
+// changement de produit (ex: "défaut = force") soit une modif d'une ligne.
+import type { GeneratorConfig } from './types';
+export const GENERATOR_DEFAULTS: GeneratorConfig = {
+  objectif: 'hypertrophie',
+  niveau: 'intermediate',
+  frequenceJours: 3,
+  equipement: ['barbell', 'dumbbell', 'cable', 'machine', 'body only'],
+};

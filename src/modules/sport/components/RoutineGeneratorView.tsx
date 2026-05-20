@@ -10,7 +10,7 @@ import { SYMBOLS } from '@/constants/symbols';
 import type { RoutineLatest } from '@/data/schemas/sport/routine';
 import type { GeneratorConfig, ObjectifType } from '@/modules/coach/routine-generator/types';
 import { generateRoutines } from '@/modules/coach/routine-generator/generator';
-import { formatRepsRange } from '@/modules/coach/routine-generator/objectifSpecs';
+import { formatRepsRange, GENERATOR_DEFAULTS } from '@/modules/coach/routine-generator/objectifSpecs';
 
 const G = L.generator;
 
@@ -26,9 +26,9 @@ interface RoutineGeneratorViewProps {
 
 export function RoutineGeneratorView({ onBack, onSave }: RoutineGeneratorViewProps) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const [objectif, setObjectif] = useState<ObjectifType>('hypertrophie');
-  const [frequence, setFrequence] = useState<2 | 3 | 4 | 5 | 6>(3);
-  const [equipement, setEquipement] = useState<EquipType[]>(['barbell', 'dumbbell', 'cable', 'machine', 'body only']);
+  const [objectif, setObjectif] = useState<ObjectifType>(GENERATOR_DEFAULTS.objectif);
+  const [frequence, setFrequence] = useState<2 | 3 | 4 | 5 | 6>(GENERATOR_DEFAULTS.frequenceJours);
+  const [equipement, setEquipement] = useState<EquipType[]>([...GENERATOR_DEFAULTS.equipement]);
   const [generated, setGenerated] = useState<RoutineLatest[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -42,7 +42,7 @@ export function RoutineGeneratorView({ onBack, onSave }: RoutineGeneratorViewPro
   async function handleGenerate() {
     setLoading(true);
     try {
-      const config: GeneratorConfig = { objectif, niveau: 'intermediate', frequenceJours: frequence, equipement };
+      const config: GeneratorConfig = { objectif, niveau: GENERATOR_DEFAULTS.niveau, frequenceJours: frequence, equipement };
       const routines = await generateRoutines(config);
       setGenerated(routines);
       setStep(4);
