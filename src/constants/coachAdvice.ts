@@ -104,6 +104,17 @@ const ADVICE_TEXTS: Record<string, AdviceText> = {
     advice: 'Rapport taille/hauteur ≥ 0,50. Cible < 0,50 pour réduire le risque cardiovasculaire. Source : Ashwell 2012.',
   },
 
+  // Norton & Layman 2006 (doi:10.3945/jn.108.103382) : 25-40g protéines autour entraînement → MPS maximale
+  'coach.nutrition.periworkout_protein': {
+    title: 'Fenêtre anabolique sous-exploitée',
+    advice: 'Moins de 30 g de protéines ce jour. Consomme 25–40 g de protéines dans les 2h autour de chaque séance pour maximiser la MPS (Norton & Layman 2006).',
+  },
+  // EFSA 2010 (efsa.europa.eu/doi/10.2903/j.efsa.2010.1462) : 25 g/j recommandé pour adultes
+  'coach.nutrition.fiber_low': {
+    title: 'Apport fibres insuffisant',
+    advice: 'Fibres < 25 g/j. Les fibres régulent la glycémie, la satiété et la flore intestinale. Ajoute légumes, légumineuses, céréales complètes. Référence : EFSA 2010.',
+  },
+
   // ── Sommeil ───────────────────────────────────────────────────────────────
   'coach.sleep.short_avg': {
     title: 'Sommeil insuffisant',

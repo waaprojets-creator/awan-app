@@ -31,6 +31,8 @@ import { useMealStore } from '../hooks/useMealStore';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
+import { InstrumentCard } from '../components/ui/InstrumentCard';
+import type { StatusVariant } from '../components/ui/InstrumentCard';
 import {
  loadFoodDatabase,
  searchFoods,
@@ -894,6 +896,36 @@ export default function NutritionScreen() {
  loadProfile(),
  );
  const [showOnboarding, setShowOnboarding] = useState(() => !loadProfile());
+ const [proteinAdherence7d, setProteinAdherence7d] = useState<number | null>(null);
+
+ useEffect(() => {
+   if (!profile) return;
+   const targetP = profile.targetP;
+   import('@/data/storage/storageService').then(({ getStorage }) =>
+     getStorage().then(async (storage) => {
+       const keys = await storage.list('nutrition.meal');
+       const today7 = Array.from({ length: 7 }, (_, i) => {
+         const d = new Date();
+         d.setDate(d.getDate() - i);
+         return d.toISOString().slice(0, 10);
+       });
+       const dateSet = new Set(today7);
+       const sumByDay: Record<string, number> = {};
+       for (const key of keys) {
+         const raw = await storage.get(key, (v) => v as Record<string, unknown>);
+         if (!raw) continue;
+         const date = typeof raw['date'] === 'string' ? raw['date'] : null;
+         if (!date || !dateSet.has(date)) continue;
+         const p = typeof raw['p'] === 'number' ? raw['p'] : 0;
+         sumByDay[date] = (sumByDay[date] ?? 0) + p;
+       }
+       const days = Object.values(sumByDay);
+       if (days.length === 0) { setProteinAdherence7d(null); return; }
+       const avg = days.reduce((a, b) => a + b, 0) / days.length;
+       setProteinAdherence7d(Math.round((avg / targetP) * 100));
+     })
+   );
+ }, [profile, selectedDate]);
  const [showAdd, setShowAdd] = useState(false);
  const [editEntry, setEditEntry] = useState<MealEntryLatest | null>(null);
 
@@ -1163,6 +1195,17 @@ export default function NutritionScreen() {
  target={profile.targetF}
  unit="g"
  />
+ {totals.fiberG > 0 && (
+ <div className="col-span-3 mt-1">
+ <ProgressBar
+ label="FIBRES"
+ actual={totals.fiberG}
+ target={35}
+ unit="g"
+ accent="var(--color-awan-status-spirit)"
+ />
+ </div>
+ )}
  </>
  ) : (
  <>
@@ -1205,6 +1248,20 @@ export default function NutritionScreen() {
  )}
  </div>
  </Card>
+
+ {/* Adhérence protéines 7j */}
+ {profile && proteinAdherence7d !== null && (
+ <div className="mt-3">
+ <InstrumentCard
+ label="PROTÉINES 7J"
+ value={proteinAdherence7d}
+ unit="%"
+ status={(proteinAdherence7d >= 80 ? 'ok' : proteinAdherence7d >= 60 ? 'warn' : 'error') as StatusVariant}
+ progress={Math.min(100, proteinAdherence7d)}
+ delta={proteinAdherence7d >= 80 ? 'Objectif atteint' : proteinAdherence7d >= 60 ? 'À améliorer' : 'Insuffisant'}
+ />
+ </div>
+ )}
  </div>
 
  {/* Meal Entries */}

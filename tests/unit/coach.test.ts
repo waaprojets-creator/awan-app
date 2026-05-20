@@ -14,7 +14,7 @@ const resolver = () => passthrough;
 describe('rulesLoader', () => {
   it('loads all bundled rules through the migrator', () => {
     const rules = loadDefaultRules();
-    expect(rules).toHaveLength(24);
+    expect(rules).toHaveLength(26);
     for (const r of rules) expect(r.v).toBe(1);
     const ids = rules.map((r) => r.id);
     expect(ids).toContain('sport.no_workout_7d');
@@ -25,6 +25,8 @@ describe('rulesLoader', () => {
     expect(ids).toContain('cross.sleep_workout');
     expect(ids).toContain('sport.acwr_danger');
     expect(ids).toContain('sport.insufficient_rest_48h');
+    expect(ids).toContain('nutrition.fiber_low');
+    expect(ids).toContain('nutrition.periworkout_protein');
   });
 });
 

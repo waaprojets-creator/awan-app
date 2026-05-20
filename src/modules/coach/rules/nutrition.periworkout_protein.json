@@ -1,0 +1,15 @@
+{
+  "v": 1,
+  "id": "nutrition.periworkout_protein",
+  "domain": "nutrition",
+  "name": "Protéines peri-workout insuffisantes (< 30 g/j)",
+  "source": "https://doi.org/10.3945/jn.108.103382",
+  "signals": [
+    { "type": "sum", "source": "nutrition.meal", "field": "p", "window": { "days": 1 } }
+  ],
+  "condition": { "op": "lt", "value": 30 },
+  "signalIndex": 0,
+  "severity": "warn",
+  "adviceKey": "coach.nutrition.periworkout_protein",
+  "enabled": false
+}

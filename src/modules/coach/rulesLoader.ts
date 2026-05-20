@@ -25,6 +25,8 @@ import nutritionFatLow from './rules/nutrition.fat_low.json';
 import anthropoWhtElevated from './rules/anthropo.wht_elevated.json';
 import sportAcwrDanger from './rules/sport.acwr_danger.json';
 import sportInsufficientRest48h from './rules/sport.insufficient_rest_48h.json';
+import nutritionFiberLow from './rules/nutrition.fiber_low.json';
+import nutritionPeriworkoutProtein from './rules/nutrition.periworkout_protein.json';
 
 const RAW_BUNDLED: unknown[] = [
   sportNoWorkout,
@@ -51,6 +53,8 @@ const RAW_BUNDLED: unknown[] = [
   anthropoWhtElevated,
   sportAcwrDanger,
   sportInsufficientRest48h,
+  nutritionFiberLow,
+  nutritionPeriworkoutProtein,
 ];
 
 /**

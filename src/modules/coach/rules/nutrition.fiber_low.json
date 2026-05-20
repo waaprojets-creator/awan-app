@@ -1,0 +1,15 @@
+{
+  "v": 1,
+  "id": "nutrition.fiber_low",
+  "domain": "nutrition",
+  "name": "Apport en fibres insuffisant (< 25 g/j)",
+  "source": "https://efsa.onlinelibrary.wiley.com/doi/10.2903/j.efsa.2010.1462",
+  "signals": [
+    { "type": "sum", "source": "nutrition.meal", "field": "fiberG", "window": { "days": 1 } }
+  ],
+  "condition": { "op": "lt", "value": 25 },
+  "signalIndex": 0,
+  "severity": "info",
+  "adviceKey": "coach.nutrition.fiber_low",
+  "enabled": true
+}
