@@ -1,22 +1,43 @@
+// Source unique pour les noms de modules : tout libellé dupliqué (nav, widget,
+// titre d'écran) DOIT pointer ici. Les variantes lowercase/uppercase coexistent
+// quand elles sont stylistiquement distinctes (`name` uppercase vs `display`
+// title-case).
+const MODULES = {
+  spirit:    { name: 'ISLAM' },
+  sante:     { name: 'SANTÉ' },
+  trajet:    { name: 'TRAJET' },
+  sport:     { name: 'SPORT' },
+  nutrition: { name: 'NUTRITION' },
+  reglages:  { name: 'SYSTÈME' },
+  mesures:   { name: 'MESURES' },
+  vigie:     { name: 'VIGIE SPIRITUELLE' },
+  planning:  { name: 'PLANNING', display: 'Planning' },
+  analyse:   { display: 'Analyse' },
+};
+
+// Tag de livraison sprint — centralisé pour pouvoir le supprimer en bloc.
+const SPRINT_2_DELIVERY = 'Sprint 2';
+
 export const L = {
+  modules: MODULES,
   header: { latin: 'AWAN', arabic: 'أوان' },
 
   nav: {
     hub:            'DASHBOARD',
-    spirit:         'ISLAM',
-    sante:          'SANTÉ',
-    planning:       'PLANNING',
+    spirit:         MODULES.spirit.name,
+    sante:          MODULES.sante.name,
+    planning:       MODULES.planning.name,
     journal:        'JOURNAL',
-    trajet:         'TRAJET',
-    sport:          'SPORT',
-    nutrition:      'NUTRITION',
+    trajet:         MODULES.trajet.name,
+    sport:          MODULES.sport.name,
+    nutrition:      MODULES.nutrition.name,
     mensuration:    'SCAN',
-    reglages:       'SYSTÈME',
+    reglages:       MODULES.reglages.name,
     tasks:          'TÂCHES',
     coach:          'COACH',
     hubSub:         'HUB',
     spiritSub:      'VIGIE',
-    santeSub:       'SANTÉ',
+    santeSub:       MODULES.sante.name,
     planningSub:    'ORG',
     journalSub:     'LOG',
     trajetSub:      'GPS',
@@ -29,12 +50,12 @@ export const L = {
   },
 
   tabs: {
-    planning: 'Planning',
+    planning: MODULES.planning.display,
     trajet:   'Trajet',
     sante:    'Santé',
     reglages: 'Réglages',
     islam:    'Vigie',
-    analyse:  'Analyse',
+    analyse:  MODULES.analyse.display,
   },
 
   common: {
@@ -74,13 +95,13 @@ export const L = {
       trajet:    'PROCHAIN TRAJET',
       transport: 'MOYEN DE TRANSPORT',
       analyse:   'ANALYSE DU JOUR',
-      sport:     'SPORT',
+      sport:     MODULES.sport.name,
       courses:   'COURSES',
       macros:    'MACROS DU JOUR',
       week:      'CETTE SEMAINE',
-      biometrics:'MESURES',
-      islam:     'VIGIE SPIRITUELLE',
-      scoreInfo: 'ISLAM 25 % · SPORT 30 % · NUTRITION 25 % · CORPS 20 %',
+      biometrics: MODULES.mesures.name,
+      islam:     MODULES.vigie.name,
+      scoreInfo: `${MODULES.spirit.name} 25 % · ${MODULES.sport.name} 30 % · ${MODULES.nutrition.name} 25 % · CORPS 20 %`,
       tacticalDep: 'DEPART TACTIQUE',
       activeMission: 'MISSION ACTIVE',
       noMission: 'AUCUNE MISSION CHANTIER DÉTECTÉE',
@@ -116,8 +137,7 @@ export const L = {
       kcal:     'Calories',
     },
     courses: {
-      today:    "Aujourd'hui",
-      tomorrow: 'Demain',
+      // Réutilise L.common.today / L.common.tomorrow — pas de doublon.
       after:    'Après-demain',
     },
     demo: 'données démo',
@@ -132,35 +152,35 @@ export const L = {
   },
 
   trajet: {
-    title:    'TRAJET',
+    title:    MODULES.trajet.name,
     desc:     "Calcul automatique des temps de trajet entre événements.",
     delivery: 'Intégration prévue Sprint 2 — 3.',
   },
 
   sante: {
-    title: 'SANTÉ',
+    title: MODULES.sante.name,
     sub:   'Sport · Nutrition · Mesures',
     sections: {
       sport: {
-        title: 'SPORT',
+        title: MODULES.sport.name,
         desc: 'Suivi des séances, programmes, performances.',
         delivery: 'en cours',
       },
       nutrition: {
-        title: 'NUTRITION',
+        title: MODULES.nutrition.name,
         desc: 'Macros du jour, repas, garde-manger.',
-        delivery: 'Sprint 2',
+        delivery: SPRINT_2_DELIVERY,
       },
       mesures: {
-        title: 'MESURES',
+        title: MODULES.mesures.name,
         desc: 'Poids, tour de taille, autres marqueurs corporels.',
-        delivery: 'Sprint 2',
+        delivery: SPRINT_2_DELIVERY,
       },
     },
   },
 
   islam: {
-    title:    'ISLAM',
+    title:    MODULES.spirit.name,
     desc:     'Heures de prière, calendrier hégirien, rappels.',
     delivery: 'Intégration prévue Sprint 3.',
   },
@@ -172,7 +192,7 @@ export const L = {
   },
 
   planning: {
-    title: 'Planning',
+    title: MODULES.planning.display,
     addEvent: '+ Événement',
     addRoutine: '+ Routine',
     routine: 'Routine',
@@ -194,7 +214,7 @@ export const L = {
   },
 
   analyse: {
-    title: 'Analyse',
+    title: MODULES.analyse.display,
     perf: 'Suivi de tes performances',
     active: 'Activités',
     rest: 'Repos',
@@ -338,7 +358,7 @@ export const L = {
   },
 
   settings: {
-    title: 'SYSTÈME',
+    title: MODULES.reglages.name,
     api: 'RELAIS DE CALCUL (ORS)',
     orsKey: 'CLÉ API OPENROUTESERVICE',
     keyStored: 'Clé stockée localement dans le coffre-fort.',
@@ -355,7 +375,7 @@ export const L = {
 
   islamSystem: {
     core: 'AWAN SPIRITUAL CORE',
-    vigie: 'VIGIE SPIRITUELLE',
+    vigie: MODULES.vigie.name,
     chrono: 'CHRONOLOGIE DES PRIÈRES',
     next: 'PROCHAINE',
     qibla: 'ORIENTATION QIBLA',
