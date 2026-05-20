@@ -38,6 +38,7 @@ export const RoutineV1Schema = z.object({
   exercises: z.array(RoutineExerciseSchema),
   defaultRestSec: z.number().int().nonnegative(),
   createdAt: TimestampSchema,
+  source: z.enum(['user', 'coach']).optional(),
 });
 
 export type RoutineV1 = z.infer<typeof RoutineV1Schema>;

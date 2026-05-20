@@ -52,8 +52,10 @@ import {
  type CycleLetter,
 } from '../data/schemas/sport/routine';
 import type { ExerciseSetV1, SetKind } from '../data/schemas/sport/exerciseSet';
+import { WorkoutListView } from '../modules/sport/components/WorkoutListView';
+import { RoutineGeneratorView } from '../modules/sport/components/RoutineGeneratorView';
 
-type ViewMode = 'list' | 'create' | 'edit' | 'active' | 'history' | 'finish' | 'recovery';
+type ViewMode = 'list' | 'create' | 'edit' | 'active' | 'history' | 'finish' | 'recovery' | 'workouts' | 'generate';
 
 const CYCLE_LETTERS: (CycleLetter | null)[] = [null, 'A', 'B', 'C', 'D'];
 
@@ -492,6 +494,32 @@ export default function SportScreen() {
  return <WorkoutHistory logs={workoutStore.sessions} onBack={() => setView('list')} />;
  }
 
+ if (view === 'workouts') {
+ return (
+ <WorkoutListView
+ routines={workoutStore.routines}
+ sessions={workoutStore.sessions}
+ onBack={() => setView('list')}
+ onGenerate={() => setView('generate')}
+ onStart={(r) => { setPendingRoutine({ routine: r }); setRecoveryScore(null); setView('recovery'); }}
+ onDelete={(id) => workoutStore.deleteRoutine(id)}
+ onAdopt={(r) => workoutStore.saveRoutine({ ...r, source: 'user' })}
+ />
+ );
+ }
+
+ if (view === 'generate') {
+ return (
+ <RoutineGeneratorView
+ onBack={() => setView('workouts')}
+ onSave={async (routines) => {
+ await Promise.all(routines.map(r => workoutStore.saveRoutine(r)));
+ setView('workouts');
+ }}
+ />
+ );
+ }
+
  return (
  <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
  {resumeModal && (
@@ -625,7 +653,7 @@ export default function SportScreen() {
  </Card>
  )}
 
- <div className="mb-6 flex flex-row gap-3">
+ <div className="mb-3 flex flex-row gap-3">
  <Touch
  className="flex-1 h-14 bg-awan-gold flex items-center justify-center"
  onPress={() => { setEditingRoutine(null); setView('create'); }}
@@ -642,6 +670,12 @@ export default function SportScreen() {
  <History size={18} className="text-awan-tx-mute" />
  </Touch>
  </div>
+ <Touch
+ className="mb-6 h-12 bg-white/5 flex items-center justify-center border border-white/10"
+ onPress={() => setView('workouts')}
+ >
+ <span className="awan-label text-awan-tx-mute">MES ROUTINES →</span>
+ </Touch>
 
  <div className="mb-20">
  <Heading level={4} mono subtitle="Protocoles Enregistrés">ROUTINES</Heading>
