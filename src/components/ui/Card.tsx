@@ -58,11 +58,39 @@ export function Card({
     </div>
   );
 
+  // Card cliquable : on rend un <div role="button"> plutôt qu'un <Touch>
+  // (= <button>) pour éviter les <button> imbriqués HTML-invalides quand la Card
+  // contient des <Touch> enfants (icônes d'action info/edit/delete).
   if (onPress !== undefined || onLongPress !== undefined) {
-    const touchProps: Record<string, unknown> = { className: 'w-full text-left' };
-    if (onPress !== undefined) touchProps['onPress'] = onPress;
-    if (onLongPress !== undefined) touchProps['onLongPress'] = onLongPress;
-    return <Touch {...touchProps}>{CardBase}</Touch>;
+    const handleKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (onPress && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        onPress();
+      }
+    };
+    const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+      // Si le clic vient d'un enfant interactif (button), on laisse passer
+      if ((e.target as HTMLElement).closest('button')) return;
+      onPress?.();
+    };
+    const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
+      if (onLongPress) {
+        e.preventDefault();
+        onLongPress();
+      }
+    };
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={handleClick}
+        onKeyDown={handleKey}
+        onContextMenu={handleContextMenu}
+        className="cursor-pointer w-full text-left"
+      >
+        {CardBase}
+      </div>
+    );
   }
 
   return CardBase;

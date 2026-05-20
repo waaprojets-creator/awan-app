@@ -24,3 +24,8 @@ design.source.json
 docs/phases/
 android/
 public/exercise-media/
+
+# Playwright transient artifacts
+test-results/
+tests/e2e/screenshots/
+tests/e2e/report/
