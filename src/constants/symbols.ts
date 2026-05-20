@@ -13,6 +13,10 @@ export const SYMBOLS = {
   arrowLeft:      '←',
   /** Séparateur signature AWAN (badges, tags, headers) */
   bullet:         '·',
+  /** Tendance haussière (poids, métriques) */
+  trendUp:        '↑',
+  /** Tendance baissière (poids, métriques) */
+  trendDown:      '↓',
 } as const;
 
 export type SymbolKey = keyof typeof SYMBOLS;

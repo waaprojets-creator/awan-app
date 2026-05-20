@@ -49,9 +49,9 @@ export function DailyCanvas({
                   <TokenIcon iconKey={entry.tokens[0]?.icon || 'clipboard'} size={16} />
                 </div>
                 <div className="flex-1">
-                  <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase mb-1 block">{entry.module}</span>
+                  <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase mb-1 block">{entry.module}</span>
                   <span className="text-sm font-bold text-awan-tx">{entry.tokens[0]?.value} {entry.tokens[0]?.unit}</span>
-                  {entry.rawText && <span className="text-[10px] text-awan-tx-mute italic block opacity-70">"{entry.rawText}"</span>}
+                  {entry.rawText && <span className="text-awan-md text-awan-tx-mute italic block opacity-70">"{entry.rawText}"</span>}
                 </div>
             </div>
           )}

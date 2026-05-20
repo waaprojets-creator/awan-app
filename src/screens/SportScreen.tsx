@@ -153,11 +153,11 @@ function VolumeWeekSection({ sessions }: { sessions: WorkoutSessionLatest[] }) {
           const barColor = sets < lm.mev ? 'var(--color-awan-status-error)' : sets <= lm.mav[1] ? 'var(--color-awan-status-ok)' : sets >= lm.mrv * 0.8 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-ok)';
           return (
             <div key={muscle} className="flex flex-row items-center gap-3">
-              <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest w-20 shrink-0">{lm.label}</span>
+              <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest w-20 shrink-0">{lm.label}</span>
               <div className="flex-1 h-[3px] bg-white/5 relative">
                 <div className="absolute inset-y-0 left-0" style={{ width: `${pct}%`, backgroundColor: barColor }} />
               </div>
-              <span className="text-[10px] font-bold font-mono" style={{ color: barColor, minWidth: 32, textAlign: 'right' }}>{sets}</span>
+              <span className="text-awan-md font-bold font-mono" style={{ color: barColor, minWidth: 32, textAlign: 'right' }}>{sets}</span>
             </div>
           );
         })}
@@ -402,7 +402,7 @@ export default function SportScreen() {
      </div>
      <div className="flex-1 flex flex-col items-center justify-center px-6 gap-8">
        <div className="w-full">
-         <span className="block text-center text-[9px] font-black text-awan-tx-mute tracking-widest uppercase mb-6">
+         <span className="block text-center text-awan-sm font-black text-awan-tx-mute tracking-widest uppercase mb-6">
            SCORE DE RÉCUPÉRATION DU JOUR
          </span>
          <div className="flex flex-row flex-wrap justify-center gap-3">
@@ -424,8 +424,8 @@ export default function SportScreen() {
            ))}
          </div>
          <div className="flex flex-row justify-between mt-4 px-2">
-           <span className="text-[9px] text-awan-tx-mute font-bold uppercase tracking-widest">épuisé</span>
-           <span className="text-[9px] text-awan-tx-mute font-bold uppercase tracking-widest">parfait</span>
+           <span className="text-awan-sm text-awan-tx-mute font-bold uppercase tracking-widest">épuisé</span>
+           <span className="text-awan-sm text-awan-tx-mute font-bold uppercase tracking-widest">parfait</span>
          </div>
        </div>
        <div className="flex flex-col gap-3 w-full">
@@ -441,12 +441,12 @@ export default function SportScreen() {
            }}
            className="bg-awan-gold p-4 items-center"
          >
-           <span className="text-[11px] font-black text-black uppercase tracking-widest">
+           <span className="text-awan-lg font-black text-black uppercase tracking-widest">
              {recoveryScore !== null ? `DÉMARRER — RÉCUP ${recoveryScore}/10` : 'DÉMARRER SANS NOTER'}
            </span>
          </Touch>
          <Touch onPress={() => { setPendingRoutine(null); setView('list'); }} className="p-4 items-center" style={{ border: '1px solid rgba(128,128,128,0.25)' }}>
-           <span className="text-[10px] font-bold text-awan-tx-mute uppercase tracking-widest">ANNULER</span>
+           <span className="text-awan-md font-bold text-awan-tx-mute uppercase tracking-widest">ANNULER</span>
          </Touch>
        </div>
      </div>
@@ -533,7 +533,7 @@ export default function SportScreen() {
  <div className="w-full bg-awan-surface rounded-t-3xl border-t border-white/10 p-6 pb-10">
  <span className="awan-label text-awan-gold mb-2 block">SÉANCE EN COURS</span>
  <span className="text-lg font-bold text-awan-tx uppercase mb-1 block">{resumeModal.routineName}</span>
- <span className="text-[10px] font-bold text-awan-tx-mute uppercase tracking-widest mb-6 block">
+ <span className="text-awan-md font-bold text-awan-tx-mute uppercase tracking-widest mb-6 block">
  Démarrée à {new Date(resumeModal.startTime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
  </span>
  <div className="flex flex-row gap-3">
@@ -562,7 +562,7 @@ export default function SportScreen() {
  <span className="text-lg font-bold text-awan-tx uppercase mb-1 block">
  {draftResumeModal.name.trim() || 'SANS NOM'}
  </span>
- <span className="text-[10px] font-bold text-awan-tx-mute uppercase tracking-widest mb-6 block">
+ <span className="text-awan-md font-bold text-awan-tx-mute uppercase tracking-widest mb-6 block">
  {draftResumeModal.exercises.length} EXERCICES · Sauvegardé à {new Date(draftResumeModal.savedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
  </span>
  <div className="flex flex-row gap-3">
@@ -599,7 +599,7 @@ export default function SportScreen() {
    const p = PeriodizationService.getOrInit();
    return (
      <div className="mb-4 px-1">
-       <span className="text-[9px] font-black text-awan-tx-mute tracking-widest uppercase">
+       <span className="text-awan-sm font-black text-awan-tx-mute tracking-widest uppercase">
          PHASE {p.phase} · SEMAINE {p.mesoWeek} · {PeriodizationService.getPhaseLabel(p.phase)}
        </span>
      </div>
@@ -643,10 +643,10 @@ export default function SportScreen() {
  <div className="flex flex-row items-center gap-3 mt-2">
  {nextRoutine.cycleLetter && (
  <div className="bg-awan-gold/15 px-2 py-0.5 rounded border border-awan-gold/30">
- <span className="text-[9px] font-black text-awan-gold tracking-widest">CYCLE {nextRoutine.cycleLetter}</span>
+ <span className="text-awan-sm font-black text-awan-gold tracking-widest">CYCLE {nextRoutine.cycleLetter}</span>
  </div>
  )}
- <span className="text-[10px] font-bold text-awan-tx-mute uppercase tracking-widest">
+ <span className="text-awan-md font-bold text-awan-tx-mute uppercase tracking-widest">
  {nextRoutine.exercises.length} EXERCICES
  </span>
  </div>
@@ -708,11 +708,11 @@ export default function SportScreen() {
  <div className="flex flex-row items-center gap-3">
  {r.cycleLetter && (
  <div className="bg-awan-gold/10 px-2 py-0.5 rounded border border-awan-gold/20">
- <span className="text-[9px] font-black text-awan-gold tracking-widest">CYCLE {r.cycleLetter}</span>
+ <span className="text-awan-sm font-black text-awan-gold tracking-widest">CYCLE {r.cycleLetter}</span>
  </div>
  )}
  <div className="bg-white/5 px-2 py-0.5 rounded">
- <span className="text-[9px] font-black text-awan-tx-mute tracking-widest">{r.exercises.length} EX</span>
+ <span className="text-awan-sm font-black text-awan-tx-mute tracking-widest">{r.exercises.length} EX</span>
  </div>
  </div>
  <div className="absolute right-6 bottom-6 w-10 h-10 bg-awan-gold/20 flex items-center justify-center border border-awan-gold/20">
@@ -933,7 +933,7 @@ function RoutineEditor({
  <Heading level={4} mono subtitle={`${exercises.length} indexé(s)`}>EXERCICES</Heading>
  {exercises.length === 0 && (
  <div className="py-12 border-2 border-dashed border-white/5 items-center">
- <span className="text-[10px] font-bold text-awan-tx-mute uppercase tracking-[0.2em] italic">Aucun exercice</span>
+ <span className="text-awan-md font-bold text-awan-tx-mute uppercase tracking-[0.2em] italic">Aucun exercice</span>
  </div>
  )}
  <StaggerList>
@@ -943,7 +943,7 @@ function RoutineEditor({
  <div className="flex flex-row items-start justify-between mb-3">
  <div className="flex-1">
  <span className="text-sm font-bold text-awan-tx uppercase tracking-tight block">{ex.name}</span>
- <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-widest">
+ <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-widest">
  {MUSCLES[ex.primaryMuscle ?? '']} • {ex.equipment}
  </span>
  </div>
@@ -1024,7 +1024,7 @@ function NumField({
 }) {
  return (
  <div>
- <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-widest mb-1 block">{label}</span>
+ <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-widest mb-1 block">{label}</span>
  <div className="flex flex-row items-center gap-1">
  <Touch onPress={() => onChange(Math.max(min, value - step))} className="w-8 h-10 bg-awan-surface flex items-center justify-center">
  <Minus size={12} className="text-awan-tx-mute" />
@@ -1092,7 +1092,7 @@ function ExercisePicker({
  !filterMuscle ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'
  }`}
  >
- <span className={`text-[10px] font-black uppercase tracking-widest ${!filterMuscle ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>Tous</span>
+ <span className={`text-awan-md font-black uppercase tracking-widest ${!filterMuscle ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>Tous</span>
  </Touch>
  {Object.entries(MUSCLES).map(([id, label]) => (
  <Touch
@@ -1102,7 +1102,7 @@ function ExercisePicker({
  filterMuscle === id ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'
  }`}
  >
- <span className={`text-[10px] font-black uppercase tracking-widest ${filterMuscle === id ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
+ <span className={`text-awan-md font-black uppercase tracking-widest ${filterMuscle === id ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
  {label}
  </span>
  </Touch>
@@ -1119,7 +1119,7 @@ function ExercisePicker({
  <Card className="flex-row items-center gap-3 py-4 px-5 bg-white/5 mb-3" variant="flat" onPress={() => onPick(ex)}>
  <div className="flex-1">
  <span className="text-base font-bold text-awan-tx uppercase tracking-tight block">{ex.n}</span>
- <span className="text-[10px] font-bold text-awan-tx-mute uppercase tracking-widest">
+ <span className="text-awan-md font-bold text-awan-tx-mute uppercase tracking-widest">
  {MUSCLES[ex.pm[0] ?? '']} • {ex.eq}
  </span>
  </div>
@@ -1194,22 +1194,22 @@ function ExerciseDetail({
  <div className="flex flex-row flex-wrap gap-2 mb-6">
  {exercise.eq && (
  <div className="bg-white/5 border border-white/10 px-3 py-1.5 ">
- <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest">{exercise.eq}</span>
+ <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest">{exercise.eq}</span>
  </div>
  )}
  {exercise.lvl && (
  <div className="bg-white/5 border border-white/10 px-3 py-1.5 ">
- <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest">{levelMap[exercise.lvl] ?? exercise.lvl}</span>
+ <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest">{levelMap[exercise.lvl] ?? exercise.lvl}</span>
  </div>
  )}
  {exercise.cat && (
  <div className="bg-awan-gold/10 border border-awan-gold/20 px-3 py-1.5 ">
- <span className="text-[10px] font-black text-awan-gold uppercase tracking-widest">{catMap[exercise.cat] ?? exercise.cat}</span>
+ <span className="text-awan-md font-black text-awan-gold uppercase tracking-widest">{catMap[exercise.cat] ?? exercise.cat}</span>
  </div>
  )}
  {exercise.force && (
  <div className="bg-white/5 border border-white/10 px-3 py-1.5 ">
- <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest">{forceMap[exercise.force] ?? exercise.force}</span>
+ <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest">{forceMap[exercise.force] ?? exercise.force}</span>
  </div>
  )}
  </div>
@@ -1236,7 +1236,7 @@ function RestRing({ remaining, total }: { remaining: number; total: number }) {
  const pct = total > 0 ? remaining / total : 0;
  return (
  <svg width={36} height={36} viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
- <circle cx={18} cy={18} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={2.5} />
+ <circle cx={18} cy={18} r={r} fill="none" stroke="var(--color-awan-border-soft)" strokeWidth={2.5} />
  <circle
  cx={18} cy={18} r={r} fill="none"
  stroke="var(--color-awan-status-warn)"
@@ -1278,7 +1278,7 @@ function ChronoOverlay({
  </span>
  </div>
  )}
- <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest max-w-[100px] truncate">{routineName}</span>
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest max-w-[100px] truncate">{routineName}</span>
  </div>
  </div>
  );
@@ -1443,7 +1443,7 @@ function ActiveWorkout({
  </span>
  {restRemaining > 0 && (
  <Touch onPress={skipRest} className="ml-1 px-2 py-1 bg-white/10 rounded">
- <span className="text-[9px] font-black text-awan-tx tracking-widest">PASSER</span>
+ <span className="text-awan-sm font-black text-awan-tx tracking-widest">PASSER</span>
  </Touch>
  )}
  </Card>
@@ -1455,17 +1455,17 @@ function ActiveWorkout({
  <Card key={ex.rid} className="mb-6 p-3 border-white/10 bg-white/5">
  <div className="mb-4">
  <span className="text-base font-bold text-awan-tx uppercase tracking-tight block">{ex.name}</span>
- <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-widest">
+ <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-widest">
  {MUSCLES[ex.primaryMuscle ?? '']} • {ex.equipment} • repos {ex.restSec}s
  </span>
  </div>
 
  <div className="flex flex-row mb-3 px-1 gap-1">
- <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest w-6 text-center">N°</span>
- <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest w-14 text-center">TYPE</span>
- <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest flex-1 text-center">KG</span>
- <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest flex-1 text-center">REPS</span>
- <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest w-8 text-center">RIR</span>
+ <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest w-6 text-center">N°</span>
+ <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest w-14 text-center">TYPE</span>
+ <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest flex-1 text-center">KG</span>
+ <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest flex-1 text-center">REPS</span>
+ <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest w-8 text-center">RIR</span>
  <span className="w-8" />
  </div>
 
@@ -1485,7 +1485,7 @@ function ActiveWorkout({
  >
  <div className="flex flex-row items-center gap-2">
  <Plus size={12} className="text-awan-tx-mute" strokeWidth={3} />
- <span className="text-[9px] font-black text-awan-tx-mute tracking-widest">AJOUTER UN SET</span>
+ <span className="text-awan-sm font-black text-awan-tx-mute tracking-widest">AJOUTER UN SET</span>
  </div>
  </Touch>
  </Card>
@@ -1498,7 +1498,7 @@ function ActiveWorkout({
  { text: 'Oui', style: 'destructive', onPress: onAbort },
  ])}
  >
- <span className="text-[10px] font-black text-awan-status-error uppercase tracking-[0.3em] opacity-50">ANNULER LA SÉANCE</span>
+ <span className="text-awan-md font-black text-awan-status-error uppercase tracking-[0.3em] opacity-50">ANNULER LA SÉANCE</span>
  </Touch>
  </ScrollView>
  </div>
@@ -1525,7 +1525,7 @@ function SetRow({
  <span className="text-xs font-mono font-black text-awan-tx-mute">{index + 1}</span>
  </div>
  <Touch onPress={() => setKindMenu(v => !v)} className="w-14 h-10 bg-awan-surface flex items-center justify-center relative">
- <span className={`text-[9px] font-black tracking-widest ${SET_KIND_COLOR[set.kind]}`}>{SET_KIND_LABEL[set.kind]}</span>
+ <span className={`text-awan-sm font-black tracking-widest ${SET_KIND_COLOR[set.kind]}`}>{SET_KIND_LABEL[set.kind]}</span>
  {kindMenu && (
  <div className="absolute top-full left-0 mt-1 bg-awan-surface border border-white/10 z-10 min-w-[100px]">
  {(['warmup', 'working', 'drop', 'failure'] as SetKind[]).map(k => (
@@ -1534,7 +1534,7 @@ function SetRow({
  onPress={() => { onChange({ kind: k }); setKindMenu(false); }}
  className="px-3 py-2 hover:bg-white/5 border-b border-white/5 last:border-0"
  >
- <span className={`text-[9px] font-black tracking-widest ${SET_KIND_COLOR[k]}`}>{SET_KIND_LABEL[k]}</span>
+ <span className={`text-awan-sm font-black tracking-widest ${SET_KIND_COLOR[k]}`}>{SET_KIND_LABEL[k]}</span>
  </Touch>
  ))}
  </div>
@@ -1733,7 +1733,7 @@ function FinishWorkout({
  <span className="awan-label mb-1 block">VOLUME (kg)</span>
  <span className="text-2xl font-mono font-bold text-awan-gold">{Math.round(stats.volume)}</span>
  {prevVolume !== null && (
- <span className="font-mono text-[10px] mt-1 block" style={{
+ <span className="font-mono text-awan-md mt-1 block" style={{
  color: stats.volume >= prevVolume
  ? 'var(--color-awan-status-ok)'
  : 'var(--color-awan-status-error)'
@@ -1843,32 +1843,32 @@ function WorkoutHistory({ logs, onBack }: { logs: WorkoutSessionLatest[]; onBack
  <Card className="p-5 bg-white/5 border-white/5">
  <div className="flex flex-row justify-between items-center mb-2">
  <span className="text-base font-bold text-awan-tx uppercase tracking-tight">{log.name}</span>
- <span className="text-[10px] font-mono font-bold text-awan-gold">{log.date}</span>
+ <span className="text-awan-md font-mono font-bold text-awan-gold">{log.date}</span>
  </div>
  <div className="flex flex-row items-center gap-4 mb-2">
  {log.cycleLetter && (
  <div className="bg-awan-gold/10 px-2 py-0.5 rounded">
- <span className="text-[9px] font-black text-awan-gold tracking-widest">CYCLE {log.cycleLetter}</span>
+ <span className="text-awan-sm font-black text-awan-gold tracking-widest">CYCLE {log.cycleLetter}</span>
  </div>
  )}
  {log.isException && (
  <div className="bg-orange-400/10 px-2 py-0.5 rounded">
- <span className="text-[9px] font-black text-orange-400 tracking-widest">EXCEPTION</span>
+ <span className="text-awan-sm font-black text-orange-400 tracking-widest">EXCEPTION</span>
  </div>
  )}
  </div>
  <div className="flex flex-row items-center gap-4 mt-1">
  <div className="flex flex-row items-center gap-1">
  <Target size={11} className="text-awan-tx-mute" />
- <span className="text-[10px] font-bold text-awan-tx-mute uppercase tracking-widest">{workingCount} SETS</span>
+ <span className="text-awan-md font-bold text-awan-tx-mute uppercase tracking-widest">{workingCount} SETS</span>
  </div>
  <div className="w-[1px] h-3 bg-white/10" />
  <div className="flex flex-row items-center gap-1">
  <Clock size={11} className="text-awan-tx-mute" />
- <span className="text-[10px] font-bold text-awan-tx-mute uppercase tracking-widest">{Math.floor(log.duration / 60)} MIN</span>
+ <span className="text-awan-md font-bold text-awan-tx-mute uppercase tracking-widest">{Math.floor(log.duration / 60)} MIN</span>
  </div>
  <div className="w-[1px] h-3 bg-white/10" />
- <span className="text-[10px] font-bold text-awan-tx-mute uppercase tracking-widest">{Math.round(volume)} KG</span>
+ <span className="text-awan-md font-bold text-awan-tx-mute uppercase tracking-widest">{Math.round(volume)} KG</span>
  </div>
  </Card>
  </StaggerItem>

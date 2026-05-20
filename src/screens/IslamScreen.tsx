@@ -133,7 +133,7 @@ function HijriCalendar({
                 className="flex flex-col items-center py-1 border"
                 style={{
                   backgroundColor: isSelected ? 'var(--color-awan-gold)' : isToday ? 'rgba(212,175,55,0.12)' : 'transparent',
-                  borderColor: isToday ? 'var(--color-awan-gold)' : holiday ? 'rgba(212,175,55,0.3)' : 'rgba(255,255,255,0.05)',
+                  borderColor: isToday ? 'var(--color-awan-gold)' : holiday ? 'rgba(212,175,55,0.3)' : 'var(--color-awan-border-soft)',
                   minHeight: 38,
                 }}
               >
@@ -408,7 +408,7 @@ export default function IslamScreen() {
 
         {/* ── Chrono prières ────────────────────────────────────────────────── */}
         <div className="mb-4 border" style={{ borderColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-          <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>CHRONO PRIÈRES</span>
             {isPast && (
               <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-mute)' }}>
@@ -431,7 +431,7 @@ export default function IslamScreen() {
                 key={key}
                 onPress={() => canToggle && prayerStore.toggle(key as PrayerName)}
                 className="flex flex-row justify-between items-center px-4 py-4 border-b"
-                style={{ borderColor: 'rgba(255,255,255,0.05)', backgroundColor: isNext ? 'rgba(212,175,55,0.06)' : done ? 'rgba(78,205,196,0.04)' : 'transparent' }}
+                style={{ borderColor: 'var(--color-awan-border-soft)', backgroundColor: isNext ? 'rgba(212,175,55,0.06)' : done ? 'rgba(78,205,196,0.04)' : 'transparent' }}
               >
                 <div className="flex flex-row items-center gap-3">
                   <div style={{ width: 3, height: 32, backgroundColor: done ? 'var(--color-awan-status-ok)' : isNext ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.08)' }} />
@@ -553,7 +553,7 @@ export default function IslamScreen() {
 
         {/* ── Calendrier hégirien ───────────────────────────────────────────── */}
         <div className="mb-4 border" style={{ borderColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-          <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
             <div className="flex flex-row gap-2">
               <Touch onPress={() => setCalView('month')}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', fontWeight: 700, color: calView === 'month' ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>MOIS</span>
@@ -593,7 +593,7 @@ export default function IslamScreen() {
                   const holidays = ISLAMIC_HOLIDAYS.filter(([m]) => m === hm);
                   return (
                     <Touch key={hm} onPress={() => { setHijriMonth(hm); setCalView('month'); }}>
-                      <div className="flex flex-row items-start justify-between p-3 border" style={{ borderColor: hm === hijriMonth ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.06)', backgroundColor: hm === hijriMonth ? 'rgba(212,175,55,0.06)' : 'transparent' }}>
+                      <div className="flex flex-row items-start justify-between p-3 border" style={{ borderColor: hm === hijriMonth ? 'var(--color-awan-gold)' : 'var(--color-awan-border)', backgroundColor: hm === hijriMonth ? 'rgba(212,175,55,0.06)' : 'transparent' }}>
                         <div>
                           <span style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', fontWeight: 700, color: hm === hijriMonth ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)', letterSpacing: '0.1em' }}>{monthName}</span>
                           <span style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', marginTop: 2 }}>{gregLabel}</span>
@@ -616,7 +616,7 @@ export default function IslamScreen() {
 
         {/* ── Progression Coran ─────────────────────────────────────────────── */}
         <div className="mb-4 border" style={{ borderColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-          <div className="px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
             <div className="flex flex-row items-center justify-between">
               <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>PROGRESSION CORAN</span>
               <TrendingUp size={14} color="var(--color-awan-gold)" />
@@ -639,7 +639,7 @@ export default function IslamScreen() {
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: '28px', fontWeight: 700, color: 'var(--color-awan-tx)' }}>{quranStore.progress.totalAyahsRead}</span>
                   </div>
                 </div>
-                <div className="h-px mb-4" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+                <div className="h-px mb-4" style={{ backgroundColor: 'var(--color-awan-border)' }} />
                 <div className="flex flex-row gap-2">
                   <Touch onPress={() => quranStore.advance(1)} className="flex-1 flex items-center justify-center gap-2 p-3 border" style={{ borderColor: 'rgba(212,175,55,0.3)', backgroundColor: 'rgba(212,175,55,0.06)' }}>
                     <Plus size={14} color="var(--color-awan-gold)" />
@@ -666,7 +666,7 @@ export default function IslamScreen() {
 
         {/* ── Vocabulaire ───────────────────────────────────────────────────── */}
         <div className="mb-8 border" style={{ borderColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-          <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>VOCABULAIRE</span>
             <div className="flex flex-row items-center gap-2">
               <BookOpen size={13} color="var(--color-awan-tx-mute)" />

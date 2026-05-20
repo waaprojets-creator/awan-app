@@ -208,7 +208,7 @@ export default function AnalyseScreen() {
                   onPress={() => setTab(id)}
                 >
                   <Icon size={18} className={tab === id ? 'text-awan-gold' : 'text-awan-tx-mute'} />
-                  <span className={`text-[8px] font-black uppercase tracking-widest mt-1 ${tab === id ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{label}</span>
+                  <span className={`text-awan-xs font-black uppercase tracking-widest mt-1 ${tab === id ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{label}</span>
                 </Touch>
               ))}
            </div>
@@ -222,7 +222,7 @@ export default function AnalyseScreen() {
                className={`px-6 py-1.5 border transition-all ${range === r.id ? 'bg-awan-gold/20 border-awan-gold' : 'border-white/10'}`}
                onPress={() => setRange(r.id)}
              >
-               <span className={`text-[10px] font-black tracking-[0.2em] ${range === r.id ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{r.label}</span>
+               <span className={`text-awan-md font-black tracking-[0.2em] ${range === r.id ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{r.label}</span>
              </Touch>
            ))}
         </div>
@@ -247,11 +247,11 @@ export default function AnalyseScreen() {
                   
                   <div className="grid grid-cols-2 gap-4">
                     <Card className="border-awan-gold/30 bg-awan-gold/5 p-6" variant="flat">
-                       <span className="text-[10px] font-black text-awan-gold tracking-widest mb-2 block uppercase">Flux Actif</span>
+                       <span className="text-awan-md font-black text-awan-gold tracking-widest mb-2 block uppercase">Flux Actif</span>
                        <span className="text-3xl font-black text-awan-tx font-mono">{Math.round(activityData.reduce((acc, d) => d.key !== FREE_KEY ? acc+d.value : acc, 0) / 60)}<span className="text-sm ml-1 opacity-50">H</span></span>
                     </Card>
                     <Card className="border-white/5 bg-white/5 p-6" variant="flat">
-                       <span className="text-[10px] font-black text-awan-tx-mute tracking-widest mb-2 block uppercase">Veille System</span>
+                       <span className="text-awan-md font-black text-awan-tx-mute tracking-widest mb-2 block uppercase">Veille System</span>
                        <span className="text-3xl font-black text-awan-tx font-mono">{Math.round((activityData.find(d => d.key === FREE_KEY)?.value ?? 0) / 60)}<span className="text-sm ml-1 opacity-50">H</span></span>
                     </Card>
                   </div>
@@ -273,7 +273,7 @@ export default function AnalyseScreen() {
                              {mealStoreToday.totals.kcal || '—'}
                            </span>
                            {mealStoreToday.totals.kcal > 0 && (
-                             <span className="text-[10px] font-mono text-awan-tx-mute">
+                             <span className="text-awan-md font-mono text-awan-tx-mute">
                                · P {mealStoreToday.totals.p}g · G {mealStoreToday.totals.c}g · L {mealStoreToday.totals.f}g
                              </span>
                            )}
@@ -283,14 +283,14 @@ export default function AnalyseScreen() {
                           <Card className="p-6 bg-white/5 border-white/5" variant="flat">
                              <div className="flex flex-row items-center gap-2 mb-3">
                                 <Flame size={12} className="text-awan-gold" />
-                                <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase">Moy. Kcal</span>
+                                <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase">Moy. Kcal</span>
                              </div>
                              <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">{nutritionStats.avgKcal || '—'}</span>
                           </Card>
                           <Card className="p-6 bg-white/5 border-white/5" variant="flat">
                              <div className="flex flex-row items-center gap-2 mb-3">
                                 <Activity size={12} className="text-awan-status-error" />
-                                <span className="text-[9px] font-black text-awan-status-error tracking-widest uppercase">Moy. Prot</span>
+                                <span className="text-awan-sm font-black text-awan-status-error tracking-widest uppercase">Moy. Prot</span>
                              </div>
                              <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">
                                {nutritionStats.avgP || '—'}{nutritionStats.avgP > 0 && <span className="text-sm ml-1">G</span>}
@@ -352,25 +352,25 @@ export default function AnalyseScreen() {
                     {measureStore.history.slice().reverse().slice(0, 10).map((m, i) => (
                       <Card key={i} className="p-5 bg-white/5 border-white/5" variant="flat">
                         <div className="flex flex-row items-center justify-between mb-3">
-                          <span className="text-[9px] font-mono text-awan-gold uppercase tracking-widest">{m.date}</span>
+                          <span className="text-awan-sm font-mono text-awan-gold uppercase tracking-widest">{m.date}</span>
                           {m.body_fat_pct != null && (
-                            <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest">{m.body_fat_pct}% MG</span>
+                            <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest">{m.body_fat_pct}% MG</span>
                           )}
                         </div>
                         <div className="flex flex-row items-end gap-6">
                           <div>
-                            <span className="text-[9px] font-black text-awan-tx-mute uppercase block mb-1">Poids</span>
+                            <span className="text-awan-sm font-black text-awan-tx-mute uppercase block mb-1">Poids</span>
                             <span className="text-3xl font-black text-awan-gold tabular-nums font-mono">{m.weight}<span className="text-sm ml-1 opacity-50">KG</span></span>
                           </div>
                           {m.bpm_rest != null && m.bpm_rest > 0 && (
                             <div>
-                              <span className="text-[9px] font-black text-awan-tx-mute uppercase block mb-1">BPM repos</span>
+                              <span className="text-awan-sm font-black text-awan-tx-mute uppercase block mb-1">BPM repos</span>
                               <span className="text-2xl font-black text-awan-tx tabular-nums font-mono">{m.bpm_rest}</span>
                             </div>
                           )}
                           {Object.entries(m.measurements).slice(0, 2).map(([k, v]) => (
                             <div key={k}>
-                              <span className="text-[9px] font-black text-awan-tx-mute uppercase block mb-1">{k}</span>
+                              <span className="text-awan-sm font-black text-awan-tx-mute uppercase block mb-1">{k}</span>
                               <span className="text-2xl font-black text-awan-tx tabular-nums font-mono">{v}<span className="text-sm ml-0.5 opacity-50">cm</span></span>
                             </div>
                           ))}
@@ -407,7 +407,7 @@ export default function AnalyseScreen() {
 
                return (
                  <div className="space-y-6">
-                   <span className="text-[8px] font-black text-awan-tx-mute tracking-[0.3em] uppercase block">CORRÉLATIONS INTER-MODULES · 30 JOURS</span>
+                   <span className="text-awan-xs font-black text-awan-tx-mute tracking-[0.3em] uppercase block">CORRÉLATIONS INTER-MODULES · 30 JOURS</span>
 
                    {/* Sport ↔ Poids timeline */}
                    <Card className="p-5 bg-white/5 border-white/5" variant="flat">
@@ -432,11 +432,11 @@ export default function AnalyseScreen() {
                      <div className="flex flex-row gap-4 mt-3">
                        <div className="flex flex-row items-center gap-1.5">
                          <div className="w-3 h-3" style={{ backgroundColor: 'var(--color-awan-gold)' }} />
-                         <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest">Séance</span>
+                         <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">Séance</span>
                        </div>
                        <div className="flex flex-row items-center gap-1.5">
                          <div className="w-3 h-3 bg-white/12" />
-                         <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest">Repos</span>
+                         <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">Repos</span>
                        </div>
                      </div>
                    </Card>
@@ -446,24 +446,24 @@ export default function AnalyseScreen() {
                      <Card className="p-5 bg-white/5 border-white/5" variant="flat">
                        <span className="awan-label text-awan-tx-mute mb-2 block">FRÉQUENCE</span>
                        <span className="text-3xl font-black text-awan-gold font-mono">{sessionsPerWeek.toFixed(1)}</span>
-                       <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">séances/sem · 30j</span>
+                       <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">séances/sem · 30j</span>
                      </Card>
                      <Card className="p-5 bg-white/5 border-white/5" variant="flat">
                        <span className="awan-label text-awan-tx-mute mb-2 block">POIDS · DELTA</span>
                        <span className={`text-3xl font-black font-mono ${weightDelta == null ? 'text-awan-tx-mute' : weightDelta < 0 ? 'text-awan-status-ok' : weightDelta > 0 ? 'text-awan-status-warn' : 'text-awan-tx'}`}>
                          {weightDelta != null ? `${weightDelta > 0 ? '+' : ''}${weightDelta.toFixed(1)}` : '—'}
                        </span>
-                       <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">kg · total historique</span>
+                       <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">kg · total historique</span>
                      </Card>
                      <Card className="p-5 bg-white/5 border-white/5" variant="flat">
                        <span className="awan-label text-awan-tx-mute mb-2 block">JOURS SPORT</span>
                        <span className="text-3xl font-black text-awan-tx font-mono">{workoutDays}<span className="text-sm ml-1 opacity-50">/30</span></span>
-                       <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">jours actifs</span>
+                       <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">jours actifs</span>
                      </Card>
                      <Card className="p-5 bg-white/5 border-white/5" variant="flat">
                        <span className="awan-label text-awan-tx-mute mb-2 block">KCAL JOUR</span>
                        <span className="text-3xl font-black text-awan-tx font-mono">{mealStoreToday.totals.kcal || '—'}</span>
-                       <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">aujourd'hui</span>
+                       <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">aujourd'hui</span>
                      </Card>
                    </div>
 
@@ -472,22 +472,22 @@ export default function AnalyseScreen() {
                      <span className="awan-label text-awan-gold mb-3 block">INSIGHTS</span>
                      <div className="space-y-2">
                        {sessionsPerWeek < 2 && (
-                         <span className="text-[10px] text-awan-tx-dim block">· Fréquence en dessous des recommandations OMS (150 min/sem)</span>
+                         <span className="text-awan-md text-awan-tx-dim block">· Fréquence en dessous des recommandations OMS (150 min/sem)</span>
                        )}
                        {sessionsPerWeek >= 4 && (
-                         <span className="text-[10px] text-awan-status-ok block">· Excellente fréquence d'entraînement</span>
+                         <span className="text-awan-md text-awan-status-ok block">· Excellente fréquence d'entraînement</span>
                        )}
                        {weightDelta != null && weightDelta < -2 && sessionsPerWeek > 2 && (
-                         <span className="text-[10px] text-awan-status-warn block">· Perte de poids rapide avec entraînement intensif — vérifier l'apport protéique</span>
+                         <span className="text-awan-md text-awan-status-warn block">· Perte de poids rapide avec entraînement intensif — vérifier l'apport protéique</span>
                        )}
                        {weightDelta != null && weightDelta > 2 && sessionsPerWeek < 2 && (
-                         <span className="text-[10px] text-awan-status-warn block">· Prise de masse sans entraînement suffisant — augmenter la fréquence</span>
+                         <span className="text-awan-md text-awan-status-warn block">· Prise de masse sans entraînement suffisant — augmenter la fréquence</span>
                        )}
                        {sessionsPerWeek >= 2 && weightDelta != null && Math.abs(weightDelta) <= 1 && (
-                         <span className="text-[10px] text-awan-status-ok block">· Équilibre sport/poids stable — maintien de la composition corporelle</span>
+                         <span className="text-awan-md text-awan-status-ok block">· Équilibre sport/poids stable — maintien de la composition corporelle</span>
                        )}
                        {workoutDays === 0 && weightPoints.length === 0 && (
-                         <span className="text-[10px] text-awan-tx-mute block">· Pas de données suffisantes — continuez à enregistrer vos séances et mesures</span>
+                         <span className="text-awan-md text-awan-tx-mute block">· Pas de données suffisantes — continuez à enregistrer vos séances et mesures</span>
                        )}
                      </div>
                    </Card>
@@ -545,7 +545,7 @@ function PieChart({ data, size = 180 }: { data: any[], size?: number }) {
   const theme = useTheme();
   const total = data.reduce((s, d) => s + d.value, 0);
   const cx = size / 2; const cy = size / 2; const r = size / 2 - 15;
-  if (total === 0) return <Svg width={size} height={size}><Circle cx={cx} cy={cy} r={r} fill="rgba(255,255,255,0.05)" /></Svg>;
+  if (total === 0) return <Svg width={size} height={size}><Circle cx={cx} cy={cy} r={r} fill="var(--color-awan-border-soft)" /></Svg>;
   let cumulative = 0;
   return (
     <Svg width={size} height={size}>
@@ -564,7 +564,7 @@ function PieChart({ data, size = 180 }: { data: any[], size?: number }) {
       })}
       <Circle cx={cx} cy={cy} r={r * 0.75} fill={theme.bg} />
       <View style={{ position: 'absolute', top: 0, left: 0, width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-         <span className="text-[10px] font-black text-awan-gold tracking-[0.4em] opacity-30">VECTEUR</span>
+         <span className="text-awan-md font-black text-awan-gold tracking-[0.4em] opacity-30">VECTEUR</span>
       </View>
     </Svg>
   );
@@ -578,14 +578,14 @@ function Legend({ data }: { data: any[] }) {
         <div key={d.key} className="flex flex-row items-center justify-between border-b border-white/5 pb-2">
           <div className="flex flex-row items-center gap-3">
             <div className="w-2 h-2 rounded-full shadow-[0_0_5px_rgba(255,255,255,0.2)]" style={{ backgroundColor: d.color }} />
-            <span className="text-[10px] font-black text-awan-tx uppercase tracking-widest">{d.label}</span>
+            <span className="text-awan-md font-black text-awan-tx uppercase tracking-widest">{d.label}</span>
           </div>
           <div className="flex flex-row items-center gap-3">
-            <span className="text-[10px] font-mono text-awan-gold">{Math.round(d.value / 60)}H</span>
+            <span className="text-awan-md font-mono text-awan-gold">{Math.round(d.value / 60)}H</span>
             <div className="w-12 h-1 bg-white/5 rounded-full overflow-hidden">
                <div className="h-full bg-awan-gold opacity-50" style={{ width: `${(d.value / total) * 100}%` }} />
             </div>
-            <span className="text-[9px] font-mono text-awan-tx-mute w-8 text-right">{Math.round((d.value / total) * 100)}%</span>
+            <span className="text-awan-sm font-mono text-awan-tx-mute w-8 text-right">{Math.round((d.value / total) * 100)}%</span>
           </div>
         </div>
       ))}
@@ -606,7 +606,7 @@ function LoadingState({ label }: { label: string }) {
   return (
     <div className="flex flex-col items-center py-20 opacity-30">
       <div className="w-8 h-8 rounded-full border-2 border-awan-gold border-t-transparent animate-spin mb-4" />
-      <span className="text-[10px] font-black uppercase tracking-widest text-awan-tx-mute">{label}</span>
+      <span className="text-awan-md font-black uppercase tracking-widest text-awan-tx-mute">{label}</span>
     </div>
   );
 }

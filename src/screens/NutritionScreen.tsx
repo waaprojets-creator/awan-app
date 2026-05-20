@@ -186,12 +186,12 @@ function ProgressBar({ label, actual, target, unit, accent }: ProgressBarProps) 
  <div className="bg-awan-surface p-3 border border-white/5">
  <div className="flex flex-row justify-between items-baseline mb-2">
  <span
- className="text-[8px] font-black uppercase tracking-widest"
+ className="text-awan-xs font-black uppercase tracking-widest"
  style={{ color: accent ?? color }}
  >
  {label}
  </span>
- <span className="text-[10px] font-mono font-bold text-awan-tx-mute">
+ <span className="text-awan-md font-mono font-bold text-awan-tx-mute">
  <span style={{ color }} className="font-bold">
  {Math.round(actual)}
  </span>
@@ -244,7 +244,7 @@ function OnboardingModal({ onComplete }: OnboardingProps) {
  <Modal visible={true} transparent animationType="fade">
  <div
  className="flex-1 flex justify-center items-end"
- style={{ backgroundColor: 'rgba(0,0,0,0.85)' }}
+ style={{ backgroundColor: 'var(--color-awan-overlay)' }}
  >
  <motion.div
  initial={{ opacity: 0, y: 40 }}
@@ -333,7 +333,7 @@ function OnboardingModal({ onComplete }: OnboardingProps) {
  <div className="flex flex-row justify-between items-center">
  <div className="flex flex-col">
  <span
- className={`text-[10px] font-black uppercase tracking-widest mb-1 ${
+ className={`text-awan-md font-black uppercase tracking-widest mb-1 ${
  activity === opt.k ? 'text-awan-gold' : 'text-awan-tx-mute'
  }`}
  >
@@ -373,7 +373,7 @@ function OnboardingModal({ onComplete }: OnboardingProps) {
  <div className="flex flex-row justify-between items-center">
  <div className="flex flex-col">
  <span
- className={`text-[10px] font-black uppercase tracking-widest mb-1 ${
+ className={`text-awan-md font-black uppercase tracking-widest mb-1 ${
  goal === opt.k ? 'text-awan-gold' : 'text-awan-tx-mute'
  }`}
  >
@@ -399,7 +399,7 @@ function OnboardingModal({ onComplete }: OnboardingProps) {
  onPress={() => setStep((step - 1) as 1 | 2 | 3)}
  className="flex-1 h-12 bg-white/5 border border-white/10 flex items-center justify-center"
  >
- <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest">
+ <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest">
  RETOUR
  </span>
  </Touch>
@@ -412,7 +412,7 @@ function OnboardingModal({ onComplete }: OnboardingProps) {
  }}
  className="flex-1 h-12 bg-awan-gold flex items-center justify-center"
  >
- <span className="text-[10px] font-black text-black uppercase tracking-widest">
+ <span className="text-awan-md font-black text-black uppercase tracking-widest">
  CONTINUER
  </span>
  </Touch>
@@ -421,7 +421,7 @@ function OnboardingModal({ onComplete }: OnboardingProps) {
  onPress={handleSubmit}
  className="flex-1 h-12 bg-awan-gold flex items-center justify-center"
  >
- <span className="text-[10px] font-black text-black uppercase tracking-widest">
+ <span className="text-awan-md font-black text-black uppercase tracking-widest">
  CALCULER & CONTINUER
  </span>
  </Touch>
@@ -496,7 +496,7 @@ function AddMealModal({
  <Modal visible={visible} transparent animationType="fade">
  <div
  className="flex-1 flex justify-center items-end"
- style={{ backgroundColor: 'rgba(0,0,0,0.85)' }}
+ style={{ backgroundColor: 'var(--color-awan-overlay)' }}
  >
  <motion.div
  initial={{ opacity: 0, y: 40 }}
@@ -542,7 +542,7 @@ function AddMealModal({
 
  {!foodsReady && (
  <div className="text-center py-8">
- <span className="text-[10px] font-black uppercase tracking-widest text-awan-tx-mute">
+ <span className="text-awan-md font-black uppercase tracking-widest text-awan-tx-mute">
  CHARGEMENT BASE...
  </span>
  </div>
@@ -550,19 +550,19 @@ function AddMealModal({
 
  {foodsReady && !query.trim() && results.length > 0 && (
  <div className="mb-2">
- <span className="text-[8px] font-black uppercase tracking-widest text-awan-gold block mb-1">RÉCENTS</span>
+ <span className="text-awan-xs font-black uppercase tracking-widest text-awan-gold block mb-1">RÉCENTS</span>
  </div>
  )}
  {foodsReady && !query.trim() && results.length === 0 && (
  <div className="text-center py-8">
- <span className="text-[10px] font-black uppercase tracking-widest text-awan-tx-mute">
+ <span className="text-awan-md font-black uppercase tracking-widest text-awan-tx-mute">
  TAPEZ POUR RECHERCHER
  </span>
  </div>
  )}
  {foodsReady && query.trim() && results.length === 0 && (
  <div className="text-center py-8">
- <span className="text-[10px] font-black uppercase tracking-widest text-awan-tx-mute">
+ <span className="text-awan-md font-black uppercase tracking-widest text-awan-tx-mute">
  AUCUN RÉSULTAT
  </span>
  </div>
@@ -582,7 +582,7 @@ function AddMealModal({
  <span className="text-sm font-bold text-awan-tx uppercase tracking-tight block">
  {item.n}
  </span>
- <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest mt-1 block font-mono">
+ <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest mt-1 block font-mono">
  {item.kcal} KCAL · P{item.p} · G{item.c} · L{item.f}
  {' '}/ 100G
  </span>
@@ -633,7 +633,7 @@ function AddMealModal({
  </span>
  <div className="grid grid-cols-4 gap-2">
  <div className="bg-awan-surface p-2 border border-white/5 text-center">
- <span className="text-[8px] font-black text-awan-gold uppercase tracking-widest block mb-1">
+ <span className="text-awan-xs font-black text-awan-gold uppercase tracking-widest block mb-1">
  KCAL
  </span>
  <span className="text-sm font-mono font-bold text-awan-tx">
@@ -641,7 +641,7 @@ function AddMealModal({
  </span>
  </div>
  <div className="bg-awan-surface p-2 border border-white/5 text-center">
- <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
  P
  </span>
  <span className="text-sm font-mono font-bold text-awan-tx">
@@ -649,7 +649,7 @@ function AddMealModal({
  </span>
  </div>
  <div className="bg-awan-surface p-2 border border-white/5 text-center">
- <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
  G
  </span>
  <span className="text-sm font-mono font-bold text-awan-tx">
@@ -657,7 +657,7 @@ function AddMealModal({
  </span>
  </div>
  <div className="bg-awan-surface p-2 border border-white/5 text-center">
- <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
  L
  </span>
  <span className="text-sm font-mono font-bold text-awan-tx">
@@ -672,7 +672,7 @@ function AddMealModal({
  onPress={() => setSelected(null)}
  className="h-10 bg-white/5 border border-white/10 flex items-center justify-center"
  >
- <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest">
+ <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest">
  ← CHANGER D'ALIMENT
  </span>
  </Touch>
@@ -686,7 +686,7 @@ function AddMealModal({
  onPress={handleSubmit}
  className="h-12 bg-awan-gold flex items-center justify-center"
  >
- <span className="text-[10px] font-black text-black uppercase tracking-widest">
+ <span className="text-awan-md font-black text-black uppercase tracking-widest">
  AJOUTER
  </span>
  </Touch>
@@ -760,7 +760,7 @@ function EditMealModal({ visible, entry, onClose, onUpdate }: EditModalProps) {
  <Modal visible={visible} transparent animationType="fade">
  <div
  className="flex-1 flex justify-center items-end"
- style={{ backgroundColor: 'rgba(0,0,0,0.85)' }}
+ style={{ backgroundColor: 'var(--color-awan-overlay)' }}
  >
  <motion.div
  initial={{ opacity: 0, y: 40 }}
@@ -827,7 +827,7 @@ function EditMealModal({ visible, entry, onClose, onUpdate }: EditModalProps) {
  </span>
  <div className="grid grid-cols-4 gap-2">
  <div className="bg-awan-surface p-2 border border-white/5 text-center">
- <span className="text-[8px] font-black text-awan-gold uppercase tracking-widest block mb-1">
+ <span className="text-awan-xs font-black text-awan-gold uppercase tracking-widest block mb-1">
  KCAL
  </span>
  <span className="text-sm font-mono font-bold text-awan-tx">
@@ -835,7 +835,7 @@ function EditMealModal({ visible, entry, onClose, onUpdate }: EditModalProps) {
  </span>
  </div>
  <div className="bg-awan-surface p-2 border border-white/5 text-center">
- <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
  P
  </span>
  <span className="text-sm font-mono font-bold text-awan-tx">
@@ -843,7 +843,7 @@ function EditMealModal({ visible, entry, onClose, onUpdate }: EditModalProps) {
  </span>
  </div>
  <div className="bg-awan-surface p-2 border border-white/5 text-center">
- <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
  G
  </span>
  <span className="text-sm font-mono font-bold text-awan-tx">
@@ -851,7 +851,7 @@ function EditMealModal({ visible, entry, onClose, onUpdate }: EditModalProps) {
  </span>
  </div>
  <div className="bg-awan-surface p-2 border border-white/5 text-center">
- <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
  L
  </span>
  <span className="text-sm font-mono font-bold text-awan-tx">
@@ -869,7 +869,7 @@ function EditMealModal({ visible, entry, onClose, onUpdate }: EditModalProps) {
  onPress={handleSubmit}
  className="h-12 bg-awan-gold flex items-center justify-center"
  >
- <span className="text-[10px] font-black text-black uppercase tracking-widest">
+ <span className="text-awan-md font-black text-black uppercase tracking-widest">
  METTRE À JOUR
  </span>
  </Touch>
@@ -1089,7 +1089,7 @@ export default function NutritionScreen() {
  <ChevronLeft size={18} className="text-awan-gold" />
  </Touch>
  <div className="flex flex-col items-center">
- <span className="text-[9px] font-black uppercase tracking-widest text-awan-tx-mute font-mono">
+ <span className="text-awan-sm font-black uppercase tracking-widest text-awan-tx-mute font-mono">
  CYCLE
  </span>
  <span className="text-sm font-bold text-awan-gold uppercase tracking-widest font-mono">
@@ -1130,7 +1130,7 @@ export default function NutritionScreen() {
  }`}
  >
  <span
- className={`text-[9px] font-black uppercase tracking-widest ${
+ className={`text-awan-sm font-black uppercase tracking-widest ${
  active ? 'text-awan-gold' : 'text-awan-tx-mute'
  }`}
  >
@@ -1212,7 +1212,7 @@ export default function NutritionScreen() {
  ) : (
  <>
  <div className="bg-awan-surface p-3 border border-white/5">
- <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">
  PROTÉINES
  </span>
  <span className="text-lg font-bold font-mono text-awan-tx">
@@ -1220,7 +1220,7 @@ export default function NutritionScreen() {
  </span>
  </div>
  <div className="bg-awan-surface p-3 border border-white/5">
- <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">
  GLUCIDES
  </span>
  <span className="text-lg font-bold font-mono text-awan-tx">
@@ -1228,7 +1228,7 @@ export default function NutritionScreen() {
  </span>
  </div>
  <div className="bg-awan-surface p-3 border border-white/5">
- <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">
  LIPIDES
  </span>
  <span className="text-lg font-bold font-mono text-awan-tx">
@@ -1237,12 +1237,12 @@ export default function NutritionScreen() {
  </div>
  {totals.fiberG > 0 && (
  <div className="bg-awan-surface p-3 border border-white/5">
-   <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">
+   <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">
      FIBRES
    </span>
    <div className="flex flex-row items-baseline gap-1">
      <span className="text-lg font-bold font-mono text-awan-tx">{Math.round(totals.fiberG)}g</span>
-     <span className="text-[8px] font-bold text-awan-tx-mute">/ 35g</span>
+     <span className="text-awan-xs font-bold text-awan-tx-mute">/ 35g</span>
    </div>
  </div>
  )}
@@ -1283,7 +1283,7 @@ export default function NutritionScreen() {
  className="p-6 bg-white/5 border-white/5 items-center"
  variant="flat"
  >
- <span className="text-[10px] font-black uppercase tracking-widest text-awan-tx-mute text-center block">
+ <span className="text-awan-md font-black uppercase tracking-widest text-awan-tx-mute text-center block">
  AUCUNE ENTRÉE
  </span>
  <span className="text-xs font-bold text-awan-tx-mute opacity-70 mt-2 block text-center">
@@ -1311,17 +1311,17 @@ export default function NutritionScreen() {
  {m.name}
  </span>
  {m.grams !== undefined && (
- <span className="text-[10px] font-mono font-bold text-awan-gold">
+ <span className="text-awan-md font-mono font-bold text-awan-gold">
  {m.grams}g
  </span>
  )}
  {m.timeHHMM && (
- <span className="text-[9px] font-mono font-bold text-awan-tx-mute">
+ <span className="text-awan-sm font-mono font-bold text-awan-tx-mute">
  · {m.timeHHMM}
  </span>
  )}
  </div>
- <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest mt-1 block font-mono">
+ <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest mt-1 block font-mono">
  {m.kcal} KCAL · P{m.p} · G{m.c} · L{m.f}
  </span>
  </div>
@@ -1353,7 +1353,7 @@ export default function NutritionScreen() {
  >
  <div className="flex flex-row items-center gap-3">
  <Plus size={18} color="black" strokeWidth={3} />
- <span className="text-[10px] font-black text-black uppercase tracking-widest">
+ <span className="text-awan-md font-black text-black uppercase tracking-widest">
  AJOUTER UN ALIMENT
  </span>
  </div>

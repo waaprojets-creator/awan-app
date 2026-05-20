@@ -26,7 +26,7 @@ export function BilanZen({ summary, onRefresh, loading }: BilanZenProps) {
             <Sparkles size={18} className="text-awan-gold" />
           </div>
           <div>
-            <span className="awan-label text-[8px] text-awan-gold block mb-0.5 tracking-[0.3em]">SYNTHÈSE IA</span>
+            <span className="awan-label text-awan-xs text-awan-gold block mb-0.5 tracking-[0.3em]">SYNTHÈSE IA</span>
             <Heading level={3} className="mb-0 leading-none">CONSCIENCE TACTIQUE</Heading>
           </div>
         </div>
@@ -56,7 +56,7 @@ export function BilanZen({ summary, onRefresh, loading }: BilanZenProps) {
           <div className="w-1 h-1 rounded-full bg-awan-gold/10" />
         </div>
         <Touch className="flex flex-row items-center gap-2 opacity-60">
-          <span className="awan-label text-[8px]">LOGS D'INFÉRENCE</span>
+          <span className="awan-label text-awan-xs">LOGS D'INFÉRENCE</span>
           <ArrowRight size={10} className="text-awan-tx-mute" />
         </Touch>
       </div>

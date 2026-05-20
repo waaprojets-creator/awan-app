@@ -1,66 +1,131 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { readFileSync, readdirSync, statSync } from 'fs';
+import { resolve, join, extname, relative } from 'path';
 
-// Empêche tout retour de valeurs inline (font sizes via text-[Npx], symboles
-// codés en dur) dans les composants AWAN introduits par les sprints v3.
-// Les utilities .awan-label-{xs,sm,md,lg} dans src/index.css et SYMBOLS dans
-// src/constants/symbols.ts sont les sources autorisées.
-//
-// Si tu introduis un nouveau composant et veux qu'il soit protégé, ajoute son
-// chemin ci-dessous. Si un fichier doit légitimement avoir une inline value
-// (pattern hérité), ne l'ajoute PAS à cette liste.
+// Prévient tout retour de valeurs inline (font-sizes, symboles, rgba remplacés
+// par des CSS vars) dans l'ensemble de src/. Les sources autorisées sont :
+//   - Tailles : --text-awan-{xxs,xs,sm,md,lg,data} dans src/index.css
+//   - Symboles : SYMBOLS dans src/constants/symbols.ts
+//   - Couleurs semi-transparentes : --color-awan-border/overlay dans src/index.css
 
-const PROTECTED_FILES = [
-  'src/modules/sport/components/WorkoutListView.tsx',
-  'src/modules/sport/components/RoutineGeneratorView.tsx',
-  'src/services/mediaCacheService.ts',
-  'src/modules/coach/routine-generator/generator.ts',
-  'src/modules/coach/routine-generator/templates.ts',
-  'src/modules/coach/routine-generator/exerciseSelector.ts',
-  'src/modules/coach/routine-generator/volumeAllocator.ts',
-  'src/modules/coach/routine-generator/objectifSpecs.ts',
-];
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const INLINE_FONT_SIZE = /className=["'][^"']*text-\[\d+(?:\.\d+)?px\]/;
-const HARDCODED_SYMBOL = /['"]([◆◇])['"]/;
-// Empêche le retour de defaults type "niveau: 'intermediate'" / "objectif: 'force'"
-// inline dans le composant. Doit pointer vers GENERATOR_DEFAULTS.
-const HARDCODED_GENERATOR_DEFAULT = /(?:niveau|objectif|frequenceJours):\s*['"]?(?:intermediate|beginner|advanced|hypertrophie|force|endurance|recomposition|\d)['"]?/;
+function walk(dir: string): string[] {
+  const results: string[] = [];
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) {
+      results.push(...walk(full));
+    } else {
+      results.push(full);
+    }
+  }
+  return results;
+}
 
-describe('Design tokens drift — composants protégés', () => {
-  for (const relPath of PROTECTED_FILES) {
-    const abs = resolve(process.cwd(), relPath);
-    const src = readFileSync(abs, 'utf8');
+const ROOT = resolve(process.cwd());
+const SRC  = join(ROOT, 'src');
 
-    it(`${relPath} — aucun text-[Npx] inline (utiliser .awan-label-{xs,sm,md,lg})`, () => {
-      const matches: string[] = [];
-      src.split('\n').forEach((line, idx) => {
-        if (INLINE_FONT_SIZE.test(line)) matches.push(`L${idx + 1}: ${line.trim()}`);
-      });
-      expect(matches, matches.join('\n')).toEqual([]);
-    });
+/** Tous les .tsx / .ts dans src/, chemin relatif à la racine */
+const ALL_SRC = walk(SRC)
+  .filter(f => extname(f) === '.ts' || extname(f) === '.tsx')
+  .map(f => relative(ROOT, f));
 
-    it(`${relPath} — aucun symbole ◆/◇ hardcodé (utiliser SYMBOLS depuis constants/symbols)`, () => {
-      const matches: string[] = [];
-      src.split('\n').forEach((line, idx) => {
-        if (HARDCODED_SYMBOL.test(line)) matches.push(`L${idx + 1}: ${line.trim()}`);
-      });
-      expect(matches, matches.join('\n')).toEqual([]);
-    });
+// ─── Patterns interdits ───────────────────────────────────────────────────────
 
-    // Le check de defaults générateur ne s'applique qu'au composant UI qui les
-    // consomme — les .ts du module routine-generator définissent les types et
-    // les specs, donc contiennent légitimement ces valeurs.
-    if (relPath.endsWith('RoutineGeneratorView.tsx')) {
-      it(`${relPath} — aucun default générateur hardcodé inline (utiliser GENERATOR_DEFAULTS)`, () => {
+/** text-[Npx] inline dans un className — doit utiliser text-awan-* */
+const INLINE_FONT_SIZE = /text-\[\d+(?:\.\d+)?px\]/;
+
+/** ◆ ◇ → ← · ↑ ↓ écrits en dur dans une string JS (hors fichier de définition) */
+const HARDCODED_SYMBOL = /['"`]([◆◇→←·↑↓])['"`]/;
+
+/** rgba() pour les valeurs migrées vers des CSS vars.
+ *  Ne capture que les valeurs qu'on a EXPLICITEMENT remplacées — évite les faux
+ *  positifs sur les ombres Tailwind (shadow-[…rgba…]) ou les attrs SVG restants. */
+const REPLACED_RGBA = /(?<![a-z-])(?:borderColor|backgroundColor|background|borderBottomColor|borderTopColor|borderLeftColor|borderRightColor)\s*[:=]\s*['"]?rgba\((?:255,255,255,0\.0[56]|0,0,0,0\.8[5]|0,0,0,0\.9[24])\)/;
+
+// ─── Exclusions légitimes ─────────────────────────────────────────────────────
+
+/** Fichiers autorisés à contenir des symboles littéraux (la définition). */
+const SYMBOL_WHITELIST = new Set([
+  'src/constants/symbols.ts',
+]);
+
+/** Fichiers contenant du SVG ou des animations canvas où rgba() dans les
+ *  attributs SVG (fill/stroke) est inévitable. Le check REPLACED_RGBA n'y
+ *  est pas appliqué (il ne cible de toute façon que les props CSS nommées). */
+const SVG_ANIMATION_FILES = new Set([
+  'src/components/MoonMenu.tsx',
+  'src/components/BodyMeasureSvg.tsx',
+  'src/HumanAnatomySvg.tsx',
+]);
+
+// ─── Tests ───────────────────────────────────────────────────────────────────
+
+describe('Design tokens drift — toute la codebase src/', () => {
+
+  describe('Aucun text-[Npx] inline (utiliser text-awan-* ou .awan-label-*)', () => {
+    for (const relPath of ALL_SRC) {
+      it(relPath, () => {
+        const src = readFileSync(join(ROOT, relPath), 'utf8');
         const matches: string[] = [];
         src.split('\n').forEach((line, idx) => {
-          if (line.includes('GENERATOR_DEFAULTS')) return; // ligne qui consomme la constante
-          if (HARDCODED_GENERATOR_DEFAULT.test(line)) matches.push(`L${idx + 1}: ${line.trim()}`);
+          // Autorisé dans index.css (@apply), dans les commentaires, et dans
+          // des string templates qui décrivent la syntaxe Tailwind.
+          if (relPath.endsWith('index.css')) return;
+          if (line.trimStart().startsWith('//') || line.trimStart().startsWith('*')) return;
+          if (INLINE_FONT_SIZE.test(line)) matches.push(`L${idx + 1}: ${line.trim()}`);
         });
         expect(matches, matches.join('\n')).toEqual([]);
       });
     }
-  }
+  });
+
+  describe('Aucun symbole ◆/◇/→/←/·/↑/↓ hardcodé (utiliser SYMBOLS)', () => {
+    for (const relPath of ALL_SRC) {
+      if (SYMBOL_WHITELIST.has(relPath)) continue;
+      it(relPath, () => {
+        const src = readFileSync(join(ROOT, relPath), 'utf8');
+        const matches: string[] = [];
+        src.split('\n').forEach((line, idx) => {
+          if (line.trimStart().startsWith('//') || line.trimStart().startsWith('*')) return;
+          if (HARDCODED_SYMBOL.test(line)) matches.push(`L${idx + 1}: ${line.trim()}`);
+        });
+        expect(matches, matches.join('\n')).toEqual([]);
+      });
+    }
+  });
+
+  describe('Aucun rgba() remplacé par CSS var (régressions interdites)', () => {
+    for (const relPath of ALL_SRC) {
+      if (SVG_ANIMATION_FILES.has(relPath)) continue;
+      it(relPath, () => {
+        const src = readFileSync(join(ROOT, relPath), 'utf8');
+        const matches: string[] = [];
+        src.split('\n').forEach((line, idx) => {
+          if (line.trimStart().startsWith('//') || line.trimStart().startsWith('*')) return;
+          if (REPLACED_RGBA.test(line)) matches.push(`L${idx + 1}: ${line.trim()}`);
+        });
+        expect(matches, matches.join('\n')).toEqual([]);
+      });
+    }
+  });
+
+  // Check spécifique aux composants protégés du générateur
+  describe('Composants générateur — defaults centralisés dans GENERATOR_DEFAULTS', () => {
+    const HARDCODED_GENERATOR_DEFAULT =
+      /(?:niveau|objectif|frequenceJours):\s*['"]?(?:intermediate|beginner|advanced|hypertrophie|force|endurance|recomposition|\d)['"]?/;
+    const GENERATOR_VIEW = 'src/modules/sport/components/RoutineGeneratorView.tsx';
+
+    it(GENERATOR_VIEW, () => {
+      const src = readFileSync(join(ROOT, GENERATOR_VIEW), 'utf8');
+      const matches: string[] = [];
+      src.split('\n').forEach((line, idx) => {
+        if (line.includes('GENERATOR_DEFAULTS')) return;
+        if (HARDCODED_GENERATOR_DEFAULT.test(line)) matches.push(`L${idx + 1}: ${line.trim()}`);
+      });
+      expect(matches, matches.join('\n')).toEqual([]);
+    });
+  });
+
 });

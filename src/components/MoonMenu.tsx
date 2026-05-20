@@ -182,7 +182,7 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
-            style={{ position: 'fixed', inset: 0, zIndex: 90, background: editMode ? 'rgba(0,0,0,0.94)' : 'rgba(0,0,0,0.88)' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 90, background: editMode ? 'var(--color-awan-overlay-deep)' : 'rgba(0,0,0,0.88)' }}
             onClick={() => { if (!editMode) setIsOpen(false); }}
             onMouseMove={e => onDragMove(e.clientX, e.clientY)}
             onMouseUp={onDragEnd}

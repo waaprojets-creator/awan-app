@@ -57,7 +57,7 @@ function DomainBar({ label, value, status, index }: DomainBarProps) {
       {/* Barre */}
       <div
         className="h-[2px] w-full"
-        style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+        style={{ backgroundColor: 'var(--color-awan-border)' }}
       >
         <motion.div
           className="h-full"
@@ -89,7 +89,7 @@ export function AwanScoreDisplay({ score, temporal, className = '', onInfo }: Aw
       className={`p-5 border ${className}`}
       style={{
         backgroundColor: 'var(--color-awan-surface)',
-        borderColor: 'rgba(255,255,255,0.06)',
+        borderColor: 'var(--color-awan-border)',
       }}
     >
       {/* Ligne supérieure : mode temporel + ⓘ */}

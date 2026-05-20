@@ -169,7 +169,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
         {showScoreInfo && (
           <div
             className="mt-2 p-3 border"
-            style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'rgba(255,255,255,0.06)' }}
+            style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border)' }}
           >
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--color-awan-tx-dim)', lineHeight: 1.5 }}>
               {dash.widgets.scoreInfo}
@@ -179,7 +179,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
       </div>
 
       {/* Transport — 2e widget */}
-      <div className="p-4 border mb-4" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'rgba(255,255,255,0.06)' }}>
+      <div className="p-4 border mb-4" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border)' }}>
         <span className="uppercase block mb-3" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
           {dash.widgets.transport}
         </span>
@@ -190,7 +190,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
             const active = transportMode === opt.key;
             return (
               <Touch key={opt.key} className="flex-1 flex flex-col items-center p-3 border transition-all"
-                style={{ backgroundColor: active ? 'rgba(212,175,55,0.08)' : 'transparent', borderColor: active ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.06)' }}
+                style={{ backgroundColor: active ? 'rgba(212,175,55,0.08)' : 'transparent', borderColor: active ? 'var(--color-awan-gold)' : 'var(--color-awan-border)' }}
                 onPress={() => setTransportMode(opt.key)}>
                 {Icon && <Icon size={18} color={active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)'} />}
                 <span className="mt-1 uppercase" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: active ? 'var(--fw-value)' : 'var(--fw-label)', color: active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' } as any}>
@@ -204,7 +204,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
 
       {/* Health Score */}
       <div className="p-4 border mb-4 flex flex-row items-center justify-between"
-        style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'rgba(255,255,255,0.06)' }}>
+        style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border)' }}>
         {health.loading ? (
           <div style={{ height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--color-awan-tx-dim)' }}>—</span>
@@ -235,7 +235,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
       </div>
 
       {/* Rétrospective semaine + Objectifs jour */}
-      <div className="p-4 border mb-4" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'rgba(255,255,255,0.06)' }}>
+      <div className="p-4 border mb-4" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border)' }}>
         <div className="flex flex-row justify-between items-baseline mb-3">
           <span className="uppercase" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
             SEMAINE EN COURS
@@ -280,7 +280,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
           </div>
         </div>
         {/* Objectifs jour */}
-        <div className="mt-3 pt-3 border-t flex flex-row gap-4" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+        <div className="mt-3 pt-3 border-t flex flex-row gap-4" style={{ borderColor: 'var(--color-awan-border-soft)' }}>
           <span style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em', textTransform: 'uppercase', marginRight: 4 }}>OBJECTIFS JOUR ·</span>
           <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-dim)' }}>
             {prayerStore.doneCount}/{prayerStore.total} prières · {kcalTarget} kcal · séance {sessionsCount < 4 ? 'conseillée' : 'facultative'}
@@ -329,7 +329,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
       {/* Mot arabe du jour */}
       <Touch onPress={() => navigate('Islam')} className="block w-full text-left mb-4">
         <div className="p-4 border flex flex-row items-center gap-4"
-          style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'rgba(255,255,255,0.06)' }}>
+          style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border)' }}>
           <div className="flex-1">
             <span className="uppercase block mb-1" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
               {dash.widgets.islam}
@@ -370,7 +370,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
 
       {/* Macros */}
       {mealStore.totals.kcal > 0 && (
-        <div className="p-4 border mb-4" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'rgba(255,255,255,0.06)' }}>
+        <div className="p-4 border mb-4" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border)' }}>
           <span className="uppercase block mb-3" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
             {dash.widgets.macros}
           </span>
@@ -390,7 +390,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
       {/* Coach */}
       <Touch onPress={() => navigate('Coach')} className="block w-full text-left mb-4">
         <div className="p-4 border flex flex-col gap-2"
-          style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: topAdvice ? `${COACH_COLOR[topAdvice.severity]}33` : 'rgba(255,255,255,0.06)' }}>
+          style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: topAdvice ? `${COACH_COLOR[topAdvice.severity]}33` : 'var(--color-awan-border)' }}>
           <div className="flex flex-row justify-between items-baseline">
             <span className="uppercase block" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
               COACH
@@ -421,7 +421,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
       {/* Import JSON */}
       <Touch onPress={() => { setImportResult(null); setImportText(''); setImportModal(true); }} className="block w-full text-left mb-4">
         <div className="p-4 border flex flex-row items-center gap-3"
-          style={{ backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.05)' }}>
+          style={{ backgroundColor: 'var(--color-awan-border-soft)', borderColor: 'var(--color-awan-border-soft)' }}>
           <Upload size={16} color="var(--color-awan-tx-mute)" />
           <div className="flex flex-col flex-1">
             <span className="uppercase block" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
@@ -437,8 +437,8 @@ export default function DashboardScreen({ navigate }: NavProps) {
       {/* Modal IMPORT */}
       {importModal && (
         <div className="fixed inset-0 z-[200] flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }} onClick={() => setImportModal(false)}>
-          <div className="w-full max-w-xl border rounded-awan-xl flex flex-col" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'rgba(255,255,255,0.05)', maxHeight: '88vh' }} onClick={(e) => e.stopPropagation()}>
-            <div className="flex flex-row items-center justify-between p-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+          <div className="w-full max-w-xl border rounded-awan-xl flex flex-col" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border-soft)', maxHeight: '88vh' }} onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-row items-center justify-between p-4 border-b" style={{ borderColor: 'var(--color-awan-border-soft)' }}>
               <span className="uppercase" style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.4em' }}>
                 {common.import_json}
               </span>
@@ -478,9 +478,9 @@ export default function DashboardScreen({ navigate }: NavProps) {
               <TextInput value={importText} onChangeText={(v: string) => setImportText(v)} multiline numberOfLines={6}
                 placeholder={'{ "type": "sport.routine", "data": { ... } }'}
                 placeholderTextColor="rgba(255,255,255,0.25)"
-                style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-awan-tx)', backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: 12, minHeight: 140, textAlignVertical: 'top' }} />
+                style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-awan-tx)', backgroundColor: 'var(--color-awan-border-soft)', borderWidth: 1, borderColor: 'var(--color-awan-border-soft)', borderRadius: 8, padding: 12, minHeight: 140, textAlignVertical: 'top' }} />
               {importResult && (
-                <div className="p-3 border" style={{ backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.05)' }}>
+                <div className="p-3 border" style={{ backgroundColor: 'var(--color-awan-border-soft)', borderColor: 'var(--color-awan-border-soft)' }}>
                   <span className="font-mono" style={{ fontSize: '11px', color: importResult.success ? 'var(--color-awan-status-ok)' : 'var(--color-awan-status-error)' }}>
                     {importResult.message}
                   </span>

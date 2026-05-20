@@ -1,3 +1,5 @@
+import { SYMBOLS } from '@/constants/symbols';
+
 export interface HalalAuditResult {
   status: 'halal' | 'douteux' | 'haram';
   message: string;
@@ -74,7 +76,7 @@ export const LocalAIService = {
     }
 
     if (data.weightKg != null) {
-      const arrow = data.weightTrend === 'down' ? '↓' : data.weightTrend === 'up' ? '↑' : '→';
+      const arrow = data.weightTrend === 'down' ? SYMBOLS.trendDown : data.weightTrend === 'up' ? SYMBOLS.trendUp : SYMBOLS.arrowRight;
       lines.push(`Masse corporelle : ${data.weightKg} kg ${arrow}`);
     }
 

@@ -122,7 +122,7 @@ export default function SettingsScreen() {
  style={{ flex: 1 }}
  showsVerticalScrollIndicator={false}
  >
- <div className="px-6 pt-4 pb-4 border-b" style={{ borderBottomColor: 'rgba(255,255,255,0.06)' }}>
+ <div className="px-6 pt-4 pb-4 border-b" style={{ borderBottomColor: 'var(--color-awan-border)' }}>
  <ScreenHeader tag="SYS" title="SYSTÈME" />
  </div>
 
@@ -140,7 +140,7 @@ export default function SettingsScreen() {
    </div>
    <div className="flex-1">
      <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">MODIFIER MOONMENU</span>
-     <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-tighter">Repositionner les nœuds de navigation · Ouvrir le menu lune</span>
+     <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Repositionner les nœuds de navigation · Ouvrir le menu lune</span>
    </div>
  </Touch>
  </div>
@@ -165,7 +165,7 @@ export default function SettingsScreen() {
          <span className={`text-xs font-black uppercase tracking-widest block mb-1 ${active ? 'text-awan-gold' : 'text-awan-tx'}`}>
            {meta.label}
          </span>
-         <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-tighter">{meta.desc}</span>
+         <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">{meta.desc}</span>
        </div>
        <span className={`text-base font-black font-mono ${active ? 'text-awan-gold' : 'text-white/20'}`}>
          {active ? SYMBOLS.diamondFilled : SYMBOLS.diamondOutline}
@@ -186,18 +186,18 @@ export default function SettingsScreen() {
  <div className="flex flex-row justify-between items-center mb-6">
  <div>
  <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">MODE ACTIF</span>
- <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-tighter">Bascule clair / sombre</span>
+ <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Bascule clair / sombre</span>
  </div>
  <span className="text-2xl font-black text-awan-gold font-mono">{themeMode === 'dark' ? 'DARK' : 'LIGHT'}</span>
  </div>
  <div className="flex flex-row bg-awan-surface p-1 gap-1">
  <Touch onPress={() => setTheme('light')}
  className={`flex-1 py-3 items-center justify-center ${themeMode === 'light' ? 'bg-awan-gold' : 'transparent'}`}>
- <span className={`text-[10px] font-black font-mono ${themeMode === 'light' ? 'text-black' : 'text-awan-tx-mute'}`}>LIGHT</span>
+ <span className={`text-awan-md font-black font-mono ${themeMode === 'light' ? 'text-black' : 'text-awan-tx-mute'}`}>LIGHT</span>
  </Touch>
  <Touch onPress={() => setTheme('dark')}
  className={`flex-1 py-3 items-center justify-center ${themeMode === 'dark' ? 'bg-awan-gold' : 'transparent'}`}>
- <span className={`text-[10px] font-black font-mono ${themeMode === 'dark' ? 'text-black' : 'text-awan-tx-mute'}`}>DARK</span>
+ <span className={`text-awan-md font-black font-mono ${themeMode === 'dark' ? 'text-black' : 'text-awan-tx-mute'}`}>DARK</span>
  </Touch>
  </div>
  </Card>
@@ -211,7 +211,7 @@ export default function SettingsScreen() {
  {theme.palette.map((color, idx) => (
  <div key={idx} className="flex flex-col items-center gap-2">
  <div className="w-12 h-12 border border-white/10" style={{ backgroundColor: color }} />
- <span className="text-[8px] font-black text-awan-tx-mute font-mono tracking-widest">P{idx}</span>
+ <span className="text-awan-xs font-black text-awan-tx-mute font-mono tracking-widest">P{idx}</span>
  </div>
  ))}
  </div>
@@ -234,7 +234,7 @@ export default function SettingsScreen() {
  />
  </div>
  </Card>
- <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest leading-relaxed px-1">
+ <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest leading-relaxed px-1">
  Requis pour les calculs de vecteurs géographiques et routiers.
  </span>
  </div>
@@ -246,7 +246,7 @@ export default function SettingsScreen() {
  <div className="flex flex-row justify-between items-center mb-6">
  <div>
  <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">FACTEUR JIT</span>
- <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-tighter">Marge de sécurité temporelle</span>
+ <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Marge de sécurité temporelle</span>
  </div>
  <span className="text-2xl font-black text-awan-gold font-mono">{(Number(config.jitFactor) || 1.2).toFixed(1)}x</span>
  </div>
@@ -256,7 +256,7 @@ export default function SettingsScreen() {
  return (
  <Touch key={v} onPress={() => updateCfg('jitFactor', v)}
  className={`flex-1 py-3 items-center justify-center ${active ? 'bg-awan-gold' : 'transparent'}`}>
- <span className={`text-[10px] font-black font-mono ${active ? 'text-black' : 'text-white/20'}`}>{v.toFixed(1)}</span>
+ <span className={`text-awan-md font-black font-mono ${active ? 'text-black' : 'text-white/20'}`}>{v.toFixed(1)}</span>
  </Touch>
  );
  })}
@@ -274,7 +274,7 @@ export default function SettingsScreen() {
  </div>
  <div className="flex-1">
  <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">OPTIMISATION CACHE</span>
- <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-tighter">Nettoyage des archives terminées</span>
+ <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Nettoyage des archives terminées</span>
  </div>
  </Touch>
 
@@ -284,7 +284,7 @@ export default function SettingsScreen() {
  </div>
  <div className="flex-1">
  <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">EXPORTATION NOYAU</span>
- <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-tighter">Télécharge awan-backup-YYYY-MM-DD.json</span>
+ <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Télécharge awan-backup-YYYY-MM-DD.json</span>
  </div>
  </Touch>
 
@@ -297,7 +297,7 @@ export default function SettingsScreen() {
  </div>
  <div className="flex-1">
  <span className={`text-xs font-black uppercase tracking-widest block mb-1 ${config.isLocked ? 'text-awan-status-error' : 'text-awan-tx'}`}>VERROUILLAGE BIOMÉTRIQUE</span>
- <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-tighter">Isolation du terminal actif</span>
+ <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Isolation du terminal actif</span>
  </div>
  <Switch
  value={!!config.isLocked}
@@ -316,7 +316,7 @@ export default function SettingsScreen() {
  </div>
  <div className="flex-1">
  <span className="text-xs font-black text-awan-status-error uppercase tracking-widest block mb-1">PURGE DONNÉES PERSONNELLES</span>
- <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-tighter">Suppression totale et irréversible</span>
+ <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Suppression totale et irréversible</span>
  </div>
  </Touch>
  </div>
@@ -329,7 +329,7 @@ export default function SettingsScreen() {
  {purgeModal && (
  <motion.div
  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
- style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+ style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--color-awan-overlay-deep)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
  onClick={() => !purging && setPurgeModal(false)}
  >
  <motion.div
@@ -343,7 +343,7 @@ export default function SettingsScreen() {
  </div>
  <div className="mb-6">
  <span className="text-lg font-black text-awan-tx uppercase tracking-wider block mb-3">Purge totale</span>
- <span className="text-[11px] text-awan-tx-mute leading-relaxed block">
+ <span className="text-awan-lg text-awan-tx-mute leading-relaxed block">
  Cette opération supprime définitivement toutes les données personnelles : séances, mesures, repas, prières, journal. Aucune récupération possible.
  </span>
  </div>
@@ -353,12 +353,12 @@ export default function SettingsScreen() {
  className="bg-awan-status-error h-14 items-center justify-center"
  style={{ opacity: purging ? 0.5 : 1 }}
  >
- <span className="text-[11px] font-black text-white uppercase tracking-[0.2em] font-mono">
+ <span className="text-awan-lg font-black text-white uppercase tracking-[0.2em] font-mono">
  {purging ? 'SUPPRESSION...' : 'Purger données personnelles'}
  </span>
  </Touch>
  <Touch onPress={() => setPurgeModal(false)} className="h-12 items-center justify-center border border-white/10">
- <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-[0.2em] font-mono">Annuler</span>
+ <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-[0.2em] font-mono">Annuler</span>
  </Touch>
  </div>
  </motion.div>

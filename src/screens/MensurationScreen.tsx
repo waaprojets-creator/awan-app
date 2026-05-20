@@ -277,7 +277,7 @@ export default function MensurationScreen() {
       
       <div className="flex flex-row justify-between bg-awan-surface p-5  border border-white/5 shadow-inner mx-6 mb-6">
          <div className="flex-1 items-center border-r border-white/5">
-            <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase mb-2">Poids</span>
+            <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase mb-2">Poids</span>
             <div className="flex flex-row items-baseline gap-1">
               <TextInput
                 className="text-3xl font-black text-awan-tx font-mono w-20 text-center outline-none"
@@ -287,16 +287,16 @@ export default function MensurationScreen() {
                 placeholder={lastKnownWeight ? lastKnownWeight.weight.toString() : '00.0'}
                 placeholderTextColor={lastKnownWeight ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.1)'}
               />
-              <span className="text-[10px] font-bold text-awan-tx-mute font-mono">KG</span>
+              <span className="text-awan-md font-bold text-awan-tx-mute font-mono">KG</span>
             </div>
             {lastKnownWeight && (
-              <span className="text-[8px] font-black text-awan-tx-mute tracking-widest uppercase mt-1">
+              <span className="text-awan-xs font-black text-awan-tx-mute tracking-widest uppercase mt-1">
                 DERNIÈRE PESÉE — J-{lastKnownWeight.daysAgo}
               </span>
             )}
          </div>
          <div className="flex-1 items-center border-r border-white/5">
-            <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase mb-2">BPM Repos</span>
+            <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase mb-2">BPM Repos</span>
             <div className="flex flex-row items-baseline gap-1">
               <TextInput 
                 className="text-3xl font-black text-awan-tx font-mono w-16 text-center outline-none"
@@ -306,14 +306,14 @@ export default function MensurationScreen() {
                 placeholder="00"
                 placeholderTextColor="rgba(128,128,128,0.5)"
               />
-               <span className="text-[10px] font-bold text-awan-tx-mute font-mono">BPM</span>
+               <span className="text-awan-md font-bold text-awan-tx-mute font-mono">BPM</span>
             </div>
          </div>
          <div className="flex-1 items-center">
-            <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase mb-2">Grasse</span>
+            <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase mb-2">Grasse</span>
             <div className="flex flex-row items-baseline gap-1">
               <span className="text-3xl font-black text-awan-tx font-mono">{currentEntry.body_fat_pct || '--.-'}</span>
-              <span className="text-[10px] font-bold text-awan-tx-mute font-mono">%</span>
+              <span className="text-awan-md font-bold text-awan-tx-mute font-mono">%</span>
             </div>
          </div>
       </div>
@@ -331,7 +331,7 @@ export default function MensurationScreen() {
                     onPress={() => setWeightFilter(d)}
                     className={`px-3 py-1.5  transition-all ${weightFilter === d ? 'bg-awan-gold' : ''}`}
                   >
-                    <span className={`text-[9px] font-black uppercase tracking-widest ${weightFilter === d ? 'text-black' : 'text-awan-tx-mute'}`}>
+                    <span className={`text-awan-sm font-black uppercase tracking-widest ${weightFilter === d ? 'text-black' : 'text-awan-tx-mute'}`}>
                       {d === 365 ? '1AN' : `${d}J`}
                     </span>
                   </Touch>
@@ -341,7 +341,7 @@ export default function MensurationScreen() {
             <Card className="p-5 bg-white/3 border-white/5" variant="flat">
               {weightSeries.length < 2 ? (
                 <div className="h-[100px] flex items-center justify-center">
-                  <span className="text-[10px] font-black text-awan-tx-mute tracking-widest uppercase">Pas assez de données</span>
+                  <span className="text-awan-md font-black text-awan-tx-mute tracking-widest uppercase">Pas assez de données</span>
                 </div>
               ) : (() => {
                 const ws = weightSeries;
@@ -362,8 +362,8 @@ export default function MensurationScreen() {
                 return (
                   <div>
                     <div className="flex flex-row justify-between items-baseline mb-2">
-                      <span className="text-[9px] font-bold text-awan-tx-mute font-mono">MIN {minY.toFixed(1)} KG</span>
-                      <span className="text-[9px] font-bold text-awan-tx-mute font-mono">MAX {maxY.toFixed(1)} KG</span>
+                      <span className="text-awan-sm font-bold text-awan-tx-mute font-mono">MIN {minY.toFixed(1)} KG</span>
+                      <span className="text-awan-sm font-bold text-awan-tx-mute font-mono">MAX {maxY.toFixed(1)} KG</span>
                     </div>
                     <svg viewBox="0 0 300 100" width="100%" height="100" preserveAspectRatio="none">
                       <polyline
@@ -380,7 +380,7 @@ export default function MensurationScreen() {
                     {/* S2.2 — Tendance hebdomadaire */}
                     {weeklyTrend && (
                       <div className="mt-4 pt-4 border-t border-white/5 flex flex-row items-center justify-between">
-                        <span className="text-[9px] font-black text-awan-tx-mute tracking-widest uppercase">Tendance 7J</span>
+                        <span className="text-awan-sm font-black text-awan-tx-mute tracking-widest uppercase">Tendance 7J</span>
                         {(() => {
                           const d = weeklyTrend.delta;
                           if (d === 0) {
@@ -413,7 +413,7 @@ export default function MensurationScreen() {
             <Heading level={4} mono subtitle="Cibles opératives" className="mb-6">OBJECTIFS</Heading>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <Card className="p-4 bg-white/5 border-white/5" variant="flat">
-                <span className="text-[9px] font-black text-awan-gold tracking-widest mb-2 block uppercase">Poids cible</span>
+                <span className="text-awan-sm font-black text-awan-gold tracking-widest mb-2 block uppercase">Poids cible</span>
                 <div className="flex flex-row items-baseline gap-2">
                   <TextInput
                     className="text-2xl font-black text-awan-tx font-mono flex-1 outline-none"
@@ -423,11 +423,11 @@ export default function MensurationScreen() {
                     placeholder="00.0"
                     placeholderTextColor="rgba(128,128,128,0.5)"
                   />
-                  <span className="text-[10px] font-bold text-awan-tx-mute font-mono">KG</span>
+                  <span className="text-awan-md font-bold text-awan-tx-mute font-mono">KG</span>
                 </div>
               </Card>
               <Card className="p-4 bg-white/5 border-white/5" variant="flat">
-                <span className="text-[9px] font-black text-awan-gold tracking-widest mb-2 block uppercase">% Graisse cible</span>
+                <span className="text-awan-sm font-black text-awan-gold tracking-widest mb-2 block uppercase">% Graisse cible</span>
                 <div className="flex flex-row items-baseline gap-2">
                   <TextInput
                     className="text-2xl font-black text-awan-tx font-mono flex-1 outline-none"
@@ -437,15 +437,15 @@ export default function MensurationScreen() {
                     placeholder="00.0"
                     placeholderTextColor="rgba(128,128,128,0.5)"
                   />
-                  <span className="text-[10px] font-bold text-awan-tx-mute font-mono">%</span>
+                  <span className="text-awan-md font-bold text-awan-tx-mute font-mono">%</span>
                 </div>
               </Card>
             </div>
             {goalProgress && (
               <Card className="p-4 bg-white/3 border-white/5" variant="flat">
                 <div className="flex flex-row justify-between items-baseline mb-2">
-                  <span className="text-[9px] font-black text-awan-tx-mute tracking-widest uppercase">Progression poids</span>
-                  <span className="text-[10px] font-mono font-bold text-awan-tx">
+                  <span className="text-awan-sm font-black text-awan-tx-mute tracking-widest uppercase">Progression poids</span>
+                  <span className="text-awan-md font-mono font-bold text-awan-tx">
                     {goalProgress.current.toFixed(1)} / {goalProgress.target.toFixed(1)} KG
                   </span>
                 </div>
@@ -462,7 +462,7 @@ export default function MensurationScreen() {
                   />
                 </div>
                 <span
-                  className="text-[8px] font-mono font-bold mt-2 block uppercase tracking-widest"
+                  className="text-awan-xs font-mono font-bold mt-2 block uppercase tracking-widest"
                   style={{
                     color:
                       goalProgress.status === 'ok' ? 'var(--color-awan-status-ok)'
@@ -489,7 +489,7 @@ export default function MensurationScreen() {
                   placeholder={weightStore.todayEntry ? String(weightStore.todayEntry.weightKg) : '00.0'}
                   placeholderTextColor="rgba(255,255,255,0.2)"
                 />
-                <span className="text-[10px] font-bold text-awan-tx-mute font-mono">KG</span>
+                <span className="text-awan-md font-bold text-awan-tx-mute font-mono">KG</span>
                 <Touch
                   onPress={async () => {
                     const w = parseFloat(weightInput.replace(',', '.'));
@@ -504,13 +504,13 @@ export default function MensurationScreen() {
                   }}
                   className="bg-awan-gold px-4 py-2"
                 >
-                  <span className="text-[10px] font-black text-black uppercase tracking-widest">ENREGISTRER</span>
+                  <span className="text-awan-md font-black text-black uppercase tracking-widest">ENREGISTRER</span>
                 </Touch>
               </div>
               {weightStore.avg7d > 0 && (
                 <div className="pt-3 border-t border-white/5">
                   <div className="flex flex-row justify-between items-center">
-                    <span className="text-[9px] font-black text-awan-tx-mute tracking-widest uppercase">Moyenne 7j</span>
+                    <span className="text-awan-sm font-black text-awan-tx-mute tracking-widest uppercase">Moyenne 7j</span>
                     <span className="text-sm font-mono font-bold text-awan-tx">{weightStore.avg7d.toFixed(1)} kg</span>
                   </div>
                 </div>
@@ -525,38 +525,38 @@ export default function MensurationScreen() {
               <div className="grid grid-cols-2 gap-3">
                 {indices.ffmi !== null && (
                   <Card className="p-4 bg-white/3 border-white/5" variant="flat">
-                    <span className="text-[9px] font-black text-awan-gold tracking-widest mb-1 block uppercase">FFMI</span>
+                    <span className="text-awan-sm font-black text-awan-gold tracking-widest mb-1 block uppercase">FFMI</span>
                     <span className="text-2xl font-black text-awan-tx font-mono">{indices.ffmi}</span>
-                    <span className="text-[8px] font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">
+                    <span className="text-awan-xs font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">
                       plafond naturel 25,0
                     </span>
                   </Card>
                 )}
                 {indices.navyBF !== null && (
                   <Card className="p-4 bg-white/3 border-white/5" variant="flat">
-                    <span className="text-[9px] font-black text-awan-gold tracking-widest mb-1 block uppercase">BF% Navy</span>
+                    <span className="text-awan-sm font-black text-awan-gold tracking-widest mb-1 block uppercase">BF% Navy</span>
                     <span className="text-2xl font-black text-awan-tx font-mono">{indices.navyBF}<span className="text-sm ml-1 text-awan-tx-mute">%</span></span>
-                    <span className="text-[8px] font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">Formule US Navy</span>
+                    <span className="text-awan-xs font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">Formule US Navy</span>
                   </Card>
                 )}
                 {indices.whtr !== null && (
                   <Card className="p-4 bg-white/3 border-white/5" variant="flat">
-                    <span className="text-[9px] font-black text-awan-gold tracking-widest mb-1 block uppercase">WHtR</span>
+                    <span className="text-awan-sm font-black text-awan-gold tracking-widest mb-1 block uppercase">WHtR</span>
                     <span className="text-2xl font-black font-mono"
                       style={{ color: indices.whtr < 0.50 ? 'var(--color-awan-status-ok)' : indices.whtr < 0.55 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-error)' }}>
                       {indices.whtr}
                     </span>
-                    <span className="text-[8px] font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">cible &lt; 0,50</span>
+                    <span className="text-awan-xs font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">cible &lt; 0,50</span>
                   </Card>
                 )}
                 {indices.whr !== null && (
                   <Card className="p-4 bg-white/3 border-white/5" variant="flat">
-                    <span className="text-[9px] font-black text-awan-gold tracking-widest mb-1 block uppercase">WHR</span>
+                    <span className="text-awan-sm font-black text-awan-gold tracking-widest mb-1 block uppercase">WHR</span>
                     <span className="text-2xl font-black font-mono"
                       style={{ color: indices.whr < 0.90 ? 'var(--color-awan-status-ok)' : indices.whr < 0.95 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-error)' }}>
                       {indices.whr}
                     </span>
-                    <span className="text-[8px] font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">cible &lt; 0,90</span>
+                    <span className="text-awan-xs font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">cible &lt; 0,90</span>
                   </Card>
                 )}
               </div>
@@ -592,7 +592,7 @@ export default function MensurationScreen() {
                 <Touch onPress={() => shiftDate(-1)} className="w-6 h-6 items-center justify-center">
                   <ChevronLeft size={14} className="text-awan-tx-mute" />
                 </Touch>
-                <span className="text-[9px] font-black font-mono text-awan-gold tracking-widest">
+                <span className="text-awan-sm font-black font-mono text-awan-gold tracking-widest">
                   {selectedDate === todayStr ? 'AUJOURD\'HUI' : selectedDate.split('-').slice(1).join('/')}
                 </span>
                 <Touch
@@ -629,7 +629,7 @@ export default function MensurationScreen() {
                   >
                     <div className="flex flex-row items-center gap-4">
                       <div className="flex-1">
-                        <span className="text-[8px] font-black text-awan-gold tracking-[0.3em] uppercase block mb-1">
+                        <span className="text-awan-xs font-black text-awan-gold tracking-[0.3em] uppercase block mb-1">
                           {measure?.label ?? selectedPart}
                         </span>
                         <div className="flex flex-row items-baseline gap-2">
@@ -651,7 +651,7 @@ export default function MensurationScreen() {
                           onPress={saveMeasurement}
                           className="w-12 h-12 bg-awan-gold items-center justify-center"
                         >
-                          <span className="text-[9px] font-black text-black font-mono">OK</span>
+                          <span className="text-awan-sm font-black text-black font-mono">OK</span>
                         </Touch>
                         <Touch
                           onPress={() => setSelectedPart(null)}
@@ -678,10 +678,10 @@ export default function MensurationScreen() {
                     onPress={() => handlePartPress(key)}
                     className={`p-3 border transition-all ${active ? 'border-awan-gold bg-awan-gold/10' : hasVal ? 'border-white/10 bg-white/3' : 'border-white/5 bg-transparent'}`}
                   >
-                    <span className={`text-[7px] font-black tracking-widest uppercase block mb-1 ${active ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{label}</span>
+                    <span className={`text-awan-xxs font-black tracking-widest uppercase block mb-1 ${active ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{label}</span>
                     <span className={`text-base font-black font-mono ${active ? 'text-awan-gold' : hasVal ? 'text-awan-tx' : 'text-white/15'}`}>
                       {hasVal ? `${val}` : '--'}
-                      <span className="text-[8px] ml-0.5 opacity-60">cm</span>
+                      <span className="text-awan-xs ml-0.5 opacity-60">cm</span>
                     </span>
                   </Touch>
                 );
@@ -695,19 +695,19 @@ export default function MensurationScreen() {
               {measureStore.history.slice(-5).reverse().map((h) => (
                 <Card key={h.date} className="flex-row items-center gap-3 p-4 bg-white/3 border-white/5" variant="flat">
                    <div className="w-10 h-10 rounded-full border border-white/10 items-center justify-center">
-                      <span className="text-[8px] font-mono text-awan-tx-mute">{h.date.split('-').slice(1).join('/')}</span>
+                      <span className="text-awan-xs font-mono text-awan-tx-mute">{h.date.split('-').slice(1).join('/')}</span>
                    </div>
                    <div className="flex-1">
                       <div className="flex flex-row items-baseline gap-1">
                          <span className="text-xl font-black text-awan-tx font-mono">{h.weight}</span>
-                         <span className="text-[9px] font-bold text-awan-tx-mute uppercase">KG</span>
+                         <span className="text-awan-sm font-bold text-awan-tx-mute uppercase">KG</span>
                       </div>
                    </div>
                    <div className="w-px h-8 bg-white/5" />
                    <div className="flex-1 items-end">
                       <div className="flex flex-row items-baseline gap-1">
                          <span className="text-xl font-black text-awan-gold font-mono">{h.body_fat_pct}</span>
-                         <span className="text-[9px] font-bold text-awan-tx-mute uppercase">%</span>
+                         <span className="text-awan-sm font-bold text-awan-tx-mute uppercase">%</span>
                       </div>
                    </div>
                    <Touch

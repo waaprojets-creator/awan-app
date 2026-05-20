@@ -86,7 +86,7 @@ export default function JournalScreen() {
            </Touch>
            <div className="items-center">
               <span className="text-2xl font-mono font-black text-awan-tx tracking-tight tabular-nums">{selectedDate}</span>
-              <span className="text-[9px] font-black text-awan-gold tracking-[0.4em] uppercase mt-1">SÉQUENCE OPÉRATIVE</span>
+              <span className="text-awan-sm font-black text-awan-gold tracking-[0.4em] uppercase mt-1">SÉQUENCE OPÉRATIVE</span>
            </div>
            <Touch className="w-8 h-8 items-center justify-center">
               <Plus size={16} className="text-white/20" />
@@ -100,7 +100,7 @@ export default function JournalScreen() {
           <div className="mb-10">
             <div className="flex flex-row justify-between items-end mb-4 px-1">
                <Heading level={4} mono subtitle="Injection de Données" className="mb-0">INPUT TERMINAL</Heading>
-               <span className="text-[9px] font-mono text-awan-gold opacity-50 uppercase">Ready for Sync</span>
+               <span className="text-awan-sm font-mono text-awan-gold opacity-50 uppercase">Ready for Sync</span>
             </div>
             
             <div className="bg-awan-surface p-6  border border-white/10 shadow-2xl">
@@ -113,7 +113,7 @@ export default function JournalScreen() {
                   >
                     <div className="flex flex-row items-center gap-2">
                        <TokenIcon iconKey={MODULE_ICON_KEY[mod.toLowerCase()] ?? 'file'} size={12} color={activeModule === mod ? '#000' : 'var(--color-awan-tx-mute)'} />
-                       <span className={`text-[10px] font-black uppercase tracking-widest ${activeModule === mod ? 'text-black' : 'text-awan-tx-mute'}`}>{mod}</span>
+                       <span className={`text-awan-md font-black uppercase tracking-widest ${activeModule === mod ? 'text-black' : 'text-awan-tx-mute'}`}>{mod}</span>
                     </div>
                   </Touch>
                 ))}
@@ -173,7 +173,7 @@ export default function JournalScreen() {
               {entries.length === 0 && (
                 <div className="flex-1 items-center justify-center py-20 opacity-20">
                    <Layout size={48} className="text-awan-tx-mute mb-4" />
-                   <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-[0.5em] text-center">Aucune séquence archivée</span>
+                   <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-[0.5em] text-center">Aucune séquence archivée</span>
                 </div>
               )}
             </div>
@@ -187,11 +187,11 @@ export default function JournalScreen() {
 
             {journalStore.loading ? (
               <div className="py-10 flex items-center justify-center opacity-30">
-                <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest">Chargement...</span>
+                <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest">Chargement...</span>
               </div>
             ) : journalStore.entries.length === 0 ? (
               <div className="py-10 flex items-center justify-center opacity-20">
-                <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-[0.4em]">Aucune entrée pour ce jour</span>
+                <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-[0.4em]">Aucune entrée pour ce jour</span>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
@@ -208,7 +208,7 @@ export default function JournalScreen() {
                         <div className="flex flex-row items-center gap-3">
                           <TokenIcon iconKey={MODULE_ICON_KEY[entry.module] || 'file'} size={18} />
                           <div>
-                            <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase block">{entry.module}</span>
+                            <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase block">{entry.module}</span>
                             <div className="flex flex-row gap-1 mt-1">
                               {([1,2,3,4,5] as const).map(v => (
                                 <div key={v} className={`w-2 h-2 rounded-full ${v <= entry.mood ? 'bg-awan-gold' : 'bg-white/10'}`} />
@@ -217,7 +217,7 @@ export default function JournalScreen() {
                           </div>
                         </div>
                         <div className="flex flex-row items-center gap-3">
-                          <span className="text-[9px] font-mono text-awan-tx-mute opacity-50">
+                          <span className="text-awan-sm font-mono text-awan-tx-mute opacity-50">
                             {new Date(entry.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                           <Touch onPress={() => journalStore.remove(entry.id)}
@@ -231,7 +231,7 @@ export default function JournalScreen() {
                       {entry.tags.length > 0 && (
                         <div className="flex flex-row flex-wrap gap-2 mt-3">
                           {entry.tags.map(tag => (
-                            <span key={tag} className="text-[9px] font-black text-awan-tx-mute bg-white/5 px-2 py-1  border border-white/5 uppercase tracking-widest">{tag}</span>
+                            <span key={tag} className="text-awan-sm font-black text-awan-tx-mute bg-white/5 px-2 py-1  border border-white/5 uppercase tracking-widest">{tag}</span>
                           ))}
                         </div>
                       )}

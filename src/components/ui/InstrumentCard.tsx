@@ -42,7 +42,7 @@ export function InstrumentCard({
  className={`relative flex flex-col justify-between p-4 border overflow-hidden ${className}`}
  style={{
  backgroundColor: 'var(--color-awan-surface)',
- borderColor: 'rgba(255,255,255,0.06)',
+ borderColor: 'var(--color-awan-border)',
  minHeight: 96,
  }}
  >

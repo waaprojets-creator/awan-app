@@ -145,11 +145,11 @@ export default function TasksScreen() {
 
           <div className="flex flex-row gap-4">
             <Card className="flex-1 p-5 bg-white/5 border-white/5" variant="flat">
-              <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase mb-1 block text-center">EN ATTENTE</span>
+              <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase mb-1 block text-center">EN ATTENTE</span>
               <span className="text-2xl font-black text-awan-tx tabular-nums text-center">{tasks.filter((t: any) => !t.done).length}</span>
             </Card>
             <Card className="flex-1 p-5 bg-white/5 border-white/5" variant="flat">
-              <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest mb-1 block text-center">REMPLIS</span>
+              <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest mb-1 block text-center">REMPLIS</span>
               <span className="text-2xl font-black text-white/20 tabular-nums text-center">{tasks.filter((t: any) => t.done).length}</span>
             </Card>
           </div>
@@ -177,7 +177,7 @@ export default function TasksScreen() {
                   onPress={() => setFilterStatus(status)}
                   className={`px-5 py-3 rounded-xl border transition-all ${filterStatus === status ? 'bg-awan-gold/10 border-awan-gold shadow-[0_0_10px_rgba(212,175,55,0.2)]' : 'bg-white/3 border-white/5'}`}
                 >
-                  <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${filterStatus === status ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
+                  <span className={`text-awan-md font-black uppercase tracking-[0.2em] ${filterStatus === status ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
                     {status === 'all' ? 'Indifférent' : (status === 'pending' ? 'Opérationnel' : 'Archivé')}
                   </span>
                 </Touch>
@@ -191,7 +191,7 @@ export default function TasksScreen() {
                 >
                   <div className="flex flex-row items-center gap-2">
                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.c }} />
-                     <span className="text-[10px] font-black uppercase tracking-widest text-[#6C665E]" style={{ color: filterCat === k ? '#fff' : '#6C665E' }}>{c.l}</span>
+                     <span className="text-awan-md font-black uppercase tracking-widest text-[#6C665E]" style={{ color: filterCat === k ? '#fff' : '#6C665E' }}>{c.l}</span>
                   </div>
                 </Touch>
               ))}
@@ -244,14 +244,14 @@ export default function TasksScreen() {
                     <div className="flex flex-row items-center gap-3 mt-2">
                       <div className="flex flex-row items-center gap-1.5">
                          <div className="w-1.5 h-1.5 rounded-full shadow-[0_0_5px_rgba(255,255,255,0.3)]" style={{ backgroundColor: categories[item.category]?.c || '#6C665E' }} />
-                         <span className="text-[9px] font-black uppercase tracking-widest text-awan-tx-mute">
+                         <span className="text-awan-sm font-black uppercase tracking-widest text-awan-tx-mute">
                            {categories[item.category]?.l || item.category}
                          </span>
                       </div>
                       {item.time && (
                          <div className="flex flex-row items-center gap-1.5">
                             <Clock size={10} className="text-awan-gold" />
-                            <span className="text-[9px] font-black font-mono text-awan-gold opacity-60 uppercase">{item.time}</span>
+                            <span className="text-awan-sm font-black font-mono text-awan-gold opacity-60 uppercase">{item.time}</span>
                          </div>
                       )}
                     </div>
@@ -311,7 +311,7 @@ export default function TasksScreen() {
             
             <div className="space-y-10">
               <div>
-                <span className="text-[10px] font-black text-awan-gold tracking-[0.4em] uppercase mb-4 block">Désignation de Mission</span>
+                <span className="text-awan-md font-black text-awan-gold tracking-[0.4em] uppercase mb-4 block">Désignation de Mission</span>
                 <TextInput 
                   className="bg-black/40 border border-white/5 rounded-2xl p-6 text-awan-tx font-bold text-lg uppercase tracking-tight" 
                   value={title} 
@@ -324,7 +324,7 @@ export default function TasksScreen() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <span className="text-[10px] font-black text-awan-tx-mute tracking-[0.4em] uppercase mb-4 block">Heure H</span>
+                  <span className="text-awan-md font-black text-awan-tx-mute tracking-[0.4em] uppercase mb-4 block">Heure H</span>
                   <TextInput 
                     className="bg-black/40 border border-white/5 rounded-2xl p-6 text-awan-tx font-mono text-center text-xl font-black" 
                     value={time} 
@@ -333,7 +333,7 @@ export default function TasksScreen() {
                   />
                 </div>
                 <div>
-                  <span className="text-[10px] font-black text-awan-tx-mute tracking-[0.4em] uppercase mb-4 block">Anticipation</span>
+                  <span className="text-awan-md font-black text-awan-tx-mute tracking-[0.4em] uppercase mb-4 block">Anticipation</span>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', gap: 8 }}>
                     {NOTIF_INTERVALS.map(ni => (
                       <Touch 
@@ -341,7 +341,7 @@ export default function TasksScreen() {
                         className={`px-6 py-4 rounded-xl border transition-all ${reminder === ni.value ? 'bg-awan-gold/20 border-awan-gold shadow-inner' : 'bg-black/20 border-white/5'}`}
                         onPress={() => setReminder(ni.value)}
                       >
-                        <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${reminder === ni.value ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{ni.label}</span>
+                        <span className={`text-awan-md font-black uppercase tracking-[0.2em] ${reminder === ni.value ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{ni.label}</span>
                       </Touch>
                     ))}
                   </ScrollView>
@@ -349,7 +349,7 @@ export default function TasksScreen() {
               </div>
 
               <div>
-                <span className="text-[10px] font-black text-awan-tx-mute tracking-[0.4em] uppercase mb-4 block">Classification de Priorité</span>
+                <span className="text-awan-md font-black text-awan-tx-mute tracking-[0.4em] uppercase mb-4 block">Classification de Priorité</span>
                 <div className="flex flex-row flex-wrap gap-3">
                   {Object.entries(categories).map(([k, c]: any) => (
                     <Touch 
@@ -359,7 +359,7 @@ export default function TasksScreen() {
                     >
                       <div className="flex flex-row items-center gap-3">
                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: c.c }} />
-                         <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: cat === k ? '#fff' : c.c }}>{c.l}</span>
+                         <span className="text-awan-md font-black uppercase tracking-widest" style={{ color: cat === k ? '#fff' : c.c }}>{c.l}</span>
                       </div>
                     </Touch>
                   ))}

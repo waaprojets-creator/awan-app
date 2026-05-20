@@ -173,7 +173,7 @@ export default function TrajetScreen() {
                       <MapPin size={16} className="text-awan-gold" />
                       <div className="flex-1">
                         <span className="text-xs font-bold text-awan-tx block mb-0.5">{r.properties.label}</span>
-                        <span className="text-[10px] font-medium text-awan-tx-mute uppercase tracking-widest">{r.properties.region}</span>
+                        <span className="text-awan-md font-medium text-awan-tx-mute uppercase tracking-widest">{r.properties.region}</span>
                       </div>
                     </Touch>
                   ))}
@@ -193,7 +193,7 @@ export default function TrajetScreen() {
                   disabled={loading || mapEntries.length < 2}
                 >
                   <Navigation2 size={14} className="text-black" />
-                  <span className="text-[10px] font-black text-black uppercase tracking-widest">TRACER VECTEUR</span>
+                  <span className="text-awan-md font-black text-black uppercase tracking-widest">TRACER VECTEUR</span>
                 </Touch>
                 <Touch 
                   className="w-10 h-10  bg-white/5 border border-white/10 items-center justify-center hover:bg-awan-status-error/10 hover:border-awan-status-error/30" 
@@ -213,9 +213,9 @@ export default function TrajetScreen() {
                     <MapPin size={22} className="text-awan-gold" />
                   </div>
                   <div className="flex-1">
-                    <span className="text-[10px] font-black text-awan-gold tracking-widest uppercase mb-1 block">Point de Passage</span>
+                    <span className="text-awan-md font-black text-awan-gold tracking-widest uppercase mb-1 block">Point de Passage</span>
                     <span className="text-sm font-bold text-awan-tx uppercase tracking-tight mb-0.5">{item.title}</span>
-                    <span className="text-[9px] font-medium text-awan-tx-mute uppercase tracking-[0.2em]">{item.data.address}</span>
+                    <span className="text-awan-sm font-medium text-awan-tx-mute uppercase tracking-[0.2em]">{item.data.address}</span>
                   </div>
                   <Touch onPress={() => removeEntry(item.id)} className="p-3">
                     <X size={16} className="text-white/20" />
@@ -230,17 +230,17 @@ export default function TrajetScreen() {
               <div className="flex flex-row justify-between mb-6">
                  <div className="flex flex-row items-center gap-2">
                     <Zap size={14} className="text-awan-gold" />
-                    <span className="text-[10px] font-black text-awan-gold tracking-widest uppercase">Analyse de Trajectoire</span>
+                    <span className="text-awan-md font-black text-awan-gold tracking-widest uppercase">Analyse de Trajectoire</span>
                  </div>
                  <div className="w-2 h-2 rounded-full bg-awan-gold animate-pulse" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest mb-2 block">Distance de Projection</span>
+                  <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest mb-2 block">Distance de Projection</span>
                   <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">{(route.summary.distance / 1000).toFixed(1)}<span className="text-sm ml-1 text-awan-gold">KM</span></span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest mb-2 block">Délai d'Infiltration</span>
+                  <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest mb-2 block">Délai d'Infiltration</span>
                   <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">{Math.floor(route.summary.duration / 60)}<span className="text-sm ml-1 text-awan-gold">MIN</span></span>
                 </div>
               </div>
@@ -248,7 +248,7 @@ export default function TrajetScreen() {
           )}
 
           {/* Widget choix de véhicule */}
-          <div className="p-4 border mb-6" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div className="p-4 border mb-6" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border)' }}>
             <span className="uppercase block mb-3" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 700, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
               {(LABELS as any).dash.widgets.transport}
             </span>
@@ -259,7 +259,7 @@ export default function TrajetScreen() {
                 const active = activeKey === opt.key;
                 return (
                   <Touch key={opt.key} className="flex-1 flex flex-col items-center p-3 border transition-all"
-                    style={{ backgroundColor: active ? 'rgba(212,175,55,0.08)' : 'transparent', borderColor: active ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.06)' }}
+                    style={{ backgroundColor: active ? 'rgba(212,175,55,0.08)' : 'transparent', borderColor: active ? 'var(--color-awan-gold)' : 'var(--color-awan-border)' }}
                     onPress={() => setMode(ORS_MODE[opt.key] ?? 'driving-car')}>
                     {Icon && <Icon size={18} color={active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)'} />}
                     <span className="mt-1 uppercase" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: active ? 700 : 400, color: active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>

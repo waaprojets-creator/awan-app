@@ -118,17 +118,17 @@ export default function SanteScreen({ navigate }: any) {
  <div className="w-8 h-8 bg-awan-gold/10 flex items-center justify-center border border-awan-gold/20">
  <Activity size={15} className="text-awan-gold" />
  </div>
- <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase">SPORT</span>
+ <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase">SPORT</span>
  </div>
  <ChevronRight size={16} className="text-awan-tx-mute" />
  </div>
  <div className="flex flex-row gap-8 items-end">
  <div>
- <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">SÉANCES / SEM</span>
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-1">SÉANCES / SEM</span>
  <div className="flex flex-row items-baseline gap-2">
    <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">{sessCount}</span>
    {sportDelta !== 0 && (
-     <span className="text-[9px] font-black font-mono" style={{ color: sportDelta > 0 ? 'var(--color-awan-status-ok)' : 'var(--color-awan-status-error)' }}>
+     <span className="text-awan-sm font-black font-mono" style={{ color: sportDelta > 0 ? 'var(--color-awan-status-ok)' : 'var(--color-awan-status-error)' }}>
        {sportDelta > 0 ? '▲' : '▼'} {Math.abs(sportDelta)} vs S-1
      </span>
    )}
@@ -136,7 +136,7 @@ export default function SanteScreen({ navigate }: any) {
  </div>
  {daysSince !== null && (
  <div>
- <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">DERNIÈRE SÉANCE</span>
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-1">DERNIÈRE SÉANCE</span>
  <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">
  {daysSince === 0 ? "AUJOURD'HUI" : `J-${daysSince}`}
  </span>
@@ -159,24 +159,24 @@ export default function SanteScreen({ navigate }: any) {
  <div className="w-8 h-8 bg-awan-gold/10 flex items-center justify-center border border-awan-gold/20">
  <Utensils size={15} className="text-awan-gold" />
  </div>
- <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase">NUTRITION</span>
+ <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase">NUTRITION</span>
  </div>
  <ChevronRight size={16} className="text-awan-tx-mute" />
  </div>
  <div className="flex flex-row gap-6 flex-wrap">
  <div>
- <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">KCAL</span>
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-1">KCAL</span>
  <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">
  {kcal}<span className="text-xs ml-1 opacity-50" style={{ color: 'var(--color-awan-gold)' }}>/{KCAL_TARGET}</span>
  </span>
  </div>
  {(['p', 'c', 'f'] as const).map(m => (
  <div key={m}>
- <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
  {m === 'p' ? 'PROT' : m === 'c' ? 'GLUC' : 'LIP'}
  </span>
  <span className="text-2xl font-black text-awan-tx font-mono">
- {mealStore.totals[m]}<span className="text-[10px] ml-0.5 opacity-50" style={{ color: 'var(--color-awan-gold)' }}>g</span>
+ {mealStore.totals[m]}<span className="text-awan-md ml-0.5 opacity-50" style={{ color: 'var(--color-awan-gold)' }}>g</span>
  </span>
  </div>
  ))}
@@ -198,7 +198,7 @@ export default function SanteScreen({ navigate }: any) {
  <div className="w-8 h-8 bg-awan-gold/10 flex items-center justify-center border border-awan-gold/20">
  <Ruler size={15} className="text-awan-gold" />
  </div>
- <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase">MENSURATION</span>
+ <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase">MENSURATION</span>
  </div>
  <ChevronRight size={16} className="text-awan-tx-mute" />
  </div>
@@ -208,13 +208,13 @@ export default function SanteScreen({ navigate }: any) {
  {latestMeasure ? (
  <>
  <div>
- <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-0.5">POIDS</span>
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-0.5">POIDS</span>
  <div className="flex flex-row items-baseline gap-2">
    <span className="text-2xl font-black text-awan-tx font-mono tracking-tighter">
      {latestMeasure.weight}<span className="text-xs ml-1 text-awan-gold">kg</span>
    </span>
    {weightDelta !== null && (
-     <span className="text-[9px] font-black font-mono" style={{ color: weightDelta < 0 ? 'var(--color-awan-status-ok)' : weightDelta > 0 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-tx-mute)' }}>
+     <span className="text-awan-sm font-black font-mono" style={{ color: weightDelta < 0 ? 'var(--color-awan-status-ok)' : weightDelta > 0 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-tx-mute)' }}>
        {weightDelta > 0 ? '▲' : weightDelta < 0 ? '▼' : '–'} {Math.abs(weightDelta).toFixed(1)} kg/sem
      </span>
    )}
@@ -222,7 +222,7 @@ export default function SanteScreen({ navigate }: any) {
  </div>
  {latestMeasure.body_fat_pct > 0 && (
  <div>
- <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-0.5">MASSE GRASSE</span>
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-0.5">MASSE GRASSE</span>
  <span className="text-2xl font-black text-awan-tx font-mono tracking-tighter">
  {latestMeasure.body_fat_pct.toFixed(1)}<span className="text-xs ml-1 text-awan-gold">%</span>
  </span>
@@ -230,13 +230,13 @@ export default function SanteScreen({ navigate }: any) {
  )}
  {latestMeasure.bpm_rest > 0 && (
  <div>
- <span className="text-[8px] font-black text-awan-tx-mute uppercase tracking-widest block mb-0.5">BPM REPOS</span>
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-0.5">BPM REPOS</span>
  <span className="text-2xl font-black text-awan-tx font-mono tracking-tighter">{latestMeasure.bpm_rest}</span>
  </div>
  )}
  </>
  ) : (
- <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest opacity-40">Aucune mesure</span>
+ <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest opacity-40">Aucune mesure</span>
  )}
  </div>
  </div>
@@ -251,18 +251,18 @@ export default function SanteScreen({ navigate }: any) {
  <div className="w-8 h-8 bg-awan-gold/10 flex items-center justify-center border border-awan-gold/20">
  <Moon size={15} className="text-awan-gold" />
  </div>
- <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase">SOMMEIL</span>
+ <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase">SOMMEIL</span>
  </div>
  <ChevronRight size={16} className="text-awan-tx-mute" />
  </div>
  <div className="flex flex-row gap-4">
  <div className="flex flex-col">
- <span className="text-[9px] font-black text-awan-tx-mute tracking-widest uppercase mb-1">MOY. 7J</span>
+ <span className="text-awan-sm font-black text-awan-tx-mute tracking-widest uppercase mb-1">MOY. 7J</span>
  <span className="font-mono font-black text-2xl"
  style={{ color: sleepStore.avgDurationH >= 7 ? 'var(--color-awan-status-ok)' : sleepStore.avgDurationH >= 6 ? 'var(--color-awan-status-warn)' : sleepStore.avgDurationH > 0 ? 'var(--color-awan-status-error)' : 'var(--color-awan-tx-mute)' }}>
  {sleepStore.avgDurationH > 0 ? `${sleepStore.avgDurationH.toFixed(1)}h` : '—'}
  </span>
- <span className="text-[9px] text-awan-tx-mute mt-1">
+ <span className="text-awan-sm text-awan-tx-mute mt-1">
  {sleepStore.avgDurationH > 0
  ? sleepStore.avgDurationH >= 7 ? 'objectif OMS atteint' : `${(7 - sleepStore.avgDurationH).toFixed(1)}h sous OMS`
  : 'aucune donnée'}
@@ -280,13 +280,13 @@ export default function SanteScreen({ navigate }: any) {
  <div className="w-8 h-8 bg-awan-gold/10 flex items-center justify-center border border-awan-gold/20">
  <Brain size={15} className="text-awan-gold" />
  </div>
- <span className="text-[9px] font-black text-awan-gold tracking-widest uppercase">COACH</span>
+ <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase">COACH</span>
  </div>
  <ChevronRight size={16} className="text-awan-tx-mute" />
  </div>
  {topAdvice ? (
  <div>
- <span className="text-[9px] font-black uppercase tracking-widest block mb-1"
+ <span className="text-awan-sm font-black uppercase tracking-widest block mb-1"
  style={{ color: COACH_COLOR[topAdvice.severity] }}>
  {topAdvice.severity.toUpperCase()}
  </span>
@@ -294,7 +294,7 @@ export default function SanteScreen({ navigate }: any) {
  <span className="text-xs text-awan-tx-dim mt-0.5 block leading-relaxed">{getAdviceText(topAdvice.key).advice}</span>
  </div>
  ) : (
- <span className="text-[10px] font-black text-awan-tx-mute uppercase tracking-widest opacity-40">Analyse non effectuée</span>
+ <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest opacity-40">Analyse non effectuée</span>
  )}
  </Card>
  </Touch>

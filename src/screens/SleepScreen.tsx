@@ -136,7 +136,7 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
       <ScreenHeader tag="SYSTÈME · SOMMEIL" title="SUIVI SOMMEIL" />
 
       {/* Saisie du jour */}
-      <div className="p-4 border mb-4" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'rgba(255,255,255,0.06)' }}>
+      <div className="p-4 border mb-4" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border)' }}>
         <span className="awan-label block mb-4">
           {todayEntry ? 'MODIFIER AUJOURD\'HUI' : 'SAISIR AUJOURD\'HUI'}
         </span>
@@ -229,7 +229,7 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
 
       {/* Tendance 7 jours */}
       {last7.length >= 2 && (
-        <div className="p-4 border mb-4" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'rgba(255,255,255,0.06)' }}>
+        <div className="p-4 border mb-4" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border)' }}>
           <div className="flex flex-row justify-between items-baseline mb-3">
             <span className="awan-label">TENDANCE 7 JOURS</span>
             <span className="font-mono font-bold text-sm" style={{ color: durationColor(store.avgDurationH) }}>

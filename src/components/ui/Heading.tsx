@@ -22,7 +22,7 @@ export function Heading({
     1: 'text-2xl font-bold tracking-tight',
     2: 'text-xl font-bold tracking-tight',
     3: 'text-lg font-semibold tracking-tight',
-    4: 'text-[9px] uppercase tracking-[0.2em] font-bold text-awan-tx-mute',
+    4: 'text-awan-sm uppercase tracking-[0.2em] font-bold text-awan-tx-mute',
   };
 
   const Tag: any = `h${level}`;
@@ -34,7 +34,7 @@ export function Heading({
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="text-[9px] text-awan-tx-mute mb-1 uppercase tracking-[0.3em] font-mono font-bold"
+          className="text-awan-sm text-awan-tx-mute mb-1 uppercase tracking-[0.3em] font-mono font-bold"
         >
           {subtitle}
         </motion.p>

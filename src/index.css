@@ -33,6 +33,23 @@
   --radius-awan-md: 0px;
   --radius-awan-lg: 0px;
   --radius-awan-xl: 0px;
+
+  /* Échelle de tailles typographiques — source unique.
+     Toute taille custom DOIT référencer ces tokens plutôt que text-[Npx].
+     Modifier ici = changement global cohérent. */
+  --text-awan-xxs:  7px;
+  --text-awan-xs:   8px;
+  --text-awan-sm:   9px;
+  --text-awan-md:   10px;
+  --text-awan-lg:   11px;
+  --text-awan-data: 22px;
+
+  /* Couleurs semi-transparentes réutilisables */
+  --color-awan-border:      rgba(255,255,255,0.06);
+  --color-awan-border-soft: rgba(255,255,255,0.05);
+  --color-awan-overlay:     rgba(0,0,0,0.85);
+  --color-awan-overlay-deep: rgba(0,0,0,0.92);
+  --color-awan-placeholder: rgba(255,255,255,0.15);
 }
 
 @layer base {
@@ -55,12 +72,13 @@
   /* Échelle typographique AWAN — toute taille custom DOIT utiliser une de
      ces classes plutôt que text-[Npx] inline. Pattern signature AWAN :
      uppercase + tracking-widest + font-black. Couleur reste libre. */
-  .awan-label-xs    { @apply text-[8px]  uppercase tracking-widest font-black; }
-  .awan-label-sm    { @apply text-[9px]  uppercase tracking-widest font-black; }
-  .awan-label-md    { @apply text-[10px] uppercase tracking-widest font-black; }
-  .awan-label-lg    { @apply text-[11px] uppercase tracking-widest font-black; }
-  .awan-label       { @apply font-mono text-[9px] uppercase tracking-[0.2em] text-awan-tx-mute font-bold; }
-  .awan-data-value  { @apply font-mono text-[22px] tracking-tighter font-bold; }
+  .awan-label-xxs   { @apply text-awan-xxs uppercase tracking-widest font-black; }
+  .awan-label-xs    { @apply text-awan-xs  uppercase tracking-widest font-black; }
+  .awan-label-sm    { @apply text-awan-sm  uppercase tracking-widest font-black; }
+  .awan-label-md    { @apply text-awan-md  uppercase tracking-widest font-black; }
+  .awan-label-lg    { @apply text-awan-lg  uppercase tracking-widest font-black; }
+  .awan-label       { @apply font-mono text-awan-sm uppercase tracking-[0.2em] text-awan-tx-mute font-bold; }
+  .awan-data-value  { @apply font-mono text-awan-data tracking-tighter font-bold; }
 
   .awan-value {
     @apply font-mono text-sm tracking-tighter text-awan-tx;
