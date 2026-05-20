@@ -54,6 +54,7 @@ import {
 import type { ExerciseSetV1, SetKind } from '../data/schemas/sport/exerciseSet';
 import { WorkoutListView } from '../modules/sport/components/WorkoutListView';
 import { RoutineGeneratorView } from '../modules/sport/components/RoutineGeneratorView';
+import { cacheForRoutine } from '../services/mediaCacheService';
 
 type ViewMode = 'list' | 'create' | 'edit' | 'active' | 'history' | 'finish' | 'recovery' | 'workouts' | 'generate';
 
@@ -514,6 +515,9 @@ export default function SportScreen() {
  onBack={() => setView('workouts')}
  onSave={async (routines) => {
  await Promise.all(routines.map(r => workoutStore.saveRoutine(r)));
+ // Pre-warm image cache silently after saving
+ const ids = routines.flatMap(r => r.exercises.map(e => e.exerciseId));
+ cacheForRoutine(ids).catch(() => {});
  setView('workouts');
  }}
  />
