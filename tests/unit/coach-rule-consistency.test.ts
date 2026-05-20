@@ -2,10 +2,20 @@ import { describe, it, expect } from 'vitest';
 import { loadDefaultRules } from '@/modules/coach/rulesLoader';
 
 // Chaque nombre apparaissant dans `rule.name` DOIT correspondre à un nombre
-// significatif de la règle : condition.value/min/max, ou signal.window.days,
-// ou signal.ratioWindow.days. Sinon le texte humain ment sur ce que la règle
-// évalue (cas réel observé : `nutrition.meal_regularity` "moins de 2"
-// alors que la condition était `avg.kcal < 500`).
+// significatif de la règle (condition.value/min/max, signal.window.days,
+// signal.ratioWindow.days). Sinon le texte humain ment sur ce qu'évalue la règle.
+//
+// Allowlist : règles dont le nom contient une valeur DÉRIVÉE légitime
+// (conversion d'unité jours↔heures↔semaines, ou paramètre de calcul explicatif
+// comme "80 kg × 1.4"). Toute nouvelle règle qui voudrait rejoindre cette
+// liste doit le justifier explicitement.
+const ALLOWED_DERIVED_VALUES = new Set([
+  'sport.fatigue_rpe',          // "5 séances" ≈ avg sessions per 14d window
+  'sport.insufficient_frequency', // "2 séances/sem" = 6 count / 3 weeks
+  'sport.deload_due',           // "6 semaines" = 42 days
+  'sport.insufficient_rest_48h', // "48h" = 2 days
+  'nutrition.proteines_faibles', // "80kg × 1.4" calcul explicatif derrière 112g
+]);
 
 function extractNumbers(s: string): number[] {
   const matches = s.match(/-?\d+(?:[.,]\d+)?/g) ?? [];
@@ -28,16 +38,10 @@ function meaningfulNumbers(rule: ReturnType<typeof loadDefaultRules>[number]): S
 describe('Coach rules — cohérence nom ↔ règle', () => {
   const rules = loadDefaultRules();
 
-  // TODO: activer une fois les 6 cas connus traités (voir conversation 2026-05-20) :
-  //   - 5 faux positifs (unités converties/calculs explicatifs, à allowlist) :
-  //     sport.fatigue_rpe, sport.insufficient_frequency, sport.deload_due,
-  //     sport.insufficient_rest_48h, nutrition.proteines_faibles
-  //   - 1 vraie dérive (nom ment sur la condition) :
-  //     nutrition.meal_regularity — name dit "moins de 2 entrées/jour"
-  //     mais condition évalue `avg kcal < 500`. À renommer ou recâbler.
-  it.skip('chaque nombre dans rule.name correspond à un nombre meaningful de la règle', () => {
+  it('chaque nombre dans rule.name correspond à un nombre meaningful (sauf allowlist)', () => {
     const drifts: string[] = [];
     for (const rule of rules) {
+      if (ALLOWED_DERIVED_VALUES.has(rule.id)) continue;
       const inName = extractNumbers(rule.name);
       if (inName.length === 0) continue;
       const meaningful = meaningfulNumbers(rule);
@@ -45,11 +49,19 @@ describe('Coach rules — cohérence nom ↔ règle', () => {
         if (!meaningful.has(n)) {
           drifts.push(
             `[${rule.id}] nombre "${n}" dans le nom "${rule.name}" ne correspond à aucune valeur de la règle ` +
-            `(condition/window/ratioWindow = ${JSON.stringify([...meaningful])}).`,
+            `(condition/window/ratioWindow = ${JSON.stringify([...meaningful])}). ` +
+            `Soit corrige le nom, soit ajoute ${rule.id} dans ALLOWED_DERIVED_VALUES avec justification.`,
           );
         }
       }
     }
     expect(drifts, drifts.join('\n')).toEqual([]);
+  });
+
+  it('allowlist : aucune règle "fantôme" (allowlist ⊆ règles chargées)', () => {
+    const ids = new Set(rules.map(r => r.id));
+    for (const allowed of ALLOWED_DERIVED_VALUES) {
+      expect(ids.has(allowed), `Rule "${allowed}" dans allowlist mais introuvable — règle renommée ou supprimée ?`).toBe(true);
+    }
   });
 });

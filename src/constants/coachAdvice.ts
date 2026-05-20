@@ -51,8 +51,8 @@ const ADVICE_TEXTS: Record<string, AdviceText> = {
     advice: 'Moyenne > 2800 kcal/j. Un surplus modéré de 200–300 kcal est idéal pour une prise de masse propre.',
   },
   'coach.nutrition.meal_regularity': {
-    title: 'Repas irréguliers',
-    advice: 'Peu d\'entrées nutritionnelles détectées. Des repas réguliers stabilisent la glycémie et réduisent les fringales.',
+    title: 'Repas faibles en énergie',
+    advice: 'Moyenne < 500 kcal/repas sur 7 jours. Tes repas sont peu denses en énergie — augmente la portion ou ajoute des féculents/lipides pour atteindre tes besoins quotidiens.',
   },
 
   // ── Anthropométrie ────────────────────────────────────────────────────────
