@@ -6,6 +6,7 @@ import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Card } from '@/components/ui/Card';
 import { Heading } from '@/components/ui/Heading';
 import { Touch } from '@/components/ui/Touch';
+import { L } from '@/constants/labels';
 import type { RoutineLatest, WorkoutSessionLatest } from '@/data/schemas/sport/routine';
 
 interface WorkoutListViewProps {
@@ -38,9 +39,9 @@ export function WorkoutListView({
   }, [sessions]);
 
   function handleDelete(r: RoutineLatest) {
-    Alert.alert('Suppression', `Supprimer "${r.name}" ?`, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => onDelete(r.id) },
+    Alert.alert(L.sport.deleteTitle, L.sport.deletePrompt(r.name), [
+      { text: L.common.cancel, style: 'cancel' },
+      { text: L.common.delete, style: 'destructive', onPress: () => onDelete(r.id) },
     ]);
   }
 
@@ -55,14 +56,14 @@ export function WorkoutListView({
             >
               <ChevronLeft size={20} className="text-awan-tx-mute" />
             </Touch>
-            <ScreenHeader tag="SPORT · PROTOCOLES" title="MES ROUTINES" />
+            <ScreenHeader tag={L.sport.routinesTag} title={L.sport.myRoutines} />
           </div>
         </div>
 
         <div className="px-6 pb-6">
           {routines.length === 0 ? (
             <Card className="py-20 items-center bg-white/5 border-dashed border-white/10">
-              <span className="awan-label text-awan-tx-mute text-center">AUCUNE ROUTINE ENREGISTRÉE</span>
+              <span className="awan-label text-awan-tx-mute text-center">{L.sport.noRoutines}</span>
             </Card>
           ) : (
             <StaggerList>
@@ -78,15 +79,9 @@ export function WorkoutListView({
                       <div className="flex flex-row items-start justify-between mb-3">
                         <div className="flex-1 pr-3">
                           {isCoach && (
-                            <div
-                              className="inline-flex items-center px-2 py-0.5 mb-1"
-                              style={{ backgroundColor: 'var(--color-awan-status-spirit, rgba(138,43,226,0.15))', border: '1px solid rgba(138,43,226,0.3)' }}
-                            >
-                              <span
-                                className="text-[8px] font-black tracking-widest uppercase"
-                                style={{ color: 'var(--color-awan-status-spirit, rgb(138,43,226))' }}
-                              >
-                                PROPOSÉE · COACH
+                            <div className="inline-flex items-center px-2 py-0.5 mb-1 bg-awan-status-spirit/15 border border-awan-status-spirit/30">
+                              <span className="text-[8px] font-black tracking-widest uppercase text-awan-status-spirit">
+                                {L.sport.coachBadge}
                               </span>
                             </div>
                           )}
@@ -111,15 +106,15 @@ export function WorkoutListView({
                       <div className="flex flex-row flex-wrap gap-2 mb-2">
                         {r.cycleLetter && (
                           <div className="bg-awan-gold/10 px-2 py-0.5 border border-awan-gold/20">
-                            <span className="text-[9px] font-black text-awan-gold tracking-widest">CYCLE {r.cycleLetter}</span>
+                            <span className="text-[9px] font-black text-awan-gold tracking-widest">{L.sport.cycle} {r.cycleLetter}</span>
                           </div>
                         )}
                         <div className="bg-white/5 px-2 py-0.5">
-                          <span className="text-[9px] font-black text-awan-tx-mute tracking-widest">{r.exercises.length} EX</span>
+                          <span className="text-[9px] font-black text-awan-tx-mute tracking-widest">{r.exercises.length} {L.sport.exShort}</span>
                         </div>
                         {lastDate && (
                           <div className="bg-white/5 px-2 py-0.5">
-                            <span className="text-[9px] font-black text-awan-tx-mute tracking-widest">DERNIÈRE : {lastDate}</span>
+                            <span className="text-[9px] font-black text-awan-tx-mute tracking-widest">{L.sport.lastSession} : {lastDate}</span>
                           </div>
                         )}
                       </div>
@@ -142,10 +137,9 @@ export function WorkoutListView({
                             e.stopPropagation?.();
                             onAdopt(r);
                           }}
-                          className="mt-4 h-10 flex items-center justify-center border border-awan-gold/40"
-                          style={{ backgroundColor: 'var(--color-awan-gold, #c9a84c)' + '15' }}
+                          className="mt-4 h-10 flex items-center justify-center border border-awan-gold/40 bg-awan-gold/[0.08]"
                         >
-                          <span className="text-[10px] font-black text-awan-gold tracking-widest uppercase">ADOPTER CETTE ROUTINE</span>
+                          <span className="text-[10px] font-black text-awan-gold tracking-widest uppercase">{L.sport.adoptRoutine}</span>
                         </Touch>
                       )}
                     </Card>
@@ -160,24 +154,10 @@ export function WorkoutListView({
       {/* Floating generate button */}
       <Touch
         onPress={onGenerate}
-        style={{
-          position: 'fixed',
-          bottom: 90,
-          right: 24,
-          backgroundColor: 'var(--color-awan-gold)',
-          paddingHorizontal: 20,
-          height: 48,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 8,
-          shadowColor: 'var(--color-awan-gold)',
-          shadowOpacity: 0.4,
-          shadowRadius: 16,
-          elevation: 8,
-        }}
+        className="fixed bottom-[90px] right-6 px-5 h-12 flex flex-row items-center gap-2 bg-awan-gold shadow-2xl"
       >
         <Zap size={16} color="black" strokeWidth={3} />
-        <span className="text-[11px] font-black text-black tracking-widest uppercase">GÉNÉRER</span>
+        <span className="text-[11px] font-black text-black tracking-widest uppercase">{L.sport.generate}</span>
       </Touch>
     </PageWrapper>
   );

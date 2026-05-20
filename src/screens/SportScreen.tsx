@@ -55,6 +55,7 @@ import type { ExerciseSetV1, SetKind } from '../data/schemas/sport/exerciseSet';
 import { WorkoutListView } from '../modules/sport/components/WorkoutListView';
 import { RoutineGeneratorView } from '../modules/sport/components/RoutineGeneratorView';
 import { cacheForRoutine } from '../services/mediaCacheService';
+import { L } from '../constants/labels';
 
 type ViewMode = 'list' | 'create' | 'edit' | 'active' | 'history' | 'finish' | 'recovery' | 'workouts' | 'generate';
 
@@ -678,7 +679,7 @@ export default function SportScreen() {
  className="mb-6 h-12 bg-white/5 flex items-center justify-center border border-white/10"
  onPress={() => setView('workouts')}
  >
- <span className="awan-label text-awan-tx-mute">MES ROUTINES →</span>
+ <span className="awan-label text-awan-tx-mute">{L.sport.myRoutinesArrow}</span>
  </Touch>
 
  <div className="mb-20">

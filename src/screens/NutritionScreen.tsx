@@ -33,6 +33,8 @@ import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
 import { InstrumentCard } from '../components/ui/InstrumentCard';
 import type { StatusVariant } from '../components/ui/InstrumentCard';
+import { L } from '../constants/labels';
+import { FIBER_TARGET_G_PER_DAY, ADHERENCE_OK_THRESHOLD, ADHERENCE_WARN_THRESHOLD } from '../constants/app';
 import {
  loadFoodDatabase,
  searchFoods,
@@ -1198,9 +1200,9 @@ export default function NutritionScreen() {
  {totals.fiberG > 0 && (
  <div className="col-span-3 mt-1">
  <ProgressBar
- label="FIBRES"
+ label={L.nutrition.fiber}
  actual={totals.fiberG}
- target={35}
+ target={FIBER_TARGET_G_PER_DAY}
  unit="g"
  accent="var(--color-awan-status-spirit)"
  />
@@ -1253,12 +1255,12 @@ export default function NutritionScreen() {
  {profile && proteinAdherence7d !== null && (
  <div className="mt-3">
  <InstrumentCard
- label="PROTÉINES 7J"
+ label={L.nutrition.adherence7d}
  value={proteinAdherence7d}
  unit="%"
- status={(proteinAdherence7d >= 80 ? 'ok' : proteinAdherence7d >= 60 ? 'warn' : 'error') as StatusVariant}
+ status={(proteinAdherence7d >= ADHERENCE_OK_THRESHOLD ? 'ok' : proteinAdherence7d >= ADHERENCE_WARN_THRESHOLD ? 'warn' : 'error') as StatusVariant}
  progress={Math.min(100, proteinAdherence7d)}
- delta={proteinAdherence7d >= 80 ? 'Objectif atteint' : proteinAdherence7d >= 60 ? 'À améliorer' : 'Insuffisant'}
+ delta={proteinAdherence7d >= ADHERENCE_OK_THRESHOLD ? L.nutrition.adherenceOk : proteinAdherence7d >= ADHERENCE_WARN_THRESHOLD ? L.nutrition.adherenceWarn : L.nutrition.adherenceError}
  />
  </div>
  )}

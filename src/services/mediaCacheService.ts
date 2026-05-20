@@ -1,10 +1,10 @@
 import { Capacitor } from '@capacitor/core';
+import { MEDIA_CACHE_MAX_BYTES } from '@/constants/app';
 
 // Media cache — 3-level structure: CDN-base / exercise-folder / {0|1}.jpg
 // Native filesystem caching (requires @capacitor/filesystem) is stubbed until the package
 // is installed — all platforms fall back to the CDN URL transparently.
 
-const MAX_CACHE_BYTES = 200 * 1024 * 1024; // 200 MB (native, unused until @capacitor/filesystem)
 const LRU_KEY = 'awan.media.lru';
 
 interface LruEntry { size: number; lastAccess: number; }
@@ -37,7 +37,7 @@ async function evictIfNeeded(_required: number): Promise<void> {
   const lru = loadLru();
   const entries = Object.entries(lru).sort((a, b) => a[1].lastAccess - b[1].lastAccess);
   let total = entries.reduce((s, [, e]) => s + e.size, 0);
-  while (total + _required > MAX_CACHE_BYTES && entries.length > 0) {
+  while (total + _required > MEDIA_CACHE_MAX_BYTES && entries.length > 0) {
     const oldest = entries.shift();
     if (!oldest) break;
     delete lru[oldest[0]];

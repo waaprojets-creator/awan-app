@@ -15,6 +15,7 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 import { getStorage } from '../data/storage/storageService';
 import { motion, AnimatePresence } from 'motion/react';
+import { L } from '../constants/labels';
 
 const AWAN_LS_KEYS = [
   'awan.seed.loaded',
@@ -32,12 +33,7 @@ type CoachProfile = 'bodybuilding' | 'sports_medicine' | 'nutrition' | 'streetwo
 const COACH_PROFILES_KEY = 'awan.coach.profiles';
 const DEFAULT_PROFILES: CoachProfile[] = ['bodybuilding', 'sports_medicine', 'nutrition'];
 
-const PROFILE_OPTIONS: { id: CoachProfile; label: string; desc: string }[] = [
-  { id: 'bodybuilding',    label: 'BODYBUILDING',     desc: 'Musculation naturelle · Volume & intensité' },
-  { id: 'sports_medicine', label: 'MÉDECINE DU SPORT', desc: 'Récupération · Prévention · Charge ACWR' },
-  { id: 'nutrition',       label: 'NUTRITIONNISTE',   desc: 'Macros · Timing · Adhérence' },
-  { id: 'streetworkout',   label: 'STREETWORKOUT',    desc: 'Callisthénie · Poids du corps' },
-];
+const PROFILE_IDS: CoachProfile[] = ['bodybuilding', 'sports_medicine', 'nutrition', 'streetworkout'];
 
 function loadCoachProfiles(): CoachProfile[] {
   const raw = safeStorage.get(COACH_PROFILES_KEY);
@@ -150,33 +146,27 @@ export default function SettingsScreen() {
 
  {/* PROFIL COACH */}
  <div className="mb-10">
- <Heading level={4} mono subtitle="Expertises Activées" className="mb-6">PROFIL COACH</Heading>
+ <Heading level={4} mono subtitle={L.coach.profile.sub} className="mb-6">{L.coach.profile.section}</Heading>
  <Card className="p-0 bg-white/3 border-white/5 overflow-hidden" variant="flat">
- {PROFILE_OPTIONS.map((opt, idx) => {
-   const active = coachProfiles.includes(opt.id);
+ {PROFILE_IDS.map((id, idx) => {
+   const active = coachProfiles.includes(id);
+   const meta = L.coach.profile[id];
    return (
      <Touch
-       key={opt.id}
-       onPress={() => toggleCoachProfile(opt.id)}
-       className={`flex flex-row items-center gap-5 px-5 h-20 ${idx > 0 ? 'border-t' : ''}`}
-       style={{ borderTopColor: 'rgba(255,255,255,0.04)' }}
+       key={id}
+       onPress={() => toggleCoachProfile(id)}
+       className={`flex flex-row items-center gap-5 px-5 h-20 ${idx > 0 ? 'border-t border-white/[0.04]' : ''}`}
      >
        <div className="w-10 h-10 bg-white/5 flex items-center justify-center">
          <Brain size={18} className={active ? 'text-awan-gold' : 'text-awan-tx-mute'} />
        </div>
        <div className="flex-1">
-         <span
-           className="text-xs font-black uppercase tracking-widest block mb-1"
-           style={{ color: active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)' }}
-         >
-           {opt.label}
+         <span className={`text-xs font-black uppercase tracking-widest block mb-1 ${active ? 'text-awan-gold' : 'text-awan-tx'}`}>
+           {meta.label}
          </span>
-         <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-tighter">{opt.desc}</span>
+         <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-tighter">{meta.desc}</span>
        </div>
-       <span
-         className="text-base font-black font-mono"
-         style={{ color: active ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.2)' }}
-       >
+       <span className={`text-base font-black font-mono ${active ? 'text-awan-gold' : 'text-white/20'}`}>
          {active ? '◆' : '◇'}
        </span>
      </Touch>
@@ -184,7 +174,7 @@ export default function SettingsScreen() {
  })}
  </Card>
  <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest leading-relaxed px-1 mt-3 block">
-   Détermine les règles Coach activées et le ton des conseils.
+   {L.coach.profile.help}
  </span>
  </div>
 
