@@ -219,7 +219,7 @@ describe('MealService.totals', () => {
 
   it('tableau vide → zéros', () => {
     const t = MealService.totals([]);
-    expect(t).toEqual({ kcal: 0, p: 0, c: 0, f: 0 });
+    expect(t).toEqual({ kcal: 0, p: 0, c: 0, f: 0, fiberG: 0 });
   });
 
   it('somme correcte sur plusieurs repas', () => {

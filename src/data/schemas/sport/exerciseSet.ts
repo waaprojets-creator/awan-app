@@ -6,7 +6,8 @@ export type SetKind = z.infer<typeof SetKindSchema>;
 export const ExerciseSetV1Schema = z.object({
   v: z.literal(1),
   exerciseId: z.string(),
-  kind: SetKindSchema,
+  // Default backfills legacy data (pre-`kind`) as a working set — safe production migration.
+  kind: SetKindSchema.default('working'),
   reps: z.number().int().nonnegative().optional(),
   weightKg: z.number().nonnegative().optional(),
   durationSec: z.number().int().nonnegative().optional(),

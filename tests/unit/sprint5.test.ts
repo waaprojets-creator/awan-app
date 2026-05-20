@@ -2,27 +2,11 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { MemoryStorage } from '../../src/data/storage/MemoryStorage';
 import { _setStorageForTest } from '../../src/data/storage/storageService';
 import { WorkoutService } from '../../src/services/workoutService';
-import type { RoutineLatest, WorkoutSessionLatest } from '../../src/data/schemas/sport/routine';
 import { Planner } from '../../src/modules/planning/api';
+import { makeRoutine, makeSession } from '../builders/sport';
 
-const makeRoutine = (id: string): RoutineLatest => ({
-  v: 1,
-  id,
-  name: `Routine ${id}`,
-  exercises: [{ rid: 'ex-1', n: 'Squat' }],
-  createdAt: Date.now(),
-});
-
-const makeSession = (id: string): WorkoutSessionLatest => ({
-  v: 1,
-  id,
-  name: 'Séance test',
-  date: '2026-05-10',
-  duration: 3600,
-  startTime: Date.now() - 3600_000,
-  endTime: Date.now(),
-  exercises: [],
-});
+const routineWithId = (id: string) => makeRoutine({ id, name: `Routine ${id}` });
+const sessionWithId = (id: string) => makeSession({ id });
 
 // ── WorkoutService ────────────────────────────────────────────────────────────
 
@@ -32,7 +16,7 @@ describe('WorkoutService', () => {
   });
 
   it('sauvegarde et récupère une routine', async () => {
-    const r = makeRoutine('550e8400-e29b-41d4-a716-446655440000');
+    const r = routineWithId('550e8400-e29b-41d4-a716-446655440000');
     await WorkoutService.saveRoutine(r);
     const all = await WorkoutService.getAllRoutines();
     expect(all).toHaveLength(1);
@@ -41,22 +25,22 @@ describe('WorkoutService', () => {
 
   it('supprime une routine', async () => {
     const id = '550e8400-e29b-41d4-a716-446655440001';
-    await WorkoutService.saveRoutine(makeRoutine(id));
+    await WorkoutService.saveRoutine(routineWithId(id));
     await WorkoutService.deleteRoutine(id);
     const all = await WorkoutService.getAllRoutines();
     expect(all).toHaveLength(0);
   });
 
   it('sauvegarde plusieurs routines et les récupère toutes', async () => {
-    await WorkoutService.saveRoutine(makeRoutine('550e8400-e29b-41d4-a716-446655440010'));
-    await WorkoutService.saveRoutine(makeRoutine('550e8400-e29b-41d4-a716-446655440011'));
-    await WorkoutService.saveRoutine(makeRoutine('550e8400-e29b-41d4-a716-446655440012'));
+    await WorkoutService.saveRoutine(routineWithId('550e8400-e29b-41d4-a716-446655440010'));
+    await WorkoutService.saveRoutine(routineWithId('550e8400-e29b-41d4-a716-446655440011'));
+    await WorkoutService.saveRoutine(routineWithId('550e8400-e29b-41d4-a716-446655440012'));
     const all = await WorkoutService.getAllRoutines();
     expect(all).toHaveLength(3);
   });
 
   it('sauvegarde et récupère une session', async () => {
-    const s = makeSession('660e8400-e29b-41d4-a716-446655440000');
+    const s = sessionWithId('660e8400-e29b-41d4-a716-446655440000');
     await WorkoutService.saveSession(s);
     const all = await WorkoutService.getAllSessions();
     expect(all).toHaveLength(1);
@@ -67,7 +51,7 @@ describe('WorkoutService', () => {
     const events: string[] = [];
     const { eventBus } = await import('../../src/data/events/bus');
     const unsub = eventBus.on('workout.completed', (d) => events.push(d.date));
-    await WorkoutService.saveSession(makeSession('660e8400-e29b-41d4-a716-446655440001'));
+    await WorkoutService.saveSession(sessionWithId('660e8400-e29b-41d4-a716-446655440001'));
     unsub();
     expect(events).toContain('2026-05-10');
   });

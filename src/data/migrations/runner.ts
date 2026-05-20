@@ -1,4 +1,4 @@
-import { z, ZodSchema } from 'zod';
+import { z } from 'zod';
 
 /**
  * A migration step: transforms data from version N to version N+1.
@@ -25,7 +25,9 @@ type MigrationMap = Record<number, MigrationFn>;
  * @param latestVersion - The version that TLatest represents
  */
 export function createMigrator<TUnion, TLatest extends TUnion>(
-  schema: ZodSchema<TUnion>,
+  // Input type is `any` so schemas using `.default()` (input shape ≠ output shape) still fit.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  schema: z.ZodType<TUnion, z.ZodTypeDef, any>,
   migrations: MigrationMap,
   latestVersion: number,
 ): (raw: unknown) => TLatest {

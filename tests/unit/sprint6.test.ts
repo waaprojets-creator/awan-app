@@ -68,7 +68,7 @@ describe('MealService', () => {
   });
 
   it('retourne totaux à zéro pour liste vide', () => {
-    expect(MealService.totals([])).toEqual({ kcal: 0, p: 0, c: 0, f: 0 });
+    expect(MealService.totals([])).toEqual({ kcal: 0, p: 0, c: 0, f: 0, fiberG: 0 });
   });
 });
 
