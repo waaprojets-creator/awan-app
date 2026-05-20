@@ -289,11 +289,13 @@ export const L = {
     equipRequired: 'Sélectionne au moins un équipement',
     emptyCatalog: 'Catalogue non chargé — accède à la bibliothèque d\'abord',
     daysCount: (n) => `${n} JOURS D'ENTRAÎNEMENT`,
+    // `descPrefix` est statique ; les `reps` sont injectées au runtime par
+    // RoutineGeneratorView à partir de OBJECTIF_SPECS — source unique.
     objectifs: {
-      hypertrophie:  { label: 'HYPERTROPHIE', desc: 'Volume maximal · MAV[1] · 8-12 reps' },
-      force:         { label: 'FORCE',        desc: 'Intensité · Charge lourde · 3-6 reps' },
-      endurance:     { label: 'ENDURANCE',    desc: 'Résistance musculaire · 15+ reps' },
-      recomposition: { label: 'RECOMPO',      desc: 'Équilibre volume/intensité · 10-15 reps' },
+      hypertrophie:  { label: 'HYPERTROPHIE', descPrefix: 'Volume maximal · MAV[1]' },
+      force:         { label: 'FORCE',        descPrefix: 'Intensité · Charge lourde' },
+      endurance:     { label: 'ENDURANCE',    descPrefix: 'Résistance musculaire' },
+      recomposition: { label: 'RECOMPO',      descPrefix: 'Équilibre volume/intensité' },
     },
     freq: {
       2: '2J — FULL BODY',

@@ -16,6 +16,7 @@ import { Touch } from '../components/ui/Touch';
 import { getStorage } from '../data/storage/storageService';
 import { motion, AnimatePresence } from 'motion/react';
 import { L } from '../constants/labels';
+import { SYMBOLS } from '../constants/symbols';
 
 const AWAN_LS_KEYS = [
   'awan.seed.loaded',
@@ -167,13 +168,13 @@ export default function SettingsScreen() {
          <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-tighter">{meta.desc}</span>
        </div>
        <span className={`text-base font-black font-mono ${active ? 'text-awan-gold' : 'text-white/20'}`}>
-         {active ? '◆' : '◇'}
+         {active ? SYMBOLS.diamondFilled : SYMBOLS.diamondOutline}
        </span>
      </Touch>
    );
  })}
  </Card>
- <span className="text-[9px] font-black text-awan-tx-mute uppercase tracking-widest leading-relaxed px-1 mt-3 block">
+ <span className="awan-label-sm text-awan-tx-mute leading-relaxed px-1 mt-3 block">
    {L.coach.profile.help}
  </span>
  </div>

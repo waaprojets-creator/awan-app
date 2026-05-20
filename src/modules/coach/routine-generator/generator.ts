@@ -6,20 +6,7 @@ import type { GeneratorConfig } from './types';
 import { getTemplate } from './templates';
 import { selectExercisesForMuscle } from './exerciseSelector';
 import { allocateSetsPerMuscle } from './volumeAllocator';
-
-const REST_BY_OBJECTIF: Record<string, number> = {
-  hypertrophie: 90,
-  force: 180,
-  endurance: 60,
-  recomposition: 90,
-};
-
-const REPS_BY_OBJECTIF: Record<string, number> = {
-  hypertrophie: 10,
-  force: 5,
-  endurance: 15,
-  recomposition: 12,
-};
+import { OBJECTIF_SPECS } from './objectifSpecs';
 
 export async function generateRoutines(config: GeneratorConfig): Promise<RoutineLatest[]> {
   try { await loadExerciseCatalog(); } catch { /* empty catalog in test env */ }
@@ -36,8 +23,9 @@ export async function generateRoutines(config: GeneratorConfig): Promise<Routine
     }
   }
 
-  const restSec = REST_BY_OBJECTIF[config.objectif] ?? DEFAULT_REST_SEC;
-  const plannedReps = REPS_BY_OBJECTIF[config.objectif] ?? 10;
+  const spec = OBJECTIF_SPECS[config.objectif];
+  const restSec = spec?.restSec ?? DEFAULT_REST_SEC;
+  const plannedReps = spec?.repsTarget ?? 10;
 
   return template.days.map((day) => {
     const exercises: RoutineExercise[] = [];

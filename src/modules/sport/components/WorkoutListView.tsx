@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Heading } from '@/components/ui/Heading';
 import { Touch } from '@/components/ui/Touch';
 import { L } from '@/constants/labels';
+import { SYMBOLS } from '@/constants/symbols';
 import type { RoutineLatest, WorkoutSessionLatest } from '@/data/schemas/sport/routine';
 
 interface WorkoutListViewProps {
@@ -80,7 +81,7 @@ export function WorkoutListView({
                         <div className="flex-1 pr-3">
                           {isCoach && (
                             <div className="inline-flex items-center px-2 py-0.5 mb-1 bg-awan-status-spirit/15 border border-awan-status-spirit/30">
-                              <span className="text-[8px] font-black tracking-widest uppercase text-awan-status-spirit">
+                              <span className="awan-label-xs text-awan-status-spirit">
                                 {L.sport.coachBadge}
                               </span>
                             </div>
@@ -106,15 +107,15 @@ export function WorkoutListView({
                       <div className="flex flex-row flex-wrap gap-2 mb-2">
                         {r.cycleLetter && (
                           <div className="bg-awan-gold/10 px-2 py-0.5 border border-awan-gold/20">
-                            <span className="text-[9px] font-black text-awan-gold tracking-widest">{L.sport.cycle} {r.cycleLetter}</span>
+                            <span className="awan-label-sm text-awan-gold">{L.sport.cycle} {r.cycleLetter}</span>
                           </div>
                         )}
                         <div className="bg-white/5 px-2 py-0.5">
-                          <span className="text-[9px] font-black text-awan-tx-mute tracking-widest">{r.exercises.length} {L.sport.exShort}</span>
+                          <span className="awan-label-sm text-awan-tx-mute">{r.exercises.length} {L.sport.exShort}</span>
                         </div>
                         {lastDate && (
                           <div className="bg-white/5 px-2 py-0.5">
-                            <span className="text-[9px] font-black text-awan-tx-mute tracking-widest">{L.sport.lastSession} : {lastDate}</span>
+                            <span className="awan-label-sm text-awan-tx-mute">{L.sport.lastSession} : {lastDate}</span>
                           </div>
                         )}
                       </div>
@@ -123,8 +124,8 @@ export function WorkoutListView({
                       {uniqueMuscles.length > 0 && (
                         <div className="flex flex-row flex-wrap gap-1 mt-2">
                           {uniqueMuscles.slice(0, 5).map(m => (
-                            <span key={m} className="text-[8px] font-bold text-awan-tx-mute uppercase tracking-wider">
-                              {m}{uniqueMuscles.indexOf(m) < uniqueMuscles.slice(0, 5).length - 1 ? ' ·' : ''}
+                            <span key={m} className="awan-label-xs text-awan-tx-mute" style={{ fontWeight: 700 }}>
+                              {m}{uniqueMuscles.indexOf(m) < uniqueMuscles.slice(0, 5).length - 1 ? ` ${SYMBOLS.bullet}` : ''}
                             </span>
                           ))}
                         </div>
@@ -139,7 +140,7 @@ export function WorkoutListView({
                           }}
                           className="mt-4 h-10 flex items-center justify-center border border-awan-gold/40 bg-awan-gold/[0.08]"
                         >
-                          <span className="text-[10px] font-black text-awan-gold tracking-widest uppercase">{L.sport.adoptRoutine}</span>
+                          <span className="awan-label-md text-awan-gold">{L.sport.adoptRoutine}</span>
                         </Touch>
                       )}
                     </Card>
@@ -157,7 +158,7 @@ export function WorkoutListView({
         className="fixed bottom-[90px] right-6 px-5 h-12 flex flex-row items-center gap-2 bg-awan-gold shadow-2xl"
       >
         <Zap size={16} color="black" strokeWidth={3} />
-        <span className="text-[11px] font-black text-black tracking-widest uppercase">{L.sport.generate}</span>
+        <span className="awan-label-lg text-black">{L.sport.generate}</span>
       </Touch>
     </PageWrapper>
   );

@@ -6,9 +6,11 @@ import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Card } from '@/components/ui/Card';
 import { Touch } from '@/components/ui/Touch';
 import { L } from '@/constants/labels';
+import { SYMBOLS } from '@/constants/symbols';
 import type { RoutineLatest } from '@/data/schemas/sport/routine';
 import type { GeneratorConfig, ObjectifType } from '@/modules/coach/routine-generator/types';
 import { generateRoutines } from '@/modules/coach/routine-generator/generator';
+import { formatRepsRange } from '@/modules/coach/routine-generator/objectifSpecs';
 
 const G = L.generator;
 
@@ -97,11 +99,13 @@ export function RoutineGeneratorView({ onBack, onSave }: RoutineGeneratorViewPro
                     className={`p-5 border ${active ? 'border-awan-gold bg-awan-gold/10' : 'border-white/10 bg-white/5'}`}
                   >
                     <span
-                      className={`text-[11px] font-black tracking-widest block mb-1 ${active ? 'text-awan-gold' : 'text-awan-tx'}`}
+                      className={`awan-label-lg block mb-1 ${active ? 'text-awan-gold' : 'text-awan-tx'}`}
                     >
                       {meta.label}
                     </span>
-                    <span className="text-[9px] font-bold text-awan-tx-mute leading-relaxed">{meta.desc}</span>
+                    <span className="awan-label-sm text-awan-tx-mute leading-relaxed" style={{ fontWeight: 700 }}>
+                      {meta.descPrefix} {SYMBOLS.bullet} {formatRepsRange(o)}
+                    </span>
                   </Touch>
                 );
               })}
@@ -154,14 +158,14 @@ export function RoutineGeneratorView({ onBack, onSave }: RoutineGeneratorViewPro
                       {G.equip[eq]}
                     </span>
                     <span className={`text-base font-black ${active ? 'text-awan-gold' : 'text-white/20'}`}>
-                      {active ? '◆' : '◇'}
+                      {active ? SYMBOLS.diamondFilled : SYMBOLS.diamondOutline}
                     </span>
                   </Touch>
                 );
               })}
             </div>
             {equipement.length === 0 && (
-              <p className="text-[10px] text-awan-status-error font-bold uppercase tracking-widest mb-4">
+              <p className="awan-label-md text-awan-status-error mb-4" style={{ fontWeight: 700 }}>
                 {G.equipRequired}
               </p>
             )}
@@ -182,9 +186,9 @@ export function RoutineGeneratorView({ onBack, onSave }: RoutineGeneratorViewPro
           <>
             <div className="mb-4">
               <span className="awan-label text-awan-tx-mute block mb-1">
-                {G.freq[frequence]} · {G.objectifs[objectif].label}
+                {G.freq[frequence]} {SYMBOLS.bullet} {G.objectifs[objectif].label}
               </span>
-              <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-widest">
+              <span className="awan-label-sm text-awan-tx-mute" style={{ fontWeight: 700 }}>
                 {G.daysCount(generated.length)}
               </span>
             </div>
@@ -201,11 +205,11 @@ export function RoutineGeneratorView({ onBack, onSave }: RoutineGeneratorViewPro
                         <span className="text-sm font-bold text-awan-tx uppercase tracking-tight flex-1">{r.name}</span>
                         {r.cycleLetter && (
                           <div className="bg-awan-gold/10 px-2 py-0.5 border border-awan-gold/20">
-                            <span className="text-[9px] font-black text-awan-gold tracking-widest">{L.sport.cycle} {r.cycleLetter}</span>
+                            <span className="awan-label-sm text-awan-gold">{L.sport.cycle} {r.cycleLetter}</span>
                           </div>
                         )}
                       </div>
-                      <span className="text-[9px] font-bold text-awan-tx-mute uppercase tracking-widest">
+                      <span className="awan-label-sm text-awan-tx-mute" style={{ fontWeight: 700 }}>
                         {r.exercises.length} {L.sport.exercises}
                       </span>
                     </Card>

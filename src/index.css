@@ -52,10 +52,16 @@
     border-radius: 0;
   }
   
-  .awan-label {
-    @apply font-mono text-[9px] uppercase tracking-[0.2em] text-awan-tx-mute font-bold;
-  }
-  
+  /* Échelle typographique AWAN — toute taille custom DOIT utiliser une de
+     ces classes plutôt que text-[Npx] inline. Pattern signature AWAN :
+     uppercase + tracking-widest + font-black. Couleur reste libre. */
+  .awan-label-xs    { @apply text-[8px]  uppercase tracking-widest font-black; }
+  .awan-label-sm    { @apply text-[9px]  uppercase tracking-widest font-black; }
+  .awan-label-md    { @apply text-[10px] uppercase tracking-widest font-black; }
+  .awan-label-lg    { @apply text-[11px] uppercase tracking-widest font-black; }
+  .awan-label       { @apply font-mono text-[9px] uppercase tracking-[0.2em] text-awan-tx-mute font-bold; }
+  .awan-data-value  { @apply font-mono text-[22px] tracking-tighter font-bold; }
+
   .awan-value {
     @apply font-mono text-sm tracking-tighter text-awan-tx;
   }
