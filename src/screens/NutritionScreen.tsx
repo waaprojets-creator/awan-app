@@ -461,6 +461,12 @@ function AddMealModal({
  const [selected, setSelected] = useState<FoodEntry | null>(null);
  const [grams, setGrams] = useState('100');
  const [time, setTime] = useState('');
+ const [customMode, setCustomMode] = useState(false);
+ const [customName, setCustomName] = useState('');
+ const [customKcal, setCustomKcal] = useState('');
+ const [customP, setCustomP] = useState('');
+ const [customC, setCustomC] = useState('');
+ const [customF, setCustomF] = useState('');
 
  useEffect(() => {
  if (!visible) {
@@ -468,6 +474,8 @@ function AddMealModal({
  setSelected(null);
  setGrams('100');
  setTime('');
+ setCustomMode(false);
+ setCustomName(''); setCustomKcal(''); setCustomP(''); setCustomC(''); setCustomF('');
  }
  }, [visible]);
 
@@ -494,6 +502,28 @@ function AddMealModal({
  }
  const t = time.trim() ? time.trim() : undefined;
  onAdd(selected, gramsNum, t);
+ };
+
+ const handleCustomSubmit = () => {
+ const kcalNum = parseFloat(customKcal);
+ if (!customName.trim() || isNaN(kcalNum) || kcalNum <= 0) {
+ Alert.alert('Erreur', 'Nom et kcal requis');
+ return;
+ }
+ const pNum = parseFloat(customP) || 0;
+ const cNum = parseFloat(customC) || 0;
+ const fNum = parseFloat(customF) || 0;
+ const customFood: FoodEntry = {
+ id: `custom-${Date.now()}`,
+ n: customName.trim().toUpperCase(),
+ kcal: Math.round(kcalNum),
+ p: Math.round(pNum * 10) / 10,
+ c: Math.round(cNum * 10) / 10,
+ f: Math.round(fNum * 10) / 10,
+ halal: true,
+ };
+ const t = time.trim() ? time.trim() : undefined;
+ onAdd(customFood, 100, t);
  };
 
  const mealLabel = _mealLabel ?? 'REPAS';
@@ -534,6 +564,31 @@ function AddMealModal({
 
  {!selected ? (
  <div className="p-6">
+ {/* N2: Custom aliment toggle */}
+ <div className="flex flex-row gap-2 mb-4">
+ <Touch onPress={() => setCustomMode(false)} className={`flex-1 py-2 border text-center ${!customMode ? 'bg-awan-gold/15 border-awan-gold' : 'bg-white/5 border-white/5'}`}>
+ <span className={`text-awan-xs font-black uppercase tracking-widest ${!customMode ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>CATALOGUE</span>
+ </Touch>
+ <Touch onPress={() => setCustomMode(true)} className={`flex-1 py-2 border text-center ${customMode ? 'bg-awan-gold/15 border-awan-gold' : 'bg-white/5 border-white/5'}`}>
+ <span className={`text-awan-xs font-black uppercase tracking-widest ${customMode ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>ALIMENT CUSTOM</span>
+ </Touch>
+ </div>
+ {customMode ? (
+ <div className="flex flex-col gap-3">
+ <TextInput className="bg-awan-bg border border-white/5 px-4 py-3 text-sm font-bold text-awan-tx" placeholder="NOM DE L'ALIMENT" placeholderTextColor="rgba(255,255,255,0.2)" value={customName} onChangeText={setCustomName} />
+ <div className="grid grid-cols-2 gap-2">
+ <TextInput className="bg-awan-bg border border-white/5 px-4 py-3 text-sm font-mono font-bold text-awan-tx" placeholder="KCAL /100G" placeholderTextColor="rgba(255,255,255,0.2)" value={customKcal} onChangeText={setCustomKcal} keyboardType="decimal-pad" />
+ <TextInput className="bg-awan-bg border border-white/5 px-4 py-3 text-sm font-mono font-bold text-awan-tx" placeholder="PROTÉINES G" placeholderTextColor="rgba(255,255,255,0.2)" value={customP} onChangeText={setCustomP} keyboardType="decimal-pad" />
+ <TextInput className="bg-awan-bg border border-white/5 px-4 py-3 text-sm font-mono font-bold text-awan-tx" placeholder="GLUCIDES G" placeholderTextColor="rgba(255,255,255,0.2)" value={customC} onChangeText={setCustomC} keyboardType="decimal-pad" />
+ <TextInput className="bg-awan-bg border border-white/5 px-4 py-3 text-sm font-mono font-bold text-awan-tx" placeholder="LIPIDES G" placeholderTextColor="rgba(255,255,255,0.2)" value={customF} onChangeText={setCustomF} keyboardType="decimal-pad" />
+ </div>
+ <TextInput className="bg-awan-bg border border-white/5 px-4 py-3 text-sm font-mono font-bold text-awan-tx" placeholder="HEURE (OPTIONNEL, ex: 13:30)" placeholderTextColor="rgba(255,255,255,0.2)" value={time} onChangeText={setTime} />
+ <Touch onPress={handleCustomSubmit} className="h-14 bg-awan-gold flex items-center justify-center">
+ <span className="awan-label text-black font-black">AJOUTER ALIMENT CUSTOM</span>
+ </Touch>
+ </div>
+ ) : (
+ <>
  <div className="flex flex-row items-center gap-3 bg-awan-bg border border-white/5 px-4 py-3 mb-4">
  <Search size={16} className="text-awan-tx-mute" />
  <TextInput
@@ -600,6 +655,8 @@ function AddMealModal({
  </Touch>
  )}
  />
+ </>
+ )}
  </div>
  ) : (
  <ScrollView
