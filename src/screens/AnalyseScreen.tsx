@@ -182,8 +182,7 @@ export default function AnalyseScreen() {
 
            <div className="mt-6 border-l-2 border-awan-gold/40 pl-4">
              <span className="block text-awan-md font-bold text-awan-tx leading-relaxed italic">
-               « Pour régner sur demain il faut lire hier.
-               <br />Pour lire hier il faut écrire aujourd'hui. »
+               « L'avenir s'esquisse en encrant aujourd'hui dans les lignes du passé. »
              </span>
              <span className="block awan-label text-awan-tx-mute mt-2">— Devise AWAN</span>
            </div>

@@ -2,7 +2,7 @@
 
 ## Genèse — devise immuable
 
-> **Pour régner sur demain il faut lire hier. Pour lire hier il faut écrire aujourd'hui.**
+> **L'avenir s'esquisse en encrant aujourd'hui dans les lignes du passé.**
 
 Cette devise est la raison d'être d'AWAN. Toute décision produit/design/code doit s'y rattacher : compter chaque jour (sport, nutrition, sommeil, mesures, prières, journal, planning), analyser le passé (Analyse, Coach, bilans hebdo/cycle), améliorer demain (forecast Coach, auto-progression, deload prédit, planning prospectif).
 
