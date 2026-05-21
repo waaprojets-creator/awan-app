@@ -1,0 +1,20 @@
+{
+  "v": 1,
+  "id": "sport.tempo.optimal",
+  "domain": "sport",
+  "topic": "Tempo d'exécution des répétitions",
+  "summary": "Un tempo total de 2-6 secondes par répétition (phase concentrique + excentrique) est optimal pour l'hypertrophie. Les tempos extrêmement lents (>8s) ou explosifs sans contrôle excentrique réduisent la tension mécanique effective. Une phase excentrique contrôlée (2-4s) est particulièrement bénéfique.",
+  "thresholds": [
+    { "metric": "rep_tempo_total_sec", "op": "lt", "value": 2, "label": "Tempo trop rapide — tension mécanique réduite", "severity": "info" },
+    { "metric": "rep_tempo_total_sec", "op": "between", "value": [2, 6], "label": "Tempo optimal hypertrophie", "severity": "good" },
+    { "metric": "rep_tempo_total_sec", "op": "gt", "value": 8, "label": "Tempo très lent — charge nécessairement réduite", "severity": "info" }
+  ],
+  "references": [
+    {
+      "citation": "Schoenfeld BJ, Ogborn DI, Vigotsky AD, et al. Hypertrophic effects of concentric vs. eccentric muscle actions: A systematic review and meta-analysis. J Strength Cond Res. 2015",
+      "doi": "10.1519/JSC.0000000000000966",
+      "year": 2015
+    }
+  ],
+  "derivedRules": []
+}

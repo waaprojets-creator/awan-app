@@ -1,0 +1,20 @@
+{
+  "v": 1,
+  "id": "sport.overtraining.signals",
+  "domain": "sport",
+  "topic": "Signaux de surentraînement et nécessité de deload",
+  "summary": "Le surentraînement fonctionnel se manifeste par une augmentation de l'RPE perçu de +2 points sur 4 semaines consécutives combinée à une stagnation ou régression du volume. Un deload (réduction de 30-40% du volume pendant 1 semaine) toutes les 4-8 semaines prévient l'accumulation de fatigue chronique.",
+  "thresholds": [
+    { "metric": "rpe_trend_4w", "op": "gt", "value": 2, "label": "Montée RPE — fatigue chronique suspectée", "severity": "alert" },
+    { "metric": "weeks_since_deload", "op": "gt", "value": 8, "label": "Deload recommandé", "severity": "warn" },
+    { "metric": "weeks_since_deload", "op": "between", "value": [4, 8], "label": "Surveiller accumulation fatigue", "severity": "info" }
+  ],
+  "references": [
+    {
+      "citation": "Halson SL. Monitoring training load to understand fatigue in athletes. Sports Med. 2014",
+      "doi": "10.1007/s40279-014-0253-z",
+      "year": 2014
+    }
+  ],
+  "derivedRules": ["sport.fatigue_rpe", "sport.deload_due", "sport.acwr_danger"]
+}

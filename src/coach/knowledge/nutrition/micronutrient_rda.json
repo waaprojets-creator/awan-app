@@ -1,0 +1,28 @@
+{
+  "v": 1,
+  "id": "nutrition.micronutrients.rda",
+  "domain": "nutrition",
+  "topic": "Références nutritionnelles micronutriments prioritaires",
+  "summary": "Les micronutriments prioritaires pour les sportifs sont la vitamine D (déficience fréquente), le fer (particulièrement chez les femmes et végétariens), le magnésium (transport de l'énergie), le zinc (synthèse protéique et testostérone), et la vitamine B12 (métabolisme neuromusculaire). Un apport en-dessous de 70% des VNR sur 14 jours indique un risque de déficience.",
+  "thresholds": [
+    { "metric": "vit_d_iu_per_day", "op": "lt", "value": 400, "label": "Vitamine D insuffisante (<600 UI)", "severity": "warn" },
+    { "metric": "iron_mg_per_day_men", "op": "lt", "value": 7, "label": "Fer insuffisant — hommes", "severity": "warn" },
+    { "metric": "iron_mg_per_day_women", "op": "lt", "value": 11, "label": "Fer insuffisant — femmes préménopausées", "severity": "alert" },
+    { "metric": "magnesium_mg_per_day", "op": "lt", "value": 270, "label": "Magnésium insuffisant", "severity": "warn" },
+    { "metric": "zinc_mg_per_day", "op": "lt", "value": 7, "label": "Zinc insuffisant", "severity": "warn" }
+  ],
+  "references": [
+    {
+      "citation": "Maughan RJ, et al. IOC consensus statement: dietary supplements and the high-performance athlete. Br J Sports Med. 2018",
+      "doi": "10.1136/bjsports-2018-099027",
+      "pmcUrl": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5867441/",
+      "year": 2018
+    },
+    {
+      "citation": "ANSES. Références nutritionnelles en vitamines et minéraux pour la population française. 2021",
+      "pmcUrl": "https://www.anses.fr/fr/content/les-références-nutritionnelles-en-vitamines-et-minéraux",
+      "year": 2021
+    }
+  ],
+  "derivedRules": []
+}

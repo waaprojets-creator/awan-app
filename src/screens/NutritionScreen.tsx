@@ -20,6 +20,8 @@ import {
  Pencil,
  ChevronLeft,
  ChevronRight,
+ Download,
+ BarChart2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PageWrapper } from '../components/Animated';
@@ -47,6 +49,13 @@ import type {
  MealEntryLatest,
  MealType,
 } from '../data/schemas/nutrition/mealEntry';
+import { MEAL_TYPE_TO_SLOT } from '../data/schemas/nutrition/mealEntry';
+import { WaterService } from '../services/waterService';
+import { buildWeeklyNutritionReport, reportDiagnostic } from '../services/weeklyNutritionReport';
+import type { WeeklyNutritionReport } from '../services/weeklyNutritionReport';
+import { buildNutritionExport } from '../services/nutritionExportService';
+import { estimateAdaptiveTDEE } from '../services/tdeeAdaptiveService';
+import { scoreMeal } from '../services/nutritionScoreService';
 
 // ─── Nutrition Profile (TDEE) ─────────────────────────────────────────────────
 
@@ -437,7 +446,7 @@ function OnboardingModal({ onComplete }: OnboardingProps) {
 
 interface AddModalProps {
  visible: boolean;
- meal: MealType;
+ mealLabel?: string | undefined;
  foodsReady: boolean;
  onClose: () => void;
  onAdd: (food: FoodEntry, grams: number, timeHHMM: string | undefined) => void;
@@ -445,7 +454,7 @@ interface AddModalProps {
 
 function AddMealModal({
  visible,
- meal,
+ mealLabel: _mealLabel,
  foodsReady,
  onClose,
  onAdd,
@@ -454,6 +463,12 @@ function AddMealModal({
  const [selected, setSelected] = useState<FoodEntry | null>(null);
  const [grams, setGrams] = useState('100');
  const [time, setTime] = useState('');
+ const [customMode, setCustomMode] = useState(false);
+ const [customName, setCustomName] = useState('');
+ const [customKcal, setCustomKcal] = useState('');
+ const [customP, setCustomP] = useState('');
+ const [customC, setCustomC] = useState('');
+ const [customF, setCustomF] = useState('');
 
  useEffect(() => {
  if (!visible) {
@@ -461,6 +476,8 @@ function AddMealModal({
  setSelected(null);
  setGrams('100');
  setTime('');
+ setCustomMode(false);
+ setCustomName(''); setCustomKcal(''); setCustomP(''); setCustomC(''); setCustomF('');
  }
  }, [visible]);
 
@@ -489,8 +506,29 @@ function AddMealModal({
  onAdd(selected, gramsNum, t);
  };
 
- const mealLabel =
- MEAL_TYPES.find((m) => m.key === meal)?.label ?? meal.toUpperCase();
+ const handleCustomSubmit = () => {
+ const kcalNum = parseFloat(customKcal);
+ if (!customName.trim() || isNaN(kcalNum) || kcalNum <= 0) {
+ Alert.alert('Erreur', 'Nom et kcal requis');
+ return;
+ }
+ const pNum = parseFloat(customP) || 0;
+ const cNum = parseFloat(customC) || 0;
+ const fNum = parseFloat(customF) || 0;
+ const customFood: FoodEntry = {
+ id: `custom-${Date.now()}`,
+ n: customName.trim().toUpperCase(),
+ kcal: Math.round(kcalNum),
+ p: Math.round(pNum * 10) / 10,
+ c: Math.round(cNum * 10) / 10,
+ f: Math.round(fNum * 10) / 10,
+ halal: true,
+ };
+ const t = time.trim() ? time.trim() : undefined;
+ onAdd(customFood, 100, t);
+ };
+
+ const mealLabel = _mealLabel ?? 'REPAS';
 
  return (
  <Modal visible={visible} transparent animationType="fade">
@@ -528,6 +566,31 @@ function AddMealModal({
 
  {!selected ? (
  <div className="p-6">
+ {/* N2: Custom aliment toggle */}
+ <div className="flex flex-row gap-2 mb-4">
+ <Touch onPress={() => setCustomMode(false)} className={`flex-1 py-2 border text-center ${!customMode ? 'bg-awan-gold/15 border-awan-gold' : 'bg-white/5 border-white/5'}`}>
+ <span className={`text-awan-xs font-black uppercase tracking-widest ${!customMode ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>CATALOGUE</span>
+ </Touch>
+ <Touch onPress={() => setCustomMode(true)} className={`flex-1 py-2 border text-center ${customMode ? 'bg-awan-gold/15 border-awan-gold' : 'bg-white/5 border-white/5'}`}>
+ <span className={`text-awan-xs font-black uppercase tracking-widest ${customMode ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>ALIMENT CUSTOM</span>
+ </Touch>
+ </div>
+ {customMode ? (
+ <div className="flex flex-col gap-3">
+ <TextInput className="bg-awan-bg border border-white/5 px-4 py-3 text-sm font-bold text-awan-tx" placeholder="NOM DE L'ALIMENT" placeholderTextColor="rgba(255,255,255,0.2)" value={customName} onChangeText={setCustomName} />
+ <div className="grid grid-cols-2 gap-2">
+ <TextInput className="bg-awan-bg border border-white/5 px-4 py-3 text-sm font-mono font-bold text-awan-tx" placeholder="KCAL /100G" placeholderTextColor="rgba(255,255,255,0.2)" value={customKcal} onChangeText={setCustomKcal} keyboardType="decimal-pad" />
+ <TextInput className="bg-awan-bg border border-white/5 px-4 py-3 text-sm font-mono font-bold text-awan-tx" placeholder="PROTÉINES G" placeholderTextColor="rgba(255,255,255,0.2)" value={customP} onChangeText={setCustomP} keyboardType="decimal-pad" />
+ <TextInput className="bg-awan-bg border border-white/5 px-4 py-3 text-sm font-mono font-bold text-awan-tx" placeholder="GLUCIDES G" placeholderTextColor="rgba(255,255,255,0.2)" value={customC} onChangeText={setCustomC} keyboardType="decimal-pad" />
+ <TextInput className="bg-awan-bg border border-white/5 px-4 py-3 text-sm font-mono font-bold text-awan-tx" placeholder="LIPIDES G" placeholderTextColor="rgba(255,255,255,0.2)" value={customF} onChangeText={setCustomF} keyboardType="decimal-pad" />
+ </div>
+ <TextInput className="bg-awan-bg border border-white/5 px-4 py-3 text-sm font-mono font-bold text-awan-tx" placeholder="HEURE (OPTIONNEL, ex: 13:30)" placeholderTextColor="rgba(255,255,255,0.2)" value={time} onChangeText={setTime} />
+ <Touch onPress={handleCustomSubmit} className="h-14 bg-awan-gold flex items-center justify-center">
+ <span className="awan-label text-black font-black">AJOUTER ALIMENT CUSTOM</span>
+ </Touch>
+ </div>
+ ) : (
+ <>
  <div className="flex flex-row items-center gap-3 bg-awan-bg border border-white/5 px-4 py-3 mb-4">
  <Search size={16} className="text-awan-tx-mute" />
  <TextInput
@@ -594,6 +657,8 @@ function AddMealModal({
  </Touch>
  )}
  />
+ </>
+ )}
  </div>
  ) : (
  <ScrollView
@@ -889,6 +954,22 @@ export default function NutritionScreen() {
  const today = ds(new Date());
  const [selectedDate, setSelectedDate] = useState<string>(today);
  const [selectedMeal, setSelectedMeal] = useState<MealType>('dejeuner');
+ const [selectedSlot, setSelectedSlot] = useState<1|2|3|4|5>(2);
+
+ // Water tracking (N5)
+ const [waterMl, setWaterMl] = useState(0);
+ const [waterTarget, setWaterTarget] = useState(2450);
+
+ // Slot labels: derive from most recent entry per slot, persist in localStorage
+ const SLOT_LABELS_KEY = 'awan.nutrition.slotLabels';
+ const [slotLabels, setSlotLabels] = useState<Record<number, string>>(() => {
+   try {
+     const raw = localStorage.getItem(SLOT_LABELS_KEY);
+     return raw ? (JSON.parse(raw) as Record<number, string>) : { 1: 'SUHOOR', 2: 'DÉJEUNER', 3: 'DÎNER', 4: 'COLLATION', 5: 'EN-CAS' };
+   } catch { return { 1: 'SUHOOR', 2: 'DÉJEUNER', 3: 'DÎNER', 4: 'COLLATION', 5: 'EN-CAS' }; }
+ });
+ const [editingSlotLabel, setEditingSlotLabel] = useState<number | null>(null);
+ const [slotLabelInput, setSlotLabelInput] = useState('');
 
  const mealStore = useMealStore(selectedDate);
 
@@ -930,6 +1011,31 @@ export default function NutritionScreen() {
  }, [profile, selectedDate]);
  const [showAdd, setShowAdd] = useState(false);
  const [editEntry, setEditEntry] = useState<MealEntryLatest | null>(null);
+ const [activeTab, setActiveTab] = useState<'journal' | 'bilan'>('journal');
+ const [weeklyReport, setWeeklyReport] = useState<WeeklyNutritionReport | null>(null);
+ const [adaptiveTDEE, setAdaptiveTDEE] = useState<{ estimatedTDEE: number; confidence: string; observationDays: number } | null>(null);
+
+ useEffect(() => {
+   if (activeTab !== 'bilan') return;
+   const targets = profile ? { targetKcal: profile.targetKcal, targetP: profile.targetP } : null;
+   buildWeeklyNutritionReport(targets).then(report => {
+     setWeeklyReport(report);
+     if (!profile) return;
+     // N3: compute adaptive TDEE from weight history + caloric intake
+     import('@/services/weightService').then(({ WeightService }) =>
+       WeightService.getAll().then(allWeights => {
+         const weightHistory = allWeights
+           .filter(w => w.date && w.weightKg > 0)
+           .map(w => ({ date: w.date, weightKg: w.weightKg }));
+         const intakeHistory = report.days
+           .filter(d => d.kcal > 0)
+           .map(d => ({ date: d.date, kcal: d.kcal }));
+         const result = estimateAdaptiveTDEE(weightHistory, intakeHistory, profile.targetKcal);
+         setAdaptiveTDEE(result);
+       })
+     );
+   }).catch(() => {});
+ }, [activeTab, profile, selectedDate]);
 
  const openAddMeal = useCallback(async () => {
  if (!foodsLoadedRef.current) {
@@ -964,11 +1070,33 @@ export default function NutritionScreen() {
  };
 
  const dayEntries = mealStore.meals;
+ // Filter by slot (V2) with fallback to meal-type-based mapping for legacy V1 entries
  const mealEntries = useMemo(
- () => dayEntries.filter((e) => (e.meal ?? 'dejeuner') === selectedMeal),
- [dayEntries, selectedMeal],
+ () => dayEntries.filter((e) => {
+   const slot = e.mealSlot ?? (e.meal ? (MEAL_TYPE_TO_SLOT[e.meal] ?? 5) : 5);
+   return slot === selectedSlot;
+ }),
+ [dayEntries, selectedSlot],
  );
  const totals = mealStore.totals;
+
+ // Load water data when date changes
+ useEffect(() => {
+   WaterService.getByDate(selectedDate).then(w => {
+     setWaterMl(w?.totalMl ?? 0);
+   });
+ }, [selectedDate]);
+
+ // Water target from profile weight
+ useEffect(() => {
+   if (!profile?.weightKg) return;
+   setWaterTarget(WaterService.targetMl(profile.weightKg));
+ }, [profile]);
+
+ const handleAddWater = async (ml: number) => {
+   const updated = await WaterService.addMl(selectedDate, ml);
+   setWaterMl(updated.totalMl);
+ };
 
  const handleAdd = (
  food: FoodEntry,
@@ -978,8 +1106,8 @@ export default function NutritionScreen() {
  const macros = calcMacros(food, grams);
  const now = Date.now();
  const entryId = uid();
- const entry: MealEntryLatest = {
- v: 1,
+ const baseEntry: MealEntryLatest = {
+ v: 2,
  id: entryId,
  date: selectedDate,
  name: food.n,
@@ -990,11 +1118,15 @@ export default function NutritionScreen() {
  ...(macros.fiberG !== undefined ? { fiberG: macros.fiberG } : {}),
  timestamp: now,
  source: 'db',
- meal: selectedMeal,
+ mealSlot: selectedSlot,
+ mealLabel: slotLabels[selectedSlot],
  grams,
  foodId: food.id,
  ...(timeHHMM !== undefined ? { timeHHMM } : {}),
  };
+ const entry: MealEntryLatest = profile
+ ? { ...baseEntry, nutritionScore: scoreMeal(baseEntry, { kcal: profile.targetKcal, p: profile.targetP, c: profile.targetC, f: profile.targetF }).total }
+ : baseEntry;
  void mealStore.add(entry);
  recordRecentFood(food.id);
  addEntry(selectedDate, {
@@ -1026,7 +1158,7 @@ export default function NutritionScreen() {
  : { kcal: entry.kcal, p: entry.p, c: entry.c, f: entry.f };
  const macros = calcMacros(base100, grams);
  const updated: MealEntryLatest = {
- v: 1,
+ v: 2,
  id: entry.id,
  date: entry.date,
  name: entry.name,
@@ -1036,12 +1168,16 @@ export default function NutritionScreen() {
  f: macros.f,
  timestamp: entry.timestamp,
  source: entry.source,
- meal: entry.meal ?? selectedMeal,
+ mealSlot: entry.mealSlot ?? selectedSlot,
+ mealLabel: entry.mealLabel,
  grams,
  ...(entry.foodId !== undefined ? { foodId: entry.foodId } : {}),
  ...(timeHHMM !== undefined ? { timeHHMM } : {}),
  };
- void mealStore.update(updated);
+ const scored: MealEntryLatest = profile
+ ? { ...updated, nutritionScore: scoreMeal(updated, { kcal: profile.targetKcal, p: profile.targetP, c: profile.targetC, f: profile.targetF }).total }
+ : updated;
+ void mealStore.update(scored);
  setEditEntry(null);
  };
 
@@ -1076,8 +1212,112 @@ export default function NutritionScreen() {
  >
  <div className="px-6 pt-4 pb-4">
  <ScreenHeader tag="BODY · NUTRITION" title="NUTRITION" />
+ <div className="flex flex-row gap-2 mt-4">
+   {(['journal', 'bilan'] as const).map(tab => (
+     <Touch
+       key={tab}
+       onPress={() => setActiveTab(tab)}
+       className={`flex-1 h-10 border flex items-center justify-center gap-2 ${activeTab === tab ? 'bg-awan-gold/15 border-awan-gold' : 'bg-white/5 border-white/5'}`}
+     >
+       {tab === 'bilan' && <BarChart2 size={12} className={activeTab === tab ? 'text-awan-gold' : 'text-awan-tx-mute'} />}
+       <span className={`text-awan-xs font-black uppercase tracking-widest ${activeTab === tab ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
+         {tab === 'journal' ? 'JOURNAL' : 'BILAN 7J'}
+       </span>
+     </Touch>
+   ))}
+   <Touch
+     onPress={async () => {
+       const json = await buildNutritionExport();
+       try { await navigator.clipboard.writeText(json); } catch { /* ignore */ }
+       const blob = new Blob([json], { type: 'application/json' });
+       const url = URL.createObjectURL(blob);
+       const a = document.createElement('a');
+       const today = new Date().toISOString().slice(0, 10);
+       a.href = url; a.download = `awan-nutrition-${today}.json`; a.click();
+       URL.revokeObjectURL(url);
+     }}
+     className="w-10 h-10 border border-white/5 bg-white/5 flex items-center justify-center"
+   >
+     <Download size={14} className="text-awan-tx-mute" />
+   </Touch>
+ </div>
  </div>
 
+ {activeTab === 'bilan' && weeklyReport && (
+ <div className="px-6 mb-6">
+   <Card className="p-5 bg-white/5 border-white/5 mb-4">
+     <span className="awan-label text-awan-gold mb-1 block">DIAGNOSTIC</span>
+     <span className="text-awan-sm font-bold text-awan-tx">{reportDiagnostic(weeklyReport)}</span>
+   </Card>
+   <div className="grid grid-cols-2 gap-3 mb-4">
+     <Card className="p-4 bg-white/5">
+       <span className="awan-label mb-1 block">KCAL MOY/J</span>
+       <span className="text-2xl font-mono font-bold text-awan-gold">{weeklyReport.avgKcal}</span>
+       {weeklyReport.kcalAdherence !== null && (
+         <span className="text-awan-xs font-mono font-bold" style={{ color: weeklyReport.kcalAdherence >= 0.85 && weeklyReport.kcalAdherence <= 1.15 ? 'var(--color-awan-status-ok)' : 'var(--color-awan-status-warn)' }}>
+           {Math.round(weeklyReport.kcalAdherence * 100)}% cible
+         </span>
+       )}
+     </Card>
+     <Card className="p-4 bg-white/5">
+       <span className="awan-label mb-1 block">PROTÉINES MOY</span>
+       <span className="text-2xl font-mono font-bold text-awan-gold">{weeklyReport.avgP}g</span>
+       {weeklyReport.proteinAdherence !== null && (
+         <span className="text-awan-xs font-mono font-bold" style={{ color: weeklyReport.proteinAdherence >= 0.8 ? 'var(--color-awan-status-ok)' : 'var(--color-awan-status-error)' }}>
+           {Math.round(weeklyReport.proteinAdherence * 100)}% cible
+         </span>
+       )}
+     </Card>
+     <Card className="p-4 bg-white/5">
+       <span className="awan-label mb-1 block">GLUCIDES MOY</span>
+       <span className="text-2xl font-mono font-bold text-awan-tx">{weeklyReport.avgC}g</span>
+     </Card>
+     <Card className="p-4 bg-white/5">
+       <span className="awan-label mb-1 block">FIBRES MOY</span>
+       <span className="text-2xl font-mono font-bold" style={{ color: weeklyReport.avgFiberG >= 20 ? 'var(--color-awan-status-ok)' : 'var(--color-awan-status-warn)' }}>{weeklyReport.avgFiberG}g</span>
+     </Card>
+   </div>
+   {adaptiveTDEE && (
+     <Card className="p-4 bg-awan-gold/5 border-awan-gold/20 mb-4">
+       <span className="awan-label text-awan-gold mb-1 block">TDEE ADAPTATIF ({adaptiveTDEE.observationDays}j)</span>
+       <div className="flex flex-row items-baseline gap-2">
+         <span className="text-3xl font-mono font-bold text-awan-tx">{adaptiveTDEE.estimatedTDEE}</span>
+         <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest">kcal/j · confiance {adaptiveTDEE.confidence}</span>
+       </div>
+       {profile && Math.abs(adaptiveTDEE.estimatedTDEE - profile.targetKcal) > 100 && (
+         <Touch
+           onPress={() => {
+             const diff = adaptiveTDEE.estimatedTDEE - profile.targetKcal;
+             const newProfile = { ...profile, targetKcal: adaptiveTDEE.estimatedTDEE };
+             saveProfile(newProfile);
+             setProfile(newProfile);
+           }}
+           className="mt-3 h-10 bg-awan-gold flex items-center justify-center"
+         >
+           <span className="text-awan-xs font-black text-black uppercase tracking-widest">
+             APPLIQUER {adaptiveTDEE.estimatedTDEE > profile.targetKcal ? '+' : ''}{adaptiveTDEE.estimatedTDEE - profile.targetKcal} KCAL
+           </span>
+         </Touch>
+       )}
+     </Card>
+   )}
+   <Heading level={4} mono subtitle={`${weeklyReport.periodStart} → ${weeklyReport.periodEnd}`} className="mb-3">7 DERNIERS JOURS</Heading>
+   {weeklyReport.days.map(day => (
+     <div key={day.date} className="flex flex-row items-center justify-between py-2 border-b border-white/5">
+       <span className="text-awan-xs font-mono text-awan-tx-mute w-24">{day.date}</span>
+       <span className="text-awan-xs font-mono text-awan-gold">{day.kcal > 0 ? `${day.kcal} kcal` : '—'}</span>
+       <span className="text-awan-xs font-mono text-awan-tx-mute">{day.p > 0 ? `P ${day.p}g` : ''}</span>
+     </div>
+   ))}
+ </div>
+ )}
+ {activeTab === 'bilan' && !weeklyReport && (
+ <div className="px-6 py-20 flex items-center justify-center">
+   <span className="awan-label text-awan-tx-mute">CHARGEMENT...</span>
+ </div>
+ )}
+
+ {activeTab === 'journal' && <>
  {/* Day Selector */}
  <div className="px-6 mb-6">
  <Card className="p-0 bg-white/5 border-white/5" variant="flat">
@@ -1114,32 +1354,60 @@ export default function NutritionScreen() {
  </Card>
  </div>
 
- {/* Meal Selector */}
+ {/* Meal Slot Selector — 5 modifiable slots (N1) */}
  <div className="px-6 mb-6">
- <div className="grid grid-cols-4 gap-2">
- {MEAL_TYPES.map((m) => {
- const active = m.key === selectedMeal;
+ <div className="grid grid-cols-5 gap-1">
+ {([1, 2, 3, 4, 5] as const).map((slot) => {
+ const active = slot === selectedSlot;
+ const label = slotLabels[slot] ?? `REPAS ${slot}`;
+ const editing = editingSlotLabel === slot;
  return (
+ <div key={slot} className="flex flex-col">
  <Touch
- key={m.key}
- onPress={() => setSelectedMeal(m.key)}
- className={`px-2 py-3 border flex items-center justify-center ${
- active
- ? 'bg-awan-gold/15 border-awan-gold'
- : 'bg-white/5 border-white/5'
+ onPress={() => setSelectedSlot(slot)}
+ className={`py-2 px-1 border flex flex-col items-center gap-0.5 ${
+ active ? 'bg-awan-gold/15 border-awan-gold' : 'bg-white/5 border-white/5'
  }`}
  >
+ <span className={`text-awan-xxs font-black font-mono ${active ? 'text-awan-gold' : 'text-white/30'}`}>{slot}</span>
+ {editing ? (
+ <input
+ className="w-full text-center text-awan-xxs font-black uppercase tracking-wider bg-transparent border-b border-awan-gold/50 outline-none text-awan-gold"
+ style={{ color: 'var(--color-awan-gold)', fontSize: 9 }}
+ value={slotLabelInput}
+ onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlotLabelInput(e.target.value.toUpperCase())}
+ onBlur={() => {
+ if (slotLabelInput.trim()) {
+ const updated = { ...slotLabels, [slot]: slotLabelInput.trim() };
+ setSlotLabels(updated);
+ try { localStorage.setItem(SLOT_LABELS_KEY, JSON.stringify(updated)); } catch { /* quota */ }
+ }
+ setEditingSlotLabel(null);
+ }}
+ onKeyDown={(e: React.KeyboardEvent) => {
+ if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+ if (e.key === 'Escape') setEditingSlotLabel(null);
+ }}
+ autoFocus
+ maxLength={10}
+ onClick={(e: React.MouseEvent) => e.stopPropagation()}
+ />
+ ) : (
  <span
- className={`text-awan-sm font-black uppercase tracking-widest ${
- active ? 'text-awan-gold' : 'text-awan-tx-mute'
- }`}
+ className={`text-center leading-tight font-black uppercase tracking-widest ${active ? 'text-awan-gold' : 'text-awan-tx-mute'}`}
+ style={{ fontSize: 8 }}
+ onDoubleClick={(e) => { e.preventDefault(); setSlotLabelInput(label); setEditingSlotLabel(slot); setSelectedSlot(slot); }}
+ title="Double-clic pour renommer"
  >
- {m.label}
+ {label.slice(0, 8)}
  </span>
+ )}
  </Touch>
+ </div>
  );
  })}
  </div>
+ <span className="text-awan-xxs text-white/20 mt-1 block text-right tracking-widest">DOUBLE-CLIC POUR RENOMMER</span>
  </div>
 
  {/* Day Totals */}
@@ -1324,6 +1592,17 @@ export default function NutritionScreen() {
  <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest mt-1 block font-mono">
  {m.kcal} KCAL · P{m.p} · G{m.c} · L{m.f}
  </span>
+ {profile && (() => {
+ const score = m.nutritionScore ?? scoreMeal(m, { kcal: profile.targetKcal, p: profile.targetP, c: profile.targetC, f: profile.targetF }).total;
+ const color = score >= 70 ? 'var(--color-awan-status-ok)'
+             : score >= 40 ? 'var(--color-awan-status-warn)'
+             : 'var(--color-awan-status-error)';
+ return (
+ <span className="text-awan-xs font-mono font-black mt-1 inline-block uppercase tracking-widest" style={{ color }}>
+ SCORE {score}/100
+ </span>
+ );
+ })()}
  </div>
  <Touch
  onPress={() => setEditEntry(m)}
@@ -1346,7 +1625,7 @@ export default function NutritionScreen() {
  </div>
 
  {/* Add Button */}
- <div className="px-6 mb-10">
+ <div className="px-6 mb-6">
  <Touch
  onPress={() => void openAddMeal()}
  className="h-14 bg-awan-gold flex items-center justify-center shadow-lg shadow-awan-gold/10"
@@ -1359,11 +1638,57 @@ export default function NutritionScreen() {
  </div>
  </Touch>
  </div>
+
+ {/* N5 — Eau / Hydratation */}
+ <div className="px-6 mb-10">
+ <Heading level={4} mono subtitle={`Cible ${waterTarget} mL · 35mL/kg`} className="mb-4">HYDRATATION</Heading>
+ <Card className="p-5 bg-white/3 border-white/5" variant="flat">
+ <div className="flex flex-row items-center justify-between mb-4">
+ <div>
+ <span className="text-4xl font-black font-mono text-awan-gold">
+ {Math.floor(waterMl / 1000) > 0 ? `${(waterMl / 1000).toFixed(1)}L` : `${waterMl}mL`}
+ </span>
+ <span className="text-awan-sm font-black text-awan-tx-mute ml-2 font-mono uppercase">
+ / {waterTarget >= 1000 ? `${(waterTarget / 1000).toFixed(1)}L` : `${waterTarget}mL`}
+ </span>
+ </div>
+ <span className="text-awan-sm font-black font-mono"
+ style={{ color: waterMl >= waterTarget ? 'var(--color-awan-status-ok)' : waterMl >= waterTarget * 0.7 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-error)' }}>
+ {Math.round((waterMl / waterTarget) * 100)}%
+ </span>
+ </div>
+ <div className="w-full h-1.5 bg-white/10 mb-4">
+ <div className="h-full transition-all"
+ style={{ width: `${Math.min(100, (waterMl / waterTarget) * 100)}%`, backgroundColor: 'var(--color-awan-gold)' }} />
+ </div>
+ <div className="flex flex-row gap-3">
+ <Touch
+ onPress={() => void handleAddWater(250)}
+ className="flex-1 py-3 border border-white/10 bg-white/5 items-center justify-center"
+ >
+ <span className="text-awan-sm font-black font-mono text-awan-gold">+250 mL</span>
+ </Touch>
+ <Touch
+ onPress={() => void handleAddWater(500)}
+ className="flex-1 py-3 bg-awan-gold/20 border border-awan-gold/30 items-center justify-center"
+ >
+ <span className="text-awan-sm font-black font-mono text-awan-gold">+500 mL</span>
+ </Touch>
+ <Touch
+ onPress={() => void WaterService.reset(selectedDate).then(() => setWaterMl(0))}
+ className="w-12 py-3 border border-white/5 bg-white/3 items-center justify-center"
+ >
+ <span className="text-awan-xs font-black font-mono text-awan-tx-mute">×0</span>
+ </Touch>
+ </div>
+ </Card>
+ </div>
+ </>}
  </ScrollView>
 
  <AddMealModal
  visible={showAdd}
- meal={selectedMeal}
+ mealLabel={slotLabels[selectedSlot]}
  foodsReady={foodsReady}
  onClose={() => setShowAdd(false)}
  onAdd={handleAdd}

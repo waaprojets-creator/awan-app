@@ -51,7 +51,15 @@ import {
  type WorkoutSessionLatest,
  type CycleLetter,
 } from '../data/schemas/sport/routine';
-import type { ExerciseSetV1, SetKind } from '../data/schemas/sport/exerciseSet';
+import type { ExerciseSetLatest, SetKind } from '../data/schemas/sport/exerciseSet';
+import { scoreSession } from '../services/sessionScoreService';
+import { sessionAdherence, sessionDensity, bestOneRmFromSession } from '../services/workoutAnalysisService';
+import { computeCycleScore } from '../services/cycleScoreService';
+import { suggestProgression } from '../services/autoProgressionService';
+import { BodySvg } from '../components/BodySvg';
+import type { MuscleId } from '../components/BodySvg';
+import { buildIAExport } from '../services/iaExportService';
+import { Download } from 'lucide-react';
 import { WorkoutListView } from '../modules/sport/components/WorkoutListView';
 import { RoutineGeneratorView } from '../modules/sport/components/RoutineGeneratorView';
 import { cacheForRoutine } from '../services/mediaCacheService';
@@ -130,6 +138,100 @@ async function notifyRestEnd() {
  osc.start(); osc.stop(ctx.currentTime + 0.4);
  } catch { /* silent */ }
  }
+}
+
+// Maps exercise-catalog muscle names to BodySvg MuscleIds. Bilateral muscles split to L/R.
+const MUSCLE_TO_SVG: Partial<Record<string, MuscleId[]>> = {
+  chest:      ['chest'],
+  back:       ['lats', 'back_lower', 'traps'],
+  shoulders:  ['front_delts', 'side_delts', 'rear_delts'],
+  biceps:     ['biceps_left', 'biceps_right'],
+  triceps:    ['triceps_left', 'triceps_right'],
+  forearms:   ['forearms_left', 'forearms_right'],
+  quads:      ['quads_left', 'quads_right'],
+  hamstrings: ['hamstrings_left', 'hamstrings_right'],
+  calves:     ['calves_left', 'calves_right'],
+  glutes:     ['glutes'],
+  abs:        ['abs'],
+  obliques:   ['obliques'],
+  traps:      ['traps'],
+  lats:       ['lats'],
+};
+const MUSCLE_MRV: Record<string, number> = {
+  chest: 22, back: 25, shoulders: 26, biceps: 26, triceps: 22,
+  quads: 20, hamstrings: 20, calves: 20, glutes: 16, abs: 25,
+};
+
+function volumeToMuscleValues(vol: Record<string, number>): Partial<Record<MuscleId, number>> {
+  const result: Partial<Record<MuscleId, number>> = {};
+  for (const [muscle, sets] of Object.entries(vol)) {
+    const ids = MUSCLE_TO_SVG[muscle.toLowerCase()];
+    if (!ids) continue;
+    const normalized = Math.min(1, sets / (MUSCLE_MRV[muscle.toLowerCase()] ?? 20));
+    for (const id of ids) {
+      result[id] = Math.max(result[id] ?? 0, normalized);
+    }
+  }
+  return result;
+}
+
+function CycleScoreSection({ sessions }: { sessions: WorkoutSessionLatest[] }) {
+  const result = useMemo(() => computeCycleScore(sessions), [sessions]);
+  if (result.sessionsCount === 0) return null;
+  const status = result.score >= 80 ? 'ok' : result.score >= 60 ? 'warn' : 'error';
+  const statusVar = `var(--color-awan-status-${status})`;
+  return (
+    <div className="mb-6">
+      <span className="awan-label text-awan-tx-mute mb-3 block">NOTE CYCLE — 4 SEMAINES</span>
+      <Card className="p-5 bg-white/5">
+        <div className="flex flex-row items-baseline gap-3 mb-3">
+          <span className="text-4xl font-mono font-bold" style={{ color: statusVar }}>{result.score}</span>
+          <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest">/ 100</span>
+          <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest ml-auto">{result.sessionsCount} séances · {result.weeksObserved}/4 sem</span>
+        </div>
+        <span className="text-awan-md font-bold text-awan-tx block leading-relaxed">{result.diagnostic}</span>
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          <BreakdownChip label="ADH." value={result.breakdown.adherence} max={20} />
+          <BreakdownChip label="FRÉQ." value={result.breakdown.frequency} max={20} />
+          <BreakdownChip label="PROG." value={result.breakdown.progression} max={20} />
+          <BreakdownChip label="PLATE." value={result.breakdown.plateau} max={15} />
+          <BreakdownChip label="RÉCUP." value={result.breakdown.recovery} max={15} />
+          <BreakdownChip label="CONST." value={result.breakdown.consistency} max={10} />
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function BreakdownChip({ label, value, max }: { label: string; value: number; max: number }) {
+  const ratio = max > 0 ? value / max : 0;
+  const color = ratio >= 0.8 ? 'var(--color-awan-status-ok)'
+              : ratio >= 0.5 ? 'var(--color-awan-status-warn)'
+              : 'var(--color-awan-status-error)';
+  return (
+    <div className="bg-white/5 px-2 py-1.5 flex flex-col items-center">
+      <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">{label}</span>
+      <span className="text-awan-md font-mono font-bold" style={{ color }}>{value}/{max}</span>
+    </div>
+  );
+}
+
+function VolumeHeatmapSection({ sessions }: { sessions: WorkoutSessionLatest[] }) {
+  const weekStart = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - d.getDay());
+    d.setHours(0, 0, 0, 0);
+    return d;
+  })();
+  const vol = WorkoutService.getWeeklyVolumeByMuscle(sessions, weekStart);
+  if (Object.values(vol).every(v => v === 0)) return null;
+  const muscleValues = volumeToMuscleValues(vol);
+  return (
+    <div className="mb-6">
+      <span className="awan-label text-awan-tx-mute mb-3 block">HEATMAP MUSCULAIRE — SEMAINE</span>
+      <BodySvg mode="heatmap" muscleValues={muscleValues as Record<MuscleId, number>} />
+    </div>
+  );
 }
 
 function VolumeWeekSection({ sessions }: { sessions: WorkoutSessionLatest[] }) {
@@ -247,7 +349,14 @@ export default function SportScreen() {
  }, []);
 
  const startWorkout = useCallback(async (routine: RoutineLatest, opts?: { isException?: boolean }) => {
- const lastSession = await WorkoutService.getLastSessionByRoutine(routine.id);
+ const allSessions = await WorkoutService.getAllSessions();
+ const routineSessions = allSessions
+   .filter(s => s.routineId === routine.id && !s.isException)
+   .sort((a, b) => a.startTime - b.startTime);
+ const lastSession = routineSessions[routineSessions.length - 1] ?? null;
+ // S7: auto-progression suggestions
+ const suggestions = suggestProgression(routine.exercises, routineSessions);
+ const suggestionMap = new Map(suggestions.map(s => [s.exerciseId, s.suggestedWeightKg]));
  // Stocker le volume de la session précédente pour le delta post-séance
  if (lastSession) {
  const prevVol = lastSession.exercises.flatMap(e => e.sets.filter(s => s.kind === 'working'))
@@ -262,10 +371,17 @@ export default function SportScreen() {
  const lastWorkingSet = lastExerciseLog?.sets
  .filter(s => s.kind === 'working')
  .slice(-1)[0];
+ const plannedWeightKg = re.plannedWeightKg ?? undefined;
+ const plannedReps = re.plannedReps;
+ // S7: suggested weight overrides last actual; last actual overrides planned
+ const suggestedWeight = suggestionMap.get(re.exerciseId);
+ const prefillWeight = suggestedWeight ?? lastWorkingSet?.weightKg ?? plannedWeightKg;
  const sets: ActiveSet[] = Array.from({ length: re.plannedSets }, (_, i) => ({
  kind: 'working' as SetKind,
- weightKg: lastWorkingSet?.weightKg ?? re.plannedWeightKg ?? undefined,
- reps: lastWorkingSet?.reps ?? re.plannedReps,
+ weightKg: prefillWeight,
+ reps: lastWorkingSet?.reps ?? plannedReps,
+ plannedWeightKg,
+ plannedReps,
  rir: undefined,
  completed: false,
  index: i,
@@ -275,6 +391,7 @@ export default function SportScreen() {
  exerciseId: re.exerciseId,
  name: re.name,
  primaryMuscle: re.primaryMuscle,
+ secondaryMuscles: re.secondaryMuscles,
  equipment: re.equipment,
  order: idx,
  restSec: re.restSec,
@@ -314,16 +431,19 @@ export default function SportScreen() {
  exerciseId: ex.exerciseId,
  name: ex.name,
  primaryMuscle: ex.primaryMuscle,
+ secondaryMuscles: ex.secondaryMuscles,
  equipment: ex.equipment,
  order: ex.order,
  sets: ex.sets
  .filter(s => s.completed)
- .map<ExerciseSetV1>(s => ({
- v: 1,
+ .map<ExerciseSetLatest>(s => ({
+ v: 2,
  exerciseId: ex.exerciseId,
  kind: s.kind,
  reps: s.reps,
  weightKg: s.weightKg,
+ plannedWeightKg: s.plannedWeightKg,
+ plannedReps: s.plannedReps,
  rir: s.rir,
  restActualSec: s.restActualSec,
  note: s.note,
@@ -331,8 +451,8 @@ export default function SportScreen() {
  })),
  }));
 
- const session: WorkoutSessionLatest = {
- v: 1,
+ const sessionBase: WorkoutSessionLatest = {
+ v: 2,
  id: activeSession.id,
  routineId: activeSession.routineId,
  name: activeSession.routineName,
@@ -351,6 +471,12 @@ export default function SportScreen() {
  note: summary.note,
  isException: activeSession.isException,
  exercises: exercisesLog,
+ exitedAt: summary.exitedAt,
+ adherence: sessionAdherence({ v: 2, id: activeSession.id, routineId: activeSession.routineId, name: activeSession.routineName, cycleLetter: activeSession.cycleLetter, date: ds(new Date()), startTime: activeSession.startTime, endTime, duration: 0, solo: activeSession.solo, isException: activeSession.isException, exercises: exercisesLog }),
+ };
+ const session: WorkoutSessionLatest = {
+ ...sessionBase,
+ scoreSeance: scoreSession(sessionBase),
  };
 
  workoutStore.saveSession(session);
@@ -633,6 +759,8 @@ export default function SportScreen() {
  </div>
 
  <VolumeWeekSection sessions={workoutStore.sessions as WorkoutSessionLatest[]} />
+ <CycleScoreSection sessions={workoutStore.sessions as WorkoutSessionLatest[]} />
+ <VolumeHeatmapSection sessions={workoutStore.sessions as WorkoutSessionLatest[]} />
 
  {nextRoutine && (
  <Card className="p-6 bg-awan-gold/5 border-awan-gold/20 mb-6" onPress={() => { setPendingRoutine({ routine: nextRoutine }); setRecoveryScore(null); setView('recovery'); }}>
@@ -676,10 +804,25 @@ export default function SportScreen() {
  </Touch>
  </div>
  <Touch
- className="mb-6 h-12 bg-white/5 flex items-center justify-center border border-white/10"
+ className="mb-3 h-12 bg-white/5 flex items-center justify-center border border-white/10"
  onPress={() => setView('workouts')}
  >
  <span className="awan-label text-awan-tx-mute">{L.sport.myRoutines} →</span>
+ </Touch>
+ <Touch
+ className="mb-6 h-12 bg-white/5 flex items-center justify-center border border-white/10 flex-row gap-2"
+ onPress={async () => {
+   const { json, promptWithData } = await buildIAExport(workoutStore.routines);
+   try { await navigator.clipboard.writeText(promptWithData); } catch { /* ignore */ }
+   const blob = new Blob([json], { type: 'application/json' });
+   const url = URL.createObjectURL(blob);
+   const a = document.createElement('a');
+   a.href = url; a.download = `awan-sport-ia-${ds(new Date())}.json`; a.click();
+   URL.revokeObjectURL(url);
+ }}
+ >
+ <Download size={14} className="text-awan-tx-mute" />
+ <span className="awan-label text-awan-tx-mute">EXPORT ANALYSE IA</span>
  </Touch>
 
  <div className="mb-20">
@@ -736,6 +879,8 @@ interface ActiveSet {
  kind: SetKind;
  weightKg?: number | undefined;
  reps?: number | undefined;
+ plannedWeightKg?: number | undefined;
+ plannedReps?: number | undefined;
  rir?: number | undefined;
  restActualSec?: number | undefined;
  note?: string | undefined;
@@ -751,6 +896,7 @@ interface ActiveExercise {
  exerciseId: string;
  name: string;
  primaryMuscle?: string | undefined;
+ secondaryMuscles?: string[] | undefined;
  equipment?: string | undefined;
  order: number;
  restSec: number;
@@ -781,6 +927,7 @@ interface SessionSummary {
  feeling?: number | undefined;
  sessionRPE?: number | undefined;
  note?: string | undefined;
+ exitedAt?: number | undefined;
 }
 
 // ─── Routine Editor ──────────────────────────────────────────────────────────
@@ -834,6 +981,7 @@ function RoutineEditor({
  exerciseId: ex.id,
  name: ex.n,
  primaryMuscle: ex.pm[0],
+ secondaryMuscles: ex.sm,
  equipment: ex.eq,
  plannedSets: DEFAULT_PLANNED_SETS,
  plannedReps: DEFAULT_PLANNED_REPS,
@@ -1301,6 +1449,7 @@ function ActiveWorkout({
 }) {
  const [restRemaining, setRestRemaining] = useState(0);
  const prevRestRef = useRef<number>(0);
+ const [substituteTarget, setSubstituteTarget] = useState<{ exIdx: number; muscle: string } | null>(null);
 
  useEffect(() => {
  if (prevRestRef.current > 0 && restRemaining === 0) notifyRestEnd();
@@ -1398,6 +1547,23 @@ function ActiveWorkout({
  onUpdate(s => ({ ...s, restEndAt: null }));
  }, [onUpdate]);
 
+ const substituteExercise = useCallback((exIdx: number, newEx: ExerciseEntry) => {
+   onUpdate(s => {
+     const orig = s.exercises[exIdx];
+     if (!orig) return s;
+     const updated: ActiveExercise = {
+       ...orig,
+       exerciseId: newEx.id,
+       name: newEx.n,
+       primaryMuscle: newEx.pm[0] ?? orig.primaryMuscle,
+       equipment: newEx.eq,
+       sets: orig.sets.map(set => ({ ...set, completed: false, completedAt: undefined })),
+     };
+     return { ...s, exercises: s.exercises.map((e, i) => i === exIdx ? updated : e) };
+   });
+   setSubstituteTarget(null);
+ }, [onUpdate]);
+
  if (session.stage === 'arrived') {
  return (
  <PreWorkout
@@ -1454,7 +1620,20 @@ function ActiveWorkout({
  {session.exercises.map((ex, exIdx) => (
  <Card key={ex.rid} className="mb-6 p-3 border-white/10 bg-white/5">
  <div className="mb-4">
- <span className="text-base font-bold text-awan-tx uppercase tracking-tight block">{ex.name}</span>
+ <div className="flex flex-row items-start justify-between">
+ <span className="text-base font-bold text-awan-tx uppercase tracking-tight flex-1">{ex.name}</span>
+ {ex.sets.every(s => !s.completed) && (
+ <Touch
+ onPress={async () => {
+   await loadExerciseCatalog();
+   setSubstituteTarget({ exIdx, muscle: ex.primaryMuscle ?? '' });
+ }}
+ className="px-2 py-1 bg-white/5 border border-white/5 ml-2"
+ >
+ <span className="text-awan-xxs font-black text-awan-tx-mute tracking-widest uppercase">REMPLACER</span>
+ </Touch>
+ )}
+ </div>
  <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-widest">
  {MUSCLES[ex.primaryMuscle ?? '']} • {ex.equipment} • repos {ex.restSec}s
  </span>
@@ -1501,6 +1680,37 @@ function ActiveWorkout({
  <span className="text-awan-md font-black text-awan-status-error uppercase tracking-[0.3em] opacity-50">ANNULER LA SÉANCE</span>
  </Touch>
  </ScrollView>
+
+ {/* S3: Substitution modal */}
+ {substituteTarget && (
+ <Modal visible={true} transparent animationType="slide">
+ <div className="flex-1 flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}>
+ <div className="w-full bg-awan-surface border-t border-white/10 rounded-t-3xl" style={{ maxHeight: '70vh' }}>
+ <div className="px-6 pt-4 pb-3 border-b border-white/5 flex flex-row justify-between items-center">
+ <span className="awan-label text-awan-gold">REMPLACER PAR...</span>
+ <Touch onPress={() => setSubstituteTarget(null)} className="w-8 h-8 bg-white/5 flex items-center justify-center">
+ <X size={14} className="text-awan-tx-mute" />
+ </Touch>
+ </div>
+ <ScrollView style={{ flex: 1, maxHeight: 400 } as any} contentContainerStyle={{ padding: 16 }}>
+ {searchExercises(substituteTarget.muscle).filter(ex => ex.pm[0] === substituteTarget.muscle || ex.pm.includes(substituteTarget.muscle)).slice(0, 20).map(ex => (
+ <Touch
+ key={ex.id}
+ onPress={() => substituteExercise(substituteTarget.exIdx, ex)}
+ className="mb-2 px-4 py-3 bg-white/5 border border-white/5 flex flex-row justify-between items-center"
+ >
+ <div className="flex-1">
+ <span className="text-sm font-bold text-awan-tx uppercase tracking-tight block">{ex.n}</span>
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">{ex.eq}</span>
+ </div>
+ <span className="text-awan-xs font-black text-awan-gold uppercase tracking-widest ml-2">{MUSCLES[ex.pm[0] ?? ''] ?? ex.pm[0]}</span>
+ </Touch>
+ ))}
+ </ScrollView>
+ </div>
+ </div>
+ </Modal>
+ )}
  </div>
  );
 }
@@ -1598,7 +1808,7 @@ function SetRow({
  transition={{ type: 'spring', stiffness: 400, damping: 12 }}
  style={{ position: 'absolute', top: -6, right: -6, backgroundColor: 'var(--color-awan-gold)', borderRadius: 6, paddingInline: 4, paddingBlock: 2 }}
  >
- <span style={{ fontSize: 7, fontWeight: 900, color: '#000', letterSpacing: '0.1em' }}>PR</span>
+ <span className="text-black" style={{ fontSize: 7, fontWeight: 900, letterSpacing: '0.1em' }}>PR</span>
  </motion.div>
  )}
  </div>
@@ -1619,6 +1829,21 @@ function PreWorkout({
  onStart: () => void;
  onAbort: () => void;
 }) {
+ const [showPreEdit, setShowPreEdit] = useState(false);
+
+ if (showPreEdit) {
+   return (
+     <PreEditExercises
+       exercises={session.exercises}
+       onDone={(updated) => {
+         onUpdate(s => ({ ...s, exercises: updated }));
+         setShowPreEdit(false);
+       }}
+       onBack={() => setShowPreEdit(false)}
+     />
+   );
+ }
+
  return (
  <div className="flex-1 bg-awan-bg">
  <div className="px-6 pt-12 pb-6 border-b border-white/5 bg-white/10">
@@ -1674,7 +1899,13 @@ function PreWorkout({
  </div>
 
  <Touch
- className="h-16 bg-awan-gold flex items-center justify-center shadow-xl shadow-awan-gold/20 mt-6"
+ className="mt-4 h-12 bg-white/5 border border-white/10 flex items-center justify-center gap-2"
+ onPress={() => setShowPreEdit(true)}
+ >
+ <span className="awan-label text-awan-tx-mute">MODIFIER EXERCICES →</span>
+ </Touch>
+ <Touch
+ className="h-16 bg-awan-gold flex items-center justify-center shadow-xl shadow-awan-gold/20 mt-3"
  onPress={onStart}
  >
  <div className="flex flex-row items-center gap-3">
@@ -1684,6 +1915,98 @@ function PreWorkout({
  </Touch>
  </ScrollView>
  </div>
+ );
+}
+
+// S2: Pre-edit exercises before session start
+function PreEditExercises({
+ exercises,
+ onDone,
+ onBack,
+}: {
+ exercises: ActiveExercise[];
+ onDone: (updated: ActiveExercise[]) => void;
+ onBack: () => void;
+}) {
+ const [exos, setExos] = useState<ActiveExercise[]>(exercises);
+
+ const updateWeight = (idx: number, val: string) => {
+   const n = parseFloat(val);
+   setExos(prev => prev.map((e, i) => i !== idx ? e : {
+     ...e,
+     sets: e.sets.map(s => ({ ...s, weightKg: isNaN(n) ? s.weightKg : n, plannedWeightKg: isNaN(n) ? s.plannedWeightKg : n })),
+   }));
+ };
+
+ const updateReps = (idx: number, val: string) => {
+   const n = parseInt(val);
+   setExos(prev => prev.map((e, i) => i !== idx ? e : {
+     ...e,
+     sets: e.sets.map(s => ({ ...s, reps: isNaN(n) ? s.reps : n, plannedReps: isNaN(n) ? s.plannedReps : n })),
+   }));
+ };
+
+ const removeExercise = (idx: number) => setExos(prev => prev.filter((_, i) => i !== idx));
+
+ return (
+   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 bg-awan-bg">
+     <div className="px-6 pt-12 pb-6 border-b border-white/5 bg-white/5">
+       <div className="flex flex-row items-center gap-4">
+         <Touch onPress={onBack} className="w-10 h-10 bg-white/5 flex items-center justify-center">
+           <ChevronLeft size={20} className="text-awan-tx-mute" />
+         </Touch>
+         <Heading level={2} className="mb-0 flex-1" subtitle="Avant de commencer">MODIFIER SÉANCE</Heading>
+       </div>
+     </div>
+     <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 120 }} style={{ flex: 1 }}>
+       {exos.map((ex, idx) => (
+         <div key={ex.rid} className="mb-4">
+           <div className="flex flex-row items-center justify-between mb-2">
+             <span className="text-sm font-bold text-awan-tx uppercase tracking-tight flex-1">{ex.name}</span>
+             <Touch onPress={() => removeExercise(idx)} className="w-8 h-8 bg-white/5 flex items-center justify-center">
+               <Trash2 size={14} className="text-white/30" />
+             </Touch>
+           </div>
+           <div className="flex flex-row gap-2">
+             <div className="flex-1">
+               <span className="text-awan-xxs font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">POIDS KG</span>
+               <TextInput
+                 className="bg-white/5 border border-white/5 px-3 py-2 text-sm font-mono font-bold text-awan-gold"
+                 value={String(ex.sets[0]?.weightKg ?? ex.sets[0]?.plannedWeightKg ?? '')}
+                 onChangeText={(v: string) => updateWeight(idx, v)}
+                 keyboardType="decimal-pad"
+               />
+             </div>
+             <div className="flex-1">
+               <span className="text-awan-xxs font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">REPS</span>
+               <TextInput
+                 className="bg-white/5 border border-white/5 px-3 py-2 text-sm font-mono font-bold text-awan-tx"
+                 value={String(ex.sets[0]?.reps ?? ex.sets[0]?.plannedReps ?? '')}
+                 onChangeText={(v: string) => updateReps(idx, v)}
+                 keyboardType="number-pad"
+               />
+             </div>
+             <div className="flex items-end pb-1">
+               <span className="text-awan-xs font-black text-awan-tx-mute font-mono">{ex.sets.length} × sets</span>
+             </div>
+           </div>
+         </div>
+       ))}
+       {exos.length === 0 && (
+         <div className="py-16 items-center opacity-30">
+           <span className="awan-label text-center block">TOUS LES EXERCICES SUPPRIMÉS</span>
+         </div>
+       )}
+     </ScrollView>
+     <div className="px-6 pb-10 pt-4 border-t border-white/5 bg-awan-bg">
+       <Touch
+         onPress={() => onDone(exos.map((e, i) => ({ ...e, order: i })))}
+         className="h-16 bg-awan-gold flex items-center justify-center"
+       >
+         <span className="awan-label text-black font-black">CONFIRMER MODIFICATIONS</span>
+       </Touch>
+     </div>
+   </motion.div>
  );
 }
 
@@ -1709,7 +2032,53 @@ function FinishWorkout({
  e.sets.filter(s => s.completed && s.kind === 'working'),
  );
  const volume = workingSets.reduce((acc, s) => acc + (s.weightKg ?? 0) * (s.reps ?? 0), 0);
- return { workingCount: workingSets.length, volume };
+
+ // S4: density + best 1RM — build pseudo WorkoutSessionLatest from active session
+ const pseudoSession: WorkoutSessionLatest = {
+ v: 2,
+ id: session.id,
+ routineId: session.routineId,
+ name: session.routineName,
+ cycleLetter: session.cycleLetter,
+ date: ds(new Date()),
+ startTime: session.startTime,
+ endTime: Date.now(),
+ duration: Math.floor((Date.now() - session.startTime) / 1000),
+ warmupStartedAt: session.warmupStartedAt,
+ workoutEndedAt: session.workoutEndedAt ?? Date.now(),
+ solo: session.solo,
+ isException: session.isException,
+ exercises: session.exercises.map(ex => ({
+ rid: ex.rid,
+ exerciseId: ex.exerciseId,
+ name: ex.name,
+ primaryMuscle: ex.primaryMuscle,
+ secondaryMuscles: ex.secondaryMuscles,
+ equipment: ex.equipment,
+ order: ex.order,
+ sets: ex.sets.filter(s => s.completed).map<ExerciseSetLatest>(s => ({
+ v: 2,
+ exerciseId: ex.exerciseId,
+ kind: s.kind,
+ reps: s.reps,
+ weightKg: s.weightKg,
+ plannedWeightKg: s.plannedWeightKg,
+ plannedReps: s.plannedReps,
+ rir: s.rir,
+ restActualSec: s.restActualSec,
+ completedAt: s.completedAt,
+ })),
+ })),
+ };
+ const density = sessionDensity(pseudoSession);
+ const oneRmMap = bestOneRmFromSession(pseudoSession);
+ const oneRmEntries = Object.entries(oneRmMap).sort((a, b) => b[1] - a[1]);
+ const topOneRm = oneRmEntries[0];
+ const topExerciseName = topOneRm
+ ? (session.exercises.find(e => e.exerciseId === topOneRm[0])?.name ?? topOneRm[0])
+ : null;
+
+ return { workingCount: workingSets.length, volume, density, topOneRm, topExerciseName };
  }, [session]);
 
  return (
@@ -1742,6 +2111,20 @@ function FinishWorkout({
  </span>
  )}
  </Card>
+ {stats.density !== null && (
+ <Card className="p-4 bg-white/5">
+ <span className="awan-label mb-1 block">DENSITÉ</span>
+ <span className="text-2xl font-mono font-bold text-awan-gold">{stats.density}</span>
+ <span className="font-mono text-awan-sm text-awan-tx-mute mt-1 block uppercase tracking-widest">kg·rep/min actif</span>
+ </Card>
+ )}
+ {stats.topOneRm && stats.topExerciseName && (
+ <Card className="p-4 bg-white/5">
+ <span className="awan-label mb-1 block">EST. 1RM</span>
+ <span className="text-2xl font-mono font-bold text-awan-gold">{stats.topOneRm[1]}</span>
+ <span className="font-mono text-awan-sm text-awan-tx-mute mt-1 block uppercase tracking-widest">kg · {stats.topExerciseName}</span>
+ </Card>
+ )}
  </div>
 
  <div className="mb-8">
@@ -1798,6 +2181,12 @@ function FinishWorkout({
  <CheckCircle2 size={20} color="black" strokeWidth={3} />
  <span className="awan-label text-black font-black">ENREGISTRER LA SÉANCE</span>
  </div>
+ </Touch>
+ <Touch
+ onPress={() => onSave({ feeling, sessionRPE, note: note.trim() || undefined, exitedAt: Date.now() })}
+ className="mt-3 h-14 bg-white/5 border border-white/10 flex items-center justify-center"
+ >
+ <span className="awan-label text-awan-tx-mute font-black">QUITTER VESTIAIRE →</span>
  </Touch>
  </ScrollView>
  </motion.div>

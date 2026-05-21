@@ -1,0 +1,26 @@
+{
+  "v": 1,
+  "id": "nutrition.fiber.rda",
+  "domain": "nutrition",
+  "topic": "Apport en fibres alimentaires",
+  "summary": "L'apport recommandé en fibres est de 25g/jour pour les femmes et 38g/jour pour les hommes (ANSES/DRI). Un apport suffisant réduit le risque de maladies cardiovasculaires, améliore la glycémie postprandiale et soutient le microbiome intestinal. La plupart des populations industrialisées consomment moitié moins que la recommandation.",
+  "thresholds": [
+    { "metric": "fiber_g_per_day_men", "op": "lt", "value": 20, "label": "Apport insuffisant — hommes", "severity": "warn" },
+    { "metric": "fiber_g_per_day_men", "op": "gt", "value": 30, "label": "Apport adéquat — hommes", "severity": "good" },
+    { "metric": "fiber_g_per_day_women", "op": "lt", "value": 15, "label": "Apport insuffisant — femmes", "severity": "warn" },
+    { "metric": "fiber_g_per_day_women", "op": "gt", "value": 22, "label": "Apport adéquat — femmes", "severity": "good" }
+  ],
+  "references": [
+    {
+      "citation": "ANSES. Références nutritionnelles en vitamines et minéraux — Fibres alimentaires. 2021",
+      "pmcUrl": "https://www.anses.fr/fr/content/les-fibres-alimentaires",
+      "year": 2021
+    },
+    {
+      "citation": "Dahl WJ, Stewart ML. Position of the Academy of Nutrition and Dietetics: health implications of dietary fiber. J Acad Nutr Diet. 2015",
+      "doi": "10.1016/j.jand.2015.09.003",
+      "year": 2015
+    }
+  ],
+  "derivedRules": ["nutrition.fiber_low"]
+}

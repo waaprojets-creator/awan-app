@@ -1,0 +1,22 @@
+{
+  "v": 1,
+  "id": "anthropo.ffmi.classification",
+  "domain": "anthropo",
+  "topic": "Fat-Free Mass Index (FFMI) — classification et plafond naturel",
+  "summary": "Le FFMI normalise la masse maigre à la taille et permet la comparaison inter-individuelle indépendamment de la morphologie. Pour les hommes, un FFMI de 25 représente le plafond naturel généralement admis (étude Kouri 1995). Pour les femmes, ce plafond est estimé à ~22. Les valeurs normalisées au-delà indiquent un développement musculaire exceptionnel ou un contexte pharmacologique.",
+  "thresholds": [
+    { "metric": "ffmi_men", "op": "lt", "value": 18, "label": "Développement musculaire sous la moyenne", "severity": "info" },
+    { "metric": "ffmi_men", "op": "between", "value": [18, 20], "label": "Développement musculaire moyen", "severity": "good" },
+    { "metric": "ffmi_men", "op": "between", "value": [20, 23], "label": "Développement musculaire bon", "severity": "good" },
+    { "metric": "ffmi_men", "op": "between", "value": [23, 25], "label": "Développement musculaire athlétique", "severity": "good" },
+    { "metric": "ffmi_men", "op": "gt", "value": 25, "label": "FFMI au-dessus du plafond naturel estimé", "severity": "info" }
+  ],
+  "references": [
+    {
+      "citation": "Kouri EM, et al. Fat-free mass index in users and nonusers of anabolic-androgenic steroids. Clin J Sport Med. 1995",
+      "doi": "10.1097/00042752-199510000-00009",
+      "year": 1995
+    }
+  ],
+  "derivedRules": []
+}

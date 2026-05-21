@@ -1,0 +1,22 @@
+{
+  "v": 1,
+  "id": "anthropo.whtr.thresholds",
+  "domain": "anthropo",
+  "topic": "Rapport tour de taille / taille (WHtR)",
+  "summary": "Le WHtR (Waist-to-Height Ratio) est un meilleur prédicteur du risque cardiométabolique que l'IMC car il cible spécifiquement la graisse viscérale. Un seuil de 0.5 (taille ≤ moitié de la hauteur) est universellement validé indépendamment de l'ethnie, l'âge et le sexe. Un WHtR > 0.6 indique un risque substantiellement élevé.",
+  "thresholds": [
+    { "metric": "whtr", "op": "lt", "value": 0.4, "label": "Très mince — surveiller sous-nutrition", "severity": "info" },
+    { "metric": "whtr", "op": "between", "value": [0.4, 0.5], "label": "Zone saine", "severity": "good" },
+    { "metric": "whtr", "op": "between", "value": [0.5, 0.6], "label": "Risque modéré", "severity": "warn" },
+    { "metric": "whtr", "op": "gt", "value": 0.6, "label": "Risque cardiométabolique élevé", "severity": "alert" }
+  ],
+  "references": [
+    {
+      "citation": "Ashwell M, Gunn P, Gibson S. Waist-to-height ratio is a better screening tool than waist circumference and BMI for adult cardiometabolic risk factors: systematic review and meta-analysis. Obes Rev. 2012",
+      "doi": "10.1111/j.1467-789X.2011.00952.x",
+      "pmcUrl": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3306025/",
+      "year": 2012
+    }
+  ],
+  "derivedRules": ["anthropo.wht_elevated"]
+}

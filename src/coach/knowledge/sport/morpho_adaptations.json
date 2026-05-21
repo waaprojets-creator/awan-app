@@ -1,0 +1,19 @@
+{
+  "v": 1,
+  "id": "sport.morpho.adaptations",
+  "domain": "sport",
+  "topic": "Adaptations aux contraintes morphologiques",
+  "summary": "Les leviers morphologiques (longueur des fémurs, du buste, des bras) influencent directement la technique optimale et les exercices favorables. Les personnes à fémurs longs bénéficient du sumo deadlift et d'un stance large au squat. Un buste court favorise le bench press. Ces variantes ne sont pas des faiblesses mais des adaptations biomécaniques.",
+  "thresholds": [
+    { "metric": "femur_to_height_ratio", "op": "gt", "value": 0.27, "label": "Fémurs longs — variantes sumo/wide stance recommandées", "severity": "info" },
+    { "metric": "arm_span_to_height_ratio", "op": "gt", "value": 1.03, "label": "Envergure > taille — avantage pull exercices", "severity": "info" }
+  ],
+  "references": [
+    {
+      "citation": "Vigotsky AD, Bryanton MA. Relative muscle moment arms of the gluteus medius and tensor fascia latae: implications for stance width. J Strength Cond Res. 2016",
+      "pmcUrl": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6193835/",
+      "year": 2016
+    }
+  ],
+  "derivedRules": []
+}

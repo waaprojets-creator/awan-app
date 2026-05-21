@@ -1,0 +1,20 @@
+{
+  "v": 1,
+  "id": "sport.proximity_to_failure",
+  "domain": "sport",
+  "topic": "Proximité à l'échec musculaire (RIR)",
+  "summary": "S'entraîner à RIR 1-3 (1 à 3 reps avant échec) produit une hypertrophie équivalente à l'entraînement jusqu'à l'échec, avec un coût de récupération moindre. L'échec systématique augmente la fatigue sans bénéfice supplémentaire pour la masse musculaire.",
+  "thresholds": [
+    { "metric": "avg_rir", "op": "gt", "value": 5, "label": "Effort insuffisant — sous-stimulation", "severity": "warn" },
+    { "metric": "avg_rir", "op": "between", "value": [1, 3], "label": "Zone RIR optimale", "severity": "good" },
+    { "metric": "avg_rir", "op": "eq", "value": 0, "label": "Échec systématique — fatigue accrue", "severity": "info" }
+  ],
+  "references": [
+    {
+      "citation": "Carroll KM, et al. Divergent performance outcomes following resistance training using repetition maximums or relative intensity. Int J Sports Physiol Perform. 2019",
+      "doi": "10.1123/ijspp.2018-0669",
+      "year": 2019
+    }
+  ],
+  "derivedRules": ["sport.fatigue_rpe", "sport.low_recovery"]
+}
