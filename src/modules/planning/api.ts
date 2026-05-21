@@ -1,6 +1,6 @@
 import type { IStorage } from '@/data/storage';
 import { eventBus } from '@/data/events/bus';
-import type { ScheduleTaskLatest } from '@/data/schemas/planning/scheduleTask';
+import type { ScheduleTaskLatest, TaskDomain } from '@/data/schemas/planning/scheduleTask';
 import { migrateDaySchedule, type DayScheduleLatest } from '@/data/schemas/planning/daySchedule';
 import { migrateScheduleTask } from '@/data/schemas/planning/scheduleTask';
 import { buildSchedule, type SchedulerConfig } from './engine/greedy';
@@ -59,5 +59,41 @@ export class Planner {
    */
   async preview(date: string, tasks: ScheduleTaskLatest[]): Promise<DayScheduleLatest> {
     return buildSchedule(date, tasks, this.config);
+  }
+
+  /**
+   * Create a recurring system task (idempotent by id).
+   * If the id already exists, the call is a no-op (no duplicate).
+   * Tags: ['system', 'recurring', 'every:<recurringDays>'] are added automatically.
+   */
+  async createSystemTask(params: {
+    id: string;
+    title: string;
+    domain: TaskDomain;
+    durationMin: number;
+    recurringDays?: number;
+    priority?: 1 | 2 | 3 | 4 | 5;
+    energyLevel?: 'low' | 'medium' | 'high';
+  }): Promise<void> {
+    const existing = await this.storage.get(`${TASKS_PREFIX}.${params.id}`, migrateScheduleTask);
+    if (existing) return;
+
+    const tags = ['system', 'recurring'];
+    if (params.recurringDays) tags.push(`every:${params.recurringDays}`);
+
+    const task: ScheduleTaskLatest = {
+      v: 1,
+      id: params.id,
+      title: params.title,
+      domain: params.domain,
+      durationMin: params.durationMin,
+      priority: params.priority ?? 1,
+      energyLevel: params.energyLevel ?? 'low',
+      tags,
+      dependsOn: [],
+      enabled: true,
+    };
+
+    await this.saveTask(task);
   }
 }

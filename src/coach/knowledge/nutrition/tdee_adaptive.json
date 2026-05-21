@@ -1,0 +1,21 @@
+{
+  "v": 1,
+  "id": "nutrition.tdee.adaptive",
+  "domain": "nutrition",
+  "topic": "TDEE adaptatif et ajustement hebdomadaire",
+  "summary": "La dépense énergétique totale réelle (TDEE) diverge des formules prédictives de 10-30% selon les individus. Un recalibrage hebdomadaire basé sur la tendance pondérale (poids réel vs apport calorique) sur 7-14 jours permet de corriger cette dérive. MacroFactor et Carbon valident cette approche en pratique clinique.",
+  "thresholds": [
+    { "metric": "weight_trend_slope_g_per_day", "op": "gt", "value": 30, "label": "Gain >210g/sem — surplus au-dessus de la cible", "severity": "info" },
+    { "metric": "weight_trend_slope_g_per_day", "op": "lt", "value": -50, "label": "Perte >350g/sem — déficit agressif potentiel", "severity": "warn" },
+    { "metric": "observation_days", "op": "lt", "value": 7, "label": "Données insuffisantes pour calibration", "severity": "info" }
+  ],
+  "references": [
+    {
+      "citation": "Thomas DM, et al. Time to correctly predict the amount of weight loss with dieting. J Acad Nutr Diet. 2014",
+      "doi": "10.1016/j.jand.2014.02.003",
+      "pmcUrl": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4035446/",
+      "year": 2014
+    }
+  ],
+  "derivedRules": ["nutrition.deficit_agressif", "nutrition.tdee_surplus"]
+}

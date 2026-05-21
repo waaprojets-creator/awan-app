@@ -1,0 +1,21 @@
+{
+  "v": 1,
+  "id": "sport.rest.intersets",
+  "domain": "sport",
+  "topic": "Temps de repos inter-séries",
+  "summary": "Pour les exercices composés (squat, deadlift, bench press), des repos de 2-3 minutes permettent une récupération neuromusculaire suffisante pour maintenir la performance. Pour les exercices d'isolation, 60-90 secondes sont adéquates. Des repos trop courts (<60s pour composés) compromettent le volume et augmentent le stress métabolique.",
+  "thresholds": [
+    { "metric": "rest_sec_compound", "op": "lt", "value": 90, "label": "Repos insuffisant — exercices composés", "severity": "warn" },
+    { "metric": "rest_sec_compound", "op": "between", "value": [120, 180], "label": "Repos optimal — composés", "severity": "good" },
+    { "metric": "rest_sec_isolation", "op": "lt", "value": 45, "label": "Repos trop court — isolation", "severity": "info" },
+    { "metric": "rest_sec_isolation", "op": "between", "value": [60, 90], "label": "Repos optimal — isolation", "severity": "good" }
+  ],
+  "references": [
+    {
+      "citation": "Schoenfeld BJ, Pope ZK, Benik FM, et al. Longer interset rest periods enhance muscle strength and hypertrophy in resistance-trained men. J Strength Cond Res. 2016",
+      "doi": "10.1519/JSC.0000000000001272",
+      "year": 2016
+    }
+  ],
+  "derivedRules": []
+}

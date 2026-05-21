@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { IdSchema } from '../common/id';
 import { DateStringSchema, TimestampSchema } from '../common/date';
-import { ExerciseSetV1Schema } from './exerciseSet';
+import { ExerciseSetSchema } from './exerciseSet';
 import { createMigrator } from '../../migrations/runner';
 
 // ─── V1 ───────────────────────────────────────────────────────────────────────
@@ -12,7 +12,7 @@ export const WorkoutLogV1Schema = z.object({
   date: DateStringSchema,
   startedAt: TimestampSchema,
   endedAt: TimestampSchema.optional(),
-  sets: z.array(ExerciseSetV1Schema),
+  sets: z.array(ExerciseSetSchema),
   note: z.string().optional(),
 });
 

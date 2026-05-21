@@ -1,0 +1,24 @@
+{
+  "v": 1,
+  "id": "anthropo.bf.methods_precision",
+  "domain": "anthropo",
+  "topic": "Précision des méthodes d'estimation du % masse grasse",
+  "summary": "Chaque méthode d'estimation du % masse grasse a une erreur standard (SEE) différente : DEXA (SEE ≈ 1.5%), hydrodensitométrie (SEE ≈ 2%), plis cutanés Jackson-Pollock (SEE ≈ 3.5%), méthode Navy (SEE ≈ 3-5%). Utiliser plusieurs méthodes et afficher une fourchette de confiance est plus honnête qu'une valeur unique. L'évolution dans le temps d'une même méthode reste plus pertinente que la valeur absolue.",
+  "thresholds": [
+    { "metric": "bf_methods_divergence_pct", "op": "gt", "value": 5, "label": "Divergence élevée entre méthodes — vérifier mesures", "severity": "warn" },
+    { "metric": "bf_methods_count", "op": "lt", "value": 2, "label": "Une seule méthode disponible — imprécision élevée", "severity": "info" }
+  ],
+  "references": [
+    {
+      "citation": "Jackson AS, Pollock ML. Generalized equations for predicting body density of men. Br J Nutr. 1978",
+      "doi": "10.1079/bjn19780078",
+      "year": 1978
+    },
+    {
+      "citation": "Durnin JV, Womersley J. Body fat assessed from total body density and its estimation from skinfold thickness. Br J Nutr. 1974",
+      "doi": "10.1079/bjn19740060",
+      "year": 1974
+    }
+  ],
+  "derivedRules": []
+}

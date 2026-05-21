@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { IdSchema } from '../common/id';
 import { DateStringSchema, TimestampSchema } from '../common/date';
-import { ExerciseSetV1Schema } from './exerciseSet';
+import { ExerciseSetSchema } from './exerciseSet';
+import type { ExerciseSetLatest } from './exerciseSet';
 import { createMigrator } from '../../migrations/runner';
 
 // ─── Routine (template d'entraînement) ──────────────────────────────────────
@@ -14,6 +15,7 @@ export const RoutineExerciseSchema = z.object({
   exerciseId: z.string(),
   name: z.string(),
   primaryMuscle: z.string().optional(),
+  secondaryMuscles: z.array(z.string()).optional(),
   equipment: z.string().optional(),
   plannedSets: z.number().int().positive(),
   plannedReps: z.number().int().positive(),
@@ -62,13 +64,16 @@ export const WorkoutExerciseLogSchema = z.object({
   exerciseId: z.string(),
   name: z.string(),
   primaryMuscle: z.string().optional(),
+  secondaryMuscles: z.array(z.string()).optional(),
   equipment: z.string().optional(),
   order: z.number().int().nonnegative(),
-  sets: z.array(ExerciseSetV1Schema),
+  sets: z.array(ExerciseSetSchema),
   substitutedFrom: z.string().optional(),
 });
 
 export type WorkoutExerciseLog = z.infer<typeof WorkoutExerciseLogSchema>;
+// Re-export for consumers building new sets
+export type { ExerciseSetLatest };
 
 export const WorkoutSessionV1Schema = z.object({
   v: z.literal(1),

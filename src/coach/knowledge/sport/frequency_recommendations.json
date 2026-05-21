@@ -1,0 +1,20 @@
+{
+  "v": 1,
+  "id": "sport.frequency.optimal",
+  "domain": "sport",
+  "topic": "Fréquence d'entraînement par groupe musculaire",
+  "summary": "Stimuler chaque groupe musculaire 2 fois par semaine produit significativement plus d'hypertrophie qu'une fréquence unique, à volume égal. Au-delà de 3×/semaine, le bénéfice additionnel est marginal pour l'hypertrophie. La fréquence est particulièrement importante pour les débutants et intermédiaires.",
+  "thresholds": [
+    { "metric": "muscle_frequency_per_week", "op": "lt", "value": 2, "label": "Fréquence sous-optimale", "severity": "warn" },
+    { "metric": "muscle_frequency_per_week", "op": "between", "value": [2, 3], "label": "Fréquence optimale", "severity": "good" },
+    { "metric": "muscle_frequency_per_week", "op": "gt", "value": 4, "label": "Fréquence élevée — surveiller récupération", "severity": "info" }
+  ],
+  "references": [
+    {
+      "citation": "Schoenfeld BJ, Ogborn D, Krieger JW. Effects of resistance training frequency on measures of muscle hypertrophy: a systematic review and meta-analysis. Sports Med. 2016",
+      "doi": "10.1007/s40279-016-0543-8",
+      "year": 2016
+    }
+  ],
+  "derivedRules": ["sport.insufficient_frequency", "sport.consecutive_days"]
+}

@@ -47,6 +47,8 @@ import type {
  MealEntryLatest,
  MealType,
 } from '../data/schemas/nutrition/mealEntry';
+import { MEAL_TYPE_TO_SLOT } from '../data/schemas/nutrition/mealEntry';
+import { WaterService } from '../services/waterService';
 
 // ─── Nutrition Profile (TDEE) ─────────────────────────────────────────────────
 
@@ -437,7 +439,7 @@ function OnboardingModal({ onComplete }: OnboardingProps) {
 
 interface AddModalProps {
  visible: boolean;
- meal: MealType;
+ mealLabel?: string | undefined;
  foodsReady: boolean;
  onClose: () => void;
  onAdd: (food: FoodEntry, grams: number, timeHHMM: string | undefined) => void;
@@ -445,7 +447,7 @@ interface AddModalProps {
 
 function AddMealModal({
  visible,
- meal,
+ mealLabel: _mealLabel,
  foodsReady,
  onClose,
  onAdd,
@@ -489,8 +491,7 @@ function AddMealModal({
  onAdd(selected, gramsNum, t);
  };
 
- const mealLabel =
- MEAL_TYPES.find((m) => m.key === meal)?.label ?? meal.toUpperCase();
+ const mealLabel = _mealLabel ?? 'REPAS';
 
  return (
  <Modal visible={visible} transparent animationType="fade">
@@ -889,6 +890,22 @@ export default function NutritionScreen() {
  const today = ds(new Date());
  const [selectedDate, setSelectedDate] = useState<string>(today);
  const [selectedMeal, setSelectedMeal] = useState<MealType>('dejeuner');
+ const [selectedSlot, setSelectedSlot] = useState<1|2|3|4|5>(2);
+
+ // Water tracking (N5)
+ const [waterMl, setWaterMl] = useState(0);
+ const [waterTarget, setWaterTarget] = useState(2450);
+
+ // Slot labels: derive from most recent entry per slot, persist in localStorage
+ const SLOT_LABELS_KEY = 'awan.nutrition.slotLabels';
+ const [slotLabels, setSlotLabels] = useState<Record<number, string>>(() => {
+   try {
+     const raw = localStorage.getItem(SLOT_LABELS_KEY);
+     return raw ? (JSON.parse(raw) as Record<number, string>) : { 1: 'SUHOOR', 2: 'DÉJEUNER', 3: 'DÎNER', 4: 'COLLATION', 5: 'EN-CAS' };
+   } catch { return { 1: 'SUHOOR', 2: 'DÉJEUNER', 3: 'DÎNER', 4: 'COLLATION', 5: 'EN-CAS' }; }
+ });
+ const [editingSlotLabel, setEditingSlotLabel] = useState<number | null>(null);
+ const [slotLabelInput, setSlotLabelInput] = useState('');
 
  const mealStore = useMealStore(selectedDate);
 
@@ -964,11 +981,33 @@ export default function NutritionScreen() {
  };
 
  const dayEntries = mealStore.meals;
+ // Filter by slot (V2) with fallback to meal-type-based mapping for legacy V1 entries
  const mealEntries = useMemo(
- () => dayEntries.filter((e) => (e.meal ?? 'dejeuner') === selectedMeal),
- [dayEntries, selectedMeal],
+ () => dayEntries.filter((e) => {
+   const slot = e.mealSlot ?? (e.meal ? (MEAL_TYPE_TO_SLOT[e.meal] ?? 5) : 5);
+   return slot === selectedSlot;
+ }),
+ [dayEntries, selectedSlot],
  );
  const totals = mealStore.totals;
+
+ // Load water data when date changes
+ useEffect(() => {
+   WaterService.getByDate(selectedDate).then(w => {
+     setWaterMl(w?.totalMl ?? 0);
+   });
+ }, [selectedDate]);
+
+ // Water target from profile weight
+ useEffect(() => {
+   if (!profile?.weightKg) return;
+   setWaterTarget(WaterService.targetMl(profile.weightKg));
+ }, [profile]);
+
+ const handleAddWater = async (ml: number) => {
+   const updated = await WaterService.addMl(selectedDate, ml);
+   setWaterMl(updated.totalMl);
+ };
 
  const handleAdd = (
  food: FoodEntry,
@@ -979,7 +1018,7 @@ export default function NutritionScreen() {
  const now = Date.now();
  const entryId = uid();
  const entry: MealEntryLatest = {
- v: 1,
+ v: 2,
  id: entryId,
  date: selectedDate,
  name: food.n,
@@ -990,7 +1029,8 @@ export default function NutritionScreen() {
  ...(macros.fiberG !== undefined ? { fiberG: macros.fiberG } : {}),
  timestamp: now,
  source: 'db',
- meal: selectedMeal,
+ mealSlot: selectedSlot,
+ mealLabel: slotLabels[selectedSlot],
  grams,
  foodId: food.id,
  ...(timeHHMM !== undefined ? { timeHHMM } : {}),
@@ -1026,7 +1066,7 @@ export default function NutritionScreen() {
  : { kcal: entry.kcal, p: entry.p, c: entry.c, f: entry.f };
  const macros = calcMacros(base100, grams);
  const updated: MealEntryLatest = {
- v: 1,
+ v: 2,
  id: entry.id,
  date: entry.date,
  name: entry.name,
@@ -1036,7 +1076,8 @@ export default function NutritionScreen() {
  f: macros.f,
  timestamp: entry.timestamp,
  source: entry.source,
- meal: entry.meal ?? selectedMeal,
+ mealSlot: entry.mealSlot ?? selectedSlot,
+ mealLabel: entry.mealLabel,
  grams,
  ...(entry.foodId !== undefined ? { foodId: entry.foodId } : {}),
  ...(timeHHMM !== undefined ? { timeHHMM } : {}),
@@ -1114,32 +1155,60 @@ export default function NutritionScreen() {
  </Card>
  </div>
 
- {/* Meal Selector */}
+ {/* Meal Slot Selector — 5 modifiable slots (N1) */}
  <div className="px-6 mb-6">
- <div className="grid grid-cols-4 gap-2">
- {MEAL_TYPES.map((m) => {
- const active = m.key === selectedMeal;
+ <div className="grid grid-cols-5 gap-1">
+ {([1, 2, 3, 4, 5] as const).map((slot) => {
+ const active = slot === selectedSlot;
+ const label = slotLabels[slot] ?? `REPAS ${slot}`;
+ const editing = editingSlotLabel === slot;
  return (
+ <div key={slot} className="flex flex-col">
  <Touch
- key={m.key}
- onPress={() => setSelectedMeal(m.key)}
- className={`px-2 py-3 border flex items-center justify-center ${
- active
- ? 'bg-awan-gold/15 border-awan-gold'
- : 'bg-white/5 border-white/5'
+ onPress={() => setSelectedSlot(slot)}
+ className={`py-2 px-1 border flex flex-col items-center gap-0.5 ${
+ active ? 'bg-awan-gold/15 border-awan-gold' : 'bg-white/5 border-white/5'
  }`}
  >
+ <span className={`text-awan-xxs font-black font-mono ${active ? 'text-awan-gold' : 'text-white/30'}`}>{slot}</span>
+ {editing ? (
+ <input
+ className="w-full text-center text-awan-xxs font-black uppercase tracking-wider bg-transparent border-b border-awan-gold/50 outline-none text-awan-gold"
+ style={{ color: 'var(--color-awan-gold)', fontSize: 9 }}
+ value={slotLabelInput}
+ onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlotLabelInput(e.target.value.toUpperCase())}
+ onBlur={() => {
+ if (slotLabelInput.trim()) {
+ const updated = { ...slotLabels, [slot]: slotLabelInput.trim() };
+ setSlotLabels(updated);
+ try { localStorage.setItem(SLOT_LABELS_KEY, JSON.stringify(updated)); } catch { /* quota */ }
+ }
+ setEditingSlotLabel(null);
+ }}
+ onKeyDown={(e: React.KeyboardEvent) => {
+ if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+ if (e.key === 'Escape') setEditingSlotLabel(null);
+ }}
+ autoFocus
+ maxLength={10}
+ onClick={(e: React.MouseEvent) => e.stopPropagation()}
+ />
+ ) : (
  <span
- className={`text-awan-sm font-black uppercase tracking-widest ${
- active ? 'text-awan-gold' : 'text-awan-tx-mute'
- }`}
+ className={`text-center leading-tight font-black uppercase tracking-widest ${active ? 'text-awan-gold' : 'text-awan-tx-mute'}`}
+ style={{ fontSize: 8 }}
+ onDoubleClick={(e) => { e.preventDefault(); setSlotLabelInput(label); setEditingSlotLabel(slot); setSelectedSlot(slot); }}
+ title="Double-clic pour renommer"
  >
- {m.label}
+ {label.slice(0, 8)}
  </span>
+ )}
  </Touch>
+ </div>
  );
  })}
  </div>
+ <span className="text-awan-xxs text-white/20 mt-1 block text-right tracking-widest">DOUBLE-CLIC POUR RENOMMER</span>
  </div>
 
  {/* Day Totals */}
@@ -1346,7 +1415,7 @@ export default function NutritionScreen() {
  </div>
 
  {/* Add Button */}
- <div className="px-6 mb-10">
+ <div className="px-6 mb-6">
  <Touch
  onPress={() => void openAddMeal()}
  className="h-14 bg-awan-gold flex items-center justify-center shadow-lg shadow-awan-gold/10"
@@ -1359,11 +1428,56 @@ export default function NutritionScreen() {
  </div>
  </Touch>
  </div>
+
+ {/* N5 — Eau / Hydratation */}
+ <div className="px-6 mb-10">
+ <Heading level={4} mono subtitle={`Cible ${waterTarget} mL · 35mL/kg`} className="mb-4">HYDRATATION</Heading>
+ <Card className="p-5 bg-white/3 border-white/5" variant="flat">
+ <div className="flex flex-row items-center justify-between mb-4">
+ <div>
+ <span className="text-4xl font-black font-mono text-awan-gold">
+ {Math.floor(waterMl / 1000) > 0 ? `${(waterMl / 1000).toFixed(1)}L` : `${waterMl}mL`}
+ </span>
+ <span className="text-awan-sm font-black text-awan-tx-mute ml-2 font-mono uppercase">
+ / {waterTarget >= 1000 ? `${(waterTarget / 1000).toFixed(1)}L` : `${waterTarget}mL`}
+ </span>
+ </div>
+ <span className="text-awan-sm font-black font-mono"
+ style={{ color: waterMl >= waterTarget ? 'var(--color-awan-status-ok)' : waterMl >= waterTarget * 0.7 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-error)' }}>
+ {Math.round((waterMl / waterTarget) * 100)}%
+ </span>
+ </div>
+ <div className="w-full h-1.5 bg-white/10 mb-4">
+ <div className="h-full transition-all"
+ style={{ width: `${Math.min(100, (waterMl / waterTarget) * 100)}%`, backgroundColor: 'var(--color-awan-gold)' }} />
+ </div>
+ <div className="flex flex-row gap-3">
+ <Touch
+ onPress={() => void handleAddWater(250)}
+ className="flex-1 py-3 border border-white/10 bg-white/5 items-center justify-center"
+ >
+ <span className="text-awan-sm font-black font-mono text-awan-gold">+250 mL</span>
+ </Touch>
+ <Touch
+ onPress={() => void handleAddWater(500)}
+ className="flex-1 py-3 bg-awan-gold/20 border border-awan-gold/30 items-center justify-center"
+ >
+ <span className="text-awan-sm font-black font-mono text-awan-gold">+500 mL</span>
+ </Touch>
+ <Touch
+ onPress={() => void WaterService.reset(selectedDate).then(() => setWaterMl(0))}
+ className="w-12 py-3 border border-white/5 bg-white/3 items-center justify-center"
+ >
+ <span className="text-awan-xs font-black font-mono text-awan-tx-mute">×0</span>
+ </Touch>
+ </div>
+ </Card>
+ </div>
  </ScrollView>
 
  <AddMealModal
  visible={showAdd}
- meal={selectedMeal}
+ mealLabel={slotLabels[selectedSlot]}
  foodsReady={foodsReady}
  onClose={() => setShowAdd(false)}
  onAdd={handleAdd}

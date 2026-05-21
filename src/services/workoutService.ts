@@ -58,6 +58,8 @@ export const WorkoutService = {
     eventBus.emit('workout.completed', { workoutId: session.id, date: session.date });
   },
 
+  // Sets: primary muscle counts 1.0, each secondary muscle counts 0.5
+  // Source: Schoenfeld 2017 volume-hypertrophy dose-response
   getWeeklyVolumeByMuscle(sessions: WorkoutSessionLatest[], weekStart: Date): Record<string, number> {
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekEnd.getDate() + 7);
@@ -66,10 +68,14 @@ export const WorkoutService = {
       const d = new Date(session.date);
       if (d < weekStart || d >= weekEnd) continue;
       for (const exercise of session.exercises) {
-        const muscle = exercise.primaryMuscle;
-        if (!muscle) continue;
         const workingSets = exercise.sets.filter(s => s.kind === 'working').length;
-        volume[muscle] = (volume[muscle] ?? 0) + workingSets;
+        if (workingSets === 0) continue;
+        if (exercise.primaryMuscle) {
+          volume[exercise.primaryMuscle] = (volume[exercise.primaryMuscle] ?? 0) + workingSets;
+        }
+        for (const sm of exercise.secondaryMuscles ?? []) {
+          volume[sm] = (volume[sm] ?? 0) + workingSets * 0.5;
+        }
       }
     }
     return volume;

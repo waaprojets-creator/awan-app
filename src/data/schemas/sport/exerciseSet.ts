@@ -1,7 +1,10 @@
 import { z } from 'zod';
+import { createMigrator } from '../../migrations/runner';
 
 export const SetKindSchema = z.enum(['warmup', 'working', 'drop', 'failure']);
 export type SetKind = z.infer<typeof SetKindSchema>;
+
+// ─── V1 ───────────────────────────────────────────────────────────────────────
 
 export const ExerciseSetV1Schema = z.object({
   v: z.literal(1),
@@ -21,5 +24,44 @@ export const ExerciseSetV1Schema = z.object({
 
 export type ExerciseSetV1 = z.infer<typeof ExerciseSetV1Schema>;
 
-export const ExerciseSetSchema = ExerciseSetV1Schema;
-export type ExerciseSet = ExerciseSetV1;
+// ─── V2: planned vs actual (override tracking) ───────────────────────────────
+// plannedWeightKg / plannedReps = snapshot at session start
+// weightKg / reps = actual values (user override during session)
+
+export const ExerciseSetV2Schema = ExerciseSetV1Schema.extend({
+  v: z.literal(2),
+  plannedWeightKg: z.number().nonnegative().optional(),
+  plannedReps: z.number().int().nonnegative().optional(),
+  substitutedFrom: z.string().optional(),
+});
+
+export type ExerciseSetV2 = z.infer<typeof ExerciseSetV2Schema>;
+
+// ─── Union ────────────────────────────────────────────────────────────────────
+
+export const ExerciseSetSchema = z.discriminatedUnion('v', [
+  ExerciseSetV1Schema,
+  ExerciseSetV2Schema,
+]);
+export type ExerciseSet = z.infer<typeof ExerciseSetSchema>;
+
+export const EXERCISE_SET_LATEST_VERSION = 2;
+export type ExerciseSetLatest = ExerciseSetV2;
+
+// ─── Migrations ───────────────────────────────────────────────────────────────
+
+const migrations = {
+  1: (data: ExerciseSetV1): ExerciseSetV2 => ({
+    ...data,
+    v: 2,
+    // Copy actual values as planned snapshot for retro-compat
+    plannedWeightKg: data.weightKg,
+    plannedReps: data.reps,
+  }),
+};
+
+export const migrateExerciseSet = createMigrator<ExerciseSet, ExerciseSetLatest>(
+  ExerciseSetSchema,
+  migrations,
+  EXERCISE_SET_LATEST_VERSION,
+);

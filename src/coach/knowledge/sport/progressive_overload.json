@@ -1,0 +1,25 @@
+{
+  "v": 1,
+  "id": "sport.progressive_overload",
+  "domain": "sport",
+  "topic": "Progression de charge et surcharge progressive",
+  "summary": "Les débutants peuvent progresser de ~2.5% par semaine sur les charges, les intermédiaires ~1%/semaine et les avancés ~0.5%/mois. Une stagnation sur 3+ semaines sans modification du programme indique un plateau nécessitant une variation (charge, volume, ou exercice). La progression est le signal primaire de l'adaptation.",
+  "thresholds": [
+    { "metric": "load_progression_pct_per_week", "op": "between", "value": [1, 5], "label": "Progression débutant saine", "severity": "good" },
+    { "metric": "load_progression_pct_per_week", "op": "between", "value": [0.5, 2], "label": "Progression intermédiaire saine", "severity": "good" },
+    { "metric": "stagnation_weeks", "op": "gt", "value": 3, "label": "Plateau — intervention requise", "severity": "warn" }
+  ],
+  "references": [
+    {
+      "citation": "Helms ER, Cronin J, Storey A, Zourdos MC. Application of the Repetitions in Reserve-Based Rating of Perceived Exertion Scale for Resistance Training. Strength Cond J. 2016",
+      "doi": "10.1519/SSC.0000000000000218",
+      "year": 2016
+    },
+    {
+      "citation": "Helms ER, et al. RPE and velocity relationships for the back squat, bench press, and deadlift in powerlifters. J Strength Cond Res. 2017",
+      "doi": "10.1519/JSC.0000000000001937",
+      "year": 2017
+    }
+  ],
+  "derivedRules": ["sport.stagnation_charge", "sport.deload_due"]
+}

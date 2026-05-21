@@ -1,0 +1,26 @@
+{
+  "v": 1,
+  "id": "sport.volume.hypertrophy",
+  "domain": "sport",
+  "topic": "Volume hebdomadaire pour l'hypertrophie",
+  "summary": "Le volume hebdomadaire par groupe musculaire est le principal déterminant de l'hypertrophie. Un minimum de 10 séries par semaine (MEV) est requis, avec 10-20 sets comme zone optimale (MAV). Au-delà de 20 sets (MRV), la récupération devient insuffisante pour la plupart des pratiquants.",
+  "thresholds": [
+    { "metric": "weekly_sets_per_muscle", "op": "lt", "value": 5, "label": "Sous le MEV — stimulus insuffisant", "severity": "alert" },
+    { "metric": "weekly_sets_per_muscle", "op": "between", "value": [5, 9], "label": "Volume minimal efficace", "severity": "warn" },
+    { "metric": "weekly_sets_per_muscle", "op": "between", "value": [10, 20], "label": "Zone MAV optimale", "severity": "good" },
+    { "metric": "weekly_sets_per_muscle", "op": "gt", "value": 20, "label": "Au-delà du MRV — risque de sous-récupération", "severity": "warn" }
+  ],
+  "references": [
+    {
+      "citation": "Schoenfeld BJ, Ogborn D, Krieger JW. Dose-response relationship between weekly resistance training volume and increases in muscle mass. J Strength Cond Res. 2017",
+      "doi": "10.1519/JSC.0000000000001974",
+      "year": 2017
+    },
+    {
+      "citation": "Krieger JW. Single vs. multiple sets of resistance exercise for muscle hypertrophy: a meta-analysis. J Strength Cond Res. 2010",
+      "doi": "10.1519/JSC.0b013e3181d3d090",
+      "year": 2010
+    }
+  ],
+  "derivedRules": ["sport.insufficient_frequency", "sport.stagnation_charge"]
+}

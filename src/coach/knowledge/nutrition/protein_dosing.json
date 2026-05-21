@@ -1,0 +1,27 @@
+{
+  "v": 1,
+  "id": "nutrition.protein.dosing",
+  "domain": "nutrition",
+  "topic": "Apport protéique pour la composition corporelle",
+  "summary": "Un apport de 1.6-2.2g de protéines par kg de poids corporel par jour maximise la synthèse protéique musculaire pour les pratiquants de musculation. En déficit calorique, 2.2-3.1g/kg est recommandé pour préserver la masse maigre. Au-delà de 2.2g/kg en surplus, le bénéfice supplémentaire est faible.",
+  "thresholds": [
+    { "metric": "protein_g_per_kg", "op": "lt", "value": 1.2, "label": "Apport insuffisant — catabolisme possible", "severity": "alert" },
+    { "metric": "protein_g_per_kg", "op": "between", "value": [1.6, 2.2], "label": "Zone optimale hypertrophie", "severity": "good" },
+    { "metric": "protein_g_per_kg", "op": "between", "value": [2.2, 3.1], "label": "Zone optimale déficit calorique", "severity": "good" },
+    { "metric": "protein_g_per_kg", "op": "gt", "value": 3.5, "label": "Apport très élevé — bénéfice marginal", "severity": "info" }
+  ],
+  "references": [
+    {
+      "citation": "Morton RW, et al. A systematic review, meta-analysis and meta-regression of the effect of protein supplementation on resistance training-induced gains in muscle mass and strength in healthy adults. Br J Sports Med. 2018",
+      "doi": "10.1136/bjsports-2017-097608",
+      "pmcUrl": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5867436/",
+      "year": 2018
+    },
+    {
+      "citation": "Helms ER, Zinn C, Rowlands DS, Brown SR. A systematic review of dietary protein during caloric restriction in resistance trained lean athletes: a case for higher intakes. Int J Sport Nutr Exerc Metab. 2014",
+      "doi": "10.1123/ijsnem.2013-0054",
+      "year": 2014
+    }
+  ],
+  "derivedRules": ["nutrition.protein_low", "nutrition.proteines_faibles", "nutrition.periworkout_protein"]
+}

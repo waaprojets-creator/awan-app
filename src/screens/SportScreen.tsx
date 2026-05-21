@@ -51,7 +51,7 @@ import {
  type WorkoutSessionLatest,
  type CycleLetter,
 } from '../data/schemas/sport/routine';
-import type { ExerciseSetV1, SetKind } from '../data/schemas/sport/exerciseSet';
+import type { ExerciseSetLatest, SetKind } from '../data/schemas/sport/exerciseSet';
 import { WorkoutListView } from '../modules/sport/components/WorkoutListView';
 import { RoutineGeneratorView } from '../modules/sport/components/RoutineGeneratorView';
 import { cacheForRoutine } from '../services/mediaCacheService';
@@ -262,10 +262,14 @@ export default function SportScreen() {
  const lastWorkingSet = lastExerciseLog?.sets
  .filter(s => s.kind === 'working')
  .slice(-1)[0];
+ const plannedWeightKg = re.plannedWeightKg ?? undefined;
+ const plannedReps = re.plannedReps;
  const sets: ActiveSet[] = Array.from({ length: re.plannedSets }, (_, i) => ({
  kind: 'working' as SetKind,
- weightKg: lastWorkingSet?.weightKg ?? re.plannedWeightKg ?? undefined,
- reps: lastWorkingSet?.reps ?? re.plannedReps,
+ weightKg: lastWorkingSet?.weightKg ?? plannedWeightKg,
+ reps: lastWorkingSet?.reps ?? plannedReps,
+ plannedWeightKg,
+ plannedReps,
  rir: undefined,
  completed: false,
  index: i,
@@ -275,6 +279,7 @@ export default function SportScreen() {
  exerciseId: re.exerciseId,
  name: re.name,
  primaryMuscle: re.primaryMuscle,
+ secondaryMuscles: re.secondaryMuscles,
  equipment: re.equipment,
  order: idx,
  restSec: re.restSec,
@@ -314,16 +319,19 @@ export default function SportScreen() {
  exerciseId: ex.exerciseId,
  name: ex.name,
  primaryMuscle: ex.primaryMuscle,
+ secondaryMuscles: ex.secondaryMuscles,
  equipment: ex.equipment,
  order: ex.order,
  sets: ex.sets
  .filter(s => s.completed)
- .map<ExerciseSetV1>(s => ({
- v: 1,
+ .map<ExerciseSetLatest>(s => ({
+ v: 2,
  exerciseId: ex.exerciseId,
  kind: s.kind,
  reps: s.reps,
  weightKg: s.weightKg,
+ plannedWeightKg: s.plannedWeightKg,
+ plannedReps: s.plannedReps,
  rir: s.rir,
  restActualSec: s.restActualSec,
  note: s.note,
@@ -736,6 +744,8 @@ interface ActiveSet {
  kind: SetKind;
  weightKg?: number | undefined;
  reps?: number | undefined;
+ plannedWeightKg?: number | undefined;
+ plannedReps?: number | undefined;
  rir?: number | undefined;
  restActualSec?: number | undefined;
  note?: string | undefined;
@@ -751,6 +761,7 @@ interface ActiveExercise {
  exerciseId: string;
  name: string;
  primaryMuscle?: string | undefined;
+ secondaryMuscles?: string[] | undefined;
  equipment?: string | undefined;
  order: number;
  restSec: number;
@@ -834,6 +845,7 @@ function RoutineEditor({
  exerciseId: ex.id,
  name: ex.n,
  primaryMuscle: ex.pm[0],
+ secondaryMuscles: ex.sm,
  equipment: ex.eq,
  plannedSets: DEFAULT_PLANNED_SETS,
  plannedReps: DEFAULT_PLANNED_REPS,

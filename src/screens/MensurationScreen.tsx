@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { View, ScrollView, TextInput as RNTextInput, Alert } from 'react-native';
 
 const TextInput = RNTextInput as React.ComponentType<any>;
@@ -7,17 +7,42 @@ import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
 import { ds, uid } from '../utils/storage';
 import { BiometricsService } from '../services/biometricsService';
+import { analyzeSymmetry, asymmetryToHeatmapValue } from '../services/symmetryService';
 import { safeStorage } from '../utils/safeStorage';
 import { useWeightStore } from '../hooks/useWeightStore';
 import { useMeasurementStore } from '../hooks/useMeasurementStore';
 import { BodyMeasureSvg, BODY_MEASURES } from '../components/BodyMeasureSvg';
-import { ChevronLeft, ChevronRight, Target, Plus, X, Database } from 'lucide-react';
+import { BodySvg } from '../components/BodySvg';
+import type { MuscleId } from '../components/BodySvg';
+import { Planner } from '../modules/planning/api';
+import { getStorage } from '../data/storage/storageService';
+import { ChevronLeft, ChevronRight, Target, Plus, X, Database, AlertTriangle } from 'lucide-react';
 import { PageWrapper } from '../components/Animated';
 import { DailyCanvas } from '../components/DailyCanvas';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
+
+// ISAK Level 1 skinfold sites (bilateral where applicable)
+const SKINFOLD_SITES = [
+  { key: 'triceps',         label: 'Triceps',        bilateral: true },
+  { key: 'subscapular',     label: 'Sous-scapulaire', bilateral: false },
+  { key: 'biceps',          label: 'Biceps',          bilateral: false },
+  { key: 'suprailiac',      label: 'Supra-iliaque',   bilateral: false },
+  { key: 'supraspinal',     label: 'Supra-épineux',   bilateral: false },
+  { key: 'abdominal',       label: 'Abdominal',       bilateral: false },
+  { key: 'thigh_anterior',  label: 'Cuisse antérieure', bilateral: false },
+  { key: 'calf_medial',     label: 'Mollet médial',    bilateral: false },
+] as const;
+
+// Bilateral circumference pairs
+const BILATERAL_MEASURES = [
+  { base: 'arm',     label: 'BRAS',      leftKey: 'arm_left',     rightKey: 'arm_right' },
+  { base: 'forearm', label: 'AVANT-BRAS', leftKey: 'forearm_left', rightKey: 'forearm_right' },
+  { base: 'thigh',   label: 'CUISSE',    leftKey: 'thigh_left',   rightKey: 'thigh_right' },
+  { base: 'calf',    label: 'MOLLET',    leftKey: 'calf_left',    rightKey: 'calf_right' },
+] as const;
 
 export default function MensurationScreen() {
   const { navigate } = useAppState() as any;
@@ -31,6 +56,41 @@ export default function MensurationScreen() {
   const [inputValue, setInputValue] = useState('');
   const [gender, setGender] = useState('man');
   const [age, setAge] = useState('30');
+
+  // A7: profile completeness check
+  const profileIncomplete = useMemo(() => {
+    try {
+      const raw = safeStorage.get('awan.nutrition.profile');
+      if (!raw) return true;
+      const p = JSON.parse(raw) as Record<string, unknown>;
+      return !p.heightCm || !p.age || !p.gender;
+    } catch { return true; }
+  }, []);
+
+  // A6: create recurring anthropo planning tasks (idempotent)
+  useEffect(() => {
+    getStorage().then(storage => {
+      const planner = new Planner(storage);
+      void planner.createSystemTask({
+        id: 'anthropo.biweekly',
+        title: 'Mesures bimensuelles',
+        domain: 'anthropo',
+        durationMin: 15,
+        recurringDays: 14,
+        priority: 1,
+        energyLevel: 'low',
+      });
+      void planner.createSystemTask({
+        id: 'anthropo.quarterly',
+        title: 'Bilan trimestriel complet',
+        domain: 'anthropo',
+        durationMin: 45,
+        recurringDays: 90,
+        priority: 2,
+        energyLevel: 'low',
+      });
+    });
+  }, []);
 
   // Date navigation
   const todayStr = ds(new Date());
@@ -260,9 +320,23 @@ export default function MensurationScreen() {
     newEntry.skinfolds = { ...newEntry.skinfolds, [site]: isNaN(v) ? 0 : v };
     const s = newEntry.skinfolds;
     const a = parseInt(age);
-    const bf = gender === 'man'
-      ? BiometricsService.jacksonPollock3Men(s['chest'] ?? 0, s['abdomen'] ?? 0, s['thigh'] ?? 0, a)
-      : BiometricsService.jacksonPollock3Women(s['triceps'] ?? 0, s['suprailiac'] ?? 0, s['thigh'] ?? 0, a);
+    const sex = gender === 'man' ? 'male' as const : 'female' as const;
+
+    // Try JP7 first (all 7 sites available), fallback to JP3
+    const jp7Sites = ['chest', 'midaxilla', 'triceps', 'subscapular', 'abdominal', 'suprailiac', 'thigh_anterior'];
+    const hasAllJP7 = jp7Sites.every(k => (s[k] ?? 0) > 0);
+    let bf: number;
+    if (hasAllJP7) {
+      bf = BiometricsService.jacksonPollock7(
+        s['chest'] ?? 0, s['midaxilla'] ?? 0, s['triceps'] ?? 0,
+        s['subscapular'] ?? 0, s['abdominal'] ?? 0, s['suprailiac'] ?? 0,
+        s['thigh_anterior'] ?? 0, a, sex,
+      );
+    } else if (sex === 'male') {
+      bf = BiometricsService.jacksonPollock3Men(s['chest'] ?? 0, s['abdominal'] ?? 0, s['thigh_anterior'] ?? 0, a);
+    } else {
+      bf = BiometricsService.jacksonPollock3Women(s['triceps'] ?? 0, s['suprailiac'] ?? 0, s['thigh_anterior'] ?? 0, a);
+    }
     newEntry.body_fat_pct = parseFloat(bf.toFixed(2));
     setCurrentEntry(newEntry);
     persistEntry(newEntry);
@@ -273,6 +347,19 @@ export default function MensurationScreen() {
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
       <div className="px-6 pt-4 pb-2">
         <ScreenHeader tag="BODY · MENSURATION" title="DÉTAILS PHYSIQUES" />
+        {/* A7: Non-blocking profile alert */}
+        {profileIncomplete && (
+          <Touch
+            onPress={() => navigate?.('settings')}
+            className="flex flex-row items-center gap-3 mt-3 px-4 py-3 border"
+            style={{ borderColor: 'var(--color-awan-status-warn)', backgroundColor: 'var(--color-awan-status-warn)14' }}
+          >
+            <AlertTriangle size={14} style={{ color: 'var(--color-awan-status-warn)' }} />
+            <span className="text-awan-xs font-black tracking-widest uppercase flex-1" style={{ color: 'var(--color-awan-status-warn)' }}>
+              PROFIL INITIAL À COMPLÉTER →
+            </span>
+          </Touch>
+        )}
       </div>
       
       <div className="flex flex-row justify-between bg-awan-surface p-5  border border-white/5 shadow-inner mx-6 mb-6">
@@ -687,6 +774,149 @@ export default function MensurationScreen() {
                 );
               })}
             </div>
+          </div>
+
+          {/* A1 — Mesures bilatérales L/R */}
+          <div className="mb-10">
+            <Heading level={4} mono subtitle="Symétrie musculaire G/D" className="mb-6">MESURES BILATÉRALES</Heading>
+            {(() => {
+              const symmetryResults = analyzeSymmetry(currentEntry.measurements);
+              const heatmapValues: Partial<Record<MuscleId, number>> = {};
+              for (const r of symmetryResults) {
+                const id = r.muscleKey as MuscleId;
+                heatmapValues[id] = asymmetryToHeatmapValue(r.diffPct);
+              }
+              const hasAsymmetry = symmetryResults.some(r => r.asymmetric);
+              return (
+                <>
+                  {hasAsymmetry && (
+                    <div className="mb-4 px-4 py-3 border flex flex-row items-center gap-3"
+                      style={{ borderColor: 'var(--color-awan-status-warn)', backgroundColor: 'var(--color-awan-status-warn)14' }}>
+                      <AlertTriangle size={14} style={{ color: 'var(--color-awan-status-warn)' }} />
+                      <span className="text-awan-xs font-black tracking-widest uppercase" style={{ color: 'var(--color-awan-status-warn)' }}>
+                        ASYMÉTRIE DÉTECTÉE (&gt;5%)
+                      </span>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    {BILATERAL_MEASURES.map(({ base, label, leftKey, rightKey }) => {
+                      const lVal = currentEntry.measurements[leftKey] ?? 0;
+                      const rVal = currentEntry.measurements[rightKey] ?? 0;
+                      const result = symmetryResults.find(r => r.muscleKey === base);
+                      const warn = result?.asymmetric;
+                      return (
+                        <Card key={base} className="p-4 bg-white/3 border-white/5" variant="flat"
+                          style={warn ? { borderColor: 'var(--color-awan-status-warn)' } : {}}>
+                          <span className="text-awan-xs font-black tracking-widest uppercase mb-3 block"
+                            style={{ color: warn ? 'var(--color-awan-status-warn)' : 'var(--color-awan-gold)' }}>
+                            {label} {warn && '⚠'}
+                          </span>
+                          <div className="flex flex-row gap-3">
+                            <div className="flex-1">
+                              <span className="text-awan-xxs font-black text-awan-tx-mute tracking-widest block mb-1">GAUCHE</span>
+                              <TextInput
+                                className="text-xl font-black font-mono text-awan-tx outline-none w-full"
+                                keyboardType="decimal-pad"
+                                placeholder="--"
+                                placeholderTextColor="rgba(255,255,255,0.15)"
+                                value={lVal > 0 ? String(lVal) : ''}
+                                onChangeText={(v: string) => {
+                                  const n = parseFloat(v);
+                                  const newEntry = { ...currentEntry };
+                                  newEntry.measurements = { ...newEntry.measurements, [leftKey]: isNaN(n) ? 0 : n };
+                                  setCurrentEntry(newEntry);
+                                  persistEntry(newEntry);
+                                }}
+                              />
+                            </div>
+                            <div className="w-px bg-white/5" />
+                            <div className="flex-1">
+                              <span className="text-awan-xxs font-black text-awan-tx-mute tracking-widest block mb-1">DROITE</span>
+                              <TextInput
+                                className="text-xl font-black font-mono text-awan-tx outline-none w-full"
+                                keyboardType="decimal-pad"
+                                placeholder="--"
+                                placeholderTextColor="rgba(255,255,255,0.15)"
+                                value={rVal > 0 ? String(rVal) : ''}
+                                onChangeText={(v: string) => {
+                                  const n = parseFloat(v);
+                                  const newEntry = { ...currentEntry };
+                                  newEntry.measurements = { ...newEntry.measurements, [rightKey]: isNaN(n) ? 0 : n };
+                                  setCurrentEntry(newEntry);
+                                  persistEntry(newEntry);
+                                }}
+                              />
+                            </div>
+                          </div>
+                          {result && lVal > 0 && rVal > 0 && (
+                            <div className="mt-2 pt-2 border-t border-white/5">
+                              <span className="text-awan-xxs font-black tracking-widest"
+                                style={{ color: warn ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-ok)' }}>
+                                Δ {result.diffPct.toFixed(1)}%
+                              </span>
+                            </div>
+                          )}
+                        </Card>
+                      );
+                    })}
+                  </div>
+                  {hasAsymmetry && (
+                    <div className="mt-4" style={{ maxWidth: 280, margin: '0 auto' }}>
+                      <BodySvg mode="heatmap" muscleValues={heatmapValues} />
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+
+          {/* A2 — Plis cutanés ISAK (caliper requis) */}
+          <div className="mb-10">
+            <Heading level={4} mono subtitle="Caliper requis (~25–50€)" className="mb-4">PLIS CUTANÉS ISAK</Heading>
+            <div className="mb-4 px-4 py-3 border border-white/10 bg-white/3">
+              <span className="text-awan-xs text-awan-tx-mute leading-relaxed">
+                Saisir les plis en mm. Le % masse grasse est calculé automatiquement (JP7 avec 7 sites, JP3 sinon). Mesurer systématiquement du côté droit, à jeun.
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {SKINFOLD_SITES.map(({ key, label }) => {
+                const val = currentEntry.skinfolds[key] ?? 0;
+                return (
+                  <Card key={key} className="p-4 bg-white/3 border-white/5" variant="flat">
+                    <span className="text-awan-xxs font-black text-awan-gold tracking-widest uppercase block mb-2">{label}</span>
+                    <div className="flex flex-row items-baseline gap-2">
+                      <TextInput
+                        className="text-2xl font-black font-mono text-awan-tx outline-none flex-1"
+                        keyboardType="decimal-pad"
+                        placeholder="0.0"
+                        placeholderTextColor="rgba(255,255,255,0.12)"
+                        value={val > 0 ? String(val) : ''}
+                        onChangeText={(v: string) => updateSkinfold(key, v)}
+                      />
+                      <span className="text-awan-xs font-black text-awan-tx-mute font-mono">mm</span>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+            {currentEntry.body_fat_pct > 0 && (
+              <Card className="mt-4 p-4 border-awan-gold/30 bg-awan-gold/5" variant="flat">
+                <span className="text-awan-xs font-black text-awan-gold tracking-widest uppercase block mb-1">
+                  % MASSE GRASSE ESTIMÉE
+                </span>
+                <span className="text-3xl font-black font-mono text-awan-gold">
+                  {currentEntry.body_fat_pct.toFixed(1)}
+                  <span className="text-sm ml-1 text-awan-tx-mute">%</span>
+                </span>
+                <span className="text-awan-xxs text-awan-tx-mute block mt-1 uppercase tracking-widest">
+                  {(() => {
+                    const jp7Sites = ['chest', 'midaxilla', 'triceps', 'subscapular', 'abdominal', 'suprailiac', 'thigh_anterior'];
+                    const has7 = jp7Sites.every(k => (currentEntry.skinfolds[k] ?? 0) > 0);
+                    return has7 ? 'Jackson-Pollock 7 sites' : 'Jackson-Pollock 3 sites';
+                  })()}
+                </span>
+              </Card>
+            )}
           </div>
 
           <div className="mb-10">
