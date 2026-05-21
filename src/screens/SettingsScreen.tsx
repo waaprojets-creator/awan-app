@@ -167,7 +167,7 @@ export default function SettingsScreen() {
          </span>
          <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">{meta.desc}</span>
        </div>
-       <span className={`text-base font-black font-mono ${active ? 'text-awan-gold' : 'text-white/20'}`}>
+       <span className={`text-base font-black font-mono ${active ? 'text-awan-gold' : 'text-white/40'}`}>
          {active ? SYMBOLS.diamondFilled : SYMBOLS.diamondOutline}
        </span>
      </Touch>

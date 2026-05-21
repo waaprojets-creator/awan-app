@@ -97,7 +97,7 @@ export default function JournalScreen() {
            <Touch className="w-8 h-8 items-center justify-center">
               <ChevronLeft size={16} className="text-white/20" />
            </Touch>
-           <div className="items-center">
+           <div className="flex flex-col items-center">
               <span className="text-2xl font-mono font-black text-awan-tx tracking-tight tabular-nums">{selectedDate}</span>
               <span className="text-awan-sm font-black text-awan-gold tracking-[0.4em] uppercase mt-1">SÉQUENCE OPÉRATIVE</span>
            </div>
