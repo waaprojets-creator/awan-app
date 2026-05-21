@@ -54,6 +54,7 @@ import { WaterService } from '../services/waterService';
 import { buildWeeklyNutritionReport, reportDiagnostic } from '../services/weeklyNutritionReport';
 import type { WeeklyNutritionReport } from '../services/weeklyNutritionReport';
 import { buildNutritionExport } from '../services/nutritionExportService';
+import { estimateAdaptiveTDEE } from '../services/tdeeAdaptiveService';
 
 // ─── Nutrition Profile (TDEE) ─────────────────────────────────────────────────
 
@@ -1011,11 +1012,28 @@ export default function NutritionScreen() {
  const [editEntry, setEditEntry] = useState<MealEntryLatest | null>(null);
  const [activeTab, setActiveTab] = useState<'journal' | 'bilan'>('journal');
  const [weeklyReport, setWeeklyReport] = useState<WeeklyNutritionReport | null>(null);
+ const [adaptiveTDEE, setAdaptiveTDEE] = useState<{ estimatedTDEE: number; confidence: string; observationDays: number } | null>(null);
 
  useEffect(() => {
    if (activeTab !== 'bilan') return;
    const targets = profile ? { targetKcal: profile.targetKcal, targetP: profile.targetP } : null;
-   buildWeeklyNutritionReport(targets).then(setWeeklyReport).catch(() => {});
+   buildWeeklyNutritionReport(targets).then(report => {
+     setWeeklyReport(report);
+     if (!profile) return;
+     // N3: compute adaptive TDEE from weight history + caloric intake
+     import('@/services/weightService').then(({ WeightService }) =>
+       WeightService.getAll().then(allWeights => {
+         const weightHistory = allWeights
+           .filter(w => w.date && w.weightKg > 0)
+           .map(w => ({ date: w.date, weightKg: w.weightKg }));
+         const intakeHistory = report.days
+           .filter(d => d.kcal > 0)
+           .map(d => ({ date: d.date, kcal: d.kcal }));
+         const result = estimateAdaptiveTDEE(weightHistory, intakeHistory, profile.targetKcal);
+         setAdaptiveTDEE(result);
+       })
+     );
+   }).catch(() => {});
  }, [activeTab, profile, selectedDate]);
 
  const openAddMeal = useCallback(async () => {
@@ -1252,6 +1270,30 @@ export default function NutritionScreen() {
        <span className="text-2xl font-mono font-bold" style={{ color: weeklyReport.avgFiberG >= 20 ? 'var(--color-awan-status-ok)' : 'var(--color-awan-status-warn)' }}>{weeklyReport.avgFiberG}g</span>
      </Card>
    </div>
+   {adaptiveTDEE && (
+     <Card className="p-4 bg-awan-gold/5 border-awan-gold/20 mb-4">
+       <span className="awan-label text-awan-gold mb-1 block">TDEE ADAPTATIF ({adaptiveTDEE.observationDays}j)</span>
+       <div className="flex flex-row items-baseline gap-2">
+         <span className="text-3xl font-mono font-bold text-awan-tx">{adaptiveTDEE.estimatedTDEE}</span>
+         <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest">kcal/j · confiance {adaptiveTDEE.confidence}</span>
+       </div>
+       {profile && Math.abs(adaptiveTDEE.estimatedTDEE - profile.targetKcal) > 100 && (
+         <Touch
+           onPress={() => {
+             const diff = adaptiveTDEE.estimatedTDEE - profile.targetKcal;
+             const newProfile = { ...profile, targetKcal: adaptiveTDEE.estimatedTDEE };
+             saveProfile(newProfile);
+             setProfile(newProfile);
+           }}
+           className="mt-3 h-10 bg-awan-gold flex items-center justify-center"
+         >
+           <span className="text-awan-xs font-black text-black uppercase tracking-widest">
+             APPLIQUER {adaptiveTDEE.estimatedTDEE > profile.targetKcal ? '+' : ''}{adaptiveTDEE.estimatedTDEE - profile.targetKcal} KCAL
+           </span>
+         </Touch>
+       )}
+     </Card>
+   )}
    <Heading level={4} mono subtitle={`${weeklyReport.periodStart} → ${weeklyReport.periodEnd}`} className="mb-3">7 DERNIERS JOURS</Heading>
    {weeklyReport.days.map(day => (
      <div key={day.date} className="flex flex-row items-center justify-between py-2 border-b border-white/5">
