@@ -20,6 +20,8 @@ import {
  Pencil,
  ChevronLeft,
  ChevronRight,
+ Download,
+ BarChart2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PageWrapper } from '../components/Animated';
@@ -49,6 +51,9 @@ import type {
 } from '../data/schemas/nutrition/mealEntry';
 import { MEAL_TYPE_TO_SLOT } from '../data/schemas/nutrition/mealEntry';
 import { WaterService } from '../services/waterService';
+import { buildWeeklyNutritionReport, reportDiagnostic } from '../services/weeklyNutritionReport';
+import type { WeeklyNutritionReport } from '../services/weeklyNutritionReport';
+import { buildNutritionExport } from '../services/nutritionExportService';
 
 // ─── Nutrition Profile (TDEE) ─────────────────────────────────────────────────
 
@@ -947,6 +952,14 @@ export default function NutritionScreen() {
  }, [profile, selectedDate]);
  const [showAdd, setShowAdd] = useState(false);
  const [editEntry, setEditEntry] = useState<MealEntryLatest | null>(null);
+ const [activeTab, setActiveTab] = useState<'journal' | 'bilan'>('journal');
+ const [weeklyReport, setWeeklyReport] = useState<WeeklyNutritionReport | null>(null);
+
+ useEffect(() => {
+   if (activeTab !== 'bilan') return;
+   const targets = profile ? { targetKcal: profile.targetKcal, targetP: profile.targetP } : null;
+   buildWeeklyNutritionReport(targets).then(setWeeklyReport).catch(() => {});
+ }, [activeTab, profile, selectedDate]);
 
  const openAddMeal = useCallback(async () => {
  if (!foodsLoadedRef.current) {
@@ -1117,8 +1130,88 @@ export default function NutritionScreen() {
  >
  <div className="px-6 pt-4 pb-4">
  <ScreenHeader tag="BODY · NUTRITION" title="NUTRITION" />
+ <div className="flex flex-row gap-2 mt-4">
+   {(['journal', 'bilan'] as const).map(tab => (
+     <Touch
+       key={tab}
+       onPress={() => setActiveTab(tab)}
+       className={`flex-1 h-10 border flex items-center justify-center gap-2 ${activeTab === tab ? 'bg-awan-gold/15 border-awan-gold' : 'bg-white/5 border-white/5'}`}
+     >
+       {tab === 'bilan' && <BarChart2 size={12} className={activeTab === tab ? 'text-awan-gold' : 'text-awan-tx-mute'} />}
+       <span className={`text-awan-xs font-black uppercase tracking-widest ${activeTab === tab ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
+         {tab === 'journal' ? 'JOURNAL' : 'BILAN 7J'}
+       </span>
+     </Touch>
+   ))}
+   <Touch
+     onPress={async () => {
+       const json = await buildNutritionExport();
+       try { await navigator.clipboard.writeText(json); } catch { /* ignore */ }
+       const blob = new Blob([json], { type: 'application/json' });
+       const url = URL.createObjectURL(blob);
+       const a = document.createElement('a');
+       const today = new Date().toISOString().slice(0, 10);
+       a.href = url; a.download = `awan-nutrition-${today}.json`; a.click();
+       URL.revokeObjectURL(url);
+     }}
+     className="w-10 h-10 border border-white/5 bg-white/5 flex items-center justify-center"
+   >
+     <Download size={14} className="text-awan-tx-mute" />
+   </Touch>
+ </div>
  </div>
 
+ {activeTab === 'bilan' && weeklyReport && (
+ <div className="px-6 mb-6">
+   <Card className="p-5 bg-white/5 border-white/5 mb-4">
+     <span className="awan-label text-awan-gold mb-1 block">DIAGNOSTIC</span>
+     <span className="text-awan-sm font-bold text-awan-tx">{reportDiagnostic(weeklyReport)}</span>
+   </Card>
+   <div className="grid grid-cols-2 gap-3 mb-4">
+     <Card className="p-4 bg-white/5">
+       <span className="awan-label mb-1 block">KCAL MOY/J</span>
+       <span className="text-2xl font-mono font-bold text-awan-gold">{weeklyReport.avgKcal}</span>
+       {weeklyReport.kcalAdherence !== null && (
+         <span className="text-awan-xs font-mono font-bold" style={{ color: weeklyReport.kcalAdherence >= 0.85 && weeklyReport.kcalAdherence <= 1.15 ? 'var(--color-awan-status-ok)' : 'var(--color-awan-status-warn)' }}>
+           {Math.round(weeklyReport.kcalAdherence * 100)}% cible
+         </span>
+       )}
+     </Card>
+     <Card className="p-4 bg-white/5">
+       <span className="awan-label mb-1 block">PROTÉINES MOY</span>
+       <span className="text-2xl font-mono font-bold text-awan-gold">{weeklyReport.avgP}g</span>
+       {weeklyReport.proteinAdherence !== null && (
+         <span className="text-awan-xs font-mono font-bold" style={{ color: weeklyReport.proteinAdherence >= 0.8 ? 'var(--color-awan-status-ok)' : 'var(--color-awan-status-error)' }}>
+           {Math.round(weeklyReport.proteinAdherence * 100)}% cible
+         </span>
+       )}
+     </Card>
+     <Card className="p-4 bg-white/5">
+       <span className="awan-label mb-1 block">GLUCIDES MOY</span>
+       <span className="text-2xl font-mono font-bold text-awan-tx">{weeklyReport.avgC}g</span>
+     </Card>
+     <Card className="p-4 bg-white/5">
+       <span className="awan-label mb-1 block">FIBRES MOY</span>
+       <span className="text-2xl font-mono font-bold" style={{ color: weeklyReport.avgFiberG >= 20 ? 'var(--color-awan-status-ok)' : 'var(--color-awan-status-warn)' }}>{weeklyReport.avgFiberG}g</span>
+     </Card>
+   </div>
+   <Heading level={4} mono subtitle={`${weeklyReport.periodStart} → ${weeklyReport.periodEnd}`} className="mb-3">7 DERNIERS JOURS</Heading>
+   {weeklyReport.days.map(day => (
+     <div key={day.date} className="flex flex-row items-center justify-between py-2 border-b border-white/5">
+       <span className="text-awan-xs font-mono text-awan-tx-mute w-24">{day.date}</span>
+       <span className="text-awan-xs font-mono text-awan-gold">{day.kcal > 0 ? `${day.kcal} kcal` : '—'}</span>
+       <span className="text-awan-xs font-mono text-awan-tx-mute">{day.p > 0 ? `P ${day.p}g` : ''}</span>
+     </div>
+   ))}
+ </div>
+ )}
+ {activeTab === 'bilan' && !weeklyReport && (
+ <div className="px-6 py-20 flex items-center justify-center">
+   <span className="awan-label text-awan-tx-mute">CHARGEMENT...</span>
+ </div>
+ )}
+
+ {activeTab === 'journal' && <>
  {/* Day Selector */}
  <div className="px-6 mb-6">
  <Card className="p-0 bg-white/5 border-white/5" variant="flat">
@@ -1473,6 +1566,7 @@ export default function NutritionScreen() {
  </div>
  </Card>
  </div>
+ </>}
  </ScrollView>
 
  <AddMealModal
