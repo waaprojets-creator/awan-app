@@ -10,12 +10,14 @@ import type { Domain, RuleLatest } from '@/data/schemas/coach/rule';
 
 import { runEngine } from './engine';
 import { loadDefaultRules } from './rulesLoader';
+import { loadDefaultForecastGenerators, type ForecastGenerator } from './forecasts';
 import type { CoachContext, SourceResolver } from './types';
 
 export interface CoachOptions {
   storage: IStorage;
   rules?: RuleLatest[];
   resolveSource?: SourceResolver;
+  forecastGenerators?: ForecastGenerator[];
 }
 
 const ALL_DOMAINS: Domain[] = ['sport', 'nutrition', 'anthropo', 'sleep', 'cross'];
@@ -46,12 +48,14 @@ export class Coach {
   private readonly storage: IStorage;
   private readonly rules: RuleLatest[];
   private readonly resolveSource: SourceResolver;
+  private readonly forecastGenerators: ForecastGenerator[];
   private unsubscribers: Array<() => void> = [];
 
   constructor(opts: CoachOptions) {
     this.storage = opts.storage;
     this.rules = opts.rules ?? loadDefaultRules();
     this.resolveSource = opts.resolveSource ?? defaultResolver();
+    this.forecastGenerators = opts.forecastGenerators ?? loadDefaultForecastGenerators();
   }
 
   /** Run engine for one domain on a given date and persist the assessment. */
@@ -61,7 +65,7 @@ export class Coach {
       resolveSource: this.resolveSource,
       date,
     };
-    const assessment = await runEngine(domain, this.rules, ctx);
+    const assessment = await runEngine(domain, this.rules, ctx, this.forecastGenerators);
     await this.storage.set(assessmentKey(date, domain), assessment);
     eventBus.emit('coach.assessment.ready', { domain, date });
     return assessment;

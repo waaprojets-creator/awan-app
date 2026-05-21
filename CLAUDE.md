@@ -1,5 +1,11 @@
 # AWAN — Règles permanentes Claude Code
 
+## Genèse — devise immuable
+
+> **L'avenir s'esquisse en encrant aujourd'hui dans les lignes du passé.**
+
+Cette devise est la raison d'être d'AWAN. Toute décision produit/design/code doit s'y rattacher : compter chaque jour (sport, nutrition, sommeil, mesures, prières, journal, planning), analyser le passé (Analyse, Coach, bilans hebdo/cycle), améliorer demain (forecast Coach, auto-progression, deload prédit, planning prospectif).
+
 ## Règles absolues
 
 - **Jamais de build APK sans aval explicite de l'utilisateur.**

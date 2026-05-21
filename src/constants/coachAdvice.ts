@@ -130,6 +130,86 @@ const ADVICE_TEXTS: Record<string, AdviceText> = {
     title: 'Entraînement sous-alimenté',
     advice: 'Apport calorique faible malgré des séances régulières. Augmente les glucides autour des entraînements.',
   },
+
+  // ── Forecasts (forward-looking) ──────────────────────────────────────────
+  'forecast.sport.deload_predicted.title': {
+    title: 'Deload prévu',
+    advice: 'Une semaine de décharge est conseillée la semaine prochaine.',
+  },
+  'forecast.sport.deload_predicted.detail': {
+    title: 'Deload prévu',
+    advice: 'Le RPE moyen progresse de +{slope} par séance ces 3 dernières semaines ({sessionCount} séances analysées, moyenne récente {lastWeekAvgRpe}). Programme une semaine à 60% des charges la semaine du {targetDate}.',
+  },
+  'forecast.anthropo.next_biweekly.title': {
+    title: 'Mesures bimensuelles',
+    advice: 'Mesures anthropométriques attendues.',
+  },
+  'forecast.anthropo.next_biweekly.detail_due': {
+    title: 'Mesures bimensuelles',
+    advice: 'Dernière mesure le {lastMeasurement}. Prochaine attendue le {targetDate} pour conserver la cadence bimensuelle.',
+  },
+  'forecast.anthropo.next_biweekly.detail_overdue': {
+    title: 'Mesures bimensuelles en retard',
+    advice: 'Dernière mesure le {lastMeasurement} ({overdueDays} j de retard). Mesure-toi dès demain pour rétablir le suivi.',
+  },
+  'forecast.anthropo.next_biweekly.detail_onboarding': {
+    title: 'Première mesure',
+    advice: 'Aucune mesure encore enregistrée. Programme ta première session anthropométrique pour le {targetDate} afin de poser un référentiel.',
+  },
+
+  // ── Forecast : bilan trimestriel ─────────────────────────────────────────
+  'forecast.anthropo.next_quarterly.title': {
+    title: 'Bilan trimestriel',
+    advice: 'Bilan anthropométrique complet attendu.',
+  },
+  'forecast.anthropo.next_quarterly.detail_due': {
+    title: 'Bilan trimestriel',
+    advice: 'Dernière mesure complète le {lastMeasurement}. Prochain bilan trimestriel attendu le {targetDate} — poids, mensurations, plis cutanés et indices complets.',
+  },
+  'forecast.anthropo.next_quarterly.detail_overdue': {
+    title: 'Bilan trimestriel en retard',
+    advice: 'Dernière mesure le {lastMeasurement} ({overdueDays} j de retard). Programme ton bilan complet dès demain pour rétablir le suivi morphologique.',
+  },
+  'forecast.anthropo.next_quarterly.detail_onboarding': {
+    title: 'Premier bilan trimestriel',
+    advice: 'Aucune mesure enregistrée. Programme ton premier bilan complet pour le {targetDate} — poids, mensurations et plis cutanés.',
+  },
+
+  // ── Forecast : fenêtre de refeed ─────────────────────────────────────────
+  // Trexler 2014 (doi:10.1186/1550-2783-11-7) : adaptation métabolique après restriction prolongée
+  'forecast.nutrition.refeed_window.title': {
+    title: 'Refeed conseillé',
+    advice: 'Fenêtre de recharge calorique recommandée.',
+  },
+  'forecast.nutrition.refeed_window.detail': {
+    title: 'Refeed conseillé',
+    advice: '{consecutiveDays} jours consécutifs sous {avgKcal} kcal/j. Programme un jour de recharge (≥ maintenance + 300 kcal, 60% glucides) avant le {targetDate} pour prévenir l\'adaptation métabolique — Trexler 2014.',
+  },
+
+  // ── Forecast : récupération prioritaire ──────────────────────────────────
+  // Lamon 2021 (doi:10.14814/phy2.14660) : privation de sommeil → –18% MPS, –24% testostérone
+  'forecast.cross.recovery_priority.title': {
+    title: 'Récupération prioritaire',
+    advice: 'Qualité de récupération insuffisante avant la prochaine séance.',
+  },
+  'forecast.cross.recovery_priority.detail': {
+    title: 'Récupération prioritaire',
+    advice: 'Moyenne de sommeil : {avgSleepH} h/nuit (déficit {sleepDeficitH} h). Une séance est prévue demain. Priorise 8h de sommeil ce soir — la privation réduit la synthèse protéique de 18% et la testostérone de 24% (Lamon 2021).',
+  },
+
+  // ── Forecast : prochaine séance planifiée ─────────────────────────────────
+  'forecast.sport.next_planned_session.title': {
+    title: 'Prochaine séance',
+    advice: 'Séance d\'entraînement prévue.',
+  },
+  'forecast.sport.next_planned_session.detail_routine': {
+    title: 'Prochaine séance',
+    advice: 'Séance planifiée dans ta routine pour le {targetDate} (J+{horizonDays}). Prépare ton matériel et vérifie ta nutrition péri-séance.',
+  },
+  'forecast.sport.next_planned_session.detail_frequency': {
+    title: 'Prochaine séance estimée',
+    advice: 'Basé sur ta fréquence récente, prochaine séance estimée vers le {targetDate} (J+{horizonDays}). Définis des jours fixes dans ta routine pour optimiser la planification.',
+  },
 };
 
 export function getAdviceText(key: string): AdviceText {

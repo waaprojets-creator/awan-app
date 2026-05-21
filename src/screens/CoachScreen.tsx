@@ -1,12 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { ScrollView } from 'react-native';
-import { AlertOctagon, AlertTriangle, CheckCircle2, Info, Zap } from 'lucide-react';
+import { AlertOctagon, AlertTriangle, CalendarClock, CheckCircle2, Info, Zap } from 'lucide-react';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 import { useCoach } from '../hooks/useCoach';
 import { ds } from '../utils/storage';
 import { getAdviceText } from '../constants/coachAdvice';
 import type { AssessmentLatest, Advice, RuleResult } from '../data/schemas/coach/assessment';
+import type { ForecastLatest } from '../data/schemas/coach/forecast';
 import type { Domain, Severity } from '../data/schemas/coach/rule';
 import type { NavProps } from '../types/nav';
 
@@ -62,6 +63,53 @@ function AdviceCard({ advice, ruleResult }: { advice: Advice; ruleResult: RuleRe
             VALEUR MESURÉE · {Number.isInteger(ruleResult.signalValue) ? ruleResult.signalValue : ruleResult.signalValue.toFixed(2)}
           </span>
         )}
+      </div>
+    </div>
+  );
+}
+
+function interpolate(template: string, params: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => {
+    const v = params[key];
+    return v === undefined ? `{${key}}` : String(v);
+  });
+}
+
+function horizonLabel(days: number): string {
+  if (days <= 0) return 'AUJOURD\'HUI';
+  if (days === 1) return 'DEMAIN';
+  if (days < 7) return `J+${days}`;
+  if (days < 30) return `S+${Math.round(days / 7)}`;
+  return `M+${Math.round(days / 30)}`;
+}
+
+function ForecastCard({ forecast }: { forecast: ForecastLatest }) {
+  const style = SEVERITY_STYLES[forecast.severity];
+  const text = getAdviceText(forecast.detailKey);
+  const titleText = getAdviceText(forecast.titleKey);
+  const interpolated = interpolate(text.advice, { ...forecast.params, targetDate: forecast.targetDate });
+  return (
+    <div className={`border p-4 flex flex-row gap-3 ${style.className}`}>
+      <div className="flex-shrink-0 pt-0.5">
+        <CalendarClock size={20} color={style.color} />
+      </div>
+      <div className="flex-1 flex flex-col gap-1 min-w-0">
+        <div className="flex flex-row items-center gap-2">
+          <span className="awan-label" style={{ color: style.color }}>
+            {horizonLabel(forecast.horizonDays)}
+          </span>
+          <span className="awan-label text-awan-tx-mute">·</span>
+          <span className="awan-label text-awan-tx-mute font-mono">{forecast.targetDate}</span>
+        </div>
+        <span className="text-awan-tx font-bold text-sm leading-snug break-words">
+          {titleText.title}
+        </span>
+        <span className="text-awan-tx-dim text-xs leading-relaxed break-words">
+          {interpolated}
+        </span>
+        <span className="font-mono text-awan-md text-awan-tx-mute mt-1">
+          CONFIANCE · {Math.round(forecast.confidence * 100)}%
+        </span>
       </div>
     </div>
   );
@@ -146,8 +194,29 @@ export default function CoachScreen(_props: NavProps): React.ReactElement {
         })}
       </div>
 
-      {/* ── Cartes assessment ─────────────────────────────────────────────── */}
+      {/* ── À VENIR (forecasts) ─────────────────────────────────────────── */}
+      {hasAny && filtered.length > 0 && (() => {
+        const allForecasts = filtered.flatMap(a => a.forecasts ?? []);
+        if (allForecasts.length === 0) return null;
+        const sorted = allForecasts.slice().sort((a, b) => a.horizonDays - b.horizonDays);
+        return (
+          <div className="mb-6">
+            <span className="awan-label text-awan-tx-mute mb-3 block">À VENIR — PROJECTIONS COACH</span>
+            <div className="flex flex-col gap-3">
+              {sorted.map(f => <ForecastCard key={f.id} forecast={f} />)}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── Cartes assessment (reactive advices) ─────────────────────────── */}
       <div className="flex flex-col gap-3">
+        {hasAny && filtered.length > 0 && (() => {
+          const anyAdvice = filtered.some(a => a.advices.length > 0);
+          return anyAdvice ? (
+            <span className="awan-label text-awan-tx-mute mb-1 block">AUJOURD'HUI</span>
+          ) : null;
+        })()}
         {!hasAny ? (
           <EmptyState message="Aucune analyse — Appuie sur ANALYSER" />
         ) : filtered.length === 0 ? (
