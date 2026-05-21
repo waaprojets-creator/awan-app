@@ -179,7 +179,15 @@ export default function AnalyseScreen() {
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }}>
         <div className="px-6 pt-4 pb-4">
            <Heading level={1} subtitle="Intelligence de Situation">ANALYSE TACTIQUE</Heading>
-           
+
+           <div className="mt-6 border-l-2 border-awan-gold/40 pl-4">
+             <span className="block text-awan-md font-bold text-awan-tx leading-relaxed italic">
+               « Pour régner sur demain il faut lire hier.
+               <br />Pour lire hier il faut écrire aujourd'hui. »
+             </span>
+             <span className="block awan-label text-awan-tx-mute mt-2">— Devise AWAN</span>
+           </div>
+
            <div className="mt-8">
              <BilanZen
                 summary={aiSummary}

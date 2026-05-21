@@ -130,6 +130,32 @@ const ADVICE_TEXTS: Record<string, AdviceText> = {
     title: 'Entraînement sous-alimenté',
     advice: 'Apport calorique faible malgré des séances régulières. Augmente les glucides autour des entraînements.',
   },
+
+  // ── Forecasts (forward-looking) ──────────────────────────────────────────
+  'forecast.sport.deload_predicted.title': {
+    title: 'Deload prévu',
+    advice: 'Une semaine de décharge est conseillée la semaine prochaine.',
+  },
+  'forecast.sport.deload_predicted.detail': {
+    title: 'Deload prévu',
+    advice: 'Le RPE moyen progresse de +{slope} par séance ces 3 dernières semaines ({sessionCount} séances analysées, moyenne récente {lastWeekAvgRpe}). Programme une semaine à 60% des charges la semaine du {targetDate}.',
+  },
+  'forecast.anthropo.next_biweekly.title': {
+    title: 'Mesures bimensuelles',
+    advice: 'Mesures anthropométriques attendues.',
+  },
+  'forecast.anthropo.next_biweekly.detail_due': {
+    title: 'Mesures bimensuelles',
+    advice: 'Dernière mesure le {lastMeasurement}. Prochaine attendue le {targetDate} pour conserver la cadence bimensuelle.',
+  },
+  'forecast.anthropo.next_biweekly.detail_overdue': {
+    title: 'Mesures bimensuelles en retard',
+    advice: 'Dernière mesure le {lastMeasurement} ({overdueDays} j de retard). Mesure-toi dès demain pour rétablir le suivi.',
+  },
+  'forecast.anthropo.next_biweekly.detail_onboarding': {
+    title: 'Première mesure',
+    advice: 'Aucune mesure encore enregistrée. Programme ta première session anthropométrique pour le {targetDate} afin de poser un référentiel.',
+  },
 };
 
 export function getAdviceText(key: string): AdviceText {
