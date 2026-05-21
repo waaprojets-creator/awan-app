@@ -1724,6 +1724,21 @@ function PreWorkout({
  onStart: () => void;
  onAbort: () => void;
 }) {
+ const [showPreEdit, setShowPreEdit] = useState(false);
+
+ if (showPreEdit) {
+   return (
+     <PreEditExercises
+       exercises={session.exercises}
+       onDone={(updated) => {
+         onUpdate(s => ({ ...s, exercises: updated }));
+         setShowPreEdit(false);
+       }}
+       onBack={() => setShowPreEdit(false)}
+     />
+   );
+ }
+
  return (
  <div className="flex-1 bg-awan-bg">
  <div className="px-6 pt-12 pb-6 border-b border-white/5 bg-white/10">
@@ -1779,7 +1794,13 @@ function PreWorkout({
  </div>
 
  <Touch
- className="h-16 bg-awan-gold flex items-center justify-center shadow-xl shadow-awan-gold/20 mt-6"
+ className="mt-4 h-12 bg-white/5 border border-white/10 flex items-center justify-center gap-2"
+ onPress={() => setShowPreEdit(true)}
+ >
+ <span className="awan-label text-awan-tx-mute">MODIFIER EXERCICES →</span>
+ </Touch>
+ <Touch
+ className="h-16 bg-awan-gold flex items-center justify-center shadow-xl shadow-awan-gold/20 mt-3"
  onPress={onStart}
  >
  <div className="flex flex-row items-center gap-3">
@@ -1789,6 +1810,98 @@ function PreWorkout({
  </Touch>
  </ScrollView>
  </div>
+ );
+}
+
+// S2: Pre-edit exercises before session start
+function PreEditExercises({
+ exercises,
+ onDone,
+ onBack,
+}: {
+ exercises: ActiveExercise[];
+ onDone: (updated: ActiveExercise[]) => void;
+ onBack: () => void;
+}) {
+ const [exos, setExos] = useState<ActiveExercise[]>(exercises);
+
+ const updateWeight = (idx: number, val: string) => {
+   const n = parseFloat(val);
+   setExos(prev => prev.map((e, i) => i !== idx ? e : {
+     ...e,
+     sets: e.sets.map(s => ({ ...s, weightKg: isNaN(n) ? s.weightKg : n, plannedWeightKg: isNaN(n) ? s.plannedWeightKg : n })),
+   }));
+ };
+
+ const updateReps = (idx: number, val: string) => {
+   const n = parseInt(val);
+   setExos(prev => prev.map((e, i) => i !== idx ? e : {
+     ...e,
+     sets: e.sets.map(s => ({ ...s, reps: isNaN(n) ? s.reps : n, plannedReps: isNaN(n) ? s.plannedReps : n })),
+   }));
+ };
+
+ const removeExercise = (idx: number) => setExos(prev => prev.filter((_, i) => i !== idx));
+
+ return (
+   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 bg-awan-bg">
+     <div className="px-6 pt-12 pb-6 border-b border-white/5 bg-white/5">
+       <div className="flex flex-row items-center gap-4">
+         <Touch onPress={onBack} className="w-10 h-10 bg-white/5 flex items-center justify-center">
+           <ChevronLeft size={20} className="text-awan-tx-mute" />
+         </Touch>
+         <Heading level={2} className="mb-0 flex-1" subtitle="Avant de commencer">MODIFIER SÉANCE</Heading>
+       </div>
+     </div>
+     <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 120 }} style={{ flex: 1 }}>
+       {exos.map((ex, idx) => (
+         <div key={ex.rid} className="mb-4">
+           <div className="flex flex-row items-center justify-between mb-2">
+             <span className="text-sm font-bold text-awan-tx uppercase tracking-tight flex-1">{ex.name}</span>
+             <Touch onPress={() => removeExercise(idx)} className="w-8 h-8 bg-white/5 flex items-center justify-center">
+               <Trash2 size={14} className="text-white/30" />
+             </Touch>
+           </div>
+           <div className="flex flex-row gap-2">
+             <div className="flex-1">
+               <span className="text-awan-xxs font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">POIDS KG</span>
+               <TextInput
+                 className="bg-white/5 border border-white/5 px-3 py-2 text-sm font-mono font-bold text-awan-gold"
+                 value={String(ex.sets[0]?.weightKg ?? ex.sets[0]?.plannedWeightKg ?? '')}
+                 onChangeText={(v: string) => updateWeight(idx, v)}
+                 keyboardType="decimal-pad"
+               />
+             </div>
+             <div className="flex-1">
+               <span className="text-awan-xxs font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">REPS</span>
+               <TextInput
+                 className="bg-white/5 border border-white/5 px-3 py-2 text-sm font-mono font-bold text-awan-tx"
+                 value={String(ex.sets[0]?.reps ?? ex.sets[0]?.plannedReps ?? '')}
+                 onChangeText={(v: string) => updateReps(idx, v)}
+                 keyboardType="number-pad"
+               />
+             </div>
+             <div className="flex items-end pb-1">
+               <span className="text-awan-xs font-black text-awan-tx-mute font-mono">{ex.sets.length} × sets</span>
+             </div>
+           </div>
+         </div>
+       ))}
+       {exos.length === 0 && (
+         <div className="py-16 items-center opacity-30">
+           <span className="awan-label text-center block">TOUS LES EXERCICES SUPPRIMÉS</span>
+         </div>
+       )}
+     </ScrollView>
+     <div className="px-6 pb-10 pt-4 border-t border-white/5 bg-awan-bg">
+       <Touch
+         onPress={() => onDone(exos.map((e, i) => ({ ...e, order: i })))}
+         className="h-16 bg-awan-gold flex items-center justify-center"
+       >
+         <span className="awan-label text-black font-black">CONFIRMER MODIFICATIONS</span>
+       </Touch>
+     </div>
+   </motion.div>
  );
 }
 
