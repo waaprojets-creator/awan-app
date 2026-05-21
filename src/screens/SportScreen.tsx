@@ -1406,6 +1406,7 @@ function ActiveWorkout({
 }) {
  const [restRemaining, setRestRemaining] = useState(0);
  const prevRestRef = useRef<number>(0);
+ const [substituteTarget, setSubstituteTarget] = useState<{ exIdx: number; muscle: string } | null>(null);
 
  useEffect(() => {
  if (prevRestRef.current > 0 && restRemaining === 0) notifyRestEnd();
@@ -1503,6 +1504,23 @@ function ActiveWorkout({
  onUpdate(s => ({ ...s, restEndAt: null }));
  }, [onUpdate]);
 
+ const substituteExercise = useCallback((exIdx: number, newEx: ExerciseEntry) => {
+   onUpdate(s => {
+     const orig = s.exercises[exIdx];
+     if (!orig) return s;
+     const updated: ActiveExercise = {
+       ...orig,
+       exerciseId: newEx.id,
+       name: newEx.n,
+       primaryMuscle: newEx.pm[0] ?? orig.primaryMuscle,
+       equipment: newEx.eq,
+       sets: orig.sets.map(set => ({ ...set, completed: false, completedAt: undefined })),
+     };
+     return { ...s, exercises: s.exercises.map((e, i) => i === exIdx ? updated : e) };
+   });
+   setSubstituteTarget(null);
+ }, [onUpdate]);
+
  if (session.stage === 'arrived') {
  return (
  <PreWorkout
@@ -1559,7 +1577,20 @@ function ActiveWorkout({
  {session.exercises.map((ex, exIdx) => (
  <Card key={ex.rid} className="mb-6 p-3 border-white/10 bg-white/5">
  <div className="mb-4">
- <span className="text-base font-bold text-awan-tx uppercase tracking-tight block">{ex.name}</span>
+ <div className="flex flex-row items-start justify-between">
+ <span className="text-base font-bold text-awan-tx uppercase tracking-tight flex-1">{ex.name}</span>
+ {ex.sets.every(s => !s.completed) && (
+ <Touch
+ onPress={async () => {
+   await loadExerciseCatalog();
+   setSubstituteTarget({ exIdx, muscle: ex.primaryMuscle ?? '' });
+ }}
+ className="px-2 py-1 bg-white/5 border border-white/5 ml-2"
+ >
+ <span className="text-awan-xxs font-black text-awan-tx-mute tracking-widest uppercase">REMPLACER</span>
+ </Touch>
+ )}
+ </div>
  <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-widest">
  {MUSCLES[ex.primaryMuscle ?? '']} • {ex.equipment} • repos {ex.restSec}s
  </span>
@@ -1606,6 +1637,37 @@ function ActiveWorkout({
  <span className="text-awan-md font-black text-awan-status-error uppercase tracking-[0.3em] opacity-50">ANNULER LA SÉANCE</span>
  </Touch>
  </ScrollView>
+
+ {/* S3: Substitution modal */}
+ {substituteTarget && (
+ <Modal visible={true} transparent animationType="slide">
+ <div className="flex-1 flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}>
+ <div className="w-full bg-awan-surface border-t border-white/10 rounded-t-3xl" style={{ maxHeight: '70vh' }}>
+ <div className="px-6 pt-4 pb-3 border-b border-white/5 flex flex-row justify-between items-center">
+ <span className="awan-label text-awan-gold">REMPLACER PAR...</span>
+ <Touch onPress={() => setSubstituteTarget(null)} className="w-8 h-8 bg-white/5 flex items-center justify-center">
+ <X size={14} className="text-awan-tx-mute" />
+ </Touch>
+ </div>
+ <ScrollView style={{ flex: 1, maxHeight: 400 } as any} contentContainerStyle={{ padding: 16 }}>
+ {searchExercises(substituteTarget.muscle).filter(ex => ex.pm[0] === substituteTarget.muscle || ex.pm.includes(substituteTarget.muscle)).slice(0, 20).map(ex => (
+ <Touch
+ key={ex.id}
+ onPress={() => substituteExercise(substituteTarget.exIdx, ex)}
+ className="mb-2 px-4 py-3 bg-white/5 border border-white/5 flex flex-row justify-between items-center"
+ >
+ <div className="flex-1">
+ <span className="text-sm font-bold text-awan-tx uppercase tracking-tight block">{ex.n}</span>
+ <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">{ex.eq}</span>
+ </div>
+ <span className="text-awan-xs font-black text-awan-gold uppercase tracking-widest ml-2">{MUSCLES[ex.pm[0] ?? ''] ?? ex.pm[0]}</span>
+ </Touch>
+ ))}
+ </ScrollView>
+ </div>
+ </div>
+ </Modal>
+ )}
  </div>
  );
 }
