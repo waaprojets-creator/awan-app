@@ -52,6 +52,13 @@ import {
  type CycleLetter,
 } from '../data/schemas/sport/routine';
 import type { ExerciseSetLatest, SetKind } from '../data/schemas/sport/exerciseSet';
+import { scoreSession } from '../services/sessionScoreService';
+import { sessionAdherence } from '../services/workoutAnalysisService';
+import { suggestProgression } from '../services/autoProgressionService';
+import { BodySvg } from '../components/BodySvg';
+import type { MuscleId } from '../components/BodySvg';
+import { buildIAExport } from '../services/iaExportService';
+import { Download } from 'lucide-react';
 import { WorkoutListView } from '../modules/sport/components/WorkoutListView';
 import { RoutineGeneratorView } from '../modules/sport/components/RoutineGeneratorView';
 import { cacheForRoutine } from '../services/mediaCacheService';
@@ -130,6 +137,59 @@ async function notifyRestEnd() {
  osc.start(); osc.stop(ctx.currentTime + 0.4);
  } catch { /* silent */ }
  }
+}
+
+// Maps exercise-catalog muscle names to BodySvg MuscleIds. Bilateral muscles split to L/R.
+const MUSCLE_TO_SVG: Partial<Record<string, MuscleId[]>> = {
+  chest:      ['chest'],
+  back:       ['lats', 'back_lower', 'traps'],
+  shoulders:  ['front_delts', 'side_delts', 'rear_delts'],
+  biceps:     ['biceps_left', 'biceps_right'],
+  triceps:    ['triceps_left', 'triceps_right'],
+  forearms:   ['forearms_left', 'forearms_right'],
+  quads:      ['quads_left', 'quads_right'],
+  hamstrings: ['hamstrings_left', 'hamstrings_right'],
+  calves:     ['calves_left', 'calves_right'],
+  glutes:     ['glutes'],
+  abs:        ['abs'],
+  obliques:   ['obliques'],
+  traps:      ['traps'],
+  lats:       ['lats'],
+};
+const MUSCLE_MRV: Record<string, number> = {
+  chest: 22, back: 25, shoulders: 26, biceps: 26, triceps: 22,
+  quads: 20, hamstrings: 20, calves: 20, glutes: 16, abs: 25,
+};
+
+function volumeToMuscleValues(vol: Record<string, number>): Partial<Record<MuscleId, number>> {
+  const result: Partial<Record<MuscleId, number>> = {};
+  for (const [muscle, sets] of Object.entries(vol)) {
+    const ids = MUSCLE_TO_SVG[muscle.toLowerCase()];
+    if (!ids) continue;
+    const normalized = Math.min(1, sets / (MUSCLE_MRV[muscle.toLowerCase()] ?? 20));
+    for (const id of ids) {
+      result[id] = Math.max(result[id] ?? 0, normalized);
+    }
+  }
+  return result;
+}
+
+function VolumeHeatmapSection({ sessions }: { sessions: WorkoutSessionLatest[] }) {
+  const weekStart = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - d.getDay());
+    d.setHours(0, 0, 0, 0);
+    return d;
+  })();
+  const vol = WorkoutService.getWeeklyVolumeByMuscle(sessions, weekStart);
+  if (Object.values(vol).every(v => v === 0)) return null;
+  const muscleValues = volumeToMuscleValues(vol);
+  return (
+    <div className="mb-6">
+      <span className="awan-label text-awan-tx-mute mb-3 block">HEATMAP MUSCULAIRE — SEMAINE</span>
+      <BodySvg mode="heatmap" muscleValues={muscleValues as Record<MuscleId, number>} />
+    </div>
+  );
 }
 
 function VolumeWeekSection({ sessions }: { sessions: WorkoutSessionLatest[] }) {
@@ -247,7 +307,14 @@ export default function SportScreen() {
  }, []);
 
  const startWorkout = useCallback(async (routine: RoutineLatest, opts?: { isException?: boolean }) => {
- const lastSession = await WorkoutService.getLastSessionByRoutine(routine.id);
+ const allSessions = await WorkoutService.getAllSessions();
+ const routineSessions = allSessions
+   .filter(s => s.routineId === routine.id && !s.isException)
+   .sort((a, b) => a.startTime - b.startTime);
+ const lastSession = routineSessions[routineSessions.length - 1] ?? null;
+ // S7: auto-progression suggestions
+ const suggestions = suggestProgression(routine.exercises, routineSessions);
+ const suggestionMap = new Map(suggestions.map(s => [s.exerciseId, s.suggestedWeightKg]));
  // Stocker le volume de la session précédente pour le delta post-séance
  if (lastSession) {
  const prevVol = lastSession.exercises.flatMap(e => e.sets.filter(s => s.kind === 'working'))
@@ -264,9 +331,12 @@ export default function SportScreen() {
  .slice(-1)[0];
  const plannedWeightKg = re.plannedWeightKg ?? undefined;
  const plannedReps = re.plannedReps;
+ // S7: suggested weight overrides last actual; last actual overrides planned
+ const suggestedWeight = suggestionMap.get(re.exerciseId);
+ const prefillWeight = suggestedWeight ?? lastWorkingSet?.weightKg ?? plannedWeightKg;
  const sets: ActiveSet[] = Array.from({ length: re.plannedSets }, (_, i) => ({
  kind: 'working' as SetKind,
- weightKg: lastWorkingSet?.weightKg ?? plannedWeightKg,
+ weightKg: prefillWeight,
  reps: lastWorkingSet?.reps ?? plannedReps,
  plannedWeightKg,
  plannedReps,
@@ -339,8 +409,8 @@ export default function SportScreen() {
  })),
  }));
 
- const session: WorkoutSessionLatest = {
- v: 1,
+ const sessionBase: WorkoutSessionLatest = {
+ v: 2,
  id: activeSession.id,
  routineId: activeSession.routineId,
  name: activeSession.routineName,
@@ -359,6 +429,12 @@ export default function SportScreen() {
  note: summary.note,
  isException: activeSession.isException,
  exercises: exercisesLog,
+ exitedAt: summary.exitedAt,
+ adherence: sessionAdherence({ v: 2, id: activeSession.id, routineId: activeSession.routineId, name: activeSession.routineName, cycleLetter: activeSession.cycleLetter, date: ds(new Date()), startTime: activeSession.startTime, endTime, duration: 0, solo: activeSession.solo, isException: activeSession.isException, exercises: exercisesLog }),
+ };
+ const session: WorkoutSessionLatest = {
+ ...sessionBase,
+ scoreSeance: scoreSession(sessionBase),
  };
 
  workoutStore.saveSession(session);
@@ -641,6 +717,7 @@ export default function SportScreen() {
  </div>
 
  <VolumeWeekSection sessions={workoutStore.sessions as WorkoutSessionLatest[]} />
+ <VolumeHeatmapSection sessions={workoutStore.sessions as WorkoutSessionLatest[]} />
 
  {nextRoutine && (
  <Card className="p-6 bg-awan-gold/5 border-awan-gold/20 mb-6" onPress={() => { setPendingRoutine({ routine: nextRoutine }); setRecoveryScore(null); setView('recovery'); }}>
@@ -684,10 +761,25 @@ export default function SportScreen() {
  </Touch>
  </div>
  <Touch
- className="mb-6 h-12 bg-white/5 flex items-center justify-center border border-white/10"
+ className="mb-3 h-12 bg-white/5 flex items-center justify-center border border-white/10"
  onPress={() => setView('workouts')}
  >
  <span className="awan-label text-awan-tx-mute">{L.sport.myRoutines} →</span>
+ </Touch>
+ <Touch
+ className="mb-6 h-12 bg-white/5 flex items-center justify-center border border-white/10 flex-row gap-2"
+ onPress={async () => {
+   const { json, promptWithData } = await buildIAExport(workoutStore.routines);
+   try { await navigator.clipboard.writeText(promptWithData); } catch { /* ignore */ }
+   const blob = new Blob([json], { type: 'application/json' });
+   const url = URL.createObjectURL(blob);
+   const a = document.createElement('a');
+   a.href = url; a.download = `awan-sport-ia-${ds(new Date())}.json`; a.click();
+   URL.revokeObjectURL(url);
+ }}
+ >
+ <Download size={14} className="text-awan-tx-mute" />
+ <span className="awan-label text-awan-tx-mute">EXPORT ANALYSE IA</span>
  </Touch>
 
  <div className="mb-20">
@@ -792,6 +884,7 @@ interface SessionSummary {
  feeling?: number | undefined;
  sessionRPE?: number | undefined;
  note?: string | undefined;
+ exitedAt?: number | undefined;
 }
 
 // ─── Routine Editor ──────────────────────────────────────────────────────────
@@ -1810,6 +1903,12 @@ function FinishWorkout({
  <CheckCircle2 size={20} color="black" strokeWidth={3} />
  <span className="awan-label text-black font-black">ENREGISTRER LA SÉANCE</span>
  </div>
+ </Touch>
+ <Touch
+ onPress={() => onSave({ feeling, sessionRPE, note: note.trim() || undefined, exitedAt: Date.now() })}
+ className="mt-3 h-14 bg-white/5 border border-white/10 flex items-center justify-center"
+ >
+ <span className="awan-label text-awan-tx-mute font-black">QUITTER VESTIAIRE →</span>
  </Touch>
  </ScrollView>
  </motion.div>

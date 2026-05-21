@@ -98,16 +98,41 @@ export const WorkoutSessionV1Schema = z.object({
 });
 
 export type WorkoutSessionV1 = z.infer<typeof WorkoutSessionV1Schema>;
-export type WorkoutSessionLatest = WorkoutSessionV1;
 
-export const WorkoutSessionSchema = z.discriminatedUnion('v', [WorkoutSessionV1Schema]);
+// ─── WorkoutSession V2: score séance + exitedAt (vestiaire) ──────────────────
+
+export const WorkoutSessionV2Schema = WorkoutSessionV1Schema.extend({
+  v: z.literal(2),
+  scoreSeance: z.number().int().min(0).max(100).optional(),
+  exitedAt: TimestampSchema.optional(),
+  adherence: z.number().min(0).max(1).optional(),
+});
+
+export type WorkoutSessionV2 = z.infer<typeof WorkoutSessionV2Schema>;
+
+// ─── Union ────────────────────────────────────────────────────────────────────
+
+export const WorkoutSessionSchema = z.discriminatedUnion('v', [
+  WorkoutSessionV1Schema,
+  WorkoutSessionV2Schema,
+]);
 export type WorkoutSession = z.infer<typeof WorkoutSessionSchema>;
 
-export const WORKOUT_SESSION_LATEST_VERSION = 1;
+export const WORKOUT_SESSION_LATEST_VERSION = 2;
+export type WorkoutSessionLatest = WorkoutSessionV2;
+
+// ─── Migrations ───────────────────────────────────────────────────────────────
+
+const sessionMigrations = {
+  1: (data: WorkoutSessionV1): WorkoutSessionV2 => ({
+    ...data,
+    v: 2,
+  }),
+};
 
 export const migrateWorkoutSession = createMigrator<WorkoutSession, WorkoutSessionLatest>(
   WorkoutSessionSchema,
-  {},
+  sessionMigrations,
   WORKOUT_SESSION_LATEST_VERSION,
 );
 
