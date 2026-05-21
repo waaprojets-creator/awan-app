@@ -24,8 +24,9 @@ const SportScreen       = lazy(() => import('../screens/SportScreen'));
 const MensurationScreen = lazy(() => import('../screens/MensurationScreen'));
 const NutritionScreen   = lazy(() => import('../screens/NutritionScreen'));
 const JournalScreen     = lazy(() => import('../screens/JournalScreen'));
-const CoachScreen       = lazy(() => import('../screens/CoachScreen'));
-const SleepScreen       = lazy(() => import('../screens/SleepScreen'));
+const CoachScreen         = lazy(() => import('../screens/CoachScreen'));
+const SleepScreen         = lazy(() => import('../screens/SleepScreen'));
+const PhilosophieScreen   = lazy(() => import('../screens/PhilosophieScreen'));
 
 type ErrorState = { error: Error | null };
 
@@ -134,6 +135,7 @@ export default function MainLayout() {
               <Route path="/journal">{wrap(JournalScreen)}</Route>
               <Route path="/coach">{wrap(CoachScreen)}</Route>
               <Route path="/sleep">{wrap(SleepScreen)}</Route>
+              <Route path="/philosophie">{wrap(PhilosophieScreen)}</Route>
               <Route>{wrap(DashboardScreen)}</Route>
             </Switch>
           </AnimatePresence>

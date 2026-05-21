@@ -6,7 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemeMode } from '../hooks/useTheme';
 import { useAppStore } from '../store/appStore';
 import { useAppState } from '../context/AppStateContext';
-import { Shield, Database, Key, RefreshCw, Trash2, Navigation, Brain } from 'lucide-react';
+import { Shield, Database, Key, RefreshCw, Trash2, Navigation, Brain, BookOpen } from 'lucide-react';
+import { useLocation } from 'wouter';
 import { safeStorage } from '../utils/safeStorage';
 import { PageWrapper } from '../components/Animated';
 import { Card } from '../components/ui/Card';
@@ -72,6 +73,7 @@ async function purgeAllData() {
 
 export default function SettingsScreen() {
  const insets = useSafeAreaInsets();
+ const [, setLocation] = useLocation();
  const { db, updateDb } = useAppState() as any;
  const theme = useTheme();
  const themeMode = useThemeMode();
@@ -262,6 +264,20 @@ export default function SettingsScreen() {
  })}
  </div>
  </Card>
+ </div>
+
+ {/* MANIFESTE */}
+ <div className="mb-10">
+ <Heading level={4} mono subtitle="Identité & Vision" className="mb-6">MANIFESTE</Heading>
+ <Touch onPress={() => setLocation('/philosophie')} className="bg-white/3 border border-white/5 p-6 flex-row items-center gap-5">
+   <div className="w-10 h-10 bg-awan-gold/10 flex items-center justify-center">
+     <BookOpen size={18} color="var(--color-awan-gold)" />
+   </div>
+   <div className="flex-1">
+     <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">PHILOSOPHIE AWAN</span>
+     <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">La devise · Les trois temps · Les 8 principes</span>
+   </div>
+ </Touch>
  </div>
 
  {/* PROTOCOLES CRITIQUES */}
