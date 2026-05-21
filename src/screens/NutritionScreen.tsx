@@ -55,6 +55,7 @@ import { buildWeeklyNutritionReport, reportDiagnostic } from '../services/weekly
 import type { WeeklyNutritionReport } from '../services/weeklyNutritionReport';
 import { buildNutritionExport } from '../services/nutritionExportService';
 import { estimateAdaptiveTDEE } from '../services/tdeeAdaptiveService';
+import { scoreMeal } from '../services/nutritionScoreService';
 
 // ─── Nutrition Profile (TDEE) ─────────────────────────────────────────────────
 
@@ -1105,7 +1106,7 @@ export default function NutritionScreen() {
  const macros = calcMacros(food, grams);
  const now = Date.now();
  const entryId = uid();
- const entry: MealEntryLatest = {
+ const baseEntry: MealEntryLatest = {
  v: 2,
  id: entryId,
  date: selectedDate,
@@ -1123,6 +1124,9 @@ export default function NutritionScreen() {
  foodId: food.id,
  ...(timeHHMM !== undefined ? { timeHHMM } : {}),
  };
+ const entry: MealEntryLatest = profile
+ ? { ...baseEntry, nutritionScore: scoreMeal(baseEntry, { kcal: profile.targetKcal, p: profile.targetP, c: profile.targetC, f: profile.targetF }).total }
+ : baseEntry;
  void mealStore.add(entry);
  recordRecentFood(food.id);
  addEntry(selectedDate, {
@@ -1170,7 +1174,10 @@ export default function NutritionScreen() {
  ...(entry.foodId !== undefined ? { foodId: entry.foodId } : {}),
  ...(timeHHMM !== undefined ? { timeHHMM } : {}),
  };
- void mealStore.update(updated);
+ const scored: MealEntryLatest = profile
+ ? { ...updated, nutritionScore: scoreMeal(updated, { kcal: profile.targetKcal, p: profile.targetP, c: profile.targetC, f: profile.targetF }).total }
+ : updated;
+ void mealStore.update(scored);
  setEditEntry(null);
  };
 
@@ -1585,6 +1592,17 @@ export default function NutritionScreen() {
  <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest mt-1 block font-mono">
  {m.kcal} KCAL · P{m.p} · G{m.c} · L{m.f}
  </span>
+ {profile && (() => {
+ const score = m.nutritionScore ?? scoreMeal(m, { kcal: profile.targetKcal, p: profile.targetP, c: profile.targetC, f: profile.targetF }).total;
+ const color = score >= 70 ? 'var(--color-awan-status-ok)'
+             : score >= 40 ? 'var(--color-awan-status-warn)'
+             : 'var(--color-awan-status-error)';
+ return (
+ <span className="text-awan-xs font-mono font-black mt-1 inline-block uppercase tracking-widest" style={{ color }}>
+ SCORE {score}/100
+ </span>
+ );
+ })()}
  </div>
  <Touch
  onPress={() => setEditEntry(m)}

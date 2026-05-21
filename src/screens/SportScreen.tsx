@@ -53,7 +53,8 @@ import {
 } from '../data/schemas/sport/routine';
 import type { ExerciseSetLatest, SetKind } from '../data/schemas/sport/exerciseSet';
 import { scoreSession } from '../services/sessionScoreService';
-import { sessionAdherence } from '../services/workoutAnalysisService';
+import { sessionAdherence, sessionDensity, bestOneRmFromSession } from '../services/workoutAnalysisService';
+import { computeCycleScore } from '../services/cycleScoreService';
 import { suggestProgression } from '../services/autoProgressionService';
 import { BodySvg } from '../components/BodySvg';
 import type { MuscleId } from '../components/BodySvg';
@@ -172,6 +173,47 @@ function volumeToMuscleValues(vol: Record<string, number>): Partial<Record<Muscl
     }
   }
   return result;
+}
+
+function CycleScoreSection({ sessions }: { sessions: WorkoutSessionLatest[] }) {
+  const result = useMemo(() => computeCycleScore(sessions), [sessions]);
+  if (result.sessionsCount === 0) return null;
+  const status = result.score >= 80 ? 'ok' : result.score >= 60 ? 'warn' : 'error';
+  const statusVar = `var(--color-awan-status-${status})`;
+  return (
+    <div className="mb-6">
+      <span className="awan-label text-awan-tx-mute mb-3 block">NOTE CYCLE — 4 SEMAINES</span>
+      <Card className="p-5 bg-white/5">
+        <div className="flex flex-row items-baseline gap-3 mb-3">
+          <span className="text-4xl font-mono font-bold" style={{ color: statusVar }}>{result.score}</span>
+          <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest">/ 100</span>
+          <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest ml-auto">{result.sessionsCount} séances · {result.weeksObserved}/4 sem</span>
+        </div>
+        <span className="text-awan-md font-bold text-awan-tx block leading-relaxed">{result.diagnostic}</span>
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          <BreakdownChip label="ADH." value={result.breakdown.adherence} max={20} />
+          <BreakdownChip label="FRÉQ." value={result.breakdown.frequency} max={20} />
+          <BreakdownChip label="PROG." value={result.breakdown.progression} max={20} />
+          <BreakdownChip label="PLATE." value={result.breakdown.plateau} max={15} />
+          <BreakdownChip label="RÉCUP." value={result.breakdown.recovery} max={15} />
+          <BreakdownChip label="CONST." value={result.breakdown.consistency} max={10} />
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function BreakdownChip({ label, value, max }: { label: string; value: number; max: number }) {
+  const ratio = max > 0 ? value / max : 0;
+  const color = ratio >= 0.8 ? 'var(--color-awan-status-ok)'
+              : ratio >= 0.5 ? 'var(--color-awan-status-warn)'
+              : 'var(--color-awan-status-error)';
+  return (
+    <div className="bg-white/5 px-2 py-1.5 flex flex-col items-center">
+      <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">{label}</span>
+      <span className="text-awan-md font-mono font-bold" style={{ color }}>{value}/{max}</span>
+    </div>
+  );
 }
 
 function VolumeHeatmapSection({ sessions }: { sessions: WorkoutSessionLatest[] }) {
@@ -717,6 +759,7 @@ export default function SportScreen() {
  </div>
 
  <VolumeWeekSection sessions={workoutStore.sessions as WorkoutSessionLatest[]} />
+ <CycleScoreSection sessions={workoutStore.sessions as WorkoutSessionLatest[]} />
  <VolumeHeatmapSection sessions={workoutStore.sessions as WorkoutSessionLatest[]} />
 
  {nextRoutine && (
@@ -1765,7 +1808,7 @@ function SetRow({
  transition={{ type: 'spring', stiffness: 400, damping: 12 }}
  style={{ position: 'absolute', top: -6, right: -6, backgroundColor: 'var(--color-awan-gold)', borderRadius: 6, paddingInline: 4, paddingBlock: 2 }}
  >
- <span style={{ fontSize: 7, fontWeight: 900, color: '#000', letterSpacing: '0.1em' }}>PR</span>
+ <span className="text-black" style={{ fontSize: 7, fontWeight: 900, letterSpacing: '0.1em' }}>PR</span>
  </motion.div>
  )}
  </div>
@@ -1989,7 +2032,53 @@ function FinishWorkout({
  e.sets.filter(s => s.completed && s.kind === 'working'),
  );
  const volume = workingSets.reduce((acc, s) => acc + (s.weightKg ?? 0) * (s.reps ?? 0), 0);
- return { workingCount: workingSets.length, volume };
+
+ // S4: density + best 1RM — build pseudo WorkoutSessionLatest from active session
+ const pseudoSession: WorkoutSessionLatest = {
+ v: 2,
+ id: session.id,
+ routineId: session.routineId,
+ name: session.routineName,
+ cycleLetter: session.cycleLetter,
+ date: ds(new Date()),
+ startTime: session.startTime,
+ endTime: Date.now(),
+ duration: Math.floor((Date.now() - session.startTime) / 1000),
+ warmupStartedAt: session.warmupStartedAt,
+ workoutEndedAt: session.workoutEndedAt ?? Date.now(),
+ solo: session.solo,
+ isException: session.isException,
+ exercises: session.exercises.map(ex => ({
+ rid: ex.rid,
+ exerciseId: ex.exerciseId,
+ name: ex.name,
+ primaryMuscle: ex.primaryMuscle,
+ secondaryMuscles: ex.secondaryMuscles,
+ equipment: ex.equipment,
+ order: ex.order,
+ sets: ex.sets.filter(s => s.completed).map<ExerciseSetLatest>(s => ({
+ v: 2,
+ exerciseId: ex.exerciseId,
+ kind: s.kind,
+ reps: s.reps,
+ weightKg: s.weightKg,
+ plannedWeightKg: s.plannedWeightKg,
+ plannedReps: s.plannedReps,
+ rir: s.rir,
+ restActualSec: s.restActualSec,
+ completedAt: s.completedAt,
+ })),
+ })),
+ };
+ const density = sessionDensity(pseudoSession);
+ const oneRmMap = bestOneRmFromSession(pseudoSession);
+ const oneRmEntries = Object.entries(oneRmMap).sort((a, b) => b[1] - a[1]);
+ const topOneRm = oneRmEntries[0];
+ const topExerciseName = topOneRm
+ ? (session.exercises.find(e => e.exerciseId === topOneRm[0])?.name ?? topOneRm[0])
+ : null;
+
+ return { workingCount: workingSets.length, volume, density, topOneRm, topExerciseName };
  }, [session]);
 
  return (
@@ -2022,6 +2111,20 @@ function FinishWorkout({
  </span>
  )}
  </Card>
+ {stats.density !== null && (
+ <Card className="p-4 bg-white/5">
+ <span className="awan-label mb-1 block">DENSITÉ</span>
+ <span className="text-2xl font-mono font-bold text-awan-gold">{stats.density}</span>
+ <span className="font-mono text-awan-sm text-awan-tx-mute mt-1 block uppercase tracking-widest">kg·rep/min actif</span>
+ </Card>
+ )}
+ {stats.topOneRm && stats.topExerciseName && (
+ <Card className="p-4 bg-white/5">
+ <span className="awan-label mb-1 block">EST. 1RM</span>
+ <span className="text-2xl font-mono font-bold text-awan-gold">{stats.topOneRm[1]}</span>
+ <span className="font-mono text-awan-sm text-awan-tx-mute mt-1 block uppercase tracking-widest">kg · {stats.topExerciseName}</span>
+ </Card>
+ )}
  </div>
 
  <div className="mb-8">
