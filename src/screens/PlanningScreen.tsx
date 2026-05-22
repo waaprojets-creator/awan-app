@@ -494,7 +494,7 @@ export default function PlanningScreen() {
                   const titleWeight = t.priority <= 1 ? 900 : t.priority <= 2 ? 700 : t.priority <= 3 ? 600 : 400;
                   const titleSize = t.priority <= 1 ? '13px' : t.priority <= 3 ? '12px' : '11px';
                   return (
-                    <div key={t.id} className="flex-row items-center flex border" style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                    <div key={t.id} className="flex-row items-center flex border" style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)' }}>
                       <div className="w-[3px] self-stretch" style={{ backgroundColor: domainColor }} />
                       <div className="flex-1 px-4 py-3">
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', fontWeight: 700, color: domainColor, letterSpacing: '0.3em', display: 'block', marginBottom: 2 }}>{(categories[t.domain]?.l ?? t.domain ?? '').toUpperCase()} · {t.energyLevel.toUpperCase()}</span>
@@ -653,7 +653,7 @@ export default function PlanningScreen() {
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', fontWeight: 700, letterSpacing: '0.35em', color: g.isFuture ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)' }}>
                 {g.date === today ? 'AUJOURD\'HUI' : g.dateLabel}
               </span>
-              <div className="h-px flex-1" style={{ backgroundColor: g.isFuture ? 'rgba(212,175,55,0.2)' : 'var(--color-awan-border)' }} />
+              <div className="h-px flex-1" style={{ backgroundColor: g.isFuture ? 'var(--color-awan-border-soft)' : 'var(--color-awan-border)' }} />
             </div>
             {g.items.map(item => (
               <div key={item.key} className="flex flex-row gap-3 mb-1 py-2 border-b" style={{ borderColor: 'var(--color-awan-border-soft)' }}>
