@@ -45,8 +45,8 @@
   --text-awan-data: 22px;
 
   /* Couleurs semi-transparentes réutilisables */
-  --color-awan-border:      rgba(212,175,55,0.18);
-  --color-awan-border-soft: rgba(212,175,55,0.10);
+  --color-awan-border:      rgba(237,232,226,0.18);
+  --color-awan-border-soft: rgba(237,232,226,0.10);
   --color-awan-overlay:     rgba(0,0,0,0.85);
   --color-awan-overlay-deep: rgba(0,0,0,0.92);
   --color-awan-placeholder: rgba(255,255,255,0.15);
