@@ -489,14 +489,17 @@ export default function PlanningScreen() {
               <Heading level={4} mono subtitle={`${planner.tasks.length} missions`}>FILE D'ATTENTE</Heading>
               <div className="space-y-2">
                 {planner.tasks.map(t => {
-                  const domainColor = t.priority <= 2 ? 'var(--color-awan-status-ok)' : t.priority === 3 ? 'var(--color-awan-gold)' : 'var(--color-awan-status-warn)';
+                  const domainColor = (categories[t.domain] ?? CATS[t.domain as keyof typeof CATS])?.c ?? 'var(--color-awan-tx-mute)';
+                  // priorité → poids typographique (1=900 dominant, 5=400 discret)
+                  const titleWeight = t.priority <= 1 ? 900 : t.priority <= 2 ? 700 : t.priority <= 3 ? 600 : 400;
+                  const titleSize = t.priority <= 1 ? '13px' : t.priority <= 3 ? '12px' : '11px';
                   return (
                     <div key={t.id} className="flex-row items-center flex border" style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
                       <div className="w-[3px] self-stretch" style={{ backgroundColor: domainColor }} />
                       <div className="flex-1 px-4 py-3">
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', fontWeight: 700, color: domainColor, letterSpacing: '0.3em', display: 'block', marginBottom: 2 }}>P{t.priority} · {t.energyLevel.toUpperCase()}</span>
-                        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.04em', textTransform: 'uppercase', display: 'block' }}>{t.title}</span>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.1em', display: 'block', marginTop: 2 }}>{t.durationMin} MIN</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', fontWeight: 700, color: domainColor, letterSpacing: '0.3em', display: 'block', marginBottom: 2 }}>{(categories[t.domain]?.l ?? t.domain ?? '').toUpperCase()} · {t.energyLevel.toUpperCase()}</span>
+                        <span style={{ fontFamily: 'var(--font-sans)', fontSize: titleSize, fontWeight: titleWeight, color: 'var(--color-awan-tx)', letterSpacing: '0.04em', textTransform: 'uppercase', display: 'block' }}>{t.title}</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.1em', display: 'block', marginTop: 2 }}>{t.durationMin} MIN · P{t.priority}</span>
                       </div>
                       <Touch onPress={() => planner.deleteTask(t.id)} className="w-9 h-9 flex items-center justify-center" style={{ border: '1px solid var(--color-awan-border)' }}>
                         <Trash size={14} color="var(--color-awan-tx-mute)" />
