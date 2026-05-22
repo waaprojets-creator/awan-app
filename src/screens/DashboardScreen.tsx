@@ -189,13 +189,10 @@ export default function DashboardScreen({ navigate }: NavProps) {
             const Icon  = icons[opt.key];
             const active = transportMode === opt.key;
             return (
-              <Touch key={opt.key} className="flex-1 flex flex-col items-center p-3 border transition-all"
-                style={{ backgroundColor: active ? 'rgba(212,175,55,0.08)' : 'transparent', borderColor: active ? 'var(--color-awan-gold)' : 'var(--color-awan-border)' }}
+              <Touch key={opt.key} className="flex-1 flex items-center justify-center border transition-all"
+                style={{ height: 44, backgroundColor: active ? 'rgba(212,175,55,0.08)' : 'transparent', borderColor: active ? 'var(--color-awan-gold)' : 'var(--color-awan-border)' }}
                 onPress={() => setTransportMode(opt.key)}>
                 {Icon && <Icon size={18} color={active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)'} />}
-                <span className="mt-1 uppercase" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: active ? 'var(--fw-value)' : 'var(--fw-label)', color: active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' } as any}>
-                  {opt.label}
-                </span>
               </Touch>
             );
           })}

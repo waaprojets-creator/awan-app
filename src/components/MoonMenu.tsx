@@ -153,17 +153,34 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
     y: nodePositions[node.id]?.y ?? node.y,
   }));
 
+  // Push label away from the orbital centre so it never crosses an edge.
+  // Direction vector (node → away from centre) drives anchor + offset.
   function labelPos(node: Node & { x: number; y: number }) {
-    const cx = (node.x / 100) * W;
-    const cy = (node.y / 100) * CH;
-    const r  = node.tier === 0 ? 5 : node.tier === 1 ? 3.5 : 2.5;
-    if (node.y > 75) return { textX: cx, textY: cy - r - 8, anchor: 'middle' };
-    if (node.x > 72) return { textX: Math.min(W - MARGIN, cx - r - 6), textY: cy - 2, anchor: 'end' };
-    if (node.x < 18) return { textX: Math.max(MARGIN, cx + r + 6), textY: cy - 2, anchor: 'start' };
-    if (node.tier === 0) return { textX: cx, textY: cy - r - 12, anchor: 'middle' };
-    if (node.x < 40) return { textX: cx - r - 6, textY: cy - 2, anchor: 'end' };
-    if (node.x > 60) return { textX: cx + r + 6, textY: cy - 2, anchor: 'start' };
-    return { textX: cx, textY: cy + r + 15, anchor: 'middle' };
+    const cx   = (node.x / 100) * W;
+    const cy   = (node.y / 100) * CH;
+    const r    = node.tier === 0 ? 5 : node.tier === 1 ? 3.5 : 2.5;
+    const gap  = r + 8;
+    // Vector from orbital centre to node
+    const dx = node.x - 50;   // in %
+    const dy = node.y - 52;
+    const adx = Math.abs(dx), ady = Math.abs(dy);
+
+    if (node.tier === 0) {
+      // Dashboard centre — label above
+      return { textX: cx, textY: cy - r - 12, anchor: 'middle' as const };
+    }
+    if (adx < 8) {
+      // Nearly vertical — above or below
+      return dy < 0
+        ? { textX: cx, textY: Math.max(MARGIN + 8, cy - gap), anchor: 'middle' as const }
+        : { textX: cx, textY: Math.min(CH - MARGIN, cy + gap + 4), anchor: 'middle' as const };
+    }
+    if (dx > 0) {
+      // Right side — label to the right
+      return { textX: Math.min(W - MARGIN, cx + gap), textY: cy + 3, anchor: 'start' as const };
+    }
+    // Left side — label to the left
+    return { textX: Math.max(MARGIN, cx - gap), textY: cy + 3, anchor: 'end' as const };
   }
 
   function onDragStart(nodeId: string, mx: number, my: number) {
@@ -233,7 +250,7 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
             )}
             {editMode && (
               <div style={{ position: 'absolute', top: 60, left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 9, letterSpacing: '0.25em', color: 'var(--color-awan-tx-dim)', textTransform: 'uppercase' }}>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, letterSpacing: '0.25em', color: 'var(--color-awan-tx-dim)', textTransform: 'uppercase' }}>
                   GLISSER LES NŒUDS POUR REPOSITIONNER
                 </span>
               </div>
@@ -323,15 +340,10 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
       </AnimatePresence>
 
       <motion.button onClick={toggle}
-        style={{ position: 'fixed', left: 20, bottom: 16, zIndex: 100, width: 40, height: 40, background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        style={{ position: 'fixed', right: 20, bottom: 16, zIndex: 100, width: 40, height: 40, background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         whileTap={{ scale: 0.88 }}>
-        <motion.div animate={{ rotate: isOpen ? 167 + 360 : 167 }} transition={{ duration: 0.65, ease: [0.4,0,0.2,1] }} style={{ position: 'relative', width: 24, height: 24 }}>
-          <motion.div style={{ position: 'absolute', inset: 0 }} animate={{ opacity: isOpen ? 0 : 1, scale: isOpen ? 0.6 : 1 }} transition={{ duration: 0.28, delay: isOpen ? 0 : 0.3 }}>
-            <FullMoon color="var(--color-awan-tx)" />
-          </motion.div>
-          <motion.div style={{ position: 'absolute', inset: 0 }} animate={{ opacity: isOpen ? 1 : 0, scale: isOpen ? 1 : 1.4 }} transition={{ duration: 0.28, delay: isOpen ? 0.3 : 0 }}>
-            <CrescentMoon color="var(--color-awan-gold)" />
-          </motion.div>
+        <motion.div animate={{ rotate: isOpen ? 360 : 0 }} transition={{ duration: 0.65, ease: [0.4,0,0.2,1] }} style={{ width: 24, height: 24 }}>
+          <CrescentMoon color="var(--color-awan-gold)" />
         </motion.div>
       </motion.button>
     </>

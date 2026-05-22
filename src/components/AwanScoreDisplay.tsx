@@ -135,7 +135,7 @@ export function AwanScoreDisplay({ score, temporal, className = '', onInfo }: Aw
           transition={{ duration: 0.4 }}
           style={{
             fontFamily: 'var(--font-sans)',
-            fontSize: '64px',
+            fontSize: '80px',
             fontWeight: 'var(--fw-display)' as any,
             color: scoreColor,
             lineHeight: 1,
