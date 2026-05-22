@@ -80,25 +80,6 @@ function minToTime(min: number): string {
   return `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
 }
 
-function timeToMin(hhmm: string): number {
-  const [h, m] = hhmm.split(':').map(Number);
-  return ((h ?? 0) * 60) + (m ?? 0);
-}
-
-type TaskTier = 'obligatoire' | 'prioritaire' | 'secondaire';
-
-function getTaskTier(t: { fixedStartMin?: number | undefined; priority: number }): TaskTier {
-  if (t.fixedStartMin !== undefined) return 'obligatoire';
-  if (t.priority >= 4) return 'prioritaire';
-  return 'secondaire';
-}
-
-const TIER_CFG: Record<TaskTier, { label: string; colorClass: string; borderClass: string; bgClass: string }> = {
-  obligatoire: { label: 'OBLIGATOIRE', colorClass: 'text-awan-gold', borderClass: 'border-awan-gold', bgClass: 'bg-awan-gold/10' },
-  prioritaire:  { label: 'PRIORITAIRE',  colorClass: 'text-awan-status-ok', borderClass: 'border-awan-status-ok', bgClass: 'bg-awan-status-ok/10' },
-  secondaire:   { label: 'SECONDAIRE',   colorClass: 'text-awan-tx-mute',   borderClass: 'border-white/10',        bgClass: 'bg-white/5' },
-};
-
 export default function PlanningScreen() {
   const insets = useSafeAreaInsets();
   const { db, updateDb, navigate } = useAppState() as any;
@@ -127,8 +108,6 @@ export default function PlanningScreen() {
   const [aiDuration, setAiDuration] = useState('30');
   const [aiEnergy, setAiEnergy] = useState<'low' | 'medium' | 'high'>('medium');
   const [aiPriority, setAiPriority] = useState(3);
-  const [aiTier, setAiTier] = useState<TaskTier>('secondaire');
-  const [aiFixedTime, setAiFixedTime] = useState('08:00');
 
   const categories = useMemo(() => {
     const base: any = { ...CATS };
@@ -419,19 +398,17 @@ export default function PlanningScreen() {
     const addAiTask = async () => {
       const dur = parseInt(aiDuration, 10);
       if (!aiTitle.trim() || isNaN(dur) || dur < 5) return;
-      const derivedPriority = aiTier === 'obligatoire' ? 5 : aiTier === 'prioritaire' ? 4 : aiPriority;
       await planner.saveTask({
         v: 1,
         id: uid(),
         title: aiTitle.trim(),
         durationMin: dur,
-        priority: derivedPriority,
+        priority: aiPriority,
         energyLevel: aiEnergy,
         domain: 'general',
-        tags: [aiTier],
+        tags: [],
         dependsOn: [],
         enabled: true,
-        ...(aiTier === 'obligatoire' ? { fixedStartMin: timeToMin(aiFixedTime) } : {}),
       });
       setAiTitle('');
       setAiDuration('30');
@@ -442,46 +419,20 @@ export default function PlanningScreen() {
         <div className="px-6 space-y-8 pt-2">
           {/* Add task form */}
           <div>
-            <Heading level={4} mono subtitle="Hiérarchie 3 niveaux">NOUVELLE TÂCHE</Heading>
+            <Heading level={4} mono subtitle="Injection de Tâche">NOUVELLE MISSION</Heading>
             <div className="space-y-3">
-              {/* Tier selector */}
-              <div>
-                <span className="awan-label mb-2 block">NIVEAU</span>
-                <div className="flex flex-row gap-2">
-                  {(['obligatoire', 'prioritaire', 'secondaire'] as const).map(tier => {
-                    const cfg = TIER_CFG[tier];
-                    const active = aiTier === tier;
-                    return (
-                      <Touch
-                        key={tier}
-                        onPress={() => setAiTier(tier)}
-                        className={`flex-1 h-12 items-center justify-center border ${active ? `${cfg.bgClass} ${cfg.borderClass}` : 'bg-white/5 border-white/5'}`}
-                      >
-                        <span className={`text-awan-xs font-black uppercase tracking-widest font-mono ${active ? cfg.colorClass : 'text-awan-tx-mute'}`}>
-                          {tier === 'obligatoire' ? 'OBLIG.' : tier === 'prioritaire' ? 'PRIOR.' : 'SEC.'}
-                        </span>
-                      </Touch>
-                    );
-                  })}
-                </div>
-                <span className="text-awan-xs text-awan-tx-mute mt-1 block font-mono">
-                  {aiTier === 'obligatoire' ? 'Ancré à l\'heure fixe — ne bouge jamais' : aiTier === 'prioritaire' ? 'S\'insère dans le premier créneau libre' : 'Remplit les créneaux restants'}
-                </span>
-              </div>
-
               <TextInput
-                className="bg-awan-bg border border-white/5 px-5 py-4 text-sm font-bold text-awan-tx"
+                className="bg-awan-bg border border-white/5  px-5 py-4 text-sm font-bold text-awan-tx"
                 placeholder="TITRE DE LA TÂCHE..."
                 placeholderTextColor="var(--color-awan-tx-mute)"
                 value={aiTitle}
                 onChangeText={setAiTitle}
               />
-
               <div className="flex flex-row gap-3">
                 <div className="flex-1">
                   <span className="awan-label mb-2 block">DURÉE (MIN)</span>
                   <TextInput
-                    className="bg-awan-bg border border-white/5 px-5 py-4 text-sm font-bold text-awan-tx font-mono"
+                    className="bg-awan-bg border border-white/5  px-5 py-4 text-sm font-bold text-awan-tx font-mono"
                     placeholder="30"
                     placeholderTextColor="var(--color-awan-tx-mute)"
                     keyboardType="numeric"
@@ -489,35 +440,21 @@ export default function PlanningScreen() {
                     onChangeText={setAiDuration}
                   />
                 </div>
-                {aiTier === 'obligatoire' ? (
-                  <div className="flex-1">
-                    <span className="awan-label mb-2 block">HEURE FIXE</span>
-                    <TextInput
-                      className="bg-awan-bg border border-awan-gold/30 px-5 py-4 text-sm font-bold text-awan-gold font-mono text-center"
-                      placeholder="08:00"
-                      placeholderTextColor="var(--color-awan-tx-mute)"
-                      value={aiFixedTime}
-                      onChangeText={setAiFixedTime}
-                    />
+                <div className="flex-1">
+                  <span className="awan-label mb-2 block">PRIORITÉ</span>
+                  <div className="flex flex-row gap-1">
+                    {[1, 2, 3, 4, 5].map(p => (
+                      <Touch
+                        key={p}
+                        onPress={() => setAiPriority(p)}
+                        className={`flex-1 h-14  items-center justify-center border ${aiPriority === p ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'}`}
+                      >
+                        <span className={`text-xs font-black font-mono ${aiPriority === p ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{p}</span>
+                      </Touch>
+                    ))}
                   </div>
-                ) : (
-                  <div className="flex-1">
-                    <span className="awan-label mb-2 block">PRIORITÉ</span>
-                    <div className="flex flex-row gap-1">
-                      {[1, 2, 3].map(p => (
-                        <Touch
-                          key={p}
-                          onPress={() => setAiPriority(p)}
-                          className={`flex-1 h-14 items-center justify-center border ${aiPriority === p && aiTier === 'secondaire' ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'}`}
-                        >
-                          <span className={`text-xs font-black font-mono ${aiPriority === p && aiTier === 'secondaire' ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{p}</span>
-                        </Touch>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                </div>
               </div>
-
               <div>
                 <span className="awan-label mb-2 block">NIVEAU ÉNERGIE</span>
                 <div className="flex flex-row gap-2">
@@ -525,7 +462,7 @@ export default function PlanningScreen() {
                     <Touch
                       key={e}
                       onPress={() => setAiEnergy(e)}
-                      className={`flex-1 h-12 items-center justify-center border ${aiEnergy === e ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'}`}
+                      className={`flex-1 h-12  items-center justify-center border ${aiEnergy === e ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'}`}
                     >
                       <span className={`text-awan-sm font-black uppercase tracking-widest ${aiEnergy === e ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
                         {e === 'low' ? 'BAS' : e === 'medium' ? 'MOYEN' : 'ÉLEVÉ'}
@@ -534,14 +471,13 @@ export default function PlanningScreen() {
                   ))}
                 </div>
               </div>
-
               <Touch
                 onPress={addAiTask}
-                className="h-14 bg-white/5 border border-white/10 flex items-center justify-center"
+                className="h-14 bg-white/5 border border-white/10  flex items-center justify-center"
               >
                 <div className="flex flex-row items-center gap-3">
                   <Plus size={18} className="text-awan-gold" />
-                  <span className="awan-label text-awan-gold">AJOUTER TÂCHE</span>
+                  <span className="awan-label text-awan-gold">INJECTER TÂCHE</span>
                 </div>
               </Touch>
             </div>
@@ -550,47 +486,21 @@ export default function PlanningScreen() {
           {/* Task list */}
           {planner.tasks.length > 0 && (
             <div>
-              <Heading level={4} mono subtitle={`${planner.tasks.length} tâches`}>FILE D'ATTENTE</Heading>
-              {/* Tier legend */}
-              <div className="flex flex-row gap-3 mb-3">
-                {(['obligatoire', 'prioritaire', 'secondaire'] as const).map(tier => {
-                  const count = planner.tasks.filter(t => getTaskTier(t) === tier).length;
-                  const cfg = TIER_CFG[tier];
-                  return (
-                    <div key={tier} className={`flex-1 py-2 px-3 border ${cfg.borderClass} ${cfg.bgClass} flex flex-col items-center`}>
-                      <span className={`text-awan-xs font-black font-mono ${cfg.colorClass}`}>{count}</span>
-                      <span className="text-awan-xs text-awan-tx-mute font-mono">{cfg.label.substring(0, 5)}.</span>
-                    </div>
-                  );
-                })}
-              </div>
+              <Heading level={4} mono subtitle={`${planner.tasks.length} missions`}>FILE D'ATTENTE</Heading>
               <div className="space-y-2">
-                {(['obligatoire', 'prioritaire', 'secondaire'] as const).flatMap(tier =>
-                  planner.tasks
-                    .filter(t => getTaskTier(t) === tier)
-                    .map(t => {
-                      const cfg = TIER_CFG[tier];
-                      return (
-                        <Card key={t.id} className={`flex-row items-center gap-4 py-3 px-4 border-l-4 ${cfg.borderClass} bg-white/[0.03] border-r-0 border-t-0 border-b-0`} variant="flat">
-                          <div className="flex-1">
-                            <div className="flex flex-row items-center gap-2 mb-0.5">
-                              <span className={`text-awan-xs font-black font-mono ${cfg.colorClass}`}>{cfg.label}</span>
-                              {t.fixedStartMin !== undefined && (
-                                <span className="text-awan-xs font-mono text-awan-gold bg-awan-gold/10 px-1">{minToTime(t.fixedStartMin)}</span>
-                              )}
-                            </div>
-                            <span className="text-sm font-bold text-awan-tx uppercase tracking-tight">{t.title}</span>
-                            <span className="text-awan-xs font-mono text-awan-tx-mute block mt-0.5">
-                              {t.durationMin} MIN · {t.energyLevel.toUpperCase()}
-                            </span>
-                          </div>
-                          <Touch onPress={() => planner.deleteTask(t.id)} className="w-9 h-9 bg-white/5 flex items-center justify-center border border-white/10">
-                            <Trash size={14} className="text-awan-tx-mute" />
-                          </Touch>
-                        </Card>
-                      );
-                    })
-                )}
+                {planner.tasks.map(t => (
+                  <Card key={t.id} className="flex-row items-center gap-4 py-4 px-5 bg-white/5 border-white/5" variant="flat">
+                    <div className="flex-1">
+                      <span className="text-sm font-bold text-awan-tx uppercase tracking-tight">{t.title}</span>
+                      <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-widest mt-0.5 block">
+                        {t.durationMin} MIN • P{t.priority} • {t.energyLevel.toUpperCase()}
+                      </span>
+                    </div>
+                    <Touch onPress={() => planner.deleteTask(t.id)} className="w-9 h-9  bg-white/5 flex items-center justify-center border border-white/10">
+                      <Trash size={14} className="text-awan-tx-mute" />
+                    </Touch>
+                  </Card>
+                ))}
               </div>
             </div>
           )}
@@ -611,7 +521,7 @@ export default function PlanningScreen() {
           {/* Schedule result */}
           {planner.schedule && (
             <div>
-              <Heading level={4} mono subtitle={`${planner.schedule.slots.length} créneaux planifiés`}>RÉSULTAT</Heading>
+              <Heading level={4} mono subtitle={`${planner.schedule.slots.length} créneaux`}>PLANNING OPTIMISÉ</Heading>
               {planner.schedule.slots.length === 0 ? (
                 <Card className="py-10 items-center bg-white/5 border-white/5" variant="flat">
                   <span className="awan-label">AUCUN CRÉNEAU GÉNÉRÉ</span>
@@ -620,29 +530,28 @@ export default function PlanningScreen() {
                 <div className="space-y-2">
                   {planner.schedule.slots.map((slot, i) => {
                     const task = taskMap.get(slot.taskId);
-                    const tier = task ? getTaskTier(task) : 'secondaire';
-                    const cfg = TIER_CFG[tier];
                     return (
-                      <div key={i} className={`flex flex-row items-stretch border-l-4 ${cfg.borderClass} bg-white/[0.03]`}>
-                        <div className="w-16 flex flex-col items-center justify-center py-3 px-2">
-                          <span className={`text-awan-md font-black font-mono ${cfg.colorClass}`}>{minToTime(slot.startMin)}</span>
-                          <span className="text-awan-xs font-mono text-awan-tx-mute">{minToTime(slot.endMin)}</span>
+                      <Card key={i} className="flex-row items-center gap-4 py-4 px-5 bg-awan-surface border-awan-gold/10" variant="flat">
+                        <div className="w-16 items-center">
+                          <span className="text-awan-md font-black text-awan-gold font-mono">{minToTime(slot.startMin)}</span>
+                          <span className="text-awan-xs font-bold text-awan-tx-mute font-mono">{minToTime(slot.endMin)}</span>
                         </div>
-                        <div className="w-px bg-white/5 self-stretch" />
-                        <div className="flex-1 py-3 px-4">
-                          <span className={`text-awan-xs font-black font-mono ${cfg.colorClass} block mb-0.5`}>{cfg.label}</span>
-                          <span className="text-sm font-bold text-awan-tx uppercase tracking-tight block">{task?.title ?? slot.taskId}</span>
-                          <span className="text-awan-xs font-mono text-awan-tx-mute">{slot.endMin - slot.startMin} MIN</span>
+                        <div className="w-px h-8 bg-awan-gold/20" />
+                        <div className="flex-1">
+                          <span className="text-sm font-bold text-awan-tx uppercase tracking-tight">{task?.title ?? slot.taskId}</span>
+                          <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-widest">
+                            {slot.endMin - slot.startMin} MIN
+                          </span>
                         </div>
-                      </div>
+                      </Card>
                     );
                   })}
                   {planner.schedule.unscheduled.length > 0 && (
-                    <div className="py-4 px-5 bg-awan-status-error/5 border border-awan-status-error/20">
+                    <Card className="py-4 px-5 bg-awan-status-error/5 border-awan-status-error/20" variant="flat">
                       <span className="text-awan-sm font-black text-awan-status-error uppercase tracking-widest">
-                        {planner.schedule.unscheduled.length} TÂCHE(S) NON PLACÉE(S) — JOUR PLEIN
+                        {planner.schedule.unscheduled.length} TÂCHES NON PLANIFIÉES
                       </span>
-                    </div>
+                    </Card>
                   )}
                 </div>
               )}
