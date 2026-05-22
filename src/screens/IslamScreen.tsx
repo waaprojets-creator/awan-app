@@ -358,7 +358,7 @@ export default function IslamScreen() {
           if (next) void schedulePrayerNotifications(prayerTimesForDate as Record<string, unknown>);
           else void cancelPrayerNotifications();
         }}>
-          <div className="flex flex-row items-center justify-between mb-3 px-4 py-3 border" style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: 'var(--color-awan-surface)' }}>
+          <div className="flex flex-row items-center justify-between mb-3 px-4 py-3 border" style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)' }}>
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>RAPPELS PRIÈRES</span>
             <div style={{
               width: 36, height: 20, borderRadius: 10, position: 'relative',
@@ -376,7 +376,7 @@ export default function IslamScreen() {
         </Touch>
 
         {/* ── Sélecteur de date ──────────────────────────────────────────────── */}
-        <div className="flex flex-row items-center justify-between mb-3 p-3 border" style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: 'var(--color-awan-surface)' }}>
+        <div className="flex flex-row items-center justify-between mb-3 p-3 border" style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)' }}>
           <Touch onPress={() => {
             const d = new Date(selectedDate);
             d.setDate(d.getDate() - 1);
@@ -407,7 +407,7 @@ export default function IslamScreen() {
         </div>
 
         {/* ── Chrono prières ────────────────────────────────────────────────── */}
-        <div className="mb-4 border" style={{ borderColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+        <div className="mb-4 border" style={{ borderColor: 'var(--color-awan-border)', overflow: 'hidden' }}>
           <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>CHRONO PRIÈRES</span>
             {isPast && (
@@ -477,7 +477,7 @@ export default function IslamScreen() {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               className="mb-4 border overflow-hidden flex flex-col items-center p-8"
-              style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: 'var(--color-awan-surface)' }}
+              style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)' }}
             >
               {locationStatus === 'loading' ? (
                 <div className="flex flex-col items-center gap-4 py-8">
@@ -552,24 +552,33 @@ export default function IslamScreen() {
         </AnimatePresence>
 
         {/* ── Calendrier hégirien ───────────────────────────────────────────── */}
-        <div className="mb-4 border" style={{ borderColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+        <div className="mb-4 border" style={{ borderColor: 'var(--color-awan-border)', overflow: 'hidden' }}>
+          {/* Tabs — même pattern que Planning */}
+          <div className="flex flex-row border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
+            {(['month', 'year'] as const).map(v => (
+              <Touch key={v} className={`flex-1 py-3 flex items-center justify-center border-b-2 transition-all ${calView === v ? 'border-awan-gold' : 'border-transparent opacity-40'}`} onPress={() => setCalView(v)}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', fontWeight: 700, color: calView === v ? 'var(--color-awan-tx)' : 'var(--color-awan-tx-mute)', letterSpacing: '0.25em' }}>
+                  {v === 'month' ? 'MOIS' : 'ANNÉE'}
+                </span>
+              </Touch>
+            ))}
+          </div>
+          {/* Navigation mois */}
           <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
-            <div className="flex flex-row gap-2">
-              <Touch onPress={() => setCalView('month')}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', fontWeight: 700, color: calView === 'month' ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>MOIS</span>
-              </Touch>
-              <span style={{ color: 'var(--color-awan-tx-mute)', opacity: 0.3 }}>·</span>
-              <Touch onPress={() => setCalView('year')}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', fontWeight: 700, color: calView === 'year' ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>ANNÉE</span>
-              </Touch>
-            </div>
-            <div className="flex flex-row items-center gap-3">
-              <Touch onPress={prevMonth}><ChevronLeft size={16} color="var(--color-awan-gold)" /></Touch>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.05em' }}>
-                {HIJRI_MONTHS[hijriMonth - 1]} {hijriYear}
+            <Touch onPress={prevMonth} className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-awan-border)' }}>
+              <ChevronLeft size={14} color="var(--color-awan-tx-mute)" />
+            </Touch>
+            <div className="flex flex-col items-center">
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.25em' }}>
+                {(HIJRI_MONTHS[hijriMonth - 1] ?? '').toUpperCase()}
               </span>
-              <Touch onPress={nextMonth}><ChevronRight size={16} color="var(--color-awan-gold)" /></Touch>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', fontWeight: 400, color: 'var(--color-awan-gold)', letterSpacing: '0.3em' }}>
+                {hijriYear}
+              </span>
             </div>
+            <Touch onPress={nextMonth} className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-awan-border)' }}>
+              <ChevronRight size={14} color="var(--color-awan-tx-mute)" />
+            </Touch>
           </div>
 
           <div className="p-4">
@@ -615,7 +624,7 @@ export default function IslamScreen() {
         </div>
 
         {/* ── Progression Coran ─────────────────────────────────────────────── */}
-        <div className="mb-4 border" style={{ borderColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+        <div className="mb-4 border" style={{ borderColor: 'var(--color-awan-border)', overflow: 'hidden' }}>
           <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
             <div className="flex flex-row items-center justify-between">
               <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>PROGRESSION CORAN</span>
@@ -665,7 +674,7 @@ export default function IslamScreen() {
         </div>
 
         {/* ── Vocabulaire ───────────────────────────────────────────────────── */}
-        <div className="mb-8 border" style={{ borderColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+        <div className="mb-8 border" style={{ borderColor: 'var(--color-awan-border)', overflow: 'hidden' }}>
           <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>VOCABULAIRE</span>
             <div className="flex flex-row items-center gap-2">
