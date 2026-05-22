@@ -18,27 +18,28 @@ interface Node { id: string; label: string; x: number; y: number; tier: 0 | 1 | 
 const nav = (L as any).nav as Record<string, string | undefined>;
 const n = (k: string): string => nav[k] ?? k;
 
-// Orbital layout — two concentric rings (visual radii: 115px and 150px on a 390×726 canvas)
-// Center: (50%, 42.7%). Tier-1 at bearings 0°/72°/144°/216°/288° (clockwise from top).
-// Tier-2 clustered near their parent's bearing at the outer ring.
+// Orbital layout — portrait-optimised, centre (50%, 52%), deux anneaux concentriques.
+// Ring 1 r=22% CH, Ring 2 r=36% CH. Bearings clockwise depuis 12h.
+// Aucune arête ne se croise : tous les nœuds tier-1 sont à 72° d'écart autour du centre ;
+// les clusters tier-2 se déploient en éventail depuis leur parent sans recoupement.
 const NODES: Node[] = [
-  { id: 'Dashboard',   label: n('hub'),       x: 50.0, y: 42.7, tier: 0 },
-  // — Inner ring (tier 1) —
-  { id: 'Islam',       label: n('spirit'),    x: 50.0, y: 26.9, tier: 1 },  // bearing   0°
-  { id: 'Trajet',      label: n('trajet'),    x: 78.1, y: 37.8, tier: 1 },  // bearing  72°
-  { id: 'Planning',    label: n('planning'),  x: 67.3, y: 55.5, tier: 1 },  // bearing 144°
-  { id: 'Journal',     label: n('journal'),   x: 32.7, y: 55.5, tier: 1 },  // bearing 216°
-  { id: 'Sante',       label: n('sante'),     x: 21.9, y: 37.8, tier: 1 },  // bearing 288°
-  // — Outer ring (tier 2) — Sante cluster, bearings 255°–315°
-  { id: 'Sport',       label: n('sport'),     x: 12.8, y: 48.1, tier: 2 },  // bearing 255°
-  { id: 'Nutrition',   label: n('nutrition'), x: 11.6, y: 41.6, tier: 2 },  // bearing 273°
-  { id: 'Mensuration', label: n('mensuration'),x:14.1, y: 35.3, tier: 2 },  // bearing 291°
-  { id: 'Sleep',       label: 'SOMMEIL',      x: 20.1, y: 29.7, tier: 2 },  // bearing 309°
-  // — Outer ring (tier 2) — Dashboard direct children
-  { id: 'Coach',       label: n('coach'),     x: 72.1, y: 25.8, tier: 2 },  // bearing  35°
-  { id: 'Reglages',    label: n('reglages'),  x: 88.3, y: 44.5, tier: 2 },  // bearing  95°
-  // — Outer ring (tier 2) — Planning cluster
-  { id: 'Tasks',       label: n('tasks'),     x: 72.6, y: 59.4, tier: 2 },  // bearing 144°
+  { id: 'Dashboard',   label: n('hub'),        x: 50.0, y: 52.0, tier: 0 },
+  // — Ring 1 (tier 1) — r=22% CH, bearings 0/72/144/216/288°
+  { id: 'Islam',       label: n('spirit'),     x: 50.0, y: 30.0, tier: 1 },  // bearing   0°
+  { id: 'Trajet',      label: n('trajet'),     x: 70.9, y: 45.2, tier: 1 },  // bearing  72°
+  { id: 'Planning',    label: n('planning'),   x: 62.9, y: 69.8, tier: 1 },  // bearing 144°
+  { id: 'Journal',     label: n('journal'),    x: 37.1, y: 69.8, tier: 1 },  // bearing 216°
+  { id: 'Sante',       label: n('sante'),      x: 29.1, y: 45.2, tier: 1 },  // bearing 288°
+  // — Ring 2 (tier 2) — r=36% CH, Sante cluster bearings 255–309°
+  { id: 'Sport',       label: n('sport'),      x: 15.2, y: 61.3, tier: 2 },  // bearing 255°
+  { id: 'Nutrition',   label: n('nutrition'),  x: 14.0, y: 50.1, tier: 2 },  // bearing 273°
+  { id: 'Mensuration', label: n('mensuration'),x: 16.4, y: 39.1, tier: 2 },  // bearing 291°
+  { id: 'Sleep',       label: 'SOMMEIL',       x: 22.0, y: 29.4, tier: 2 },  // bearing 309°
+  // — Ring 2 — Dashboard direct children
+  { id: 'Coach',       label: n('coach'),      x: 70.6, y: 22.5, tier: 2 },  // bearing  35°
+  { id: 'Reglages',    label: n('reglages'),   x: 85.9, y: 55.1, tier: 2 },  // bearing  95°
+  // — Ring 2 — Planning cluster
+  { id: 'Tasks',       label: n('tasks'),      x: 71.2, y: 81.1, tier: 2 },  // bearing 144°
 ];
 
 const EDGES: [string, string][] = [
@@ -104,6 +105,16 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const dragStart = useRef<{ mx: number; my: number; nx: number; ny: number } | null>(null);
   const { width: W, height: H } = useWindowDimensions();
+  // Listen for the event dispatched by SettingsScreen → auto-open in editMode
+  useEffect(() => {
+    const handler = () => {
+      setIsOpen(true);
+      setEditMode(true);
+    };
+    window.addEventListener('moonmenu:open-edit', handler);
+    return () => window.removeEventListener('moonmenu:open-edit', handler);
+  }, []);
+
   const toggle = useCallback(() => {
     setIsOpen((v) => {
       if (!v) {
@@ -130,13 +141,11 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
 
   const CH = H * 0.86;
 
-  // Orbital ring radii (responsive — computed from the canonical geometry)
-  // Ring 1: r_visual ≈ 115px at CH=726 → ratio 0.158
-  // Ring 2: r_visual ≈ 150px at CH=726 → ratio 0.207
+  // Orbital ring radii — matched to the new portrait layout (centre y=52% CH)
   const orbitCX = W * 0.5;
-  const orbitCY = CH * 0.427;
-  const ring1R  = CH * 0.158;
-  const ring2R  = CH * 0.207;
+  const orbitCY = CH * 0.52;
+  const ring1R  = CH * 0.22;
+  const ring2R  = CH * 0.36;
 
   const resolvedNodes = NODES.map(node => ({
     ...node,
@@ -200,7 +209,7 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
             style={{ position: 'fixed', inset: 0, zIndex: 90, background: editMode ? 'var(--color-awan-overlay-deep)' : 'rgba(0,0,0,0.88)' }}
-            onClick={() => { if (!editMode) setIsOpen(false); }}
+            onClick={() => { if (editMode) cancelEdit(); else setIsOpen(false); }}
             onMouseMove={e => onDragMove(e.clientX, e.clientY)}
             onMouseUp={onDragEnd}
             onTouchMove={e => { const t = e.touches[0]; if (t) onDragMove(t.clientX, t.clientY); }}
@@ -316,7 +325,7 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
       <motion.button onClick={toggle}
         style={{ position: 'fixed', left: 20, bottom: 16, zIndex: 100, width: 40, height: 40, background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         whileTap={{ scale: 0.88 }}>
-        <motion.div animate={{ rotate: isOpen ? 360 : 0 }} transition={{ duration: 0.65, ease: [0.4,0,0.2,1] }} style={{ position: 'relative', width: 24, height: 24 }}>
+        <motion.div animate={{ rotate: isOpen ? 167 + 360 : 167 }} transition={{ duration: 0.65, ease: [0.4,0,0.2,1] }} style={{ position: 'relative', width: 24, height: 24 }}>
           <motion.div style={{ position: 'absolute', inset: 0 }} animate={{ opacity: isOpen ? 0 : 1, scale: isOpen ? 0.6 : 1 }} transition={{ duration: 0.28, delay: isOpen ? 0 : 0.3 }}>
             <FullMoon color="var(--color-awan-tx)" />
           </motion.div>

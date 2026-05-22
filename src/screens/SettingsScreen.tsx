@@ -134,7 +134,11 @@ export default function SettingsScreen() {
  <div className="mb-10">
  <Heading level={4} mono subtitle="Interface" className="mb-6">PERSONNALISATION</Heading>
  <Touch
-   onPress={() => { safeStorage.set('awan.moonmenu.pending-edit', '1'); }}
+   onPress={() => {
+     safeStorage.set('awan.moonmenu.pending-edit', '1');
+     window.dispatchEvent(new Event('moonmenu:open-edit'));
+     setLocation('/');
+   }}
    className="bg-white/3 border border-white/5 p-6 flex-row items-center gap-5 mb-3"
  >
    <div className="w-10 h-10 bg-white/5 flex items-center justify-center">
