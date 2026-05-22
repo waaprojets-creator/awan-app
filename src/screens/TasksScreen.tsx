@@ -46,7 +46,7 @@ export default function TasksScreen() {
       timestamp: Date.now(),
       module: 'task',
       rawText: inputText,
-      tokens: [{ label: 'MISSION', value: 'RAPIDE', icon: 'zap' }]
+      tokens: [{ label: 'TÂCHE', value: 'RAPIDE', icon: 'zap' }]
     });
     setInputText('');
   };
@@ -60,7 +60,7 @@ export default function TasksScreen() {
     }
     return () => clearInterval(interval);
   }, [activeTaskId, startTime]);
-  
+
   if (!db) return null;
   const tasks = db.tasks || [];
 
@@ -75,8 +75,8 @@ export default function TasksScreen() {
   const filteredTasks = useMemo(() => {
     return tasks.filter((t: any) => {
       const matchCat = filterCat === 'all' || t.category === filterCat;
-      const matchStatus = filterStatus === 'all' || 
-        (filterStatus === 'pending' && !t.done) || 
+      const matchStatus = filterStatus === 'all' ||
+        (filterStatus === 'pending' && !t.done) ||
         (filterStatus === 'done' && t.done);
       const matchSearch = !search || t.title.toLowerCase().includes(search.toLowerCase());
       return matchCat && matchStatus && matchSearch;
@@ -85,11 +85,11 @@ export default function TasksScreen() {
 
   async function addTask() {
     if (!title.trim()) return;
-    const newTask = { 
-      id: uid(), 
-      title: title.trim(), 
-      done: false, 
-      date: ds(new Date()), 
+    const newTask = {
+      id: uid(),
+      title: title.trim(),
+      done: false,
+      date: ds(new Date()),
       category: cat,
       time,
       reminder
@@ -134,64 +134,74 @@ export default function TasksScreen() {
 
   return (
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={{ paddingBottom: 150 }}
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
       >
         <div className="px-6 pt-4 pb-4">
-          <Heading level={1} className="mb-0" subtitle="Gestion des Objectifs">VECTEURS</Heading>
+          <Heading level={1} className="mb-0" subtitle="Gestion des Objectifs">TÂCHES</Heading>
         </div>
 
-          <div className="flex flex-row gap-4">
-            <Card className="flex-1 p-5 bg-white/5 border-white/5" variant="flat">
+          <div className="flex flex-row gap-4 px-6">
+            <Card className="flex-1 p-5 border" variant="flat" style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)' }}>
               <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase mb-1 block text-center">EN ATTENTE</span>
               <span className="text-2xl font-black text-awan-tx tabular-nums text-center">{tasks.filter((t: any) => !t.done).length}</span>
             </Card>
-            <Card className="flex-1 p-5 bg-white/5 border-white/5" variant="flat">
-              <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest mb-1 block text-center">REMPLIS</span>
-              <span className="text-2xl font-black text-white/20 tabular-nums text-center">{tasks.filter((t: any) => t.done).length}</span>
+            <Card className="flex-1 p-5 border" variant="flat" style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)' }}>
+              <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest mb-1 block text-center">COMPLÉTÉES</span>
+              <span className="text-2xl font-black text-awan-tx-mute tabular-nums text-center">{tasks.filter((t: any) => t.done).length}</span>
             </Card>
           </div>
 
         <div className="p-6">
-          <Card className="p-0 border-white/5 bg-black/20 rounded-2xl overflow-hidden mb-10 shadow-inner">
+          <div className="border mb-10" style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)' }}>
             <div className="flex flex-row items-center px-5 h-14">
-              <Filter size={16} className="text-awan-gold mr-4" />
-              <TextInput 
-                className="flex-1 text-xs font-black text-awan-tx outline-none bg-transparent uppercase tracking-widest"
-                placeholder="RECHERCHE VECTORIELLE..."
-                placeholderTextColor="rgba(255,255,255,0.1)"
+              <Filter size={16} color="var(--color-awan-gold)" style={{ marginRight: 16 }} />
+              <TextInput
+                style={{ flex: 1, fontSize: 11, fontWeight: 700, color: 'var(--color-awan-tx)', backgroundColor: 'transparent', outline: 'none', fontFamily: 'var(--font-mono)', letterSpacing: '0.2em', textTransform: 'uppercase' }}
+                placeholder="RECHERCHE..."
+                placeholderTextColor="var(--color-awan-tx-mute)"
                 value={search}
                 onChangeText={setSearch}
               />
             </div>
-          </Card>
+          </div>
 
           <div className="mb-10">
-            <Heading level={4} mono subtitle="Filtrage de Session" className="mb-6">CRITÈRES DE VUE</Heading>
+            <Heading level={4} mono subtitle="Filtres" className="mb-6">FILTRES</Heading>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', gap: 8 }}>
               {['all', 'pending', 'done'].map(status => (
-                <Touch 
+                <Touch
                   key={status}
                   onPress={() => setFilterStatus(status)}
-                  className={`px-5 py-3 rounded-xl border transition-all ${filterStatus === status ? 'bg-awan-gold/10 border-awan-gold shadow-[0_0_10px_rgba(212,175,55,0.2)]' : 'bg-white/3 border-white/5'}`}
+                  style={{
+                    paddingHorizontal: 20, paddingVertical: 12,
+                    border: '1px solid',
+                    borderColor: filterStatus === status ? 'var(--color-awan-gold)' : 'var(--color-awan-border)',
+                    backgroundColor: filterStatus === status ? 'rgba(212,175,55,0.08)' : 'var(--color-awan-surface)',
+                  }}
                 >
-                  <span className={`text-awan-md font-black uppercase tracking-[0.2em] ${filterStatus === status ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
-                    {status === 'all' ? 'Indifférent' : (status === 'pending' ? 'Opérationnel' : 'Archivé')}
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', color: filterStatus === status ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)', textTransform: 'uppercase' }}>
+                    {status === 'all' ? 'TOUTES' : status === 'pending' ? 'EN COURS' : 'TERMINÉES'}
                   </span>
                 </Touch>
               ))}
-              <div className="w-[1px] h-6 bg-white/10 mx-3 self-center" />
+              <div style={{ width: 1, alignSelf: 'center', height: 24, backgroundColor: 'var(--color-awan-border)', marginLeft: 12, marginRight: 12 }} />
               {Object.entries(categories).map(([k, c]: any) => (
-                <Touch 
-                  key={k} 
+                <Touch
+                  key={k}
                   onPress={() => setFilterCat(filterCat === k ? 'all' : k)}
-                  className={`px-5 py-3 rounded-xl border transition-all ${filterCat === k ? 'bg-white/10 border-white/20' : 'bg-white/3 border-transparent'}`}
+                  style={{
+                    paddingHorizontal: 20, paddingVertical: 12,
+                    border: '1px solid',
+                    borderColor: filterCat === k ? 'var(--color-awan-border)' : 'transparent',
+                    backgroundColor: filterCat === k ? 'var(--color-awan-surface)' : 'transparent',
+                  }}
                 >
                   <div className="flex flex-row items-center gap-2">
-                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.c }} />
-                     <span className="text-awan-md font-black uppercase tracking-widest text-[#6C665E]" style={{ color: filterCat === k ? '#fff' : '#6C665E' }}>{c.l}</span>
+                    <div style={{ width: 6, height: 6, backgroundColor: c.c }} />
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', color: filterCat === k ? 'var(--color-awan-tx)' : 'var(--color-awan-tx-mute)', textTransform: 'uppercase' }}>{c.l}</span>
                   </div>
                 </Touch>
               ))}
@@ -199,21 +209,21 @@ export default function TasksScreen() {
           </div>
 
           <div className="mb-12">
-            <Heading level={4} mono subtitle="Flux Instantané" className="mb-6">CAPTURE RAPIDE</Heading>
+            <Heading level={4} mono subtitle="Saisie directe" className="mb-6">AJOUT RAPIDE</Heading>
             <div className="flex flex-row gap-3 items-center">
-              <div className="flex-1 bg-black/20 border border-white/10 rounded-2xl px-5 py-4 shadow-inner">
+              <div style={{ flex: 1, border: '1px solid var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)', paddingLeft: 20, paddingRight: 20, paddingTop: 16, paddingBottom: 16 }}>
                 <TextInput
-                  className="text-sm font-bold text-awan-tx outline-none uppercase"
-                  placeholder="NOUVELLE UNITÉ D'ACTION..."
-                  placeholderTextColor="rgba(255,255,255,0.1)"
+                  style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-awan-tx)', backgroundColor: 'transparent', outline: 'none', textTransform: 'uppercase', fontFamily: 'var(--font-sans)' }}
+                  placeholder="NOUVELLE TÂCHE..."
+                  placeholderTextColor="var(--color-awan-tx-mute)"
                   value={inputText}
                   onChangeText={setInputText}
                   onSubmitEditing={handleAddEntry}
                 />
               </div>
-              <Touch 
+              <Touch
                 onPress={handleAddEntry}
-                className="w-14 h-14 bg-awan-gold rounded-2xl flex items-center justify-center shadow-lg shadow-awan-gold/20"
+                style={{ width: 56, height: 56, backgroundColor: 'var(--color-awan-gold)', alignItems: 'center', justifyContent: 'center' }}
               >
                 <Plus size={24} color="black" strokeWidth={3} />
               </Touch>
@@ -221,127 +231,148 @@ export default function TasksScreen() {
           </div>
 
           <StaggerList>
-            <Heading level={4} mono subtitle="Inventaire Actif" className="mb-6">FILE DE TRAITEMENT</Heading>
-            {filteredTasks.map((item: any) => (
-              <StaggerItem key={item.id} className="mb-4">
-                <Card 
-                  className={`flex-row items-center gap-4 py-6 px-6 transition-all border-white/5 ${item.done ? 'opacity-30 bg-black/10' : 'bg-white/3 hover:bg-white/5'}`}
-                  variant="flat"
-                  onPress={() => toggleDone(item.id)}
-                >
-                  <Touch className="p-1">
-                    {item.done ? (
-                      <CheckCircle size={24} className="text-awan-gold" />
-                    ) : (
-                      <motion.div whileTap={{ scale: 0.9 }}>
-                        <Circle size={24} className="text-white/10" />
-                      </motion.div>
-                    )}
-                  </Touch>
-                  
-                  <div className="flex-1">
-                    <span className={`text-base font-bold block uppercase tracking-tight ${item.done ? 'line-through text-awan-tx-mute' : 'text-awan-tx'}`}>{item.title}</span>
-                    <div className="flex flex-row items-center gap-3 mt-2">
-                      <div className="flex flex-row items-center gap-1.5">
-                         <div className="w-1.5 h-1.5 rounded-full shadow-[0_0_5px_rgba(255,255,255,0.3)]" style={{ backgroundColor: categories[item.category]?.c || '#6C665E' }} />
-                         <span className="text-awan-sm font-black uppercase tracking-widest text-awan-tx-mute">
-                           {categories[item.category]?.l || item.category}
-                         </span>
-                      </div>
-                      {item.time && (
-                         <div className="flex flex-row items-center gap-1.5">
-                            <Clock size={10} className="text-awan-gold" />
-                            <span className="text-awan-sm font-black font-mono text-awan-gold opacity-60 uppercase">{item.time}</span>
-                         </div>
+            <Heading level={4} mono subtitle="Inventaire" className="mb-6">LISTE</Heading>
+            {filteredTasks.map((item: any) => {
+              const catColor = categories[item.category]?.c ?? 'var(--color-awan-tx-mute)';
+              return (
+                <StaggerItem key={item.id} className="mb-3">
+                  <div
+                    style={{
+                      display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 16,
+                      paddingTop: 20, paddingBottom: 20, paddingLeft: 20, paddingRight: 16,
+                      border: '1px solid var(--color-awan-border)',
+                      backgroundColor: item.done ? 'transparent' : 'var(--color-awan-surface)',
+                      opacity: item.done ? 0.35 : 1,
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => toggleDone(item.id)}
+                  >
+                    <div style={{ width: 3, alignSelf: 'stretch', backgroundColor: catColor, flexShrink: 0 }} />
+
+                    <div style={{ cursor: 'pointer', padding: 4 }} onClick={(e) => { e.stopPropagation(); toggleDone(item.id); }}>
+                      {item.done ? (
+                        <CheckCircle size={22} color="var(--color-awan-gold)" />
+                      ) : (
+                        <Circle size={22} color="var(--color-awan-border)" />
                       )}
                     </div>
-                  </div>
 
-                  <div className="flex flex-row items-center gap-2">
-                    <Touch 
-                      className={`flex flex-row items-center gap-2 px-4 py-2.5 rounded-xl border transition-all ${activeTaskId === item.id ? 'bg-awan-status-error/10 border-awan-status-error/40 shadow-[0_0_10px_rgba(255,75,75,0.2)]' : 'bg-white/5 border-white/5'}`}
-                      onPress={(e) => { e.stopPropagation(); toggleTimer(item.id); }}
-                    >
-                      {activeTaskId === item.id && (
-                        <span className="text-xs font-black font-mono text-awan-status-error tabular-nums">{formatTime(elapsed)}</span>
-                      )}
-                      {activeTaskId === item.id ? (
-                        <StopCircle size={18} className="text-awan-status-error" />
-                      ) : (
-                        <Zap size={16} className="text-awan-tx-mute" />
-                      )}
-                    </Touch>
+                    <div style={{ flex: 1 }}>
+                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 700, color: 'var(--color-awan-tx)', textTransform: 'uppercase', letterSpacing: '0.04em', textDecoration: item.done ? 'line-through' : 'none', display: 'block' }}>{item.title}</span>
+                      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6 }}>
+                        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <div style={{ width: 6, height: 6, backgroundColor: catColor }} />
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, letterSpacing: '0.25em', color: 'var(--color-awan-tx-mute)', textTransform: 'uppercase' }}>
+                            {categories[item.category]?.l || item.category}
+                          </span>
+                        </div>
+                        {item.time && (
+                          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Clock size={10} color="var(--color-awan-gold)" />
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, color: 'var(--color-awan-gold)', opacity: 0.6, textTransform: 'uppercase' }}>{item.time}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-                    <Touch onPress={(e) => { e.stopPropagation(); deleteTask(item.id); }} className="w-10 h-10 items-center justify-center rounded-xl hover:bg-awan-status-error/10">
-                      <Trash2 size={16} className="text-white/10 hover:text-awan-status-error transition-colors" />
-                    </Touch>
+                    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Touch
+                        style={{
+                          display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8,
+                          paddingHorizontal: 14, paddingVertical: 10,
+                          border: '1px solid',
+                          borderColor: activeTaskId === item.id ? 'var(--color-awan-status-error)' : 'var(--color-awan-border)',
+                          backgroundColor: activeTaskId === item.id ? 'rgba(255,75,75,0.08)' : 'transparent',
+                        }}
+                        onPress={(e: any) => { e.stopPropagation(); toggleTimer(item.id); }}
+                      >
+                        {activeTaskId === item.id && (
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 900, color: 'var(--color-awan-status-error)', fontVariantNumeric: 'tabular-nums' }}>{formatTime(elapsed)}</span>
+                        )}
+                        {activeTaskId === item.id ? (
+                          <StopCircle size={18} color="var(--color-awan-status-error)" />
+                        ) : (
+                          <Zap size={16} color="var(--color-awan-tx-mute)" />
+                        )}
+                      </Touch>
+
+                      <Touch
+                        onPress={(e: any) => { e.stopPropagation(); deleteTask(item.id); }}
+                        style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center', border: '1px solid var(--color-awan-border)' }}
+                      >
+                        <Trash2 size={16} color="var(--color-awan-tx-mute)" />
+                      </Touch>
+                    </div>
                   </div>
-                </Card>
-              </StaggerItem>
-            ))}
+                </StaggerItem>
+              );
+            })}
           </StaggerList>
 
           {filteredTasks.length === 0 && (
-            <div className="py-24 items-center group">
-              <div className="w-24 h-24 bg-white/3 rounded-full flex items-center justify-center mb-8 border border-white/5 group-hover:scale-110 transition-transform">
-                <Target size={48} className="text-white/5" />
+            <div style={{ paddingTop: 96, paddingBottom: 96, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ width: 80, height: 80, border: '1px solid var(--color-awan-border)', alignItems: 'center', justifyContent: 'center', marginBottom: 24, display: 'flex' }}>
+                <Target size={40} color="var(--color-awan-border)" />
               </div>
-              <Heading level={4} className="mb-0 text-center uppercase tracking-widest text-white/10" subtitle="">Système en Veille • Aucun Vecteur Détecté</Heading>
+              <Heading level={4} className="mb-0 text-center uppercase tracking-widest" style={{ color: 'var(--color-awan-tx-mute)' }} subtitle="">Aucune tâche</Heading>
             </div>
           )}
         </div>
       </ScrollView>
 
-      <div className="fixed bottom-32 right-8 z-50">
-        <Touch 
-          className="w-16 h-16 bg-awan-gold rounded-[24px] flex items-center justify-center shadow-2xl shadow-awan-gold/30 border border-white/20"
+      {/* FAB — statique, pas d'animation */}
+      <div style={{ position: 'fixed', bottom: 128, right: 32, zIndex: 50 }}>
+        <Touch
+          style={{ width: 56, height: 56, backgroundColor: 'var(--color-awan-gold)', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--color-awan-border)' }}
           onPress={() => setShowModal(true)}
         >
-          <motion.div animate={{ rotate: [0, 90, 0] }} transition={{ repeat: Infinity, duration: 10 }}>
-            <Plus size={32} color="black" strokeWidth={3} />
-          </motion.div>
+          <Plus size={28} color="black" strokeWidth={3} />
         </Touch>
       </div>
 
       <Modal visible={showModal} transparent animationType="fade">
-        <div className="flex-1 flex justify-end bg-black/90 backdrop-blur-md">
-          <div className="bg-awan-surface p-10 rounded-t-[48px] border-t border-white/10 w-full max-w-lg mx-auto shadow-2xl">
-            <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-10" />
-            <Heading level={2} className="text-center mb-12" subtitle="Configuration d'Objectif">DÉPLOIEMENT</Heading>
-            
-            <div className="space-y-10">
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
+          <div style={{ backgroundColor: 'var(--color-awan-surface)', padding: 40, borderTop: '1px solid var(--color-awan-border)', width: '100%', maxWidth: 512, margin: '0 auto' }}>
+            <Heading level={2} className="text-center mb-10" subtitle="Nouvelle tâche">AJOUTER</Heading>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               <div>
-                <span className="text-awan-md font-black text-awan-gold tracking-[0.4em] uppercase mb-4 block">Désignation de Mission</span>
-                <TextInput 
-                  className="bg-black/40 border border-white/5 rounded-2xl p-6 text-awan-tx font-bold text-lg uppercase tracking-tight" 
-                  value={title} 
-                  onChangeText={setTitle} 
-                  placeholder="NOM DU VECTEUR..." 
-                  placeholderTextColor="#252525"
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'var(--color-awan-gold)', display: 'block', marginBottom: 12 }}>TITRE</span>
+                <TextInput
+                  style={{ border: '1px solid var(--color-awan-border)', backgroundColor: 'var(--color-awan-bg)', padding: 20, color: 'var(--color-awan-tx)', fontWeight: 700, fontSize: 16, textTransform: 'uppercase', letterSpacing: '0.04em', outline: 'none', width: '100%', fontFamily: 'var(--font-sans)' }}
+                  value={title}
+                  onChangeText={setTitle}
+                  placeholder="NOM DE LA TÂCHE..."
+                  placeholderTextColor="var(--color-awan-tx-mute)"
                   autoFocus
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <span className="text-awan-md font-black text-awan-tx-mute tracking-[0.4em] uppercase mb-4 block">Heure H</span>
-                  <TextInput 
-                    className="bg-black/40 border border-white/5 rounded-2xl p-6 text-awan-tx font-mono text-center text-xl font-black" 
-                    value={time} 
-                    onChangeText={setTime} 
-                    placeholder="09:00" 
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'var(--color-awan-tx-mute)', display: 'block', marginBottom: 12 }}>HEURE</span>
+                  <TextInput
+                    style={{ border: '1px solid var(--color-awan-border)', backgroundColor: 'var(--color-awan-bg)', padding: 20, color: 'var(--color-awan-tx)', fontFamily: 'var(--font-mono)', textAlign: 'center', fontSize: 18, fontWeight: 900, outline: 'none', width: '100%' }}
+                    value={time}
+                    onChangeText={setTime}
+                    placeholder="09:00"
                   />
                 </div>
                 <div>
-                  <span className="text-awan-md font-black text-awan-tx-mute tracking-[0.4em] uppercase mb-4 block">Anticipation</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'var(--color-awan-tx-mute)', display: 'block', marginBottom: 12 }}>RAPPEL</span>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', gap: 8 }}>
                     {NOTIF_INTERVALS.map(ni => (
-                      <Touch 
-                        key={ni.value} 
-                        className={`px-6 py-4 rounded-xl border transition-all ${reminder === ni.value ? 'bg-awan-gold/20 border-awan-gold shadow-inner' : 'bg-black/20 border-white/5'}`}
+                      <Touch
+                        key={ni.value}
+                        style={{
+                          paddingHorizontal: 16, paddingVertical: 14,
+                          border: '1px solid',
+                          borderColor: reminder === ni.value ? 'var(--color-awan-gold)' : 'var(--color-awan-border)',
+                          backgroundColor: reminder === ni.value ? 'rgba(212,175,55,0.08)' : 'transparent',
+                        }}
                         onPress={() => setReminder(ni.value)}
                       >
-                        <span className={`text-awan-md font-black uppercase tracking-[0.2em] ${reminder === ni.value ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{ni.label}</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: reminder === ni.value ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)' }}>{ni.label}</span>
                       </Touch>
                     ))}
                   </ScrollView>
@@ -349,35 +380,41 @@ export default function TasksScreen() {
               </div>
 
               <div>
-                <span className="text-awan-md font-black text-awan-tx-mute tracking-[0.4em] uppercase mb-4 block">Classification de Priorité</span>
-                <div className="flex flex-row flex-wrap gap-3">
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'var(--color-awan-tx-mute)', display: 'block', marginBottom: 12 }}>CATÉGORIE</span>
+                <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {Object.entries(categories).map(([k, c]: any) => (
-                    <Touch 
-                      key={k} 
-                      className={`px-6 py-4 rounded-xl border transition-all ${cat === k ? 'bg-white/10 border-white/20 shadow-inner' : 'bg-black/20 border-transparent opacity-40'}`}
+                    <Touch
+                      key={k}
+                      style={{
+                        paddingHorizontal: 16, paddingVertical: 14,
+                        border: '1px solid',
+                        borderColor: cat === k ? 'var(--color-awan-border)' : 'transparent',
+                        backgroundColor: cat === k ? 'var(--color-awan-surface)' : 'transparent',
+                        opacity: cat === k ? 1 : 0.5,
+                      }}
                       onPress={() => setCat(k)}
                     >
-                      <div className="flex flex-row items-center gap-3">
-                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: c.c }} />
-                         <span className="text-awan-md font-black uppercase tracking-widest" style={{ color: cat === k ? '#fff' : c.c }}>{c.l}</span>
+                      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <div style={{ width: 6, height: 6, backgroundColor: c.c }} />
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: cat === k ? 'var(--color-awan-tx)' : c.c }}>{c.l}</span>
                       </div>
                     </Touch>
                   ))}
                 </div>
               </div>
 
-              <div className="flex flex-row gap-3 pt-6">
-                <Touch 
-                  className="flex-1 h-20 bg-white/5 rounded-[24px] flex items-center justify-center border border-white/5"
+              <div style={{ display: 'flex', flexDirection: 'row', gap: 12, paddingTop: 16 }}>
+                <Touch
+                  style={{ flex: 1, height: 64, border: '1px solid var(--color-awan-border)', backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}
                   onPress={() => { setShowModal(false); setTitle(''); setCat('perso'); setReminder(0); }}
                 >
-                  <span className="text-xs font-black text-awan-tx-mute tracking-[0.4em] uppercase">Abort</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'var(--color-awan-tx-mute)' }}>ANNULER</span>
                 </Touch>
-                <Touch 
-                  className="flex-1 h-20 bg-awan-gold rounded-[24px] flex items-center justify-center shadow-2xl shadow-awan-gold/20"
+                <Touch
+                  style={{ flex: 1, height: 64, backgroundColor: 'var(--color-awan-gold)', alignItems: 'center', justifyContent: 'center' }}
                   onPress={addTask}
                 >
-                  <span className="text-xs font-black text-black tracking-[0.4em] uppercase">Déployer</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'black' }}>VALIDER</span>
                 </Touch>
               </div>
             </div>
@@ -387,4 +424,3 @@ export default function TasksScreen() {
     </PageWrapper>
   );
 }
-

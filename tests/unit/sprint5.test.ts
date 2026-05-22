@@ -71,12 +71,11 @@ describe('Planner via IStorage', () => {
 
   it('sauvegarde et récupère une tâche', async () => {
     await planner.saveTask({
-      v: 1,
+      v: 2,
       id: '770e8400-e29b-41d4-a716-446655440000',
       title: 'Musculation',
       durationMin: 60,
       priority: 4,
-      energyLevel: 'high',
       domain: 'sport',
       tags: [],
       dependsOn: [],
@@ -89,12 +88,11 @@ describe('Planner via IStorage', () => {
 
   it('optimise un planning et persiste le résultat', async () => {
     await planner.saveTask({
-      v: 1,
+      v: 2,
       id: '770e8400-e29b-41d4-a716-446655440001',
       title: 'Révision',
       durationMin: 45,
       priority: 3,
-      energyLevel: 'medium',
       domain: 'planning',
       tags: [],
       dependsOn: [],
@@ -111,8 +109,8 @@ describe('Planner via IStorage', () => {
   it('supprime une tâche', async () => {
     const id = '770e8400-e29b-41d4-a716-446655440002';
     await planner.saveTask({
-      v: 1, id, title: 'À supprimer', durationMin: 30,
-      priority: 1, energyLevel: 'low', domain: 'general',
+      v: 2, id, title: 'À supprimer', durationMin: 30,
+      priority: 1, domain: 'general',
       tags: [], dependsOn: [], enabled: true,
     });
     await planner.deleteTask(id);

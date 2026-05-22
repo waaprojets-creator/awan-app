@@ -4,6 +4,7 @@ import type { ScheduleTaskLatest, TaskDomain } from '@/data/schemas/planning/sch
 import { migrateDaySchedule, type DayScheduleLatest } from '@/data/schemas/planning/daySchedule';
 import { migrateScheduleTask } from '@/data/schemas/planning/scheduleTask';
 import { buildSchedule, type SchedulerConfig } from './engine/greedy';
+import { uuid } from '@/utils/id';
 
 const TASKS_PREFIX = 'planning.task';
 const SCHEDULE_PREFIX = 'planning.schedule';
@@ -73,7 +74,6 @@ export class Planner {
     durationMin: number;
     recurringDays?: number;
     priority?: 1 | 2 | 3 | 4 | 5;
-    energyLevel?: 'low' | 'medium' | 'high';
   }): Promise<void> {
     const existing = await this.storage.get(`${TASKS_PREFIX}.${params.id}`, migrateScheduleTask);
     if (existing) return;
@@ -82,13 +82,12 @@ export class Planner {
     if (params.recurringDays) tags.push(`every:${params.recurringDays}`);
 
     const task: ScheduleTaskLatest = {
-      v: 1,
+      v: 2,
       id: params.id,
       title: params.title,
       domain: params.domain,
       durationMin: params.durationMin,
       priority: params.priority ?? 1,
-      energyLevel: params.energyLevel ?? 'low',
       tags,
       dependsOn: [],
       enabled: true,

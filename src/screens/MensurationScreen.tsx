@@ -78,7 +78,6 @@ export default function MensurationScreen() {
         durationMin: 15,
         recurringDays: 14,
         priority: 1,
-        energyLevel: 'low',
       });
       void planner.createSystemTask({
         id: 'anthropo.quarterly',
@@ -87,7 +86,6 @@ export default function MensurationScreen() {
         durationMin: 45,
         recurringDays: 90,
         priority: 2,
-        energyLevel: 'low',
       });
     });
   }, []);

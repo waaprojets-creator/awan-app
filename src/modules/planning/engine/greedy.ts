@@ -1,7 +1,6 @@
 import type { ScheduleTaskLatest } from '@/data/schemas/planning/scheduleTask';
 import type { DayScheduleLatest, ScheduledSlot } from '@/data/schemas/planning/daySchedule';
 import { uuid } from '@/utils/id';
-import { energyMatchScore, dominantEnergy } from './energyModel';
 
 export interface SchedulerConfig {
   /** Start of schedulable day in minutes (default: 360 = 06:00) */
@@ -23,17 +22,11 @@ const DEFAULT_CONFIG: SchedulerConfig = {
  *
  * Algorithm:
  *   1. Validate and filter enabled tasks.
- *   2. Place fixed-time tasks first (they are immovable anchors).
+ *   2. Place fixed-time tasks first (immovable anchors).
  *   3. Sort remaining flexible tasks by score DESC:
- *        score = priority × 10 + energyMatchScore × 2 + dependencyDepth
- *        energyMatchScore is computed for the optimal slot candidate,
- *        but for initial sorting we use the task's preferred energy level
- *        vs the whole-day average to get an ordering approximation.
- *   4. For each flexible task, attempt placement:
- *        - Collect free windows in [dayStart, dayEnd].
- *        - For each free window, compute energyMatchScore at candidate start.
- *        - Pick the window + offset that maximises score.
- *        - Respect notBefore/notAfter and dependency constraints.
+ *        score = priority × 10 + dependencyDepth
+ *   4. For each flexible task, attempt placement in first available window.
+ *        Respect notBefore/notAfter and dependency constraints.
  *   5. Unplaced tasks go into `unscheduled`.
  */
 export function buildSchedule(
@@ -108,32 +101,19 @@ function findBestSlot(
   }, notBefore);
   const earliest = Math.max(notBefore, depsEndMin);
 
-  let best: ScheduledSlot | null = null;
-  let bestScore = -Infinity;
-
   for (const [winStart, winEnd] of windows) {
-    // Clamp window to task constraints
     const start = Math.max(winStart, earliest);
     const end = Math.min(winEnd, notAfter + task.durationMin);
-
     if (end - start < task.durationMin) continue;
 
-    // Try the earliest position in this window (greedy — lowest fragmentation)
     const candidateStart = start;
     const candidateEnd = candidateStart + task.durationMin;
     if (candidateEnd > end) continue;
 
-    const energy = dominantEnergy(candidateStart, task.durationMin);
-    const score =
-      task.priority * 10 + energyMatchScore(task.energyLevel, energy) * 2;
-
-    if (score > bestScore) {
-      bestScore = score;
-      best = { taskId: task.id, startMin: candidateStart, endMin: candidateEnd };
-    }
+    return { taskId: task.id, startMin: candidateStart, endMin: candidateEnd };
   }
 
-  return best;
+  return null;
 }
 
 /** Returns list of [start, end] free windows within the schedulable day. */

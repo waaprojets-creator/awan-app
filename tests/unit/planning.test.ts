@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { MemoryStorage } from '@/data/storage/MemoryStorage';
 import { Planner } from '@/modules/planning/api';
 import { buildSchedule } from '@/modules/planning/engine/greedy';
-import { energyAtMinute, energyMatchScore, dominantEnergy } from '@/modules/planning/engine/energyModel';
+import { energyAtMinute, dominantEnergy } from '@/modules/planning/engine/energyModel';
 import type { ScheduleTaskLatest } from '@/data/schemas/planning/scheduleTask';
 import { eventBus } from '@/data/events/bus';
 import { uuid } from '@/utils/id';
@@ -11,12 +11,11 @@ import { uuid } from '@/utils/id';
 
 function task(overrides: Partial<ScheduleTaskLatest> = {}): ScheduleTaskLatest {
   return {
-    v: 1,
+    v: 2,
     id: uuid(),
     title: 'test task',
     durationMin: 30,
     priority: 3,
-    energyLevel: 'medium',
     domain: 'general',
     tags: [],
     dependsOn: [],
@@ -25,7 +24,7 @@ function task(overrides: Partial<ScheduleTaskLatest> = {}): ScheduleTaskLatest {
   };
 }
 
-// ── Energy model ─────────────────────────────────────────────────────────────
+// ── Circadian model ───────────────────────────────────────────────────────────
 
 describe('energyModel', () => {
   it('returns high energy at 07:00', () => {
@@ -36,16 +35,6 @@ describe('energyModel', () => {
   });
   it('returns medium energy at 10:00', () => {
     expect(energyAtMinute(10 * 60)).toBe('medium');
-  });
-
-  it('energyMatchScore: exact match = 2', () => {
-    expect(energyMatchScore('high', 'high')).toBe(2);
-  });
-  it('energyMatchScore: one level off = 1', () => {
-    expect(energyMatchScore('high', 'medium')).toBe(1);
-  });
-  it('energyMatchScore: two levels off = 0', () => {
-    expect(energyMatchScore('high', 'low')).toBe(0);
   });
 
   it('dominantEnergy over a 60-min morning window = high', () => {
@@ -100,7 +89,6 @@ describe('buildSchedule', () => {
   });
 
   it('respects notAfterMin constraint — puts task in unscheduled when window too tight', () => {
-    // Only 20 min window available but task needs 30
     const t = task({ notBeforeMin: 21 * 60 + 40, notAfterMin: 22 * 60, durationMin: 30 });
     const s = buildSchedule('2026-05-10', [t]);
     expect(s.unscheduled).toContain(t.id);
@@ -116,18 +104,16 @@ describe('buildSchedule', () => {
   });
 
   it('prefers higher-priority tasks for better time slots', () => {
-    const high = task({ priority: 5, durationMin: 60, energyLevel: 'high' });
-    const low = task({ priority: 1, durationMin: 60, energyLevel: 'high' });
+    const high = task({ priority: 5, durationMin: 60 });
+    const low = task({ priority: 1, durationMin: 60 });
     const s = buildSchedule('2026-05-10', [low, high]);
     const highSlot = s.slots.find((x) => x.taskId === high.id)!;
     const lowSlot = s.slots.find((x) => x.taskId === low.id)!;
-    // High priority gets placed first = earlier in the day
     expect(highSlot.startMin).toBeLessThanOrEqual(lowSlot.startMin);
   });
 
   it('puts in unscheduled when day is full', () => {
-    // Fill the day with one giant task, then try to add another
-    const fill = task({ fixedStartMin: 6 * 60, durationMin: 16 * 60 }); // 6h–22h
+    const fill = task({ fixedStartMin: 6 * 60, durationMin: 16 * 60 });
     const extra = task({ durationMin: 30 });
     const s = buildSchedule('2026-05-10', [fill, extra]);
     expect(s.unscheduled).toContain(extra.id);
@@ -180,5 +166,13 @@ describe('Planner', () => {
     await planner.saveTask(t);
     await planner.deleteTask(t.id);
     expect(await planner.getTasks()).toHaveLength(0);
+  });
+
+  it('createSystemTask is idempotent', async () => {
+    const id = uuid();
+    await planner.createSystemTask({ id, title: 'Test', domain: 'general', durationMin: 30 });
+    await planner.createSystemTask({ id, title: 'Test', domain: 'general', durationMin: 30 });
+    const all = await planner.getTasks();
+    expect(all).toHaveLength(1);
   });
 });

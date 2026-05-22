@@ -72,7 +72,7 @@ const STABS = [
   { id: 0, label: 'HEBDO', Icon: Columns },
   { id: 1, label: 'MENSUEL', Icon: Grid3X3 },
   { id: 2, label: 'ANNUEL', Icon: Calendar },
-  { id: 4, label: 'FLUX IA', Icon: Target },
+  { id: 4, label: 'PLANIFICATEUR', Icon: Target },
   { id: 5, label: 'TOUT', Icon: Layers },
 ];
 
@@ -106,7 +106,6 @@ export default function PlanningScreen() {
   const measureStore = useMeasurementStore();
   const [aiTitle, setAiTitle] = useState('');
   const [aiDuration, setAiDuration] = useState('30');
-  const [aiEnergy, setAiEnergy] = useState<'low' | 'medium' | 'high'>('medium');
   const [aiPriority, setAiPriority] = useState(3);
 
   const categories = useMemo(() => {
@@ -399,12 +398,11 @@ export default function PlanningScreen() {
       const dur = parseInt(aiDuration, 10);
       if (!aiTitle.trim() || isNaN(dur) || dur < 5) return;
       await planner.saveTask({
-        v: 1,
+        v: 2,
         id: uid(),
         title: aiTitle.trim(),
         durationMin: dur,
         priority: aiPriority,
-        energyLevel: aiEnergy,
         domain: 'general',
         tags: [],
         dependsOn: [],
@@ -455,22 +453,6 @@ export default function PlanningScreen() {
                   </div>
                 </div>
               </div>
-              <div>
-                <span className="awan-label mb-2 block">NIVEAU ÉNERGIE</span>
-                <div className="flex flex-row gap-2">
-                  {(['low', 'medium', 'high'] as const).map(e => (
-                    <Touch
-                      key={e}
-                      onPress={() => setAiEnergy(e)}
-                      className={`flex-1 h-12  items-center justify-center border ${aiEnergy === e ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'}`}
-                    >
-                      <span className={`text-awan-sm font-black uppercase tracking-widest ${aiEnergy === e ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
-                        {e === 'low' ? 'BAS' : e === 'medium' ? 'MOYEN' : 'ÉLEVÉ'}
-                      </span>
-                    </Touch>
-                  ))}
-                </div>
-              </div>
               <Touch
                 onPress={addAiTask}
                 className="h-14 bg-white/5 border border-white/10  flex items-center justify-center"
@@ -497,7 +479,7 @@ export default function PlanningScreen() {
                     <div key={t.id} className="flex-row items-center flex border" style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)' }}>
                       <div className="w-[3px] self-stretch" style={{ backgroundColor: domainColor }} />
                       <div className="flex-1 px-4 py-3">
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', fontWeight: 700, color: domainColor, letterSpacing: '0.3em', display: 'block', marginBottom: 2 }}>{(categories[t.domain]?.l ?? t.domain ?? '').toUpperCase()} · {t.energyLevel.toUpperCase()}</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', fontWeight: 700, color: domainColor, letterSpacing: '0.3em', display: 'block', marginBottom: 2 }}>{(categories[t.domain]?.l ?? t.domain ?? '').toUpperCase()}</span>
                         <span style={{ fontFamily: 'var(--font-sans)', fontSize: titleSize, fontWeight: titleWeight, color: 'var(--color-awan-tx)', letterSpacing: '0.04em', textTransform: 'uppercase', display: 'block' }}>{t.title}</span>
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.1em', display: 'block', marginTop: 2 }}>{t.durationMin} MIN · P{t.priority}</span>
                       </div>
