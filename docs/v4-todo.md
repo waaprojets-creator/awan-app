@@ -562,3 +562,118 @@ Cette matrice est le signal Coach multi-widget — elle nécessite des données 
 - [ ] Organisation en 2 axes (Métabolique / Musculaire) dans `MensurationScreen` ou `AnalyseScreen`
 - [ ] Règle Coach multi-widget : matrice de décision W1+W3+W6 dans `coachAdvice.ts`
 - [ ] Service `symmetryService.ts` : L/R pour bras, cuisses, mollets (diff > 5% → alerte)
+
+
+---
+
+---
+
+## Planning W1 — Camembert Chronologique + Barres Empilées
+
+### Origine
+Spécification issue du document Gemini (geminicode1779519647031).
+Axiome : « L'avenir s'esquisse en encrant aujourd'hui dans les lignes du passé. »
+
+---
+
+### 7 Catégories — Ordre d'empilement strict (bas → haut)
+
+| # | Catégorie | Rôle |
+|---|---|---|
+| 1 | **Sommeil** | Fondation biologique immuable |
+| 2 | **Islam / Prière** | Cadre rituel et spirituel |
+| 3 | **Nutrition / Repas** | Apport énergétique |
+| 4 | **Travail / Focus** | Production et effort intellectuel |
+| 5 | **Sport / Entraînement** | Performance physique |
+| 6 | **Trajets / GPS / Logistique** | Coût de friction incompressible |
+| 7 | **Temps libre / Relâchement** | Variable d'ajustement (sommet) |
+
+Chaque catégorie a une couleur unique via `cfg.colorMap` — jamais hardcodée.
+
+---
+
+### Vue Journalière — Camembert Chronologique (1 jour)
+
+**Type :** Graphique circulaire 24h.
+
+**Résolution angulaire :** 360° = 1440 minutes → **1° = 4 minutes** de temps linéaire.
+
+**Rendu :** Secteurs chronologiques dans le sens des aiguilles d'une montre, départ 00:00 au Nord (0°). Une activité fragmentée en plusieurs créneaux = plusieurs secteurs distincts séparés dans le cercle (pas de regroupement par catégorie).
+
+**Légende associée :**
+- Couleur + type d'activité
+- Temps cumulé en heures décimales (ex. `2.5h`)
+- **Delta de performance (±h)** : `Réel − Prévu` (positif = dépassement, négatif = sous-réalisation)
+
+---
+
+### Vue Hebdomadaire / Mensuelle — Barres Empilées (jusqu'à 31 jours)
+
+**Type :** Stacked Bar Chart absolu.
+- Axe X : 1 colonne = 1 jour
+- Axe Y : **fixe à 24h** — ne s'adapte pas au contenu
+- Les 7 catégories empilées dans l'ordre strict (bas → haut)
+
+**Comportement visuel :** Si `[Travail]` ou `[Trajets]` enfle → `[Temps libre]` au sommet est mécaniquement écrasé. Si `[Sommeil]` diminue → visible visuellement en bas. La pression structurelle est lisible d'un coup d'œil.
+
+---
+
+### Vue Moyen Terme — Barres Empilées (> 31 jours)
+
+**Type :** Stacked Bar Chart absolu.
+- Axe X : 1 colonne = 1 semaine complète (7 jours agrégés)
+- Axe Y : **fixe à 168h** (24h × 7)
+- Mêmes 7 catégories, même ordre d'empilement
+- Lisse les anomalies quotidiennes → observe les transferts de masse d'activité semaine/semaine
+
+---
+
+### Vue Annuelle — Aires Empilées (365 jours)
+
+**Type :** Stacked Area Chart.
+- Axe X : continu sur 52 semaines
+- Axe Y : volume horaire hebdomadaire (168h)
+- Les colonnes rigides deviennent des **strates géologiques fluides**
+- Révèle les "saisons" : plateaux de charge travail, vagues de décharge, hypertrophie des trajets
+
+---
+
+### Logique d'Interaction — Légende Contextuelle
+
+**État initial (vue d'ensemble) :**
+- Légende = synthèse globale de la période affichée
+- Camembert : totaux cumulés du jour
+- Barres/Aires : somme ou moyenne par catégorie sur la période + cumul des Δ
+
+**État sélectionné (clic sur une colonne) :**
+- Colonne cliquée : opacité 100%
+- Toutes les autres colonnes : opacité réduite (~30%)
+- Légende : bascule sur les métriques **uniquement** de la colonne cliquée
+- Déclencheur : `activeColumn = date | semaine`
+
+**Réinitialisation :**
+- Clic sur le **titre du graphique** → `activeColumn = null`
+- Toutes les colonnes reviennent à 100% d'opacité
+- Légende rebascule sur la vue d'ensemble
+
+---
+
+### Règles graphiques
+
+- Axe Y **toujours fixe** (24h ou 168h) — jamais auto-adapté au contenu
+- Ordre d'empilement **immuable** — Sommeil toujours en bas, Temps libre toujours en haut
+- Couleurs via `cfg.colorMap` uniquement
+- Camembert : secteurs non regroupés par catégorie — ordre **chronologique strict**
+- Delta affiché en légende avec signe explicite (`+2.5h` ou `−1.2h`)
+
+---
+
+### Implémentation à faire
+
+- [ ] Service `planningTimelineService.ts` : agréger les logs par catégorie + date (croise Planning + Sport + Nutrition + Islam + Sleep)
+- [ ] Composant `DayPieChart` : camembert 24h chronologique, résolution 4 min/degré
+- [ ] Composant `StackedTimeBar` : barres 24h ou 168h fixes, 7 couches, ordre strict
+- [ ] Composant `StackedTimeArea` : aires annuelles 52 semaines
+- [ ] Légende interactive : `activeColumn` state, opacité 30%/100%, reset sur titre
+- [ ] Delta performance (Réel − Prévu) calculé par catégorie et période
+- [ ] Intégration dans `PlanningScreen` ou `AnalyseScreen` onglet TEMPS
