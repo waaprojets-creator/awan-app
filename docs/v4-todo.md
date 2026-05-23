@@ -365,3 +365,108 @@ Nécessite **minimum 28 jours** de données tonnage pour que `chronic` soit calc
 - [ ] Badge ACWR compact dans `PreWorkout` (zone + valeur, pas la courbe complète)
 - [ ] Courbe 28–60 jours avec bandes zones (cfg.colorMap)
 - [ ] Garde "données insuffisantes" si < 28j de tonnage disponibles
+
+
+---
+
+---
+
+## W5 — Analyse Métabolique : Régression Calories/Poids (Trexler 2014)
+
+### Origine
+Spécification issue de l'analyse des widgets Python (widget_5.py).
+Référence clinique : Trexler E.T. et al. (2014), *Metabolic adaptation to weight loss*, JISSN.
+
+---
+
+### Logique
+
+**Pas de hiérarchie temporelle classique.** W5 est un moteur d'analyse à deux niveaux :
+1. **Badge état** — DIÈTE ACTIVE ou PLATEAU MÉTABOLIQUE + pente de régression
+2. **Scatter plot calories vs poids (MA_7)** — nuage de points + droite de régression + R² en badge
+
+---
+
+### Signaux source
+
+2 signaux quotidiens croisés :
+- **Calories** (kcal/jour) — apport calorique journalier (depuis W Nutrition)
+- **Poids** (kg) — poids quotidien (depuis W1 Composition Corporelle)
+- Les deux lissés en **MA_7** avant régression — élimine le bruit de la rétention d'eau
+
+---
+
+### Calcul
+
+```
+cal_7j  = calories.rolling(7).mean()
+poids_7j = poids.rolling(7).mean()
+régression linéaire : poids_7j = f(cal_7j)
+→ slope, R²
+```
+
+**Fenêtre recommandée :** 28j minimum (régression sous 28j = non significative). Idéal : 56j (8 semaines).
+
+**Garde :** si < 28 jours de données croisées disponibles → afficher "données insuffisantes (28j min requis)".
+
+---
+
+### Interprétation clinique (Trexler 2014)
+
+| Condition | Statut | Action |
+|---|---|---|
+| `slope < 0.0005` | **PLATEAU MÉTABOLIQUE** | NEAT a chuté — Refeed ou pause diète |
+| `slope ≥ 0.0005` | **DIÈTE ACTIVE** | Corrélation cohérente — continuer |
+
+**R²** affiché comme badge de confiance : R² > 0.5 = signal fiable, R² < 0.3 = données trop bruitées.
+
+---
+
+### Affichage — Niveau 1 : Badge état
+
+- Statut textuel : **DIÈTE ACTIVE** ou **PLATEAU MÉTABOLIQUE**
+- Pente arrondie affichée (ex. `slope: 0.0003`)
+- Couleur via `cfg.colorMap` :
+  - DIÈTE ACTIVE → `var(--color-awan-status-ok)`
+  - PLATEAU → `var(--color-awan-status-warn)`
+- Affiché dans `AnalyseScreen` onglet CORPS (ou onglet dédié MÉTABO)
+
+---
+
+### Affichage — Niveau 2 : Scatter plot régression
+
+- Axe X : calories MA_7 (kcal)
+- Axe Y : poids MA_7 (kg)
+- 1 point = 1 jour (sur la fenêtre 28–56j)
+- Droite de régression superposée (couleur dominante)
+- Badge **R²** en coin supérieur (ex. `R² 0.71`)
+- Si pente plate visuellement → signal visuel immédiat du plateau
+
+---
+
+### Lien avec W1
+
+W5 est le signal long terme de W1 :
+- W1 long terme détecte "ralentissement de la vélocité à calories constantes"
+- W5 quantifie ce ralentissement via la régression et le R²
+- Les deux partagent `poids_7j` comme signal commun
+
+---
+
+### Règles graphiques
+
+- Scatter plot sobre : points petits, semi-transparents (`alpha` réduit)
+- Droite de régression = ligne principale, couleur `var(--color-awan-gold)` si ACTIVE, `var(--color-awan-status-warn)` si PLATEAU
+- Aucune interpolation entre les points — ce sont des mesures, pas une courbe
+- R² badge positionné hors du nuage pour ne pas masquer les données
+
+---
+
+### Implémentation à faire
+
+- [ ] Service `metabolicAnalysisService.ts` : MA_7 calories + poids, régression linéaire, seuil slope
+- [ ] Croisement données `MealService` (calories) × `MeasurementService` (poids) par date
+- [ ] Composant `MetabolicBadge` (badge niveau 1) dans `AnalyseScreen`
+- [ ] Composant `MetabolicScatterPlot` (scatter + régression) dans `AnalyseScreen`
+- [ ] Garde 28j minimum avec message "données insuffisantes"
+- [ ] R² badge de confiance affiché sur le scatter
