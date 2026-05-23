@@ -6,6 +6,7 @@ import { migrateJournalEntry } from '../data/schemas/journal/journalEntry';
 import { migrateSleepEntry } from '../data/schemas/sleep/sleepEntry';
 import { migrateWaterIntake } from '../data/schemas/nutrition/waterIntake';
 import { migrateScheduleTask } from '../data/schemas/planning/scheduleTask';
+import { migrateDaySchedule } from '../data/schemas/planning/daySchedule';
 import { WorkoutService } from '../services/workoutService';
 import { MeasurementService } from '../services/measurementService';
 import { MealService } from '../services/mealService';
@@ -21,6 +22,7 @@ import type { JournalEntryLatest } from '../data/schemas/journal/journalEntry';
 import type { SleepEntryLatest } from '../data/schemas/sleep/sleepEntry';
 import type { WaterIntakeLatest } from '../data/schemas/nutrition/waterIntake';
 import type { ScheduleTaskLatest } from '../data/schemas/planning/scheduleTask';
+import type { DayScheduleLatest } from '../data/schemas/planning/daySchedule';
 
 export interface SeedData {
   routines?: unknown[];
@@ -32,6 +34,7 @@ export interface SeedData {
   sleepEntries?: unknown[];
   waterIntakes?: unknown[];
   scheduleTasks?: unknown[];
+  daySchedules?: unknown[];
 }
 
 export type ImportPayload =
@@ -111,10 +114,19 @@ export async function importFromJson(raw: string): Promise<{ success: boolean; m
         nTasks++;
       } catch { /* skip */ }
     }
+    let nSchedules = 0;
+    for (const item of data.daySchedules ?? []) {
+      try {
+        const s = migrateDaySchedule(item) as DayScheduleLatest;
+        const storage = await getStorage();
+        await storage.set(`planning.schedule.${s.date}`, s);
+        nSchedules++;
+      } catch { /* skip */ }
+    }
 
     return {
       success: true,
-      message: `Seed: ${nRoutines} routines, ${nSessions} sessions, ${nMeasurements} mesures, ${nMeals} repas, ${nPrayers} prières, ${nJournal} journal, ${nSleep} sommeil, ${nWater} eau, ${nTasks} tâches`,
+      message: `Seed: ${nRoutines} routines, ${nSessions} sessions, ${nMeasurements} mesures, ${nMeals} repas, ${nPrayers} prières, ${nJournal} journal, ${nSleep} sommeil, ${nWater} eau, ${nTasks} tâches, ${nSchedules} plannings`,
     };
   }
 

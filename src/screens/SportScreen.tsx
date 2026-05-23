@@ -956,6 +956,7 @@ function RoutineEditor({
  );
  const [isPicking, setIsPicking] = useState(false);
  const [viewingEx, setViewingEx] = useState<ExerciseEntry | null>(null);
+ const [saveError, setSaveError] = useState<string | null>(null);
 
  // S1.2 — Persistance debouncée du draft de routine
  useEffect(() => {
@@ -1003,8 +1004,9 @@ function RoutineEditor({
 
  const handleSave = useCallback(() => {
  const trimmed = name.trim();
- if (!trimmed) { Alert.alert('Erreur', 'Donne un nom à la routine'); return; }
- if (exercises.length === 0) { Alert.alert('Erreur', 'Ajoute au moins un exercice'); return; }
+ if (!trimmed) { setSaveError('Donne un nom à la routine'); return; }
+ if (exercises.length === 0) { setSaveError('Ajoute au moins un exercice'); return; }
+ setSaveError(null);
  const routine: RoutineLatest = {
  v: 1,
  id: existing?.id ?? uid(),
@@ -1037,10 +1039,15 @@ function RoutineEditor({
  <TextInput
  className="bg-white/5 border border-white/5 p-5 text-awan-tx font-bold text-base"
  value={name}
- onChangeText={setName}
+ onChangeText={v => { setName(v); if (saveError) setSaveError(null); }}
  placeholder="Push, Pull, Legs..."
  placeholderTextColor="#3a3a3a"
  />
+ {saveError && (
+   <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-awan-status-error)', letterSpacing: '0.15em', marginTop: 6, display: 'block' }}>
+     ⚠ {saveError.toUpperCase()}
+   </span>
+ )}
  </div>
 
  <div className="mb-6">

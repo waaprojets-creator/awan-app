@@ -27,16 +27,22 @@ async function runCoachIfNeeded() {
 
 async function autoLoadSeed() {
   try {
-    if (safeStorage.get(SEED_FLAG)) return;
     const res = await fetch('/data/seed-demo.json');
     if (!res.ok) return;
     const text = await res.text();
+    let seedTs = '1';
+    try { seedTs = (JSON.parse(text) as { generatedAt?: string }).generatedAt ?? '1'; } catch { /* ignore */ }
+    if (safeStorage.get(SEED_FLAG) === seedTs) return;
     const result = await importFromJson(text);
     if (result.success) {
-      safeStorage.set(SEED_FLAG, '1');
+      safeStorage.set(SEED_FLAG, seedTs);
       window.location.reload(); // réinitialise tous les stores avec les données
+    } else {
+      console.warn('[Seed] import failed:', result.message);
     }
-  } catch { /* silencieux */ }
+  } catch (e) {
+    console.warn('[Seed] fetch error:', e);
+  }
 }
 
 function SplashLoader() {

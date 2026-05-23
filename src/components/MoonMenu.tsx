@@ -81,8 +81,6 @@ function CrescentMoon({ color }: { color: string }) {
            C13.6 6.9 12.96 5.24 11.9 3.96 C15.12 4.86 17.5 8.16 17.5 12 Z"
         stroke={color} strokeWidth="1.5" strokeLinejoin="round"
       />
-      <line x1="17.5" y1="4.5" x2="17.5" y2="2.8" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
-      <line x1="17.5" y1="19.5" x2="17.5" y2="21.2" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
     </svg>
   );
 }
@@ -340,10 +338,12 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
       </AnimatePresence>
 
       <motion.button onClick={toggle}
-        style={{ position: 'fixed', right: 20, bottom: 16, zIndex: 100, width: 40, height: 40, background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        style={{ position: 'fixed', left: 20, bottom: 16, zIndex: 100, width: 40, height: 40, background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         whileTap={{ scale: 0.88 }}>
         <motion.div animate={{ rotate: isOpen ? 360 : 0 }} transition={{ duration: 0.65, ease: [0.4,0,0.2,1] }} style={{ width: 24, height: 24 }}>
-          <CrescentMoon color="var(--color-awan-gold)" />
+          {isOpen
+            ? <CrescentMoon color="var(--color-awan-gold)" />
+            : <FullMoon color="var(--color-awan-tx)" />}
         </motion.div>
       </motion.button>
     </>
