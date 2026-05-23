@@ -3,6 +3,7 @@ import { TouchableOpacity } from 'react-native';
 import { motion, AnimatePresence } from 'motion/react';
 import { HexagonLogo, ICON_SIZE } from '../constants/icons';
 import { useAppStore } from '@/data/store/appStore';
+import { initStorageEncryption } from '@/data/storage/storageService';
 import { L } from '../constants/labels';
 
 const MotionDiv = motion.div as React.ComponentType<any>;
@@ -24,7 +25,10 @@ export default function LockScreen() {
   const handleUnlockSequence = () => {
     if (isUnlocking) return;
     setIsUnlocking(true);
-    setTimeout(() => { unlock(); }, 1800);
+    setTimeout(async () => {
+      await initStorageEncryption();
+      unlock();
+    }, 1800);
   };
 
   return (

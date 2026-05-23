@@ -59,8 +59,9 @@ function Root() {
   useThemeSync();
 
   useEffect(() => {
+    if (!isUnlocked) return;
     autoLoadSeed();
-    if (isUnlocked) void runCoachIfNeeded();
+    void runCoachIfNeeded();
   }, [isUnlocked]);
 
   if (!ready) return <SplashLoader />;

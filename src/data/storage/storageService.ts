@@ -1,6 +1,16 @@
 import type { IStorage } from './IStorage';
 import { safeStorage } from '../../utils/safeStorage';
 
+const AWAN_DB_PASSPHRASE = 'awan-v4-local';
+
+export async function initStorageEncryption(): Promise<void> {
+  if (!isNativePlatform()) return;
+  try {
+    const { CapacitorSQLite } = await import('@capacitor-community/sqlite');
+    await CapacitorSQLite.setEncryptionSecret({ passphrase: AWAN_DB_PASSPHRASE });
+  } catch { /* web ou plugin absent — ignoré */ }
+}
+
 const MIGRATION_FLAG = 'awan.migration.multidb';
 
 let _appInstance: IStorage | null = null;
