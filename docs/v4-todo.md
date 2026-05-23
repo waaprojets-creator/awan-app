@@ -71,7 +71,12 @@ La transition entre échelles **recompute le grain** — ce n'est pas un zoom, c
 - **Barres empilées** pour les plis ISAK — jamais reliées par une ligne, jamais interpolées
   - 1 segment par site ISAK, couleur distincte par site
   - Hauteur totale = somme des plis (agrégat lisible d'un coup d'œil)
-  - La répartition des segments révèle la distribution anatomique de la lipolyse
+
+- **Comportement des séparations par échelle :**
+  - `court` (grain jour) : séparations entre segments **visibles** — lecture anatomique directe, chaque site identifiable
+  - `moyen` (grain semaine) : segments **fusionnés** (barre monolithique), mais lignes pointillées horizontales reliant le niveau de chaque site d'une colonne à l'autre → suivi de trajectoire par site sans surcharge
+  - `long` (grain mois) : même logique que moyen — barre monolithique + lignes pointillées inter-colonnes
+
 - **Double axe Y** obligatoire quand poids (kg) et plis (mm) cohabitent — unités incompatibles
 - Barres plis en **alpha réduit** (translucide) : la ligne poids domine visuellement
 - **Droite de régression** superposée aux points plis en vue moyen/long terme
