@@ -16,8 +16,9 @@ export function usePrayerStore(date: string) {
     return () => { active = false; };
   }, [date]);
 
-  const toggle = useCallback(async (prayer: PrayerName): Promise<void> => {
-    const updated = await IslamService.togglePrayer(date, prayer, uid());
+  /** Toggle une prière. `timeHHMM` = heure réelle saisie (sinon non enregistrée). */
+  const toggle = useCallback(async (prayer: PrayerName, timeHHMM?: string | null): Promise<void> => {
+    const updated = await IslamService.togglePrayer(date, prayer, uid(), timeHHMM);
     setLog(updated);
   }, [date]);
 
@@ -25,7 +26,11 @@ export function usePrayerStore(date: string) {
     return log?.prayers?.[prayer] ?? false;
   }, [log]);
 
+  const realTime = useCallback((prayer: PrayerName): string | null => {
+    return log?.prayerTimes?.[prayer] ?? null;
+  }, [log]);
+
   const doneCount = PRAYER_NAMES.filter(p => log?.prayers?.[p]).length;
 
-  return { log, loading, toggle, isDone, doneCount, total: PRAYER_NAMES.length };
+  return { log, loading, toggle, isDone, realTime, doneCount, total: PRAYER_NAMES.length };
 }

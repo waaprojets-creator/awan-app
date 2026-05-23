@@ -11,14 +11,21 @@ export type PrayerTimesResult = {
   isha: Date;
 };
 
+// Nomenclature malékite tunisienne :
+// fajr_sunnah = 2 rakats sunnah avant Sobh
+// sobh        = Fard obligatoire du matin (= horaire 'fajr' adhan)
+// witr        = Shaf'a & Witr (sunnah nocturne, après Isha)
 const PRAYER_FR: Record<string, string> = {
-  fajr:    'FAJR',
-  sunrise: 'CHOUROUK',
-  dhuhr:   'DHOHR',
-  asr:     'ASR',
-  maghrib: 'MAGHRIB',
-  isha:    'ICHAA',
-  none:    'FAJR',
+  fajr_sunnah: 'FAJR SUNNAH',
+  fajr:        'FAJR',
+  sobh:        'SOBH',
+  sunrise:     'CHOUROUK',
+  dhuhr:       'DHOHR',
+  asr:         'ASR',
+  maghrib:     'MAGHRIB',
+  isha:        'ICHAA',
+  witr:        "SHAF'A & WITR",
+  none:        'FAJR',
 };
 
 function fallbackTimes(): PrayerTimesResult {

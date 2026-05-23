@@ -16,7 +16,7 @@ import { useMeasurementStore } from '../hooks/useMeasurementStore';
 import { useMealStore } from '../hooks/useMealStore';
 import { usePrayerStore } from '../hooks/usePrayerStore';
 import { PageWrapper, AnimatePresence } from '../components/Animated';
-import { Activity, Dumbbell, Ruler, Flame, TrendingUp, Moon, Clock } from 'lucide-react';
+import { Activity, Dumbbell, Ruler, Flame, TrendingUp, Moon, Clock, Star } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
@@ -24,6 +24,7 @@ import { BilanZen } from '../components/BilanZen';
 import { motion } from 'motion/react';
 import type { SleepEntryLatest } from '../data/schemas/sleep/sleepEntry';
 import TempsTab from './analyse/TempsTab';
+import IslamTab from './analyse/IslamTab';
 
 
 const TABS = [
@@ -33,6 +34,7 @@ const TABS = [
   { id: 'scan', label: 'SCAN', Icon: Ruler },
   { id: 'sommeil', label: 'SOMMEIL', Icon: Moon },
   { id: 'correla', label: 'CORRÉLA.', Icon: TrendingUp },
+  { id: 'islam', label: 'ISLAM', Icon: Star },
 ];
 
 const RANGES = [
@@ -416,6 +418,7 @@ export default function AnalyseScreen() {
                   )}
                 </div>
              )}
+             {tab === 'islam' && <IslamTab today={today} range={range} />}
              {tab === 'correla' && (() => {
                // Build a 30-day timeline with workout flags + weight + kcal (today only available)
                const last30 = Array.from({ length: 30 }).map((_, i) => {

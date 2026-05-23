@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ScrollView } from 'react-native';
-import { Compass, BookOpen, RefreshCcw, Clock, CheckCircle2, Plus, TrendingUp, Minus, ChevronLeft, ChevronRight, Edit2, Save } from 'lucide-react';
+import { Compass, BookOpen, RefreshCcw, Clock, CheckCircle2, Plus, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SpiritualService } from '../utils/spiritualService';
 import arabicData from '../assets/data/1.json';
@@ -10,7 +10,9 @@ import { safeStorage } from '../utils/safeStorage';
 import { useAppState } from '../context/AppStateContext';
 import { usePrayerStore } from '../hooks/usePrayerStore';
 import { useQuranStore } from '../hooks/useQuranStore';
+import { useQuranSessionStore } from '../hooks/useQuranSessionStore';
 import type { PrayerName } from '../data/schemas/islam/prayerLog';
+import { StaggerList, StaggerItem } from '../components/Animated';
 import { InstrumentCard } from '../components/ui/InstrumentCard';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
@@ -229,6 +231,15 @@ export default function IslamScreen() {
 
   const prayerStore = usePrayerStore(selectedDate);
   const quranStore = useQuranStore();
+  const quranSessionStore = useQuranSessionStore(selectedDate);
+
+  // Wird input state
+  const [wirdAyahs, setWirdAyahs] = useState('');
+  const [wirdTime, setWirdTime] = useState(() => {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  });
+  const [wirdError, setWirdError] = useState<string | null>(null);
 
   const isToday = selectedDate === todayStr;
   const isPast = selectedDate < todayStr;
@@ -320,8 +331,29 @@ export default function IslamScreen() {
     else setHijriMonth(m => m + 1);
   };
 
-  const prayers = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
+  // Nomenclature malékite tunisienne — 7 prières (+ Chourouk en info)
+  // timeSource = clé adhan utilisée pour afficher l'heure théorique
+  type PrayerType = 'sunnah' | 'fard' | 'info';
+  const PRAYER_ROWS: { key: string; timeSource: string; type: PrayerType }[] = [
+    { key: 'fajr_sunnah', timeSource: 'fajr',    type: 'sunnah' },
+    { key: 'sobh',        timeSource: 'fajr',    type: 'fard'   },
+    { key: 'sunrise',     timeSource: 'sunrise', type: 'info'   },
+    { key: 'dhuhr',       timeSource: 'dhuhr',   type: 'fard'   },
+    { key: 'asr',         timeSource: 'asr',     type: 'fard'   },
+    { key: 'maghrib',     timeSource: 'maghrib', type: 'fard'   },
+    { key: 'isha',        timeSource: 'isha',    type: 'fard'   },
+    { key: 'witr',        timeSource: 'isha',    type: 'sunnah' },
+  ];
   const canEdit = isPast || isToday;
+
+  // Heures personnalisées en cours de saisie par prière (avant validation)
+  const [draftTimes, setDraftTimes] = useState<Record<string, string>>({});
+  const setDraftTime = (key: string, value: string) =>
+    setDraftTimes(prev => ({ ...prev, [key]: value }));
+  const currentHHMM = (): string => {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  };
 
   return (
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
@@ -416,44 +448,114 @@ export default function IslamScreen() {
               </span>
             )}
           </div>
-          {prayers.map((key) => {
-            const time: Date | undefined = (prayerTimesForDate as Record<string, Date | undefined>)[key];
-            const isNext = isToday && prayerTimesForDate.next === key;
-            const isSunrise = key === 'sunrise';
-            const done = !isSunrise && prayerStore.isDone(key as PrayerName);
-            const timeLabel = time instanceof Date
-              ? `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`
+          {PRAYER_ROWS.map(({ key, timeSource, type }) => {
+            const theoTime: Date | undefined = (prayerTimesForDate as Record<string, Date | undefined>)[timeSource];
+            const isNext   = isToday && prayerTimesForDate.next === timeSource && type !== 'info';
+            const isInfo   = type === 'info';
+            const done     = !isInfo && prayerStore.isDone(key as PrayerName);
+            const realTime = !isInfo ? prayerStore.realTime(key as PrayerName) : null;
+            const theoLabel = theoTime instanceof Date
+              ? `${String(theoTime.getHours()).padStart(2, '0')}:${String(theoTime.getMinutes()).padStart(2, '0')}`
               : '--:--';
-            const canToggle = !isSunrise && (isToday || isPast);
+            const canToggle = !isInfo && canEdit;
+            const draftValue = draftTimes[key] ?? realTime ?? (isToday ? currentHHMM() : theoLabel);
+
+            const badge = type === 'sunnah' ? 'SUNNAH' : type === 'fard' ? 'FARD' : null;
+            const badgeColor = type === 'sunnah' ? 'var(--color-awan-tx-mute)' : 'var(--color-awan-gold)';
 
             return (
-              <Touch
+              <div
                 key={key}
-                onPress={() => canToggle && prayerStore.toggle(key as PrayerName)}
                 className="flex flex-row justify-between items-center px-4 py-4 border-b"
-                style={{ borderColor: 'var(--color-awan-border-soft)', backgroundColor: isNext ? 'rgba(212,175,55,0.06)' : done ? 'rgba(78,205,196,0.04)' : 'transparent' }}
+                style={{
+                  borderColor: 'var(--color-awan-border-soft)',
+                  backgroundColor: isNext
+                    ? 'color-mix(in srgb, var(--color-awan-gold) 6%, transparent)'
+                    : done
+                      ? 'color-mix(in srgb, var(--color-awan-status-ok) 4%, transparent)'
+                      : 'transparent',
+                }}
               >
-                <div className="flex flex-row items-center gap-3">
-                  <div style={{ width: 3, height: 32, backgroundColor: done ? 'var(--color-awan-status-ok)' : isNext ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.08)' }} />
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: done ? 'var(--color-awan-status-ok)' : isNext ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)' }}>
-                    {SpiritualService.translatePrayer(key)}
-                  </span>
+                <div className="flex flex-row items-center gap-3" style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    width: 3, height: 32,
+                    backgroundColor: done
+                      ? 'var(--color-awan-status-ok)'
+                      : isNext ? 'var(--color-awan-gold)'
+                      : 'color-mix(in srgb, var(--color-awan-tx) 12%, transparent)',
+                  }} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                    <span style={{
+                      fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700,
+                      letterSpacing: '0.15em', textTransform: 'uppercase',
+                      color: done ? 'var(--color-awan-status-ok)' : isNext ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)',
+                    }}>
+                      {SpiritualService.translatePrayer(key)}
+                    </span>
+                    <div className="flex flex-row items-center gap-2">
+                      {badge && (
+                        <span style={{
+                          fontFamily: 'var(--font-mono)', fontSize: '7px', fontWeight: 700,
+                          letterSpacing: '0.2em', color: badgeColor,
+                          padding: '1px 4px', border: `1px solid ${badgeColor}`,
+                        }}>
+                          {badge}
+                        </span>
+                      )}
+                      <span style={{
+                        fontFamily: 'var(--font-mono)', fontSize: '9px',
+                        color: 'var(--color-awan-tx-mute)', letterSpacing: '0.1em',
+                      }}>
+                        THÉO {theoLabel}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-row items-center gap-4">
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', fontWeight: 700, color: done ? 'var(--color-awan-status-ok)' : isNext ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)' }}>
-                    {timeLabel}
-                  </span>
-                  {isSunrise ? <div style={{ width: 16 }} /> : done ? (
-                    <CheckCircle2 size={16} color="var(--color-awan-status-ok)" />
-                  ) : isNext ? (
-                    <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
-                      <Clock size={16} color="var(--color-awan-gold)" />
-                    </motion.div>
+
+                <div className="flex flex-row items-center gap-3">
+                  {isInfo ? (
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', fontWeight: 700, color: 'var(--color-awan-tx-mute)' }}>
+                      {theoLabel}
+                    </span>
+                  ) : done ? (
+                    <>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '16px', fontWeight: 700, color: 'var(--color-awan-status-ok)' }}>
+                        {realTime ?? '--:--'}
+                      </span>
+                      <Touch onPress={() => { void prayerStore.toggle(key as PrayerName); setDraftTime(key, ''); }} disabled={!canToggle}>
+                        <CheckCircle2 size={20} color="var(--color-awan-status-ok)" />
+                      </Touch>
+                    </>
                   ) : (
-                    <div style={{ width: 16, height: 16, border: '1px solid rgba(255,255,255,0.2)' }} />
+                    <>
+                      <input
+                        type="time"
+                        value={draftValue}
+                        onChange={e => setDraftTime(key, e.target.value)}
+                        disabled={!canToggle}
+                        style={{
+                          fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700,
+                          color: 'var(--color-awan-tx)', backgroundColor: 'transparent',
+                          border: '1px solid var(--color-awan-border-soft)', padding: '4px 6px',
+                          width: 72, textAlign: 'center',
+                        }}
+                      />
+                      <Touch
+                        onPress={() => { if (canToggle) void prayerStore.toggle(key as PrayerName, draftValue); }}
+                        disabled={!canToggle}
+                      >
+                        {isNext ? (
+                          <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
+                            <Clock size={20} color="var(--color-awan-gold)" />
+                          </motion.div>
+                        ) : (
+                          <div style={{ width: 20, height: 20, border: '1px solid var(--color-awan-border)' }} />
+                        )}
+                      </Touch>
+                    </>
                   )}
                 </div>
-              </Touch>
+              </div>
             );
           })}
         </div>
@@ -623,52 +725,122 @@ export default function IslamScreen() {
           </div>
         </div>
 
-        {/* ── Progression Coran ─────────────────────────────────────────────── */}
+        {/* ── Wird coranique ────────────────────────────────────────────────── */}
         <div className="mb-4 border" style={{ borderColor: 'var(--color-awan-border)', overflow: 'hidden' }}>
           <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
             <div className="flex flex-row items-center justify-between">
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>PROGRESSION CORAN</span>
-              <TrendingUp size={14} color="var(--color-awan-gold)" />
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>WIRD CORANIQUE</span>
+              <div className="flex flex-row items-center gap-3">
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-awan-gold)', letterSpacing: '0.2em' }}>
+                  {quranSessionStore.totalAyahs} VERSETS
+                </span>
+                <TrendingUp size={14} color="var(--color-awan-gold)" />
+              </div>
             </div>
           </div>
-          <div className="p-4">
-            {quranStore.progress ? (
-              <div>
-                <div className="flex flex-row justify-between items-center mb-4">
-                  <div>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-gold)', letterSpacing: '0.2em', display: 'block', marginBottom: 4 }}>SOURATE</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '28px', fontWeight: 700, color: 'var(--color-awan-tx)' }}>{quranStore.progress.currentSurah}<span style={{ fontSize: '11px', color: 'var(--color-awan-tx-mute)' }}>/114</span></span>
-                  </div>
-                  <div className="text-right">
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', display: 'block', marginBottom: 4 }}>VERSET</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '28px', fontWeight: 700, color: 'var(--color-awan-tx)' }}>{quranStore.progress.currentAyah}</span>
-                  </div>
-                  <div className="text-right">
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', display: 'block', marginBottom: 4 }}>TOTAL LU</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '28px', fontWeight: 700, color: 'var(--color-awan-tx)' }}>{quranStore.progress.totalAyahsRead}</span>
-                  </div>
-                </div>
-                <div className="h-px mb-4" style={{ backgroundColor: 'var(--color-awan-border)' }} />
-                <div className="flex flex-row gap-2">
-                  <Touch onPress={() => quranStore.advance(1)} className="flex-1 flex items-center justify-center gap-2 p-3 border" style={{ borderColor: 'rgba(212,175,55,0.3)', backgroundColor: 'rgba(212,175,55,0.06)' }}>
-                    <Plus size={14} color="var(--color-awan-gold)" />
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-gold)', letterSpacing: '0.2em' }}>+1</span>
-                  </Touch>
-                  <Touch onPress={() => quranStore.advance(5)} className="flex-1 flex items-center justify-center gap-2 p-3" style={{ backgroundColor: 'var(--color-awan-gold)' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-bg)', letterSpacing: '0.2em' }}>+5</span>
-                  </Touch>
-                  <Touch onPress={() => quranStore.advance(-1)} className="flex items-center justify-center p-3 border" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
-                    <Minus size={14} color="var(--color-awan-tx-mute)" />
-                  </Touch>
-                </div>
+
+          {/* Résumé global */}
+          {quranStore.progress && (
+            <div className="flex flex-row justify-between items-center px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
+              <div className="flex flex-col">
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', marginBottom: 2 }}>SOURATE · VERSET</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '16px', fontWeight: 700, color: 'var(--color-awan-tx)' }}>
+                  S{quranStore.progress.currentSurah} · V{quranStore.progress.currentAyah}
+                </span>
               </div>
-            ) : (
-              <div className="py-6 flex flex-col items-center gap-4">
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>AUCUNE PROGRESSION</span>
-                <Touch onPress={() => quranStore.advance(0)} className="flex items-center justify-center px-6 py-3" style={{ backgroundColor: 'var(--color-awan-gold)' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-bg)', letterSpacing: '0.2em' }}>INITIALISER</span>
+              <div className="flex flex-col items-end">
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', marginBottom: 2 }}>TOTAL GLOBAL</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '16px', fontWeight: 700, color: 'var(--color-awan-gold)' }}>
+                  {quranStore.progress.totalAyahsRead} <span style={{ fontSize: '9px', color: 'var(--color-awan-tx-mute)' }}>versets</span>
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Formulaire ajout session */}
+          {canEdit && (
+            <div className="px-4 py-4 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
+              <div className="flex flex-row gap-2 items-center">
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="versets"
+                  value={wirdAyahs}
+                  onChange={e => { setWirdAyahs(e.target.value); if (wirdError) setWirdError(null); }}
+                  style={{
+                    flex: 1, fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700,
+                    color: 'var(--color-awan-tx)', backgroundColor: 'transparent',
+                    border: '1px solid var(--color-awan-border-soft)', padding: '8px 10px',
+                    textAlign: 'center',
+                  }}
+                />
+                <input
+                  type="time"
+                  value={wirdTime}
+                  onChange={e => { setWirdTime(e.target.value); if (wirdError) setWirdError(null); }}
+                  style={{
+                    fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700,
+                    color: 'var(--color-awan-tx)', backgroundColor: 'transparent',
+                    border: '1px solid var(--color-awan-border-soft)', padding: '8px 8px',
+                    width: 84,
+                  }}
+                />
+                <Touch
+                  onPress={async () => {
+                    const n = parseInt(wirdAyahs, 10);
+                    if (!n || n < 1) { setWirdError('Nombre de versets invalide'); return; }
+                    if (!wirdTime.match(/^\d{2}:\d{2}$/)) { setWirdError('Heure invalide'); return; }
+                    setWirdError(null);
+                    await quranSessionStore.add({ timeHHMM: wirdTime, ayahsRead: n });
+                    setWirdAyahs('');
+                    const now = new Date();
+                    setWirdTime(`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`);
+                  }}
+                  className="flex items-center justify-center p-3"
+                  style={{ backgroundColor: 'var(--color-awan-gold)', flexShrink: 0 }}
+                >
+                  <Plus size={18} color="var(--color-awan-bg)" />
                 </Touch>
               </div>
+              {wirdError && (
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-awan-status-error)', letterSpacing: '0.1em', marginTop: 6, display: 'block' }}>
+                  {wirdError}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Liste des sessions du jour */}
+          <div>
+            {quranSessionStore.loading ? (
+              <div className="py-6 flex items-center justify-center">
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>CHARGEMENT...</span>
+              </div>
+            ) : quranSessionStore.sessions.length === 0 ? (
+              <div className="py-6 flex flex-col items-center gap-2">
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>AUCUNE SESSION CE JOUR</span>
+              </div>
+            ) : (
+              <StaggerList>
+                {quranSessionStore.sessions.map((s, i) => (
+                  <StaggerItem key={`${s.timeHHMM}-${i}`}>
+                    <div
+                      className="flex flex-row items-center justify-between px-4 py-3 border-b"
+                      style={{ borderColor: 'var(--color-awan-border-soft)' }}
+                    >
+                      <div className="flex flex-row items-center gap-3">
+                        <div style={{ width: 3, height: 24, backgroundColor: 'var(--color-awan-gold)' }} />
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 700, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.15em' }}>
+                          {s.timeHHMM}
+                        </span>
+                      </div>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700, color: 'var(--color-awan-tx)' }}>
+                        {s.ayahsRead} <span style={{ fontSize: '9px', color: 'var(--color-awan-tx-mute)', fontWeight: 400 }}>versets</span>
+                      </span>
+                    </div>
+                  </StaggerItem>
+                ))}
+              </StaggerList>
             )}
           </div>
         </div>
