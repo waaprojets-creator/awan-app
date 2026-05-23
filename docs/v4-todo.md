@@ -84,10 +84,89 @@ La transition entre échelles **recompute le grain** — ce n'est pas un zoom, c
 
 ---
 
+---
+
+## W2 — Performance mécanique : hiérarchie temporelle & grain
+
+### Origine
+Spécification issue de l'analyse des widgets Python (widget_2.py).
+Référence clinique : Brzycki 1RM, chaînes cinétiques Push/Pull/Legs, SMA_7 ± 2.5 kg.
+
+---
+
+### Règle des échelles
+
+| Échelle | Fenêtre | Grain | Tonnage | 1RM |
+|---|---|---|---|---|
+| **Court** | 7 → 31 jours | 1 point = 1 séance | Barres empilées par chaîne (Push/Pull/Legs) | 1RM par chaîne affiché |
+| **Moyen** | 4 → 52 semaines | 1 point = 1 semaine | Barre unique (tonnage total semaine) | Moyenne hebdo par chaîne → courbe pointillée |
+| **Long** | > 52 semaines | 1 point = 1 mois | Barre unique (tonnage total mois) | Moyenne mensuelle par chaîne → courbe pointillée |
+
+---
+
+### Calcul 1RM — limite fiabilité
+
+**Formule Brzycki :** `weight / (1.0278 − 0.0278 × reps)`
+
+**Limite à 12 reps :** Sets avec `reps > 12` sont **ignorés** du calcul 1RM.
+- À 12 reps : erreur ≈ ±5-8% — acceptable pour suivi de tendance
+- Au-delà de 12 : erreur > 10% — signal devient du bruit
+- Les sets > 12 reps contribuent au tonnage mais pas au 1RM estimé
+
+---
+
+### Court terme (7–31j, grain séance)
+
+**Données affichées :**
+- Tonnage : barres empilées par chaîne cinétique (Push / Pull / Legs) — 1 barre par séance, 3 segments
+- 1RM par chaîne : affiché en indicateur discret (badge ou ligne horizontale) par séance
+- Session budget : tonnage total toutes chaînes (KPI dominant, affiché en gros)
+- Jours de repos : pas de barre (absence de donnée, pas de zéro)
+
+**Question métier :** "Quelle est la répartition de mon travail par chaîne cette semaine ?"
+
+---
+
+### Moyen terme (4–52 semaines, grain semaine)
+
+**Données affichées :**
+- Tonnage : barre unique par semaine (chaînes fusionnées, breakdown disparu)
+- 1RM par chaîne : **courbe en pointillé** superposée — moyenne hebdomadaire des sets ≤ 12 reps de la chaîne
+- 3 courbes pointillées (Push / Pull / Legs) sur axe Y secondaire
+- Zone de tolérance SMA_7 ± 2.5 kg visible comme bande autour de chaque courbe
+
+**Question métier :** "Ma force progresse-t-elle semaine après semaine ?"
+
+---
+
+### Long terme (> 52 semaines, grain mois)
+
+**Données affichées :**
+- Tonnage : barre unique par mois
+- 1RM par chaîne : **courbe en pointillé** — moyenne mensuelle des sets ≤ 12 reps
+- Tendance de progression de force sur la durée (adaptation structurelle long terme)
+
+**Question métier :** "Quelle est ma trajectoire de force sur l'année ?"
+
+---
+
+### Règles graphiques
+
+- **Barres empilées** en court terme : Push / Pull / Legs avec couleur distincte par chaîne
+- **Barre unique** en moyen/long terme : tonnage agrégé, chaînes fusionnées
+- **1RM toujours visible** à toutes les échelles — par chaîne en court terme, en moyenne agrégée en moyen/long
+- **Courbe en pointillé** pour le 1RM en moyen/long terme (axe Y secondaire) — scientifiquement justifié car c'est une estimation, pas une mesure directe
+- **Zone SMA_7 ± 2.5 kg** autour de chaque courbe 1RM → bande de tolérance biologique
+- **Session budget** (tonnage total) = KPI dominant, affiché en premier plan
+
+---
+
 ### Implémentation à faire
 
-- [ ] Service `compositionService.ts` : calcul MA_7, agrégation semaine/mois, régression linéaire sur plis, vélocité lipolyse, R²
-- [ ] Composant graphique W1 dans `MensurationScreen` ou `AnalyseScreen` onglet SCAN
-- [ ] Sélecteur d'échelle (court / moyen / long) avec recomputation du grain au changement
-- [ ] Gestion de l'absence de données plis < 4 semaines (message "données insuffisantes")
-- [ ] Connexion avec W5 (adaptation métabolique) : si vélocité lipolyse décroît sur long terme → signal Coach
+- [ ] Filtre `reps <= 12` avant calcul Brzycki dans `workoutAnalysisService.ts`
+- [ ] Calcul 1RM moyen par chaîne par séance, par semaine, par mois
+- [ ] Agrégation tonnage : par chaîne (court) → total (moyen/long)
+- [ ] Composant graphique W2 dans `SportScreen` onglet STATS
+- [ ] Courbe pointillée 1RM sur axe Y secondaire en vue moyen/long
+- [ ] Bande SMA_7 ± 2.5 kg autour de chaque courbe 1RM
+
