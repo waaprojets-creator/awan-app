@@ -179,7 +179,7 @@ export default function TasksScreen() {
                     paddingHorizontal: 20, paddingVertical: 12,
                     border: '1px solid',
                     borderColor: filterStatus === status ? 'var(--color-awan-gold)' : 'var(--color-awan-border)',
-                    backgroundColor: filterStatus === status ? 'rgba(212,175,55,0.08)' : 'var(--color-awan-surface)',
+                    backgroundColor: filterStatus === status ? 'color-mix(in srgb, var(--color-awan-gold) 8%, transparent)' : 'var(--color-awan-surface)',
                   }}
                 >
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', color: filterStatus === status ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)', textTransform: 'uppercase' }}>
@@ -282,7 +282,7 @@ export default function TasksScreen() {
                           paddingHorizontal: 14, paddingVertical: 10,
                           border: '1px solid',
                           borderColor: activeTaskId === item.id ? 'var(--color-awan-status-error)' : 'var(--color-awan-border)',
-                          backgroundColor: activeTaskId === item.id ? 'rgba(255,75,75,0.08)' : 'transparent',
+                          backgroundColor: activeTaskId === item.id ? 'color-mix(in srgb, var(--color-awan-status-error) 8%, transparent)' : 'transparent',
                         }}
                         onPress={(e: any) => { e.stopPropagation(); toggleTimer(item.id); }}
                       >
@@ -331,7 +331,7 @@ export default function TasksScreen() {
       </div>
 
       <Modal visible={showModal} transparent animationType="fade">
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', backgroundColor: 'var(--color-awan-overlay)' }}>
           <div style={{ backgroundColor: 'var(--color-awan-surface)', padding: 40, borderTop: '1px solid var(--color-awan-border)', width: '100%', maxWidth: 512, margin: '0 auto' }}>
             <Heading level={2} className="text-center mb-10" subtitle="Nouvelle tâche">AJOUTER</Heading>
 
@@ -368,7 +368,7 @@ export default function TasksScreen() {
                           paddingHorizontal: 16, paddingVertical: 14,
                           border: '1px solid',
                           borderColor: reminder === ni.value ? 'var(--color-awan-gold)' : 'var(--color-awan-border)',
-                          backgroundColor: reminder === ni.value ? 'rgba(212,175,55,0.08)' : 'transparent',
+                          backgroundColor: reminder === ni.value ? 'color-mix(in srgb, var(--color-awan-gold) 8%, transparent)' : 'transparent',
                         }}
                         onPress={() => setReminder(ni.value)}
                       >

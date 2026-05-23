@@ -1,50 +1,45 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { View, Dimensions, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Path, Circle, Rect, G, Line } from 'react-native-svg';
+import Svg, { Rect, G, Line } from 'react-native-svg';
 import {
-  startOfDay, endOfDay, subDays, subMonths,
-  parseISO, format, startOfWeek, eachDayOfInterval
+  startOfDay, endOfDay, subDays,
+  parseISO, format, eachDayOfInterval
 } from 'date-fns';
-import { CATS } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
 import { ds } from '../utils/storage';
-import { eventsForDate } from '../utils/recurrence';
 import { LocalAIService } from '../services/localAIService';
 import { MealService } from '../services/mealService';
+import { SleepService } from '../services/sleepService';
 import { useWorkoutStore } from '../hooks/useWorkoutStore';
 import { useMeasurementStore } from '../hooks/useMeasurementStore';
 import { useMealStore } from '../hooks/useMealStore';
 import { usePrayerStore } from '../hooks/usePrayerStore';
 import { PageWrapper, AnimatePresence } from '../components/Animated';
-import { Activity, Dumbbell, Ruler, Flame, TrendingUp } from 'lucide-react';
+import { Activity, Dumbbell, Ruler, Flame, TrendingUp, Moon } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
 import { BilanZen } from '../components/BilanZen';
 import { motion } from 'motion/react';
+import type { SleepEntryLatest } from '../data/schemas/sleep/sleepEntry';
 
-const FREE_KEY = '_free';
-const FREE_COLOR = 'rgba(212, 175, 55, 0.05)';
-const FREE_LABEL = 'Temps libre';
 
 const TABS = [
-  { id: 'activity', label: 'Flux Horaire', Icon: Activity },
-  { id: 'nutrition', label: 'Biosphère', Icon: Flame },
-  { id: 'muscu', label: 'Projection', Icon: Dumbbell },
-  { id: 'measures', label: 'Biométrie', Icon: Ruler },
-  { id: 'cross', label: 'Corréla.', Icon: TrendingUp },
+  { id: 'sport', label: 'SPORT', Icon: Dumbbell },
+  { id: 'nutrition', label: 'NUTRITION', Icon: Flame },
+  { id: 'scan', label: 'SCAN', Icon: Ruler },
+  { id: 'sommeil', label: 'SOMMEIL', Icon: Moon },
+  { id: 'correla', label: 'CORRÉLA.', Icon: TrendingUp },
 ];
 
 const RANGES = [
-  { id: 'day', label: '24H' },
   { id: 'week', label: '07D' },
   { id: 'month', label: '30D' },
+  { id: 'quarter', label: '90D' },
 ];
 
 const SvgLine = Line as any;
-const SvgCircle = Circle as any;
-const SvgPath = Path as any;
 const SvgRect = Rect as any;
 const SvgG = G as any;
 
@@ -59,41 +54,24 @@ export default function AnalyseScreen() {
   const [mealsByDay, setMealsByDay] = useState<Array<{ label: string; kcal: number; p: number }>>([]);
   const [mealsLoading, setMealsLoading] = useState(false);
 
+  const [sleepEntries, setSleepEntries] = useState<SleepEntryLatest[]>([]);
   const workoutStore = useWorkoutStore();
   const measureStore = useMeasurementStore();
   const prayerStore = usePrayerStore(today);
   const mealStoreToday = useMealStore(today);
 
-  const categories = useMemo((): Record<string, { l: string; c: string }> => ({ ...CATS }), []);
-  const getColorForKey = (key: string) => (key === FREE_KEY ? FREE_COLOR : categories[key]?.c ?? theme.title);
-  const getLabelForKey = (key: string) => (key === FREE_KEY ? FREE_LABEL : categories[key]?.l ?? key);
+  useEffect(() => {
+    SleepService.getAll().then(setSleepEntries).catch(() => {});
+  }, []);
 
   const interval = useMemo(() => {
     const now = new Date();
-    let start = startOfDay(now);
     const end = endOfDay(now);
-    if (range === 'week') start = startOfWeek(subDays(now, 6), { weekStartsOn: 1 });
-    if (range === 'month') start = subMonths(now, 1);
+    let start = startOfDay(subDays(now, 6));
+    if (range === 'month') start = startOfDay(subDays(now, 29));
+    if (range === 'quarter') start = startOfDay(subDays(now, 89));
     return { start, end };
   }, [range]);
-
-  const activityData = useMemo(() => {
-    const totals: Record<string, number> = {};
-    let totalMinutes = 0;
-    const days = eachDayOfInterval(interval);
-    days.forEach(day => {
-      const evs = eventsForDate(null, ds(day));
-      evs.forEach((ev: any) => {
-        if (!ev.time) return;
-        totals[ev.category || 'perso'] = (totals[ev.category || 'perso'] ?? 0) + (ev.duration || 30);
-        totalMinutes += (ev.duration || 30);
-      });
-    });
-    totals[FREE_KEY] = Math.max(0, days.length * 1440 - totalMinutes);
-    return Object.entries(totals).map(([key, value]) => ({
-      key, value, color: getColorForKey(key), label: getLabelForKey(key),
-    })).sort((a, b) => b.value - a.value);
-  }, [categories, interval]);
 
   const muscuStats = useMemo(() => {
     return workoutStore.sessions
@@ -112,6 +90,23 @@ export default function AnalyseScreen() {
         return { label: format(parseISO(s.date), 'dd/MM'), weight, sets };
       });
   }, [workoutStore.sessions, interval]);
+
+  const sleepStats = useMemo(() => {
+    const filtered = sleepEntries.filter(e => {
+      const d = parseISO(e.date);
+      return d >= interval.start && d <= interval.end;
+    }).sort((a, b) => a.date.localeCompare(b.date));
+    const avgDuration = filtered.length > 0
+      ? filtered.reduce((s, e) => s + e.durationH, 0) / filtered.length : 0;
+    const avgQuality = filtered.length > 0
+      ? filtered.reduce((s, e) => s + e.quality, 0) / filtered.length : 0;
+    return {
+      entries: filtered,
+      avgDuration,
+      avgQuality,
+      data: filtered.map(e => ({ label: format(parseISO(e.date), 'dd/MM'), durationH: e.durationH, quality: e.quality })),
+    };
+  }, [sleepEntries, interval]);
 
   useEffect(() => {
     let active = true;
@@ -242,26 +237,40 @@ export default function AnalyseScreen() {
              exit={{ opacity: 0, y: -20 }}
              className="px-6"
            >
-             {tab === 'activity' && (
+             {tab === 'sport' && (
                 <div className="space-y-8">
-                  <Card className="items-center py-10 relative overflow-hidden bg-white/5 border-white/5">
-                     <div className="absolute top-0 right-0 w-32 h-32 bg-awan-gold/5 rounded-full blur-3xl -mr-16 -mt-16" />
-                     <PieChart data={activityData} size={220} />
-                     <div className="mt-10 w-full">
-                        <Legend data={activityData} />
-                     </div>
-                  </Card>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <Card className="border-awan-gold/30 bg-awan-gold/5 p-6" variant="flat">
-                       <span className="text-awan-md font-black text-awan-gold tracking-widest mb-2 block uppercase">Flux Actif</span>
-                       <span className="text-3xl font-black text-awan-tx font-mono">{Math.round(activityData.reduce((acc, d) => d.key !== FREE_KEY ? acc+d.value : acc, 0) / 60)}<span className="text-sm ml-1 opacity-50">H</span></span>
-                    </Card>
-                    <Card className="border-white/5 bg-white/5 p-6" variant="flat">
-                       <span className="text-awan-md font-black text-awan-tx-mute tracking-widest mb-2 block uppercase">Veille System</span>
-                       <span className="text-3xl font-black text-awan-tx font-mono">{Math.round((activityData.find(d => d.key === FREE_KEY)?.value ?? 0) / 60)}<span className="text-sm ml-1 opacity-50">H</span></span>
-                    </Card>
-                  </div>
+                   {workoutStore.loading ? (
+                     <LoadingState label="Chargement des séances..." />
+                   ) : muscuStats.length === 0 ? (
+                     <EmptyState Icon={Dumbbell} label="Aucune séance sur la période" />
+                   ) : (
+                     <>
+                       <Card className="p-6" variant="flat">
+                          <Heading level={4} mono subtitle="Volume total soulevé">TONNAGE (KG × REPS)</Heading>
+                          <div className="h-[200px] mt-6">
+                             <BarChart data={muscuStats} dataKey="weight" color={theme.title} />
+                          </div>
+                       </Card>
+                       <Card className="p-6" variant="flat">
+                          <Heading level={4} mono subtitle="Densité opérative">SÉRIES COMPLÉTÉES</Heading>
+                          <div className="h-[200px] mt-6">
+                             <BarChart data={muscuStats} dataKey="sets" color={theme.title} />
+                          </div>
+                       </Card>
+                       <div className="grid grid-cols-2 gap-4">
+                         <Card className="p-6" variant="flat">
+                           <span className="awan-label text-awan-tx-mute mb-2 block">SÉANCES</span>
+                           <span className="text-3xl font-black text-awan-gold font-mono">{muscuStats.length}</span>
+                           <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">sur la période</span>
+                         </Card>
+                         <Card className="p-6" variant="flat">
+                           <span className="awan-label text-awan-tx-mute mb-2 block">TONNAGE TOTAL</span>
+                           <span className="text-3xl font-black text-awan-tx font-mono">{Math.round(muscuStats.reduce((s, d) => s + d.weight, 0) / 1000)}</span>
+                           <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">tonnes soulevées</span>
+                         </Card>
+                       </div>
+                     </>
+                   )}
                 </div>
              )}
 
@@ -315,32 +324,7 @@ export default function AnalyseScreen() {
                 </div>
              )}
 
-             {tab === 'muscu' && (
-                <div className="space-y-8">
-                   {workoutStore.loading ? (
-                     <LoadingState label="Chargement des séances..." />
-                   ) : muscuStats.length === 0 ? (
-                     <EmptyState Icon={Dumbbell} label="Aucune séance sur la période" />
-                   ) : (
-                     <>
-                       <Card className="p-6 bg-white/5 border-white/5" variant="flat">
-                          <Heading level={4} mono subtitle="Force de Projection">VOLUME TOTAL (KG)</Heading>
-                          <div className="h-[200px] mt-6">
-                             <BarChart data={muscuStats} dataKey="weight" color={theme.title} />
-                          </div>
-                       </Card>
-                       <Card className="p-6 bg-white/5 border-white/5" variant="flat">
-                          <Heading level={4} mono subtitle="Densité Opérative">SÉRIES COMPLÉTÉES</Heading>
-                          <div className="h-[200px] mt-6">
-                             <BarChart data={muscuStats} dataKey="sets" color="#FFF" />
-                          </div>
-                       </Card>
-                     </>
-                   )}
-                </div>
-             )}
-
-             {tab === 'measures' && (
+             {tab === 'scan' && (
                 <div className="space-y-4">
                   {measureStore.loading ? (
                     <LoadingState label="Chargement des mesures..." />
@@ -349,7 +333,7 @@ export default function AnalyseScreen() {
                   ) : (
                     <>
                     {weightTrend.length > 1 && (
-                      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+                      <Card className="p-6" variant="flat">
                         <Heading level={4} mono subtitle="Trajectoire biométrique">COURBE POIDS</Heading>
                         <div className="h-[200px] mt-6">
                           <BarChart data={weightTrend} dataKey="weight" color={theme.title} />
@@ -357,7 +341,7 @@ export default function AnalyseScreen() {
                       </Card>
                     )}
                     {measureStore.history.slice().reverse().slice(0, 10).map((m, i) => (
-                      <Card key={i} className="p-5 bg-white/5 border-white/5" variant="flat">
+                      <Card key={i} className="p-5" variant="flat">
                         <div className="flex flex-row items-center justify-between mb-3">
                           <span className="text-awan-sm font-mono text-awan-gold uppercase tracking-widest">{m.date}</span>
                           {m.body_fat_pct != null && (
@@ -388,7 +372,47 @@ export default function AnalyseScreen() {
                   )}
                 </div>
              )}
-             {tab === 'cross' && (() => {
+
+             {tab === 'sommeil' && (
+                <div className="space-y-6">
+                  {sleepStats.entries.length === 0 ? (
+                    <EmptyState Icon={Moon} label="Aucun sommeil enregistré sur la période" />
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Card className="p-6" variant="flat">
+                          <span className="awan-label text-awan-tx-mute mb-2 block">MOY. DURÉE</span>
+                          <span className="text-3xl font-black text-awan-gold font-mono">{sleepStats.avgDuration.toFixed(1)}</span>
+                          <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">heures/nuit · rec. 7-9h</span>
+                        </Card>
+                        <Card className="p-6" variant="flat">
+                          <span className="awan-label text-awan-tx-mute mb-2 block">MOY. QUALITÉ</span>
+                          <span className="text-3xl font-black text-awan-tx font-mono">{sleepStats.avgQuality.toFixed(1)}</span>
+                          <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">/ 5 · Mander 2017</span>
+                        </Card>
+                      </div>
+                      <Card className="p-6" variant="flat">
+                        <Heading level={4} mono subtitle="Durée nuit">COURBE SOMMEIL</Heading>
+                        <div className="h-[200px] mt-6">
+                          <BarChart data={sleepStats.data} dataKey="durationH" color={theme.title} />
+                        </div>
+                      </Card>
+                      {sleepStats.entries.slice().reverse().slice(0, 7).map((e, i) => (
+                        <Card key={i} className="p-4" variant="flat">
+                          <div className="flex flex-row items-center justify-between">
+                            <span className="text-awan-sm font-mono text-awan-gold uppercase tracking-widest">{e.date}</span>
+                            <div className="flex flex-row items-center gap-4">
+                              <span className="text-awan-md font-black text-awan-tx font-mono">{e.durationH.toFixed(1)}<span className="text-sm ml-1 opacity-50">H</span></span>
+                              <span className="text-awan-md font-black text-awan-tx-mute">{'★'.repeat(e.quality)}</span>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </>
+                  )}
+                </div>
+             )}
+             {tab === 'correla' && (() => {
                // Build a 30-day timeline with workout flags + weight + kcal (today only available)
                const last30 = Array.from({ length: 30 }).map((_, i) => {
                  const d = new Date(); d.setDate(d.getDate() - (29 - i));
@@ -427,7 +451,7 @@ export default function AnalyseScreen() {
                                className="w-full"
                                style={{
                                  height: `${Math.max(4, Math.min(48, ((d.weight / avgWeight) * 32)))}px`,
-                                 backgroundColor: d.hasWorkout ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.12)',
+                                 backgroundColor: d.hasWorkout ? 'var(--color-awan-gold)' : 'var(--color-awan-border)',
                                }}
                              />
                            ) : (
@@ -525,7 +549,7 @@ function BarChart({ data, dataKey, color }: { data: any[], dataKey: string, colo
             y1={height - padding - v * (height - padding * 2)}
             x2={width}
             y2={height - padding - v * (height - padding * 2)}
-            stroke="rgba(255,255,255,0.03)"
+            stroke="var(--color-awan-border-soft)"
             strokeWidth="1"
           />
         ))}
@@ -538,7 +562,7 @@ function BarChart({ data, dataKey, color }: { data: any[], dataKey: string, colo
             <SvgG key={i}>
               <Rect x={x} y={y} width={barWidth} height={barHeight} fill={color} rx={2} />
               {d[dataKey] > 0 && (
-                <Rect x={x} y={y} width={barWidth} height={2} fill="#FFF" opacity={0.5} />
+                <Rect x={x} y={y} width={barWidth} height={2} fill={color} opacity={0.5} />
               )}
             </SvgG>
           );
@@ -548,57 +572,6 @@ function BarChart({ data, dataKey, color }: { data: any[], dataKey: string, colo
   );
 }
 
-function PieChart({ data, size = 180 }: { data: any[], size?: number }) {
-  const theme = useTheme();
-  const total = data.reduce((s, d) => s + d.value, 0);
-  const cx = size / 2; const cy = size / 2; const r = size / 2 - 15;
-  if (total === 0) return <Svg width={size} height={size}><Circle cx={cx} cy={cy} r={r} fill="var(--color-awan-border-soft)" /></Svg>;
-  let cumulative = 0;
-  return (
-    <Svg width={size} height={size}>
-      {/* Glow Effect */}
-      <Circle cx={cx} cy={cy} r={r} fill="transparent" stroke={theme.title} strokeWidth="1" opacity={0.05} />
-      
-      {data.filter(d => d.value > 0).map((d, i) => {
-        const start = (cumulative / total) * 2 * Math.PI;
-        cumulative += d.value;
-        const end = (cumulative / total) * 2 * Math.PI;
-        if (data.filter(x => x.value > 0).length === 1) return <SvgCircle key={i} cx={cx} cy={cy} r={r} fill={d.color} />;
-        const x1 = cx + r * Math.sin(start); const y1 = cy - r * Math.cos(start);
-        const x2 = cx + r * Math.sin(end); const y2 = cy - r * Math.cos(end);
-        const large = end - start > Math.PI ? 1 : 0;
-        return <SvgPath key={i} d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`} fill={d.color} stroke={theme.bg} strokeWidth="2" />;
-      })}
-      <Circle cx={cx} cy={cy} r={r * 0.75} fill={theme.bg} />
-      <View style={{ position: 'absolute', top: 0, left: 0, width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-         <span className="text-awan-md font-black text-awan-gold tracking-[0.4em] opacity-30">VECTEUR</span>
-      </View>
-    </Svg>
-  );
-}
-
-function Legend({ data }: { data: any[] }) {
-  const total = data.reduce((s, d) => s + d.value, 0);
-  return (
-    <div className="grid grid-cols-1 gap-4 px-4">
-      {data.filter(d => d.value > 0).slice(0, 6).map(d => (
-        <div key={d.key} className="flex flex-row items-center justify-between border-b border-white/5 pb-2">
-          <div className="flex flex-row items-center gap-3">
-            <div className="w-2 h-2 rounded-full shadow-[0_0_5px_rgba(255,255,255,0.2)]" style={{ backgroundColor: d.color }} />
-            <span className="text-awan-md font-black text-awan-tx uppercase tracking-widest">{d.label}</span>
-          </div>
-          <div className="flex flex-row items-center gap-3">
-            <span className="text-awan-md font-mono text-awan-gold">{Math.round(d.value / 60)}H</span>
-            <div className="w-12 h-1 bg-white/5 rounded-full overflow-hidden">
-               <div className="h-full bg-awan-gold opacity-50" style={{ width: `${(d.value / total) * 100}%` }} />
-            </div>
-            <span className="text-awan-sm font-mono text-awan-tx-mute w-8 text-right">{Math.round((d.value / total) * 100)}%</span>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function EmptyState({ Icon, label }: { Icon: any, label: string }) {
   return (
@@ -612,7 +585,7 @@ function EmptyState({ Icon, label }: { Icon: any, label: string }) {
 function LoadingState({ label }: { label: string }) {
   return (
     <div className="flex flex-col items-center py-20 opacity-30">
-      <div className="w-8 h-8 rounded-full border-2 border-awan-gold border-t-transparent animate-spin mb-4" />
+      <div className="w-8 h-8 border-2 border-awan-gold border-t-transparent animate-spin mb-4" />
       <span className="text-awan-md font-black uppercase tracking-widest text-awan-tx-mute">{label}</span>
     </div>
   );
