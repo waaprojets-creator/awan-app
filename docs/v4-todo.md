@@ -197,9 +197,10 @@ Même bornes temporelles que W2. Grain = jour (données quotidiennes) en court t
 
 ### Signaux source
 
-4 signaux quotidiens :
+5 signaux quotidiens :
 - **RMSSD** (ms) — variabilité cardiaque, proxy état SNC
 - **BPM repos** (bpm) — fréquence cardiaque au réveil, signal de charge nerveuse
+- **Température corporelle** (°C) — prise au réveil (thermomètre sublingual/auriculaire) — signal précoce de surmenage ou infection
 - **Sleep** (h) — durée de sommeil
 - **Fatigue** (score subjectif) — ressenti auto-rapporté
 
@@ -271,7 +272,7 @@ Signal affiché comme badge sur l'écran de démarrage de séance (Sport → Pre
 
 ### Implémentation à faire
 
-- [ ] Schéma `RecoveryEntryV1` (rmssd, bpm_repos, sleep, fatigue, date)
+- [ ] Schéma `RecoveryEntryV1` (rmssd, bpm_repos, temp_celsius, sleep, fatigue, date)
 - [ ] Service `recoveryService.ts` : CRUD + calcul ACWR croisé avec `workoutService`
 - [ ] Calcul `check_readiness()` dans `workoutAnalysisService.ts`
 - [ ] Composant W3 dans `SportScreen` onglet STATS (ou onglet dédié RÉCUP)
