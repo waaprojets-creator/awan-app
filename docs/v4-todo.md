@@ -470,3 +470,95 @@ W5 est le signal long terme de W1 :
 - [ ] Composant `MetabolicScatterPlot` (scatter + régression) dans `AnalyseScreen`
 - [ ] Garde 28j minimum avec message "données insuffisantes"
 - [ ] R² badge de confiance affiché sur le scatter
+
+
+---
+
+---
+
+## W6 — Orthométrie : Sparklines de Vélocité (Protocol ISAK)
+
+### Origine
+Spécification issue du document de conception SAPP (w6.md).
+Référence clinique : Protocole ISAK — triple mesure, écart max 0.5 cm, moyenne retenue.
+
+---
+
+### Logique
+
+**Pas de hiérarchie temporelle.** Les mensurations sont trop espacées (hebdo/mensuel) pour découper en court/moyen/long. La sparkline couvre **toute la durée disponible depuis la baseline** — c'est la trajectoire complète qui a de la valeur.
+
+Le Δ vs baseline et le ▲/▼ final répondent aux questions court et moyen terme. La sparkline complète répond au long terme.
+
+---
+
+### Protocole de saisie
+
+- **Moment :** Dimanche matin, à jeun, après passage aux toilettes
+- **Technique :** Triple mesure par site. Si écart entre mesures > 0.5 cm → recommencer
+- **Valeur retenue :** Moyenne des 3 mesures (pas le min, pas le max)
+
+**Fréquence par site :**
+
+| Fréquence | Sites |
+|---|---|
+| **Hebdomadaire** | Tour de taille, Bras (bicep L + R, avant-bras L + R) |
+| **Mensuelle** | Cou, Épaules, Poitrine, Fesses, Cuisses (L + R), Mollets (L + R), Poignet, Cheville |
+
+---
+
+### Organisation visuelle — 2 axes
+
+**Axe Métabolique** (indicateurs de masse grasse — doivent descendre) :
+- Tour de taille, Ventre, Fesses
+
+**Axe Musculaire** (indicateurs d'hypertrophie — doivent monter) :
+- Bras (bicep), Cuisses, Mollets
+
+---
+
+### Visualisation : Sparklines de vélocité
+
+Chaque site a sa propre sparkline :
+- **Ligne** reliant tous les points de mesure disponibles (pas d'interpolation entre les dates — sauts visibles si mesure manquante)
+- **Dernier point** : triangle ▲ (hausse) ou ▼ (baisse) indiquant la direction de la dernière mesure vs l'avant-dernière
+- **Badge Δ** : `+X.X cm` ou `-X.X cm` vs valeur de départ (baseline = première mesure enregistrée)
+- **Couleur sémantique** (via `cfg.colorMap`, jamais hardcodé) :
+  - Axe Métabolique : Δ négatif = `var(--color-awan-status-ok)` (bon signe), Δ positif = `var(--color-awan-status-warn)`
+  - Axe Musculaire : Δ positif = `var(--color-awan-status-ok)`, Δ négatif = `var(--color-awan-status-warn)`
+
+---
+
+### Matrice de décision (orchestrateur)
+
+Croisement des signaux W1 + W2 + W3 + W6 :
+
+| Condition | Interprétation | Action |
+|---|---|---|
+| Poids↓ + Tour de taille↓ | Perte de gras efficace | Continuer |
+| Poids stable + Bras↑ | Hypertrophie réussie (recomposition) | Continuer |
+| BPM↑ + RMSSD↓ + Tour de taille↑ | Surcharge systémique | Deload obligatoire |
+
+Cette matrice est le signal Coach multi-widget — elle nécessite des données de W1, W3 et W6 simultanément.
+
+---
+
+### Règles graphiques
+
+- Sparklines compactes (hauteur réduite, lisibles en grille)
+- Les 2 axes (Métabolique / Musculaire) séparés visuellement par un séparateur léger
+- Aucune interpolation — les sauts de dates sont visibles (la donnée est rare, c'est voulu)
+- ▲/▼ positionné sur le dernier point de la sparkline
+- Badge Δ aligné à droite de chaque sparkline
+- Si une mensuration n'a qu'un seul point → afficher le point seul + "baseline" sans Δ
+
+---
+
+### Implémentation à faire
+
+- [ ] Schéma `MeasurementV1` : vérifier champs existants, documenter clés L/R (`arm_left`, `arm_right`, etc.)
+- [ ] `MensurationScreen.tsx` : saisie triple mesure avec moyenne auto + alerte si écart > 0.5 cm
+- [ ] Composant `SparklineVelocity` : ligne + ▲▼ + badge Δ (réutilise primitives existantes)
+- [ ] Organisation en 2 axes (Métabolique / Musculaire) dans `MensurationScreen` ou `AnalyseScreen`
+- [ ] Règle Coach multi-widget : matrice de décision W1+W3+W6 dans `coachAdvice.ts`
+- [ ] Service `symmetryService.ts` : L/R pour bras, cuisses, mollets (diff > 5% → alerte)
