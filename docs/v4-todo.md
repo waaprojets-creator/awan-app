@@ -279,3 +279,89 @@ Signal affiché comme badge sur l'écran de démarrage de séance (Sport → Pre
 - [ ] Courbe ACWR avec zones colorées (cfg.colorMap)
 - [ ] Badge readiness dans `PreWorkout`
 
+
+---
+
+---
+
+## W4 — Sécurité Biomécanique : Jauge ACWR (Gabbett 2016)
+
+### Origine
+Spécification issue de l'analyse des widgets Python (widget_4.py).
+Référence clinique : ACWR Gabbett 2016, 4 zones de sécurité biomécanique.
+
+---
+
+### Logique
+
+**Pas de hiérarchie temporelle classique.** W4 est un widget de sécurité à deux niveaux :
+1. **Jauge aujourd'hui** — valeur ACWR courante + zone + recommandation actionnable
+2. **Courbe 28–60 jours** — trajectoire de l'ACWR pour lire la dynamique (montée vs descente)
+
+L'ACWR est un ratio glissant, pas une tendance d'adaptation — l'agréger en semaines ou mois perd le signal de sécurité. Pas de vue long terme.
+
+---
+
+### Calcul
+
+```
+daily_tonnage = tonnage W2 regroupé par jour (jours sans séance = 0)
+acute  = daily_tonnage.rolling(7).mean()   — charge aiguë (fatigue immédiate)
+chronic = daily_tonnage.rolling(28).mean() — charge chronique (capacité de base)
+ACWR = acute / chronic
+```
+
+Nécessite **minimum 28 jours** de données tonnage pour que `chronic` soit calculable. En dessous → afficher "données insuffisantes (28j min requis)".
+
+---
+
+### 4 Zones de Gabbett (seuils stricts)
+
+| ACWR | Zone | Recommandation |
+|---|---|---|
+| < 0.8 | **SOUS-ENTRAÎNEMENT** | Volume trop faible — augmentation sécurisée possible |
+| 0.8 – 1.3 | **FITNESS** | Progression optimale — continuer |
+| 1.3 – 1.5 | **ALERTE** | Surcharge — maintenir le volume, NE PAS augmenter |
+| > 1.5 | **BLESSURE CRITIQUE** | Deload obligatoire − 20 à 30% du volume |
+
+---
+
+### Affichage — Niveau 1 : Jauge aujourd'hui
+
+- Valeur ACWR arrondie à 2 décimales (ex. `1.42`)
+- Zone colorée via `cfg.colorMap` (jamais hardcodé) :
+  - Sous-entraînement → `var(--color-awan-tx-mute)`
+  - Fitness → `var(--color-awan-status-ok)`
+  - Alerte → `var(--color-awan-status-warn)`
+  - Blessure critique → `var(--color-awan-status-error)`
+- Texte recommandation en dessous (court, actionnable)
+- **Badge intégré dans `PreWorkout`** — visible avant chaque démarrage de séance
+
+---
+
+### Affichage — Niveau 2 : Courbe 28–60 jours
+
+- Courbe ACWR quotidienne sur la fenêtre 28–60 jours
+- 4 bandes de zones en arrière-plan (fill horizontal) — mêmes couleurs que la jauge
+- Ligne horizontale pointillée à 0.8, 1.3 et 1.5 (seuils de transition)
+- Pas d'axe Y secondaire — l'ACWR est l'unique signal de ce graphique
+- La courbe révèle la trajectoire : montée vers 1.5 = danger croissant / descente = récupération
+
+---
+
+### Règles graphiques
+
+- Zone FITNESS = couleur dominante en arrière-plan (neutre, rassurante)
+- Zone BLESSURE CRITIQUE = bande rouge visible même sans atteindre le seuil — effet d'avertissement préventif
+- Aucun dégradé complexe — bandes aplates, lisibles au premier coup d'œil
+- La jauge (niveau 1) prime sur la courbe (niveau 2) — hiérarchie visuelle claire
+
+---
+
+### Implémentation à faire
+
+- [ ] Calcul ACWR dans `workoutAnalysisService.ts` (réutilise tonnage W2 existant)
+- [ ] Composant `AcwrGauge` dans `SportScreen` onglet STATS
+- [ ] Badge ACWR compact dans `PreWorkout` (zone + valeur, pas la courbe complète)
+- [ ] Courbe 28–60 jours avec bandes zones (cfg.colorMap)
+- [ ] Garde "données insuffisantes" si < 28j de tonnage disponibles
