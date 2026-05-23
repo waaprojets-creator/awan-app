@@ -46,7 +46,7 @@ const SvgTextEl = SvgText as any;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type TimeView = 'jour' | 'semaine' | 'mois' | 'annee';
-type LayerKey = 'sommeil' | 'islam' | 'nutrition' | 'travail' | 'sport' | 'libre';
+type LayerKey = 'sommeil' | 'islam' | 'nutrition' | 'travail' | 'sport' | 'trajet' | 'libre';
 
 interface DayLayers {
   date: string;
@@ -55,6 +55,7 @@ interface DayLayers {
   nutritionH: number;
   travailH: number;
   sportH: number;
+  trajetH: number;
   libreH: number;
 }
 
@@ -73,12 +74,13 @@ interface AllData {
 
 // ─── Layer definitions ────────────────────────────────────────────────────────
 const LAYERS: { key: LayerKey; label: string; color: string }[] = [
-  { key: 'sommeil',   label: 'SOMMEIL',    color: 'var(--color-awan-status-info)' },
-  { key: 'islam',     label: 'ISLAM',       color: 'var(--color-awan-status-spirit)' },
-  { key: 'nutrition', label: 'NUTRITION',   color: 'var(--color-awan-status-ok)' },
-  { key: 'travail',   label: 'TRAVAIL',     color: 'var(--color-awan-tx-dim)' },
-  { key: 'sport',     label: 'SPORT',       color: 'var(--color-awan-status-warn)' },
-  { key: 'libre',     label: 'TEMPS LIBRE', color: 'var(--color-awan-border)' },
+  { key: 'sommeil',   label: 'SOMMEIL',       color: 'var(--color-awan-status-info)' },
+  { key: 'islam',     label: 'ISLAM',          color: 'var(--color-awan-status-spirit)' },
+  { key: 'nutrition', label: 'NUTRITION',      color: 'var(--color-awan-status-ok)' },
+  { key: 'travail',   label: 'TRAVAIL',        color: 'var(--color-awan-tx-dim)' },
+  { key: 'sport',     label: 'SPORT',          color: 'var(--color-awan-status-warn)' },
+  { key: 'trajet',    label: 'TRAJETS (V5)',   color: 'var(--color-awan-tx-mute)' },
+  { key: 'libre',     label: 'TEMPS LIBRE',    color: 'var(--color-awan-border)' },
 ];
 
 // ─── Canonical times (minutes from midnight) ─────────────────────────────────
@@ -113,10 +115,12 @@ function computeDayLayers(date: string, data: AllData): DayLayers {
   const daySessions = data.sessions.filter(s => s.date === date);
   const sportH = daySessions.reduce((sum, s) => sum + s.duration / 3600, 0);
 
-  const total = sommeilH + islamH + nutritionH + travailH + sportH;
+  const trajetH = 0; // V5 — GPS tracker
+
+  const total = sommeilH + islamH + nutritionH + travailH + sportH + trajetH;
   const libreH = Math.max(0, 24 - total);
 
-  return { date, sommeilH, islamH, nutritionH, travailH, sportH, libreH };
+  return { date, sommeilH, islamH, nutritionH, travailH, sportH, trajetH, libreH };
 }
 
 function computeDaySlots(date: string, data: AllData): DaySlot[] {
@@ -704,7 +708,7 @@ function Legend({ dayLayersList, activeBar, view }: LegendProps) {
     <View style={{ marginTop: 16 }}>
       {LAYERS.map(layer => {
         const val = getValue(layer.key);
-        const label = layer.key === 'travail' ? `${layer.label} (V5)` : layer.label;
+        const label = layer.label;
         return (
           <View
             key={layer.key}
@@ -822,7 +826,7 @@ export default function TempsTab() {
     ? period.days.map(date => computeDayLayers(date, allData))
     : period.days.map(date => ({
         date,
-        sommeilH: 0, islamH: 0, nutritionH: 0, travailH: 0, sportH: 0, libreH: 24,
+        sommeilH: 0, islamH: 0, nutritionH: 0, travailH: 0, sportH: 0, trajetH: 0, libreH: 24,
       }));
 
   const daySlots: DaySlot[] =
