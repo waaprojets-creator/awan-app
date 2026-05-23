@@ -27,7 +27,10 @@ La transition entre échelles **recompute le grain** — ce n'est pas un zoom, c
 **Données affichées :**
 - Poids brut quotidien (points ou ligne fine)
 - MA_7 (moyenne mobile 7 jours) superposée en ligne principale — valide à partir de j7 uniquement
-- Plis cutanés (somme ISAK) : barres ponctuelles les jours de mesure uniquement (1×/semaine max), jamais interpolées
+- Plis cutanés : **barres empilées** ponctuelles les jours de mesure uniquement (1×/semaine max), jamais interpolées
+  - Chaque segment = 1 site ISAK individuel en mm (triceps, sous-scapulaire, biceps, supra-iliaque, abdominal, cuisse, mollet…)
+  - Hauteur totale de la barre = `somme_plis` (agrégat de tous les sites)
+  - Chaque site a sa propre couleur → lecture simultanée de la tendance globale ET de la répartition anatomique
 
 **Contrainte :** En dessous de 7 jours, la MA_7 est incalculable — afficher le poids brut seul sans lissage.
 
@@ -39,8 +42,9 @@ La transition entre échelles **recompute le grain** — ce n'est pas un zoom, c
 
 **Données affichées :**
 - 1 point poids = moyenne des 7 jours de la semaine (= valeur MA_7 de fin de semaine)
-- 1 point plis = mesure ISAK de la semaine (protocole hebdomadaire respecté)
-- Droite de régression linéaire sur les plis → **vélocité de lipolyse** (mm/semaine)
+- 1 point plis = barre empilée ISAK de la semaine (protocole hebdomadaire respecté)
+- Droite de régression linéaire sur la **somme totale** des plis → **vélocité de lipolyse** (mm/semaine)
+- Régressions individuelles par site possibles → révèle quel dépôt lipidique fond en priorité
 - R² de la régression affiché comme indicateur de confiance
 
 **Contrainte :** Minimum 4 semaines pour que la pente soit statistiquement significative. En dessous, afficher "données insuffisantes" sur la régression.
@@ -64,7 +68,10 @@ La transition entre échelles **recompute le grain** — ce n'est pas un zoom, c
 ### Règles graphiques
 
 - **Ligne** pour les données continues lissées (poids MA_7, poids hebdo, poids mensuel)
-- **Barres** pour les données ponctuelles/périodiques (plis ISAK) — jamais reliées par une ligne
+- **Barres empilées** pour les plis ISAK — jamais reliées par une ligne, jamais interpolées
+  - 1 segment par site ISAK, couleur distincte par site
+  - Hauteur totale = somme des plis (agrégat lisible d'un coup d'œil)
+  - La répartition des segments révèle la distribution anatomique de la lipolyse
 - **Double axe Y** obligatoire quand poids (kg) et plis (mm) cohabitent — unités incompatibles
 - Barres plis en **alpha réduit** (translucide) : la ligne poids domine visuellement
 - **Droite de régression** superposée aux points plis en vue moyen/long terme
