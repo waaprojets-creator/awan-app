@@ -30,7 +30,7 @@ async function createStorage(role: 'app' | 'user'): Promise<IStorage> {
     const { SqliteStorage } = await import('./SqliteStorage');
     const sqlite = new SqliteStorage({
       dbName: role === 'app' ? 'awan-app' : 'awan-user',
-      encrypted: role === 'user',
+      encrypted: false, // chiffrement activé en v6
     });
     await sqlite.open();
     return sqlite;
