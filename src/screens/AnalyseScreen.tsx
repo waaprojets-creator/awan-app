@@ -16,16 +16,18 @@ import { useMeasurementStore } from '../hooks/useMeasurementStore';
 import { useMealStore } from '../hooks/useMealStore';
 import { usePrayerStore } from '../hooks/usePrayerStore';
 import { PageWrapper, AnimatePresence } from '../components/Animated';
-import { Activity, Dumbbell, Ruler, Flame, TrendingUp, Moon } from 'lucide-react';
+import { Activity, Dumbbell, Ruler, Flame, TrendingUp, Moon, Clock } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
 import { BilanZen } from '../components/BilanZen';
 import { motion } from 'motion/react';
 import type { SleepEntryLatest } from '../data/schemas/sleep/sleepEntry';
+import TempsTab from './analyse/TempsTab';
 
 
 const TABS = [
+  { id: 'temps', label: 'TEMPS', Icon: Clock },
   { id: 'sport', label: 'SPORT', Icon: Dumbbell },
   { id: 'nutrition', label: 'NUTRITION', Icon: Flame },
   { id: 'scan', label: 'SCAN', Icon: Ruler },
@@ -47,7 +49,7 @@ export default function AnalyseScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const today = ds(new Date());
-  const [tab, setTab] = useState('activity');
+  const [tab, setTab] = useState('temps');
   const [range, setRange] = useState('week');
   const [aiSummary, setAiSummary] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
@@ -237,6 +239,8 @@ export default function AnalyseScreen() {
              exit={{ opacity: 0, y: -20 }}
              className="px-6"
            >
+             {tab === 'temps' && <TempsTab />}
+
              {tab === 'sport' && (
                 <div className="space-y-8">
                    {workoutStore.loading ? (
