@@ -15,6 +15,7 @@ import { Heading } from '../components/ui/Heading';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 import { getStorage } from '../data/storage/storageService';
+import { DbFillGauge } from '../components/DbFillGauge';
 import { motion, AnimatePresence } from 'motion/react';
 import { L } from '../constants/labels';
 import { SYMBOLS } from '../constants/symbols';
@@ -328,6 +329,7 @@ export default function SettingsScreen() {
  <div className="mb-12">
  <Heading level={4} mono subtitle="Maintenance & Sécurité" className="mb-6">PROTOCOLES CRITIQUES</Heading>
  <div className="space-y-3">
+ <DbFillGauge />
  <Touch onPress={purgeCache} className="bg-white/3 border border-white/5 p-6 flex-row items-center gap-5">
  <div className="w-10 h-10 bg-white/5 flex items-center justify-center">
  <RefreshCw size={18} className="text-awan-tx-mute" />
