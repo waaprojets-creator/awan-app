@@ -1,4 +1,4 @@
-import type { IStorage, ITransaction, ParseFn } from './IStorage';
+import { DbFullError, MAX_DB_BYTES, type IStorage, type ITransaction, type ParseFn } from './IStorage';
 
 export class MemoryStorage implements IStorage {
   private store = new Map<string, unknown>();
@@ -10,7 +10,20 @@ export class MemoryStorage implements IStorage {
   }
 
   async set<T>(key: string, value: T): Promise<void> {
+    const projectedExtra = new TextEncoder().encode(JSON.stringify(value)).length;
+    const current = await this.getSizeBytes();
+    if (current + projectedExtra > MAX_DB_BYTES) {
+      throw new DbFullError(current);
+    }
     this.store.set(key, value);
+  }
+
+  async getSizeBytes(): Promise<number> {
+    let total = 0;
+    for (const value of this.store.values()) {
+      total += new TextEncoder().encode(JSON.stringify(value)).length;
+    }
+    return total;
   }
 
   async delete(key: string): Promise<void> {

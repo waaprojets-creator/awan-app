@@ -101,4 +101,16 @@ export class LocalStorageAdapter implements IStorage {
       this.storage.setItem(key, JSON.stringify(value));
     }
   }
+
+  async getSizeBytes(): Promise<number> {
+    let total = 0;
+    for (let i = 0; i < this.storage.length; i++) {
+      const k = this.storage.key(i);
+      if (!k) continue;
+      const raw = this.storage.getItem(k);
+      if (raw === null) continue;
+      total += new TextEncoder().encode(k).length + new TextEncoder().encode(raw).length;
+    }
+    return total;
+  }
 }

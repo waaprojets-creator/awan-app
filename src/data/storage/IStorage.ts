@@ -21,4 +21,20 @@ export interface IStorage {
   exportAll(): Promise<string>;
   /** Import key-value pairs from a raw record. */
   importAll(data: Record<string, unknown>): Promise<void>;
+  /** Taille approximative de la base en octets (file size sur SQLite, somme des values ailleurs). */
+  getSizeBytes(): Promise<number>;
+}
+
+/** Capacité maximale par DB utilisateur. Au-delà, set() rejette avec DbFullError. */
+export const MAX_DB_BYTES = 10 * 1024 * 1024;
+
+export class DbFullError extends Error {
+  readonly currentBytes: number;
+  readonly maxBytes: number;
+  constructor(currentBytes: number, maxBytes: number = MAX_DB_BYTES) {
+    super(`Base utilisateur pleine (${(currentBytes / 1024 / 1024).toFixed(2)} / ${(maxBytes / 1024 / 1024).toFixed(0)} MB)`);
+    this.name = 'DbFullError';
+    this.currentBytes = currentBytes;
+    this.maxBytes = maxBytes;
+  }
 }

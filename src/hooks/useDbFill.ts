@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getStorage } from '@/data/storage/storageService';
+import { MAX_DB_BYTES } from '@/data/storage/IStorage';
 import { useAppStore } from '@/data/store/appStore';
 
 export interface DomainCount {
@@ -20,9 +21,18 @@ const DOMAINS: Omit<DomainCount, 'count'>[] = [
   { id: 'journal',   label: 'JOURNAL',    color: 'var(--color-awan-tx-dim)',       prefixes: ['journal.entry'] },
 ];
 
-export function useDbFill(): { domains: DomainCount[]; total: number; loading: boolean } {
+export interface DbFill {
+  domains: DomainCount[];
+  total: number;
+  bytes: number;
+  maxBytes: number;
+  loading: boolean;
+}
+
+export function useDbFill(): DbFill {
   const [domains, setDomains] = useState<DomainCount[]>([]);
   const [total, setTotal] = useState(0);
+  const [bytes, setBytes] = useState(0);
   const [loading, setLoading] = useState(true);
   const dataVersion = useAppStore((s) => s.dataVersion);
 
@@ -40,14 +50,16 @@ export function useDbFill(): { domains: DomainCount[]; total: number; loading: b
           return { ...d, count: sum };
         }),
       );
+      const sizeBytes = await storage.getSizeBytes();
       if (!active) return;
       const t = counts.reduce((acc, d) => acc + d.count, 0);
       setDomains(counts);
       setTotal(t);
+      setBytes(sizeBytes);
       setLoading(false);
     })();
     return () => { active = false; };
   }, [dataVersion]);
 
-  return { domains, total, loading };
+  return { domains, total, bytes, maxBytes: MAX_DB_BYTES, loading };
 }

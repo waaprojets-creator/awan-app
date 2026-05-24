@@ -1,5 +1,5 @@
 import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite';
-import type { IStorage, ITransaction, ParseFn } from './IStorage';
+import { DbFullError, MAX_DB_BYTES, type IStorage, type ITransaction, type ParseFn } from './IStorage';
 
 const DB_VERSION = 1;
 
@@ -58,14 +58,39 @@ export class SqliteStorage implements IStorage {
 
   async set<T>(key: string, value: T): Promise<void> {
     const json = JSON.stringify(value);
+    const current = await this.getSizeBytes();
+    if (current + json.length > MAX_DB_BYTES) {
+      throw new DbFullError(current);
+    }
     await this.handle.run(
       'INSERT INTO kv (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
       [key, json],
     );
+    this.invalidateSizeCache();
   }
 
   async delete(key: string): Promise<void> {
     await this.handle.run('DELETE FROM kv WHERE key = ?', [key]);
+    this.invalidateSizeCache();
+  }
+
+  private cachedSize: number | null = null;
+  private cachedSizeAt = 0;
+
+  private invalidateSizeCache(): void {
+    this.cachedSize = null;
+  }
+
+  async getSizeBytes(): Promise<number> {
+    const now = Date.now();
+    if (this.cachedSize !== null && now - this.cachedSizeAt < 2000) return this.cachedSize;
+    const pages = await this.handle.query('PRAGMA page_count', []);
+    const pageSize = await this.handle.query('PRAGMA page_size', []);
+    const pc = (pages.values?.[0] as { page_count?: number } | undefined)?.page_count ?? 0;
+    const ps = (pageSize.values?.[0] as { page_size?: number } | undefined)?.page_size ?? 0;
+    this.cachedSize = pc * ps;
+    this.cachedSizeAt = now;
+    return this.cachedSize;
   }
 
   async list(prefix: string): Promise<string[]> {
@@ -109,6 +134,7 @@ export class SqliteStorage implements IStorage {
 
   async clear(): Promise<void> {
     await this.handle.run('DELETE FROM kv', []);
+    this.invalidateSizeCache();
   }
 
   async exportAll(): Promise<string> {

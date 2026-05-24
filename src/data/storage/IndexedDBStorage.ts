@@ -1,4 +1,4 @@
-import type { IStorage, ITransaction, ParseFn } from './IStorage';
+import { DbFullError, MAX_DB_BYTES, type IStorage, type ITransaction, type ParseFn } from './IStorage';
 
 const STORE_NAME = 'kv';
 const DB_VERSION = 1;
@@ -50,13 +50,38 @@ export class IndexedDBStorage implements IStorage {
   }
 
   async set<T>(key: string, value: T): Promise<void> {
+    const projectedExtra = new TextEncoder().encode(JSON.stringify(value)).length;
+    const current = await this.getSizeBytes();
+    if (current + projectedExtra > MAX_DB_BYTES) {
+      throw new DbFullError(current);
+    }
     const s = await this.store('readwrite');
     await idbRequest(s.put(value, key));
+    this.cachedSize = null;
   }
 
   async delete(key: string): Promise<void> {
     const s = await this.store('readwrite');
     await idbRequest(s.delete(key));
+    this.cachedSize = null;
+  }
+
+  private cachedSize: number | null = null;
+  private cachedSizeAt = 0;
+
+  async getSizeBytes(): Promise<number> {
+    const now = Date.now();
+    if (this.cachedSize !== null && now - this.cachedSizeAt < 2000) return this.cachedSize;
+    const s = await this.store('readonly');
+    const keys = await idbRequest(s.getAllKeys()) as string[];
+    let total = 0;
+    for (const key of keys) {
+      const v = await idbRequest(s.get(key));
+      total += new TextEncoder().encode(JSON.stringify(v)).length;
+    }
+    this.cachedSize = total;
+    this.cachedSizeAt = now;
+    return total;
   }
 
   async list(prefix: string): Promise<string[]> {
@@ -92,6 +117,7 @@ export class IndexedDBStorage implements IStorage {
   async clear(): Promise<void> {
     const s = await this.store('readwrite');
     await idbRequest(s.clear());
+    this.cachedSize = 0;
   }
 
   async exportAll(): Promise<string> {
