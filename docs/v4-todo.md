@@ -677,3 +677,81 @@ Chaque catégorie a une couleur unique via `cfg.colorMap` — jamais hardcodée.
 - [ ] Légende interactive : `activeColumn` state, opacité 30%/100%, reset sur titre
 - [ ] Delta performance (Réel − Prévu) calculé par catégorie et période
 - [ ] Intégration dans `PlanningScreen` ou `AnalyseScreen` onglet TEMPS
+
+
+---
+
+---
+
+## DB1 — Surfaçage `DbFullError` : feedback utilisateur quand le plafond 10 MB est atteint
+
+### Contexte
+
+Le plafond 10 MB (`MAX_DB_BYTES`) est déjà enforced au niveau `IStorage.set()` via `DbFullError` (implémenté dans `SqliteStorage`, `IndexedDBStorage`, `MemoryStorage`, `LocalStorageAdapter`). La jauge de remplissage (`DbFillGauge`) est visible dans `SettingsScreen`. Mais si `set()` lève `DbFullError`, l'erreur est actuellement absorbée silencieusement par les callers (`useMealStore`, `useWorkoutStore`, etc.) — l'utilisateur ne sait pas que la sauvegarde a échoué.
+
+### Objectif
+
+Chaque tentative d'écriture bloquée par le cap doit produire un feedback visible, non-bloquant, et actionnable en moins de 2 secondes.
+
+---
+
+### Spec UI
+
+**Toast global "DB PLEINE"** (non-bloquant, durée 6 s, position bas-centre) :
+
+```
+┌─────────────────────────────────────────────────┐
+│  ⚠  BASE SATURÉE — sauvegarde impossible        │
+│     Exportez vos données puis purgez les         │
+│     entrées anciennes dans Paramètres.           │
+│                            [PARAMÈTRES →]        │
+└─────────────────────────────────────────────────┘
+```
+
+- Couleur fond : `var(--color-awan-status-error)` à 15% opacité, bordure `var(--color-awan-status-error)`
+- Bouton `[PARAMÈTRES →]` : navigation directe vers `SettingsScreen` (section jauge + purge)
+- Si plusieurs saves échouent dans la même seconde → 1 seul toast (debounce 1 s)
+
+---
+
+### Implémentation
+
+**1. `src/components/DbFullToast.tsx`** (nouveau, extend `InstrumentCard` ou `Card`) :
+```tsx
+// Écoute un event 'awan:db-full' dispatché par les stores
+// Auto-disparaît après 6 s, cliquable pour naviguer vers SettingsScreen
+```
+
+**2. Chaque store qui écrit** (`useMealStore`, `useWorkoutStore`, `useSleepStore`, `useMeasurementStore`, `usePrayerStore`, etc.) :
+```tsx
+try {
+  await service.save(entry);
+} catch (err) {
+  if (err instanceof DbFullError) {
+    window.dispatchEvent(new CustomEvent('awan:db-full', { detail: { bytes: err.currentBytes } }));
+    return; // ne pas remonter l'erreur, l'UI gère le feedback
+  }
+  throw err; // autres erreurs remontent normalement
+}
+```
+
+**3. `App.tsx`** : monter `<DbFullToast />` au niveau racine (après `<LockScreen />`).
+
+**4. `DbFillGauge`** dans `SettingsScreen` : déjà visible — pas de changement nécessaire.
+
+---
+
+### Règles
+
+- Jamais de `alert()` — feedback inline uniquement
+- Jamais de blocage de navigation — l'utilisateur reste sur l'écran courant
+- L'event `awan:db-full` est le seul canal entre stores et toast — pas de prop drilling
+- Le toast est le seul endroit où `DbFullError` est transformé en feedback visible
+
+---
+
+### Tests obligatoires
+
+- `tests/unit/db-full-toast.test.tsx` : dispatch `awan:db-full` → toast visible → disparaît après 6 s
+- `tests/unit/meal-store-db-full.test.ts` : `MealService.save` lance `DbFullError` → store catch → event dispatché → pas de throw
+- Couverture des stores : `useMealStore`, `useWorkoutStore`, `usePrayerStore` minimum
