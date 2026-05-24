@@ -36,7 +36,7 @@ async function autoLoadSeed() {
     const result = await importFromJson(text);
     if (result.success) {
       safeStorage.set(SEED_FLAG, seedTs);
-      window.location.reload(); // réinitialise tous les stores avec les données
+      useAppStore.getState().bumpDataVersion();
     } else {
       console.warn('[Seed] import failed:', result.message);
     }

@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MealService } from '@/services/mealService';
 import type { MealEntryLatest } from '@/data/schemas/nutrition/mealEntry';
+import { useAppStore } from '@/data/store/appStore';
 
 export function useMealStore(date: string) {
   const [meals, setMeals] = useState<MealEntryLatest[]>([]);
   const [loading, setLoading] = useState(true);
+  const dataVersion = useAppStore((s) => s.dataVersion);
 
   useEffect(() => {
     let active = true;
@@ -12,7 +14,7 @@ export function useMealStore(date: string) {
       if (active) { setMeals(entries); setLoading(false); }
     });
     return () => { active = false; };
-  }, [date]);
+  }, [date, dataVersion]);
 
   const add = useCallback(async (entry: MealEntryLatest): Promise<void> => {
     await MealService.save(entry);

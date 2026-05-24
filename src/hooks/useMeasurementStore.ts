@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MeasurementService } from '@/services/measurementService';
 import type { MeasurementLatest } from '@/data/schemas/anthropo/measurement';
+import { useAppStore } from '@/data/store/appStore';
 
 export function useMeasurementStore() {
   const [history, setHistory] = useState<MeasurementLatest[]>([]);
   const [loading, setLoading] = useState(true);
+  const dataVersion = useAppStore((s) => s.dataVersion);
 
   useEffect(() => {
     let active = true;
@@ -12,7 +14,7 @@ export function useMeasurementStore() {
       if (active) { setHistory(entries); setLoading(false); }
     });
     return () => { active = false; };
-  }, []);
+  }, [dataVersion]);
 
   const save = useCallback(async (entry: MeasurementLatest): Promise<void> => {
     await MeasurementService.save(entry);

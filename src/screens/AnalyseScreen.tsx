@@ -15,6 +15,7 @@ import { useWorkoutStore } from '../hooks/useWorkoutStore';
 import { useMeasurementStore } from '../hooks/useMeasurementStore';
 import { useMealStore } from '../hooks/useMealStore';
 import { usePrayerStore } from '../hooks/usePrayerStore';
+import { useAppStore } from '../data/store/appStore';
 import { PageWrapper, AnimatePresence } from '../components/Animated';
 import { Activity, Dumbbell, Ruler, Flame, TrendingUp, Moon, Clock, Star } from 'lucide-react';
 import { Card } from '../components/ui/Card';
@@ -63,10 +64,11 @@ export default function AnalyseScreen() {
   const measureStore = useMeasurementStore();
   const prayerStore = usePrayerStore(today);
   const mealStoreToday = useMealStore(today);
+  const dataVersion = useAppStore((s) => s.dataVersion);
 
   useEffect(() => {
     SleepService.getAll().then(setSleepEntries).catch(() => {});
-  }, []);
+  }, [dataVersion]);
 
   const interval = useMemo(() => {
     const now = new Date();

@@ -16,12 +16,14 @@ interface AppState {
   ready: boolean;
   theme: Theme;
   isOfflineForced: boolean;
+  dataVersion: number;
   unlock: () => void;
   lock: () => void;
   setReady: () => void;
   toggleTheme: () => void;
   setTheme: (mode: Theme) => void;
   toggleOffline: () => void;
+  bumpDataVersion: () => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -29,9 +31,11 @@ export const useAppStore = create<AppState>((set) => ({
   ready: true,
   theme: savedTheme(),
   isOfflineForced: false,
+  dataVersion: 0,
   unlock: () => set({ isUnlocked: true }),
   lock:   () => set({ isUnlocked: false }),
   setReady: () => set({ ready: true }),
+  bumpDataVersion: () => set((s) => ({ dataVersion: s.dataVersion + 1 })),
   toggleTheme: () => set((s) => {
     const next = s.theme === 'dark' ? 'light' : 'dark';
     try { localStorage.setItem(THEME_KEY, next); } catch { /* ok */ }

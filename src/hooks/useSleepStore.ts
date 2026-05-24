@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { SleepService } from '@/services/sleepService';
 import type { SleepEntryLatest } from '@/data/schemas/sleep/sleepEntry';
+import { useAppStore } from '@/data/store/appStore';
 
 export function useSleepStore() {
   const [entries, setEntries] = useState<SleepEntryLatest[]>([]);
   const [loading, setLoading] = useState(true);
+  const dataVersion = useAppStore((s) => s.dataVersion);
 
   useEffect(() => {
     let active = true;
@@ -12,7 +14,7 @@ export function useSleepStore() {
       if (active) { setEntries(all); setLoading(false); }
     });
     return () => { active = false; };
-  }, []);
+  }, [dataVersion]);
 
   const add = useCallback(async (entry: SleepEntryLatest): Promise<void> => {
     await SleepService.save(entry);

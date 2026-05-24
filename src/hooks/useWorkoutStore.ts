@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { WorkoutService } from '@/services/workoutService';
 import type { RoutineLatest, WorkoutSessionLatest } from '@/data/schemas/sport/routine';
+import { useAppStore } from '@/data/store/appStore';
 
 export function useWorkoutStore() {
   const [routines, setRoutines] = useState<RoutineLatest[]>([]);
   const [sessions, setSessions] = useState<WorkoutSessionLatest[]>([]);
   const [loading, setLoading] = useState(true);
+  const dataVersion = useAppStore((s) => s.dataVersion);
 
   useEffect(() => {
     let active = true;
@@ -19,7 +21,7 @@ export function useWorkoutStore() {
       setLoading(false);
     });
     return () => { active = false; };
-  }, []);
+  }, [dataVersion]);
 
   async function saveRoutine(routine: RoutineLatest): Promise<void> {
     await WorkoutService.saveRoutine(routine);
