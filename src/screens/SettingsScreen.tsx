@@ -50,17 +50,55 @@ function loadCoachProfiles(): CoachProfile[] {
   } catch { return DEFAULT_PROFILES; }
 }
 
-async function exportBackup(): Promise<void> {
+function buildExportFilename(): string {
+  const d = new Date();
+  const yy = String(d.getFullYear()).slice(2);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `awan${yy}${mm}${dd}v4.0.json`;
+}
+
+function isNativePlatform(): boolean {
+  return (
+    typeof (globalThis as Record<string, unknown>)['Capacitor'] !== 'undefined' &&
+    (globalThis as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor
+      ?.isNativePlatform?.() === true
+  );
+}
+
+async function exportBackup(): Promise<{ ok: boolean; path?: string; error?: string }> {
   const storage = await getStorage();
   const json = await storage.exportAll();
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const date = new Date().toISOString().slice(0, 10);
-  a.href = url;
-  a.download = `awan-backup-${date}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const filename = buildExportFilename();
+
+  if (isNativePlatform()) {
+    try {
+      const { Filesystem, Directory } = await import('@capacitor/filesystem');
+      await Filesystem.writeFile({
+        path: `Download/${filename}`,
+        data: json,
+        directory: Directory.ExternalStorage,
+        encoding: 'utf8' as any,
+      });
+      return { ok: true, path: `Téléchargements/${filename}` };
+    } catch (e) {
+      return { ok: false, error: String(e) };
+    }
+  }
+
+  // Web fallback
+  try {
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
 }
 
 async function purgeAllData() {
@@ -80,6 +118,8 @@ export default function SettingsScreen() {
  const setTheme = useAppStore((s: any) => s.setTheme);
  const [purgeModal, setPurgeModal] = useState(false);
  const [purging, setPurging] = useState(false);
+ const [exportState, setExportState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
+ const [exportMsg, setExportMsg] = useState('');
  const [coachProfiles, setCoachProfiles] = useState<CoachProfile[]>(loadCoachProfiles);
 
  useEffect(() => {
@@ -298,13 +338,32 @@ export default function SettingsScreen() {
  </div>
  </Touch>
 
- <Touch onPress={() => void exportBackup()} className="bg-white/3 border border-white/5 p-6 flex-row items-center gap-5">
+ <Touch
+ onPress={async () => {
+   if (exportState === 'loading') return;
+   setExportState('loading');
+   setExportMsg('');
+   const result = await exportBackup();
+   if (result.ok) {
+     setExportState('ok');
+     setExportMsg(result.path ? `Enregistré dans ${result.path}` : 'Fichier téléchargé');
+   } else {
+     setExportState('error');
+     setExportMsg(result.error ?? 'Erreur inconnue');
+   }
+   setTimeout(() => setExportState('idle'), 4000);
+ }}
+ className="bg-white/3 border border-white/5 p-6 flex-row items-center gap-5"
+ >
  <div className="w-10 h-10 bg-white/5 flex items-center justify-center">
- <Database size={18} className="text-awan-tx-mute" />
+ <Database size={18} className={exportState === 'error' ? 'text-awan-status-error' : exportState === 'ok' ? 'text-awan-status-ok' : 'text-awan-tx-mute'} />
  </div>
  <div className="flex-1">
  <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">EXPORTATION NOYAU</span>
- <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Télécharge awan-backup-YYYY-MM-DD.json</span>
+ {exportState === 'idle' && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Écrit {buildExportFilename()} dans Téléchargements</span>}
+ {exportState === 'loading' && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">EXPORT EN COURS…</span>}
+ {exportState === 'ok' && <span className="text-awan-sm font-bold uppercase tracking-tighter" style={{ color: 'var(--color-awan-status-ok)' }}>{exportMsg}</span>}
+ {exportState === 'error' && <span className="text-awan-sm font-bold uppercase tracking-tighter" style={{ color: 'var(--color-awan-status-error)' }}>{exportMsg}</span>}
  </div>
  </Touch>
 
