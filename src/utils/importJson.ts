@@ -7,12 +7,14 @@ import { migrateSleepEntry } from '../data/schemas/sleep/sleepEntry';
 import { migrateWaterIntake } from '../data/schemas/nutrition/waterIntake';
 import { migrateScheduleTask } from '../data/schemas/planning/scheduleTask';
 import { migrateDaySchedule } from '../data/schemas/planning/daySchedule';
+import { migrateWeightEntry } from '../data/schemas/body/weightEntry';
 import { WorkoutService } from '../services/workoutService';
 import { MeasurementService } from '../services/measurementService';
 import { MealService } from '../services/mealService';
 import { IslamService } from '../services/islamService';
 import { JournalService } from '../services/journalService';
 import { SleepService } from '../services/sleepService';
+import { WeightService } from '../services/weightService';
 import { getStorage } from '../data/storage/storageService';
 import type { RoutineLatest, WorkoutSessionLatest } from '../data/schemas/sport/routine';
 import type { MeasurementLatest } from '../data/schemas/anthropo/measurement';
@@ -23,11 +25,13 @@ import type { SleepEntryLatest } from '../data/schemas/sleep/sleepEntry';
 import type { WaterIntakeLatest } from '../data/schemas/nutrition/waterIntake';
 import type { ScheduleTaskLatest } from '../data/schemas/planning/scheduleTask';
 import type { DayScheduleLatest } from '../data/schemas/planning/daySchedule';
+import type { WeightEntryLatest } from '../data/schemas/body/weightEntry';
 
 export interface SeedData {
   routines?: unknown[];
   sessions?: unknown[];
   measurements?: unknown[];
+  weightEntries?: unknown[];
   meals?: unknown[];
   prayerLogs?: unknown[];
   journalEntries?: unknown[];
@@ -86,6 +90,10 @@ export async function importFromJson(raw: string): Promise<{ success: boolean; m
     for (const item of data.measurements ?? []) {
       try { const m = migrateMeasurement(item) as MeasurementLatest; await MeasurementService.save(m); nMeasurements++; } catch { /* skip */ }
     }
+    let nWeights = 0;
+    for (const item of data.weightEntries ?? []) {
+      try { const w = migrateWeightEntry(item) as WeightEntryLatest; await WeightService.save(w); nWeights++; } catch { /* skip */ }
+    }
     for (const item of data.meals ?? []) {
       try { const m = migrateMealEntry(item) as MealEntryLatest; await MealService.save(m); nMeals++; } catch { /* skip */ }
     }
@@ -126,7 +134,7 @@ export async function importFromJson(raw: string): Promise<{ success: boolean; m
 
     return {
       success: true,
-      message: `Seed: ${nRoutines} routines, ${nSessions} sessions, ${nMeasurements} mesures, ${nMeals} repas, ${nPrayers} prières, ${nJournal} journal, ${nSleep} sommeil, ${nWater} eau, ${nTasks} tâches, ${nSchedules} plannings`,
+      message: `Seed: ${nRoutines} routines, ${nSessions} sessions, ${nMeasurements} mesures, ${nWeights} poids, ${nMeals} repas, ${nPrayers} prières, ${nJournal} journal, ${nSleep} sommeil, ${nWater} eau, ${nTasks} tâches, ${nSchedules} plannings`,
     };
   }
 

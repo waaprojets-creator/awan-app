@@ -6,6 +6,7 @@ import {
 import { usePlanner } from '../hooks/usePlanner';
 import { useWorkoutStore } from '../hooks/useWorkoutStore';
 import { useMeasurementStore } from '../hooks/useMeasurementStore';
+import { useWeightStore } from '../hooks/useWeightStore';
 import { ds as dsDate } from '../utils/storage';
 
 const TextInput = RNTextInput as React.ComponentType<any>;
@@ -104,6 +105,7 @@ export default function PlanningScreen() {
   const planner = usePlanner();
   const workoutStore = useWorkoutStore();
   const measureStore = useMeasurementStore();
+  const weightStore = useWeightStore();
   const [aiTitle, setAiTitle] = useState('');
   const [aiDuration, setAiDuration] = useState('30');
   const [aiPriority, setAiPriority] = useState(3);
@@ -585,7 +587,8 @@ export default function PlanningScreen() {
     // Measurements
     for (const m of measureStore.history) {
       const parts: string[] = [];
-      if ((m as any).weight > 0) parts.push(`${(m as any).weight}kg`);
+      const mw = weightStore.entries.find(e => e.date === (m as any).date);
+      if (mw && mw.weightKg > 0) parts.push(`${mw.weightKg}kg`);
       if ((m as any).body_fat_pct > 0) parts.push(`${(m as any).body_fat_pct}% MG`);
       addItem((m as any).date, {
         key: `meas-${(m as any).date}`,

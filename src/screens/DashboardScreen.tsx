@@ -15,6 +15,7 @@ import { SpiritualService } from '../utils/spiritualService';
 import { importFromJson } from '../utils/importJson';
 import { useMealStore } from '../hooks/useMealStore';
 import { useMeasurementStore } from '../hooks/useMeasurementStore';
+import { useWeightStore } from '../hooks/useWeightStore';
 import { useWorkoutStore } from '../hooks/useWorkoutStore';
 import { usePrayerStore } from '../hooks/usePrayerStore';
 import { useAwanScore, sessionsThisWeek } from '../hooks/useAwanScore';
@@ -48,6 +49,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
 
   const mealStore    = useMealStore(today);
   const measureStore = useMeasurementStore();
+  const weightStore  = useWeightStore();
   const workoutStore = useWorkoutStore();
   const prayerStore  = usePrayerStore(today);
   const temporal     = useTemporalMode();
@@ -134,7 +136,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
   }, []);
 
   const weeklyWeightDelta = useMemo(() => {
-    const sorted = measureStore.history.filter(e => e.weight > 0).sort((a, b) => a.date.localeCompare(b.date));
+    const sorted = weightStore.entries.slice().sort((a, b) => a.date.localeCompare(b.date));
     if (sorted.length < 2) return null;
     const last = sorted.at(-1)!;
     const sevenDaysAgo = new Date(last.date);
@@ -142,8 +144,8 @@ export default function DashboardScreen({ navigate }: NavProps) {
     const sevenStr = sevenDaysAgo.toISOString().slice(0, 10);
     const baseline = [...sorted].reverse().find(e => e.date <= sevenStr);
     if (!baseline) return null;
-    return last.weight - baseline.weight;
-  }, [measureStore.history]);
+    return last.weightKg - baseline.weightKg;
+  }, [weightStore.entries]);
 
   const isEarlyMorning = useMemo(() => new Date().getHours() < 10, []);
 
@@ -258,7 +260,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '20px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '-0.02em' }}>
               {weeklyWeightDelta != null
                 ? `${weeklyWeightDelta >= 0 ? '+' : ''}${weeklyWeightDelta.toFixed(1)}`
-                : latestMeasure?.weight?.toFixed(1) ?? '—'}
+                : weightStore.avg7d?.toFixed(1) ?? '—'}
               <span style={{ fontSize: '10px', opacity: 0.5, marginLeft: 2 }}>{weeklyWeightDelta != null ? 'kg' : 'kg'}</span>
             </span>
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-mute)' }}>
@@ -343,7 +345,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
 
       {/* Mesures + Séance */}
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <InstrumentCard label={dash.biometrics ?? 'POIDS'} value={latestMeasure?.weight ?? '—'} unit={latestMeasure ? 'kg' : ''} status={latestMeasure ? 'ok' : 'mute'} index={5} onPress={() => navigate('Mensuration')} />
+        <InstrumentCard label={dash.biometrics ?? 'POIDS'} value={weightStore.todayEntry?.weightKg ?? weightStore.avg7d?.toFixed(1) ?? '—'} unit={weightStore.entries.length ? 'kg' : ''} status={weightStore.entries.length ? 'ok' : 'mute'} index={5} onPress={() => navigate('Mensuration')} />
         <InstrumentCard label={dash.sport?.last ?? 'SÉANCE'} value={lastSession?.name ? lastSession.name.slice(0, 8).toUpperCase() : '—'} status={lastSession ? 'spirit' : 'mute'} index={6} onPress={() => navigate('Sport')} />
       </div>
 

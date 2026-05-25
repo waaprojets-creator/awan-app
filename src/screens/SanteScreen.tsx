@@ -7,6 +7,7 @@ import { Touch } from '../components/ui/Touch';
 import { useWorkoutStore } from '../hooks/useWorkoutStore';
 import { useMealStore } from '../hooks/useMealStore';
 import { useMeasurementStore } from '../hooks/useMeasurementStore';
+import { useWeightStore } from '../hooks/useWeightStore';
 import { useSleepStore } from '../hooks/useSleepStore';
 import { useCoach } from '../hooks/useCoach';
 import { ds } from '../utils/storage';
@@ -44,6 +45,7 @@ export default function SanteScreen({ navigate }: any) {
  const workoutStore = useWorkoutStore();
  const mealStore = useMealStore(today);
  const measureStore = useMeasurementStore();
+ const weightStore = useWeightStore();
  const sleepStore = useSleepStore();
  const { assessments: coachAssessments } = useCoach(today);
 
@@ -85,15 +87,15 @@ export default function SanteScreen({ navigate }: any) {
 
  // Tendance poids : delta 7 jours
  const weightDelta = useMemo(() => {
-   const sorted = measureStore.history.filter(e => e.weight > 0).sort((a, b) => a.date.localeCompare(b.date));
+   const sorted = weightStore.entries.slice().sort((a, b) => a.date.localeCompare(b.date));
    if (sorted.length < 2) return null;
    const last = sorted.at(-1)!;
    const sevenDaysAgo = new Date(last.date); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
    const sevenStr = sevenDaysAgo.toISOString().slice(0, 10);
    const baseline = [...sorted].reverse().find(e => e.date <= sevenStr);
    if (!baseline) return null;
-   return last.weight - baseline.weight;
- }, [measureStore.history]);
+   return last.weightKg - baseline.weightKg;
+ }, [weightStore.entries]);
 
  const topAdvice = useMemo<Advice | null>(() => {
  const order: Record<Severity, number> = { alert: 0, warn: 1, good: 2, info: 3 };
@@ -211,7 +213,7 @@ export default function SanteScreen({ navigate }: any) {
  <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-0.5">POIDS</span>
  <div className="flex flex-row items-baseline gap-2">
    <span className="text-2xl font-black text-awan-tx font-mono tracking-tighter">
-     {latestMeasure.weight}<span className="text-xs ml-1 text-awan-gold">kg</span>
+     {weightStore.entries.filter(e => e.date <= (latestMeasure?.date ?? '')).sort((a,b)=>b.date.localeCompare(a.date))[0]?.weightKg ?? '—'}<span className="text-xs ml-1 text-awan-gold">kg</span>
    </span>
    {weightDelta !== null && (
      <span className="text-awan-sm font-black font-mono" style={{ color: weightDelta < 0 ? 'var(--color-awan-status-ok)' : weightDelta > 0 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-tx-mute)' }}>

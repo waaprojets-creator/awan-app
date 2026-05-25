@@ -13,6 +13,7 @@ import { MealService } from '../services/mealService';
 import { SleepService } from '../services/sleepService';
 import { useWorkoutStore } from '../hooks/useWorkoutStore';
 import { useMeasurementStore } from '../hooks/useMeasurementStore';
+import { useWeightStore } from '../hooks/useWeightStore';
 import { useMealStore } from '../hooks/useMealStore';
 import { usePrayerStore } from '../hooks/usePrayerStore';
 import { useAppStore } from '../data/store/appStore';
@@ -62,6 +63,7 @@ export default function AnalyseScreen() {
   const [sleepEntries, setSleepEntries] = useState<SleepEntryLatest[]>([]);
   const workoutStore = useWorkoutStore();
   const measureStore = useMeasurementStore();
+  const weightStore = useWeightStore();
   const prayerStore = usePrayerStore(today);
   const mealStoreToday = useMealStore(today);
   const dataVersion = useAppStore((s) => s.dataVersion);
@@ -141,8 +143,11 @@ export default function AnalyseScreen() {
       })
       .slice()
       .sort((a, b) => a.date.localeCompare(b.date))
-      .map(m => ({ label: format(parseISO(m.date), 'dd/MM'), weight: m.weight }));
-  }, [measureStore.history, interval]);
+      .map(m => {
+        const w = weightStore.entries.filter(e => e.date <= m.date).sort((a, b) => b.date.localeCompare(a.date))[0];
+        return { label: format(parseISO(m.date), 'dd/MM'), weight: w?.weightKg ?? null };
+      });
+  }, [measureStore.history, weightStore.entries, interval]);
 
   const nutritionStats = useMemo(() => {
     let avgKcal = 0; let avgP = 0; let count = 0;
@@ -158,11 +163,11 @@ export default function AnalyseScreen() {
   }, [mealsByDay]);
 
   useEffect(() => {
-    const sorted = measureStore.history.slice().sort((a, b) => a.date.localeCompare(b.date));
+    const sorted = weightStore.entries.slice().sort((a, b) => a.date.localeCompare(b.date));
     const latest = sorted.at(-1) ?? null;
     const prev = sorted.at(-2) ?? null;
     const weightTrend = latest && prev
-      ? latest.weight > prev.weight ? 'up' : latest.weight < prev.weight ? 'down' : 'stable'
+      ? latest.weightKg > prev.weightKg ? 'up' : latest.weightKg < prev.weightKg ? 'down' : 'stable'
       : null;
     setAiLoading(true);
     LocalAIService.generateZenSummary({
@@ -170,10 +175,10 @@ export default function AnalyseScreen() {
       prayersDone: prayerStore.doneCount,
       prayersTotal: prayerStore.total,
       lastWorkoutName: workoutStore.sessions.at(-1)?.name ?? null,
-      weightKg: latest?.weight ?? null,
+      weightKg: latest?.weightKg ?? null,
       weightTrend,
     }).then(s => { setAiSummary(s); setAiLoading(false); });
-  }, [measureStore.history, mealsByDay, workoutStore.sessions, prayerStore.doneCount]);
+  }, [weightStore.entries, mealsByDay, workoutStore.sessions, prayerStore.doneCount]);
 
   return (
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
@@ -199,7 +204,7 @@ export default function AnalyseScreen() {
                     prayersDone: prayerStore.doneCount,
                     prayersTotal: prayerStore.total,
                     lastWorkoutName: workoutStore.sessions.at(-1)?.name ?? null,
-                    weightKg: measureStore.history.at(-1)?.weight ?? null,
+                    weightKg: weightStore.entries.at(-1)?.weightKg ?? null,
                   }).then(s => { setAiSummary(s); setAiLoading(false); });
                 }}
              />
@@ -359,7 +364,7 @@ export default function AnalyseScreen() {
                         <div className="flex flex-row items-end gap-6">
                           <div>
                             <span className="text-awan-sm font-black text-awan-tx-mute uppercase block mb-1">Poids</span>
-                            <span className="text-3xl font-black text-awan-gold tabular-nums font-mono">{m.weight}<span className="text-sm ml-1 opacity-50">KG</span></span>
+                            <span className="text-3xl font-black text-awan-gold tabular-nums font-mono">{weightStore.entries.filter(e => e.date <= m.date).sort((a,b)=>b.date.localeCompare(a.date))[0]?.weightKg ?? '—'}<span className="text-sm ml-1 opacity-50">KG</span></span>
                           </div>
                           {m.bpm_rest != null && m.bpm_rest > 0 && (
                             <div>
@@ -427,8 +432,8 @@ export default function AnalyseScreen() {
                  const d = new Date(); d.setDate(d.getDate() - (29 - i));
                  const str = ds(d);
                  const hasWorkout = workoutStore.sessions.some((s: any) => (s.date ?? ds(new Date(s.startTime ?? 0))) === str);
-                 const measure = measureStore.history.find(m => m.date === str);
-                 return { str, hasWorkout, weight: measure?.weight ?? null };
+                 const we = weightStore.entries.find(e => e.date === str);
+                 return { str, hasWorkout, weight: we?.weightKg ?? null };
                });
 
                // Pearson correlation: workouts vs weight change
@@ -437,10 +442,10 @@ export default function AnalyseScreen() {
                const avgWeight = weightPoints.length > 0
                  ? weightPoints.reduce((s, d) => s + (d.weight ?? 0), 0) / weightPoints.length
                  : null;
-               const latestW = measureStore.history.slice().sort((a, b) => b.date.localeCompare(a.date))[0];
-               const oldestW = measureStore.history.slice().sort((a, b) => a.date.localeCompare(b.date))[0];
+               const latestW = weightStore.entries.slice().sort((a, b) => b.date.localeCompare(a.date))[0];
+               const oldestW = weightStore.entries.slice().sort((a, b) => a.date.localeCompare(b.date))[0];
                const weightDelta = (latestW && oldestW && latestW !== oldestW)
-                 ? latestW.weight - oldestW.weight : null;
+                 ? latestW.weightKg - oldestW.weightKg : null;
 
                // Sessions efficiency: sessions per week this month
                const sessionsPerWeek = (workoutDays / 30) * 7;

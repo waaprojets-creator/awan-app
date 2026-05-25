@@ -105,7 +105,7 @@ export default function MensurationScreen() {
   const [inputText, setInputText] = useState('');
 
   const blankEntry = {
-    date: selectedDate, weight: 0, bpm_rest: 0, body_fat_pct: 0,
+    date: selectedDate, bpm_rest: 0, body_fat_pct: 0,
     measurements: {} as Record<string, number>, skinfolds: {} as Record<string, number>,
   };
 
@@ -144,38 +144,41 @@ export default function MensurationScreen() {
     return () => clearTimeout(handle);
   }, [targetWeightKg, targetBodyFatPct]);
 
+  // Helper : poids le plus récent ≤ date (depuis weightStore)
+  const getWeightKg = useMemo(() => (date: string): number => {
+    const sorted = weightStore.entries.filter(e => e.date <= date).sort((a, b) => b.date.localeCompare(a.date));
+    return sorted[0]?.weightKg ?? 0;
+  }, [weightStore.entries]);
+
   // S2.1 — Données du graphique filtrées par fenêtre temporelle
   const weightSeries = useMemo(() => {
     const cutoff = Date.now() - weightFilter * 24 * 60 * 60 * 1000;
-    return measureStore.history
-      .filter(e => e.weight > 0)
+    return weightStore.entries
       .filter(e => new Date(e.date).getTime() >= cutoff)
       .slice()
       .sort((a, b) => a.date.localeCompare(b.date));
-  }, [measureStore.history, weightFilter]);
+  }, [weightStore.entries, weightFilter]);
 
   // S2.2 — Tendance hebdomadaire (delta sur ~7 jours)
   const weeklyTrend = useMemo(() => {
-    const series = measureStore.history.filter(e => e.weight > 0).slice().sort((a, b) => a.date.localeCompare(b.date));
+    const series = weightStore.entries.slice().sort((a, b) => a.date.localeCompare(b.date));
     if (series.length < 1) return null;
     const last = series[series.length - 1];
     if (!last) return null;
     const lastTs = new Date(last.date).getTime();
     const sevenDaysAgo = lastTs - 7 * 24 * 60 * 60 * 1000;
-    // closest entry at-or-before 7d ago
     let baseline = series[0];
     for (const e of series) {
-      const ts = new Date(e.date).getTime();
-      if (ts <= sevenDaysAgo) baseline = e;
+      if (new Date(e.date).getTime() <= sevenDaysAgo) baseline = e;
     }
     if (!baseline || baseline.date === last.date) return null;
-    return { delta: last.weight - baseline.weight, current: last.weight };
-  }, [measureStore.history]);
+    return { delta: last.weightKg - baseline.weightKg, current: last.weightKg };
+  }, [weightStore.entries]);
 
   // S2.3 — Progression vers le poids cible
   const goalProgress = useMemo(() => {
     const target = parseFloat(targetWeightKg.replace(',', '.'));
-    const current = currentEntry.weight || weeklyTrend?.current || 0;
+    const current = getWeightKg(selectedDate) || weeklyTrend?.current || 0;
     if (!current || isNaN(target) || target <= 0) return null;
     const diff = Math.abs(current - target);
     const ratio = diff / target;
@@ -184,7 +187,7 @@ export default function MensurationScreen() {
     else if (ratio <= 0.10) status = 'warn';
     const pct = Math.min(100, Math.max(0, (1 - ratio) * 100));
     return { target, current, status, pct, diff };
-  }, [targetWeightKg, currentEntry.weight, weeklyTrend]);
+  }, [targetWeightKg, getWeightKg, selectedDate, weeklyTrend]);
 
   // Indices corporels (FFMI, WHR, WHtR, Navy BF%, IMC, FFMI normalisé, BF% fourchette)
   const indices = useMemo(() => {
@@ -201,7 +204,7 @@ export default function MensurationScreen() {
     const waist: number | undefined = last.measurements?.['waist'] ?? last.measurements?.['taille'];
     const hip: number | undefined = last.measurements?.['hip'] ?? last.measurements?.['hanches'];
     const neck: number | undefined = last.measurements?.['neck'] ?? last.measurements?.['cou'];
-    const weight: number = last.weight;
+    const weight: number = getWeightKg(last.date);
     const bfPct: number = last.body_fat_pct;
     const lbm = (weight > 0 && bfPct > 0) ? weight * (1 - bfPct / 100) : null;
     const ffmi = lbm ? parseFloat((lbm / (hm * hm)).toFixed(1)) : null;
@@ -232,18 +235,19 @@ export default function MensurationScreen() {
     return { ffmi, whr, whtr, navyBF, lbm, imcVal, ffmiNorm, bfRange };
   }, [measureStore.history]);
 
-  // Dernière pesée connue (quand entrée du jour vide)
+  // Dernière pesée connue (quand pas d'entrée WeightEntry pour la date sélectionnée)
   const lastKnownWeight = useMemo(() => {
-    if (currentEntry.weight > 0) return null;
-    const sorted = measureStore.history
-      .filter(e => e.weight > 0 && e.date < selectedDate)
+    const todayWeight = weightStore.entries.find(e => e.date === selectedDate);
+    if (todayWeight) return null;
+    const sorted = weightStore.entries
+      .filter(e => e.date < selectedDate)
       .sort((a, b) => b.date.localeCompare(a.date));
     if (!sorted.length || !sorted[0]) return null;
     const last = sorted[0];
     const diffMs = new Date(selectedDate).getTime() - new Date(last.date).getTime();
     const diffDays = Math.round(diffMs / (24 * 60 * 60 * 1000));
-    return { weight: last.weight, daysAgo: diffDays };
-  }, [measureStore.history, currentEntry.weight, selectedDate]);
+    return { weight: last.weightKg, daysAgo: diffDays };
+  }, [weightStore.entries, selectedDate]);
 
   // S2.4 — Suppression mesure
   const handleDeleteMeasurement = (date: string) => {
@@ -269,7 +273,7 @@ export default function MensurationScreen() {
     const whtr = waist && profileHeight ? waist / profileHeight : undefined;
     const whr = waist && hip ? waist / hip : undefined;
     measureStore.save({
-      v: 1, id: uid(), savedAt: Date.now(), ...entry, date: selectedDate,
+      v: 2 as const, id: uid(), savedAt: Date.now(), ...entry, date: selectedDate,
       ...(whtr !== undefined ? { whtr } : {}),
       ...(whr !== undefined ? { whr } : {}),
     });
@@ -306,10 +310,14 @@ export default function MensurationScreen() {
   };
 
   const updateWeight = (val: string) => {
-    const w = parseFloat(val);
-    const newEntry = { ...currentEntry, weight: isNaN(w) ? 0 : w };
-    setCurrentEntry(newEntry);
-    persistEntry(newEntry);
+    const w = parseFloat(val.replace(',', '.'));
+    if (isNaN(w) || w <= 0) return;
+    const existing = weightStore.entries.find(e => e.date === selectedDate);
+    if (existing) {
+      void weightStore.update({ ...existing, weightKg: w });
+    } else {
+      void weightStore.add({ v: 1 as const, id: uid(), date: selectedDate, timestamp: Date.now(), weightKg: w });
+    }
   };
 
   const updateBpm = (val: string) => {
@@ -388,7 +396,7 @@ export default function MensurationScreen() {
               <TextInput
                 className="text-3xl font-black text-awan-tx font-mono w-20 text-center outline-none"
                 keyboardType="numeric"
-                value={currentEntry.weight > 0 ? currentEntry.weight.toString() : ''}
+                value={weightStore.entries.find(e => e.date === selectedDate)?.weightKg?.toString() ?? ''}
                 onChangeText={updateWeight}
                 placeholder={lastKnownWeight ? lastKnownWeight.weight.toString() : '00.0'}
                 placeholderTextColor={lastKnownWeight ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.1)'}
@@ -452,7 +460,7 @@ export default function MensurationScreen() {
               ) : (() => {
                 const ws = weightSeries;
                 const xs = ws.map(e => new Date(e.date).getTime());
-                const ys = ws.map(e => e.weight);
+                const ys = ws.map(e => e.weightKg);
                 const minX = Math.min(...xs);
                 const maxX = Math.max(...xs);
                 const minY = Math.min(...ys);
@@ -993,7 +1001,7 @@ export default function MensurationScreen() {
                    </div>
                    <div className="flex-1">
                       <div className="flex flex-row items-baseline gap-1">
-                         <span className="text-xl font-black text-awan-tx font-mono">{h.weight}</span>
+                         <span className="text-xl font-black text-awan-tx font-mono">{getWeightKg(h.date) || '—'}</span>
                          <span className="text-awan-sm font-bold text-awan-tx-mute uppercase">KG</span>
                       </div>
                    </div>

@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { WeightService } from '@/services/weightService';
 import type { WeightEntryLatest } from '@/data/schemas/body/weightEntry';
+import { useAppStore } from '@/data/store/appStore';
 
 export function useWeightStore() {
   const [entries, setEntries] = useState<WeightEntryLatest[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const dataVersion = useAppStore((s) => s.dataVersion);
 
   useEffect(() => {
     let active = true;
@@ -12,7 +15,7 @@ export function useWeightStore() {
       if (active) { setEntries(all); setLoading(false); }
     });
     return () => { active = false; };
-  }, []);
+  }, [dataVersion]);
 
   const add = useCallback(async (entry: WeightEntryLatest): Promise<void> => {
     await WeightService.save(entry);
