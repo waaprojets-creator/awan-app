@@ -140,6 +140,33 @@ export const BiometricsService = {
     };
   },
 
+  // ─── 13-site personal protocol ───────────────────────────────────────────
+  // D = C - M × log10(S13), %G = (495/D) - 450 (Siri)
+  // M derived from Durnin-Womersley 1974 rescaled to 13-site sum range
+  // (M13 = M4 × ratio where ratio = log10(S4_mean) / log10(S13_mean) ≈ 0.786)
+
+  skinfolds13(s13: number, age: number, sex: 'male' | 'female'): number {
+    if (s13 <= 0) return NaN;
+    const logS = Math.log10(s13);
+    let density: number;
+    if (sex === 'male') {
+      if (age < 17)       density = 1.1533 - 0.0505 * logS;
+      else if (age < 20)  density = 1.1620 - 0.0495 * logS;
+      else if (age < 30)  density = 1.1631 - 0.0497 * logS;
+      else if (age < 40)  density = 1.1422 - 0.0428 * logS;
+      else if (age < 50)  density = 1.1620 - 0.0550 * logS;
+      else                density = 1.1715 - 0.0612 * logS;
+    } else {
+      if (age < 17)       density = 1.1369 - 0.0470 * logS;
+      else if (age < 20)  density = 1.1549 - 0.0533 * logS;
+      else if (age < 30)  density = 1.1599 - 0.0564 * logS;
+      else if (age < 40)  density = 1.1423 - 0.0497 * logS;
+      else if (age < 50)  density = 1.1333 - 0.0481 * logS;
+      else                density = 1.1339 - 0.0507 * logS;
+    }
+    return parseFloat(densityToBf(density).toFixed(1));
+  },
+
   // ─── IMC ──────────────────────────────────────────────────────────────────
 
   imc(weightKg: number, heightCm: number): number {

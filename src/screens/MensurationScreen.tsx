@@ -24,17 +24,29 @@ import { Heading } from '../components/ui/Heading';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 
-// ISAK Level 1 skinfold sites (bilateral where applicable)
+// 13-site personal protocol (Haute Densité — prise systématiquement à droite)
 const SKINFOLD_SITES = [
-  { key: 'triceps',         label: 'Triceps',        bilateral: true },
-  { key: 'subscapular',     label: 'Sous-scapulaire', bilateral: false },
-  { key: 'biceps',          label: 'Biceps',          bilateral: false },
-  { key: 'suprailiac',      label: 'Supra-iliaque',   bilateral: false },
-  { key: 'supraspinal',     label: 'Supra-épineux',   bilateral: false },
-  { key: 'abdominal',       label: 'Abdominal',       bilateral: false },
-  { key: 'thigh_anterior',  label: 'Cuisse antérieure', bilateral: false },
-  { key: 'calf_medial',     label: 'Mollet médial',    bilateral: false },
+  { key: 'pectoral',          label: 'Pectoral',          note: 'Diagonal aisselle–mamelon' },
+  { key: 'axillaire',         label: 'Axillaire',         note: 'Vertical ligne axillaire' },
+  { key: 'triceps',           label: 'Triceps',            note: 'Vertical mi-triceps' },
+  { key: 'subscapular',       label: 'Sous-scapulaire',   note: 'Diagonal sous omoplate' },
+  { key: 'abdominal',         label: 'Abdominal',         note: '2 cm droite du nombril' },
+  { key: 'suprailiac',        label: 'Supra-iliaque',     note: 'Diagonal crête iliaque' },
+  { key: 'thigh_anterior',    label: 'Cuisse ant.',        note: 'Vertical mi-face ant.' },
+  { key: 'biceps',            label: 'Biceps',             note: 'Vertical mi-biceps' },
+  { key: 'calf_medial',       label: 'Mollet médial',     note: 'Partie la plus large' },
+  { key: 'supraspinal',       label: 'Supra-épineux',     note: 'Au-dessus épine iliaque' },
+  { key: 'abdominal_lateral', label: 'Abdominal lat.',    note: 'Ligne axillaire, nombril' },
+  { key: 'thigh_lateral',     label: 'Cuisse lat.',        note: 'Face externe cuisse' },
+  { key: 'forearm',           label: 'Avant-bras',        note: 'Longitudinal, partie large' },
 ] as const;
+
+// JP7 sites within the 13-site protocol
+const JP7_SITES = ['pectoral', 'axillaire', 'triceps', 'subscapular', 'abdominal', 'suprailiac', 'thigh_anterior'] as const;
+// DW4 sites within the 13-site protocol
+const DW4_SITES = ['biceps', 'triceps', 'subscapular', 'suprailiac'] as const;
+// All 13 sites
+const ALL13_SITES = SKINFOLD_SITES.map(s => s.key);
 
 // Bilateral circumference pairs
 const BILATERAL_MEASURES = [
@@ -219,20 +231,35 @@ export default function MensurationScreen() {
     // A3: BF% fourchette multi-méthodes
     const bfMethods: { method: string; value: number }[] = [];
     if (navyBF !== null) bfMethods.push({ method: 'Navy', value: navyBF });
-    if (bfPct > 0) bfMethods.push({ method: 'JP3', value: bfPct });
     const sk = last.skinfolds ?? {};
-    const jp7Sites = ['chest', 'midaxilla', 'triceps', 'subscapular', 'abdominal', 'suprailiac', 'thigh_anterior'];
-    if (jp7Sites.every(k => (sk[k] ?? 0) > 0)) {
-      const jp7 = BiometricsService.jacksonPollock7(sk['chest']!, sk['midaxilla']!, sk['triceps']!, sk['subscapular']!, sk['abdominal']!, sk['suprailiac']!, sk['thigh_anterior']!, ageYears, sex);
+    // 13-plis (highest priority if all sites present)
+    const s13Total = ALL13_SITES.every(k => (sk[k] ?? 0) > 0)
+      ? ALL13_SITES.reduce((sum, k) => sum + (sk[k] ?? 0), 0) : 0;
+    if (s13Total > 0) {
+      bfMethods.push({ method: '13 Plis', value: BiometricsService.skinfolds13(s13Total, ageYears, sex) });
+    }
+    if (JP7_SITES.every(k => (sk[k] ?? 0) > 0)) {
+      const jp7 = BiometricsService.jacksonPollock7(sk['pectoral']!, sk['axillaire']!, sk['triceps']!, sk['subscapular']!, sk['abdominal']!, sk['suprailiac']!, sk['thigh_anterior']!, ageYears, sex);
       bfMethods.push({ method: 'JP7', value: jp7 });
     }
-    const dw4Sites = ['biceps', 'triceps', 'subscapular', 'suprailiac'];
-    if (dw4Sites.every(k => (sk[k] ?? 0) > 0)) {
+    if (DW4_SITES.every(k => (sk[k] ?? 0) > 0)) {
       const dw = BiometricsService.durninWomersley4(sk['biceps']!, sk['triceps']!, sk['subscapular']!, sk['suprailiac']!, ageYears, sex);
-      bfMethods.push({ method: 'Durnin', value: dw });
+      bfMethods.push({ method: 'DW4', value: dw });
     }
+    if (bfPct > 0 && bfMethods.length === 0) bfMethods.push({ method: 'Auto', value: bfPct });
     const bfRange = bfMethods.length > 1 ? BiometricsService.bfPctRange(bfMethods) : null;
-    return { ffmi, whr, whtr, navyBF, lbm, imcVal, ffmiNorm, bfRange };
+    // Skinfold matrix values for display
+    const bf13 = s13Total > 0 ? BiometricsService.skinfolds13(s13Total, ageYears, sex) : null;
+    const bfJP7 = JP7_SITES.every(k => (sk[k] ?? 0) > 0)
+      ? BiometricsService.jacksonPollock7(sk['pectoral']!, sk['axillaire']!, sk['triceps']!, sk['subscapular']!, sk['abdominal']!, sk['suprailiac']!, sk['thigh_anterior']!, ageYears, sex) : null;
+    const bfDW4 = DW4_SITES.every(k => (sk[k] ?? 0) > 0)
+      ? BiometricsService.durninWomersley4(sk['biceps']!, sk['triceps']!, sk['subscapular']!, sk['suprailiac']!, ageYears, sex) : null;
+    const ecartMax = (() => {
+      const vals = [bf13, bfJP7, bfDW4].filter((v): v is number => v !== null);
+      if (vals.length < 2) return null;
+      return parseFloat((Math.max(...vals) - Math.min(...vals)).toFixed(1));
+    })();
+    return { ffmi, whr, whtr, navyBF, lbm, imcVal, ffmiNorm, bfRange, s13Total, bf13, bfJP7, bfDW4, ecartMax };
   }, [measureStore.history]);
 
   // Dernière pesée connue (quand pas d'entrée WeightEntry pour la date sélectionnée)
@@ -349,18 +376,27 @@ export default function MensurationScreen() {
     const a = parseInt(age);
     const sex = gender === 'man' ? 'male' as const : 'female' as const;
 
-    // Try JP7 first (all 7 sites available), fallback to JP3
-    const jp7Sites = ['chest', 'midaxilla', 'triceps', 'subscapular', 'abdominal', 'suprailiac', 'thigh_anterior'];
-    const hasAllJP7 = jp7Sites.every(k => (s[k] ?? 0) > 0);
+    // Primary BF% from best available formula: 13-plis > JP7 > DW4 > JP3
+    const s13Total = ALL13_SITES.every(k => (s[k] ?? 0) > 0)
+      ? ALL13_SITES.reduce((sum, k) => sum + (s[k] ?? 0), 0)
+      : 0;
+    const hasAll13 = s13Total > 0;
+    const hasJP7 = JP7_SITES.every(k => (s[k] ?? 0) > 0);
+    const hasDW4 = DW4_SITES.every(k => (s[k] ?? 0) > 0);
+
     let bf: number;
-    if (hasAllJP7) {
+    if (hasAll13) {
+      bf = BiometricsService.skinfolds13(s13Total, a, sex);
+    } else if (hasJP7) {
       bf = BiometricsService.jacksonPollock7(
-        s['chest'] ?? 0, s['midaxilla'] ?? 0, s['triceps'] ?? 0,
+        s['pectoral'] ?? 0, s['axillaire'] ?? 0, s['triceps'] ?? 0,
         s['subscapular'] ?? 0, s['abdominal'] ?? 0, s['suprailiac'] ?? 0,
         s['thigh_anterior'] ?? 0, a, sex,
       );
+    } else if (hasDW4) {
+      bf = BiometricsService.durninWomersley4(s['biceps'] ?? 0, s['triceps'] ?? 0, s['subscapular'] ?? 0, s['suprailiac'] ?? 0, a, sex);
     } else if (sex === 'male') {
-      bf = BiometricsService.jacksonPollock3Men(s['chest'] ?? 0, s['abdominal'] ?? 0, s['thigh_anterior'] ?? 0, a);
+      bf = BiometricsService.jacksonPollock3Men(s['pectoral'] ?? 0, s['abdominal'] ?? 0, s['thigh_anterior'] ?? 0, a);
     } else {
       bf = BiometricsService.jacksonPollock3Women(s['triceps'] ?? 0, s['suprailiac'] ?? 0, s['thigh_anterior'] ?? 0, a);
     }
@@ -942,20 +978,29 @@ export default function MensurationScreen() {
             })()}
           </div>
 
-          {/* A2 — Plis cutanés ISAK (caliper requis) */}
+          {/* A2 — Protocole 13 plis (caliper requis) */}
           <div className="mb-10">
-            <Heading level={4} mono subtitle="Caliper requis (~25–50€)" className="mb-4">PLIS CUTANÉS ISAK</Heading>
+            <Heading level={4} mono subtitle="Protocole Haute Densité — Caliper requis (~25–50€)" className="mb-4">PLIS CUTANÉS 13 SITES</Heading>
             <div className="mb-4 px-4 py-3 border border-white/10 bg-white/3">
               <span className="text-awan-xs text-awan-tx-mute leading-relaxed">
-                Saisir les plis en mm. Le % masse grasse est calculé automatiquement (JP7 avec 7 sites, JP3 sinon). Mesurer systématiquement du côté droit, à jeun.
+                Saisir les plis en mm, côté droit, à jeun. Pince appliquée à 1 cm du point marqué. Trois formules calculées en parallèle : 13 plis (modèle haute densité), JP7 (profils athlétiques) et DW4 (population générale).
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              {SKINFOLD_SITES.map(({ key, label }) => {
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {SKINFOLD_SITES.map(({ key, label, note }) => {
                 const val = currentEntry.skinfolds[key] ?? 0;
+                const isInJP7 = (JP7_SITES as readonly string[]).includes(key);
+                const isInDW4 = (DW4_SITES as readonly string[]).includes(key);
                 return (
                   <Card key={key} className="p-4 bg-white/3 border-white/5" variant="flat">
-                    <span className="text-awan-xxs font-black text-awan-gold tracking-widest uppercase block mb-2">{label}</span>
+                    <div className="flex flex-row items-start justify-between mb-2">
+                      <span className="text-awan-xxs font-black text-awan-gold tracking-widest uppercase">{label}</span>
+                      <div className="flex flex-row gap-1">
+                        {isInJP7 && <span className="text-[9px] font-black tracking-wide px-1 py-0.5" style={{ background: 'rgba(212,175,55,0.15)', color: 'var(--color-awan-gold)' }}>JP7</span>}
+                        {isInDW4 && <span className="text-[9px] font-black tracking-wide px-1 py-0.5" style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--color-awan-tx-mute)' }}>DW4</span>}
+                      </div>
+                    </div>
+                    <span className="text-[9px] text-awan-tx-mute block mb-2 leading-tight">{note}</span>
                     <div className="flex flex-row items-baseline gap-2">
                       <TextInput
                         className="text-2xl font-black font-mono text-awan-tx outline-none flex-1"
@@ -971,24 +1016,54 @@ export default function MensurationScreen() {
                 );
               })}
             </div>
-            {currentEntry.body_fat_pct > 0 && (
-              <Card className="mt-4 p-4 border-awan-gold/30 bg-awan-gold/5" variant="flat">
-                <span className="text-awan-xs font-black text-awan-gold tracking-widest uppercase block mb-1">
-                  % MASSE GRASSE ESTIMÉE
-                </span>
-                <span className="text-3xl font-black font-mono text-awan-gold">
-                  {currentEntry.body_fat_pct.toFixed(1)}
-                  <span className="text-sm ml-1 text-awan-tx-mute">%</span>
-                </span>
-                <span className="text-awan-xxs text-awan-tx-mute block mt-1 uppercase tracking-widest">
-                  {(() => {
-                    const jp7Sites = ['chest', 'midaxilla', 'triceps', 'subscapular', 'abdominal', 'suprailiac', 'thigh_anterior'];
-                    const has7 = jp7Sites.every(k => (currentEntry.skinfolds[k] ?? 0) > 0);
-                    return has7 ? 'Jackson-Pollock 7 sites' : 'Jackson-Pollock 3 sites';
-                  })()}
-                </span>
-              </Card>
-            )}
+
+            {/* Matrice de suivi 3 formules */}
+            {(() => {
+              const sk = currentEntry.skinfolds;
+              const a = parseInt(age);
+              const sex = gender === 'man' ? 'male' as const : 'female' as const;
+              const s13Total = ALL13_SITES.every(k => (sk[k] ?? 0) > 0)
+                ? ALL13_SITES.reduce((sum, k) => sum + (sk[k] ?? 0), 0) : 0;
+              const bf13 = s13Total > 0 ? BiometricsService.skinfolds13(s13Total, a, sex) : null;
+              const bfJP7 = JP7_SITES.every(k => (sk[k] ?? 0) > 0)
+                ? BiometricsService.jacksonPollock7(sk['pectoral'] ?? 0, sk['axillaire'] ?? 0, sk['triceps'] ?? 0, sk['subscapular'] ?? 0, sk['abdominal'] ?? 0, sk['suprailiac'] ?? 0, sk['thigh_anterior'] ?? 0, a, sex) : null;
+              const bfDW4 = DW4_SITES.every(k => (sk[k] ?? 0) > 0)
+                ? BiometricsService.durninWomersley4(sk['biceps'] ?? 0, sk['triceps'] ?? 0, sk['subscapular'] ?? 0, sk['suprailiac'] ?? 0, a, sex) : null;
+              const vals = [bf13, bfJP7, bfDW4].filter((v): v is number => v !== null);
+              const ecartMax = vals.length >= 2 ? parseFloat((Math.max(...vals) - Math.min(...vals)).toFixed(1)) : null;
+              const hasAny = vals.length > 0;
+              if (!hasAny) return null;
+              return (
+                <Card className="p-4 border-awan-gold/20 bg-awan-gold/3" variant="flat">
+                  <span className="text-awan-xs font-black text-awan-gold tracking-widest uppercase block mb-4">MATRICE DE SUIVI</span>
+                  <div className="grid grid-cols-4 gap-2 mb-2">
+                    {(['S13', '%G 13P', '%G JP7', '%G DW4'] as const).map(h => (
+                      <span key={h} className="text-[9px] font-black text-awan-tx-mute tracking-widest uppercase text-center">{h}</span>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 border-t border-white/5 pt-2">
+                    <span className="text-base font-black font-mono text-awan-tx text-center">{s13Total > 0 ? s13Total : '–'}</span>
+                    <span className="text-base font-black font-mono text-center" style={{ color: bf13 !== null ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)' }}>
+                      {bf13 !== null ? `${bf13}%` : '–'}
+                    </span>
+                    <span className="text-base font-black font-mono text-center" style={{ color: bfJP7 !== null ? 'var(--color-awan-tx)' : 'var(--color-awan-tx-mute)' }}>
+                      {bfJP7 !== null ? `${bfJP7}%` : '–'}
+                    </span>
+                    <span className="text-base font-black font-mono text-center" style={{ color: bfDW4 !== null ? 'var(--color-awan-tx)' : 'var(--color-awan-tx-mute)' }}>
+                      {bfDW4 !== null ? `${bfDW4}%` : '–'}
+                    </span>
+                  </div>
+                  {ecartMax !== null && (
+                    <div className="mt-3 pt-3 border-t border-white/5 flex flex-row justify-between items-center">
+                      <span className="text-awan-xs font-black text-awan-tx-mute tracking-widest uppercase">ÉCART MAX</span>
+                      <span className="text-sm font-black font-mono" style={{ color: ecartMax > 3 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-ok)' }}>
+                        {ecartMax}%
+                      </span>
+                    </div>
+                  )}
+                </Card>
+              );
+            })()}
           </div>
 
           <div className="mb-10">
