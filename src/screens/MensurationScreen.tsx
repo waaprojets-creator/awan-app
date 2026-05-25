@@ -376,31 +376,17 @@ export default function MensurationScreen() {
     const a = parseInt(age);
     const sex = gender === 'man' ? 'male' as const : 'female' as const;
 
-    // Primary BF% from best available formula: 13-plis > JP7 > DW4 > JP3
+    // Each formula computed independently from its own sites only — no cascade, no coefficient correction
     const s13Total = ALL13_SITES.every(k => (s[k] ?? 0) > 0)
-      ? ALL13_SITES.reduce((sum, k) => sum + (s[k] ?? 0), 0)
-      : 0;
-    const hasAll13 = s13Total > 0;
-    const hasJP7 = JP7_SITES.every(k => (s[k] ?? 0) > 0);
-    const hasDW4 = DW4_SITES.every(k => (s[k] ?? 0) > 0);
-
-    let bf: number;
-    if (hasAll13) {
-      bf = BiometricsService.skinfolds13(s13Total, a, sex);
-    } else if (hasJP7) {
-      bf = BiometricsService.jacksonPollock7(
-        s['pectoral'] ?? 0, s['axillaire'] ?? 0, s['triceps'] ?? 0,
-        s['subscapular'] ?? 0, s['abdominal'] ?? 0, s['suprailiac'] ?? 0,
-        s['thigh_anterior'] ?? 0, a, sex,
-      );
-    } else if (hasDW4) {
-      bf = BiometricsService.durninWomersley4(s['biceps'] ?? 0, s['triceps'] ?? 0, s['subscapular'] ?? 0, s['suprailiac'] ?? 0, a, sex);
-    } else if (sex === 'male') {
-      bf = BiometricsService.jacksonPollock3Men(s['pectoral'] ?? 0, s['abdominal'] ?? 0, s['thigh_anterior'] ?? 0, a);
-    } else {
-      bf = BiometricsService.jacksonPollock3Women(s['triceps'] ?? 0, s['suprailiac'] ?? 0, s['thigh_anterior'] ?? 0, a);
-    }
-    newEntry.body_fat_pct = parseFloat(bf.toFixed(2));
+      ? ALL13_SITES.reduce((sum, k) => sum + (s[k] ?? 0), 0) : 0;
+    const bf13 = s13Total > 0 ? BiometricsService.skinfolds13(s13Total, a, sex) : null;
+    const bfJP7 = JP7_SITES.every(k => (s[k] ?? 0) > 0)
+      ? BiometricsService.jacksonPollock7(s['pectoral'] ?? 0, s['axillaire'] ?? 0, s['triceps'] ?? 0, s['subscapular'] ?? 0, s['abdominal'] ?? 0, s['suprailiac'] ?? 0, s['thigh_anterior'] ?? 0, a, sex) : null;
+    const bfDW4 = DW4_SITES.every(k => (s[k] ?? 0) > 0)
+      ? BiometricsService.durninWomersley4(s['biceps'] ?? 0, s['triceps'] ?? 0, s['subscapular'] ?? 0, s['suprailiac'] ?? 0, a, sex) : null;
+    // body_fat_pct stores best available: 13-plis > JP7 > DW4 (no fallback beyond)
+    const bf = bf13 ?? bfJP7 ?? bfDW4;
+    newEntry.body_fat_pct = bf !== null ? parseFloat(bf.toFixed(2)) : 0;
     setCurrentEntry(newEntry);
     persistEntry(newEntry);
   };

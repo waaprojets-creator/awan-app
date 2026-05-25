@@ -27,6 +27,7 @@ import { motion } from 'motion/react';
 import type { SleepEntryLatest } from '../data/schemas/sleep/sleepEntry';
 import TempsTab from './analyse/TempsTab';
 import IslamTab from './analyse/IslamTab';
+import ScanTab from './analyse/ScanTab';
 
 
 const TABS = [
@@ -337,54 +338,7 @@ export default function AnalyseScreen() {
                 </div>
              )}
 
-             {tab === 'scan' && (
-                <div className="space-y-4">
-                  {measureStore.loading ? (
-                    <LoadingState label="Chargement des mesures..." />
-                  ) : measureStore.history.length === 0 ? (
-                    <EmptyState Icon={Ruler} label="Aucune mesure enregistrée" />
-                  ) : (
-                    <>
-                    {weightTrend.length > 1 && (
-                      <Card className="p-6" variant="flat">
-                        <Heading level={4} mono subtitle="Trajectoire biométrique">COURBE POIDS</Heading>
-                        <div className="h-[200px] mt-6">
-                          <BarChart data={weightTrend} dataKey="weight" color={theme.title} />
-                        </div>
-                      </Card>
-                    )}
-                    {measureStore.history.slice().reverse().slice(0, 10).map((m, i) => (
-                      <Card key={i} className="p-5" variant="flat">
-                        <div className="flex flex-row items-center justify-between mb-3">
-                          <span className="text-awan-sm font-mono text-awan-gold uppercase tracking-widest">{m.date}</span>
-                          {m.body_fat_pct != null && (
-                            <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest">{m.body_fat_pct}% MG</span>
-                          )}
-                        </div>
-                        <div className="flex flex-row items-end gap-6">
-                          <div>
-                            <span className="text-awan-sm font-black text-awan-tx-mute uppercase block mb-1">Poids</span>
-                            <span className="text-3xl font-black text-awan-gold tabular-nums font-mono">{weightStore.entries.filter(e => e.date <= m.date).sort((a,b)=>b.date.localeCompare(a.date))[0]?.weightKg ?? '—'}<span className="text-sm ml-1 opacity-50">KG</span></span>
-                          </div>
-                          {m.bpm_rest != null && m.bpm_rest > 0 && (
-                            <div>
-                              <span className="text-awan-sm font-black text-awan-tx-mute uppercase block mb-1">BPM repos</span>
-                              <span className="text-2xl font-black text-awan-tx tabular-nums font-mono">{m.bpm_rest}</span>
-                            </div>
-                          )}
-                          {Object.entries(m.measurements).slice(0, 2).map(([k, v]) => (
-                            <div key={k}>
-                              <span className="text-awan-sm font-black text-awan-tx-mute uppercase block mb-1">{k}</span>
-                              <span className="text-2xl font-black text-awan-tx tabular-nums font-mono">{v}<span className="text-sm ml-0.5 opacity-50">cm</span></span>
-                            </div>
-                          ))}
-                        </div>
-                      </Card>
-                    ))}
-                    </>
-                  )}
-                </div>
-             )}
+             {tab === 'scan' && <ScanTab />}
 
              {tab === 'sommeil' && (
                 <div className="space-y-6">
