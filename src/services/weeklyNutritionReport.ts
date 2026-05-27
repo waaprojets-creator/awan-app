@@ -1,6 +1,4 @@
 import { getStorage } from '@/data/storage/storageService';
-import { migrateMealEntry } from '@/data/schemas/nutrition/mealEntry';
-import type { MealEntryLatest } from '@/data/schemas/nutrition/mealEntry';
 
 // Silently generated — stored in DB, not notified. Consulted freely.
 
@@ -45,30 +43,20 @@ export async function buildWeeklyNutritionReport(
   targets: NutritionTargets | null,
 ): Promise<WeeklyNutritionReport> {
   const storage = await getStorage();
-  const keys = await storage.list('nutrition.meal');
-  const all = await Promise.all(keys.map(k => storage.get(k, migrateMealEntry)));
-  const valid = all.filter((e): e is MealEntryLatest => e !== null);
-
   const dates = last7Days();
-  const dateSet = new Set(dates);
-  const byDate: Record<string, MealEntryLatest[]> = {};
-  for (const entry of valid) {
-    if (dateSet.has(entry.date)) {
-      (byDate[entry.date] ??= []).push(entry);
-    }
-  }
 
-  const days: DayNutritionSummary[] = dates.map(date => {
-    const entries = byDate[date] ?? [];
-    return {
-      date,
-      kcal: entries.reduce((s, e) => s + e.kcal, 0),
-      p: entries.reduce((s, e) => s + e.p, 0),
-      c: entries.reduce((s, e) => s + e.c, 0),
-      f: entries.reduce((s, e) => s + e.f, 0),
-      fiberG: entries.reduce((s, e) => s + (e.fiberG ?? 0), 0),
-    };
-  });
+  const days: DayNutritionSummary[] = await Promise.all(
+    dates.map(async date => {
+      const [kcal, p, c, f, fiberG] = await Promise.all([
+        storage.aggregate('nutrition.meal', 'kcal', 'SUM', { date }),
+        storage.aggregate('nutrition.meal', 'p', 'SUM', { date }),
+        storage.aggregate('nutrition.meal', 'c', 'SUM', { date }),
+        storage.aggregate('nutrition.meal', 'f', 'SUM', { date }),
+        storage.aggregate('nutrition.meal', 'fiberG', 'SUM', { date }),
+      ]);
+      return { date, kcal, p, c, f, fiberG };
+    }),
+  );
 
   const loggedDays = days.filter(d => d.kcal > 0);
   const n = loggedDays.length || 1;

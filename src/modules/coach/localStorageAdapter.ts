@@ -49,6 +49,46 @@ export class LocalStorageAdapter implements IStorage {
     return keys;
   }
 
+  async listFiltered(prefix: string, where: Record<string, unknown>): Promise<string[]> {
+    const results: string[] = [];
+    for (let i = 0; i < this.storage.length; i++) {
+      const k = this.storage.key(i);
+      if (!k || !k.startsWith(prefix)) continue;
+      const raw = this.storage.getItem(k);
+      if (!raw) continue;
+      try {
+        const obj = JSON.parse(raw) as Record<string, unknown>;
+        if (Object.entries(where).every(([f, v]) => obj[f] === v)) results.push(k);
+      } catch { /* skip malformed */ }
+    }
+    return results;
+  }
+
+  async listByPrefix(prefix: string, limit?: number, offset?: number): Promise<string[]> {
+    const keys = (await this.list(prefix)).sort();
+    const start = offset ?? 0;
+    return limit !== undefined ? keys.slice(start, start + limit) : keys.slice(start);
+  }
+
+  async aggregate(prefix: string, field: string, op: 'SUM' | 'AVG' | 'COUNT', where?: Record<string, unknown>): Promise<number> {
+    let sum = 0; let count = 0;
+    for (let i = 0; i < this.storage.length; i++) {
+      const k = this.storage.key(i);
+      if (!k || !k.startsWith(prefix)) continue;
+      const raw = this.storage.getItem(k);
+      if (!raw) continue;
+      try {
+        const obj = JSON.parse(raw) as Record<string, unknown>;
+        if (where && !Object.entries(where).every(([f, v]) => obj[f] === v)) continue;
+        count++;
+        if (op !== 'COUNT') { const v = obj[field]; if (typeof v === 'number') sum += v; }
+      } catch { /* skip malformed */ }
+    }
+    if (op === 'COUNT') return count;
+    if (op === 'AVG') return count > 0 ? sum / count : 0;
+    return sum;
+  }
+
   async query<T>(table: string, where: Partial<T>, parse: ParseFn<T>): Promise<T[]> {
     const keys = await this.list(table);
     const results: T[] = [];

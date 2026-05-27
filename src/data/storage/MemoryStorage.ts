@@ -21,6 +21,39 @@ export class MemoryStorage implements IStorage {
     return [...this.store.keys()].filter(k => k.startsWith(prefix));
   }
 
+  async listFiltered(prefix: string, where: Record<string, unknown>): Promise<string[]> {
+    const results: string[] = [];
+    for (const [key, value] of this.store.entries()) {
+      if (!key.startsWith(prefix)) continue;
+      const obj = value as Record<string, unknown>;
+      if (Object.entries(where).every(([k, v]) => obj[k] === v)) results.push(key);
+    }
+    return results;
+  }
+
+  async listByPrefix(prefix: string, limit?: number, offset?: number): Promise<string[]> {
+    const keys = [...this.store.keys()].filter(k => k.startsWith(prefix)).sort();
+    const start = offset ?? 0;
+    return limit !== undefined ? keys.slice(start, start + limit) : keys.slice(start);
+  }
+
+  async aggregate(prefix: string, field: string, op: 'SUM' | 'AVG' | 'COUNT', where?: Record<string, unknown>): Promise<number> {
+    let sum = 0; let count = 0;
+    for (const [key, value] of this.store.entries()) {
+      if (!key.startsWith(prefix)) continue;
+      const obj = value as Record<string, unknown>;
+      if (where && !Object.entries(where).every(([k, v]) => obj[k] === v)) continue;
+      count++;
+      if (op !== 'COUNT') {
+        const v = obj[field];
+        if (typeof v === 'number') sum += v;
+      }
+    }
+    if (op === 'COUNT') return count;
+    if (op === 'AVG') return count > 0 ? sum / count : 0;
+    return sum;
+  }
+
   async query<T>(table: string, where: Partial<T>, parse: ParseFn<T>): Promise<T[]> {
     const keys = await this.list(table);
     const results: T[] = [];

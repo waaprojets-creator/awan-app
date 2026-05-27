@@ -40,8 +40,24 @@ export const WorkoutService = {
   async getAllSessions(): Promise<WorkoutSessionLatest[]> {
     const storage = await getStorage();
     const keys = await storage.list(SESSION_PREFIX);
-    const results = await Promise.all(keys.map(k => storage.get(k, migrateWorkoutSession)));
-    return results.filter((r): r is WorkoutSessionLatest => r !== null);
+    const results: WorkoutSessionLatest[] = [];
+    // Sequential loading avoids parallel JSON parsing spike on large session objects
+    for (const key of keys) {
+      const s = await storage.get(key, migrateWorkoutSession);
+      if (s) results.push(s);
+    }
+    return results;
+  },
+
+  async getSessionsByDateRange(from: string, to: string): Promise<WorkoutSessionLatest[]> {
+    const storage = await getStorage();
+    const keys = await storage.listByPrefix(SESSION_PREFIX);
+    const results: WorkoutSessionLatest[] = [];
+    for (const key of keys) {
+      const s = await storage.get(key, migrateWorkoutSession);
+      if (s && s.date >= from && s.date <= to) results.push(s);
+    }
+    return results.sort((a, b) => a.date.localeCompare(b.date));
   },
 
   async getLastSessionByRoutine(routineId: string): Promise<WorkoutSessionLatest | null> {

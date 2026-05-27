@@ -119,8 +119,7 @@ export default function AnalyseScreen() {
     const days = eachDayOfInterval(interval);
     Promise.all(
       days.map(async day => {
-        const meals = await MealService.getByDate(ds(day));
-        const tot = MealService.totals(meals);
+        const tot = await MealService.getDailyTotals(ds(day));
         return { label: format(day, 'dd/MM'), kcal: tot.kcal, p: tot.p };
       })
     ).then(results => {
@@ -134,10 +133,7 @@ export default function AnalyseScreen() {
   // Courbe poids — restreinte à l'intervalle sélectionné
   const weightTrend = useMemo(() => {
     return measureStore.history
-      .filter(m => {
-        const d = parseISO(m.date);
-        return d >= interval.start && d <= interval.end;
-      })
+      .filter(m => { const d = parseISO(m.date); return d >= interval.start && d <= interval.end; })
       .slice()
       .sort((a, b) => a.date.localeCompare(b.date))
       .map(m => ({ label: format(parseISO(m.date), 'dd/MM'), weight: m.weight }));
