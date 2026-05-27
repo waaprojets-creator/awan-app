@@ -123,8 +123,7 @@ export default function AnalyseScreen() {
     const days = eachDayOfInterval(interval);
     Promise.all(
       days.map(async day => {
-        const meals = await MealService.getByDate(ds(day));
-        const tot = MealService.totals(meals);
+        const tot = await MealService.getDailyTotals(ds(day));
         return { label: format(day, 'dd/MM'), kcal: tot.kcal, p: tot.p };
       })
     ).then(results => {
@@ -137,17 +136,22 @@ export default function AnalyseScreen() {
 
   // Courbe poids — restreinte à l'intervalle sélectionné
   const weightTrend = useMemo(() => {
-    return measureStore.history
-      .filter(m => {
-        const d = parseISO(m.date);
-        return d >= interval.start && d <= interval.end;
-      })
+    const sortedWeights = [...weightStore.entries].sort((a, b) => a.date.localeCompare(b.date));
+    const filtered = measureStore.history
+      .filter(m => { const d = parseISO(m.date); return d >= interval.start && d <= interval.end; })
       .slice()
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .map(m => {
-        const w = weightStore.entries.filter(e => e.date <= m.date).sort((a, b) => b.date.localeCompare(a.date))[0];
-        return { label: format(parseISO(m.date), 'dd/MM'), weight: w?.weightKg ?? null };
-      });
+      .sort((a, b) => a.date.localeCompare(b.date));
+    return filtered.map(m => {
+      // Binary search: last weight entry with date <= m.date — O(log n) vs O(n²)
+      let lo = 0; let hi = sortedWeights.length - 1; let w: typeof sortedWeights[0] | undefined;
+      while (lo <= hi) {
+        const mid = (lo + hi) >>> 1;
+        const entry = sortedWeights[mid];
+        if (entry && entry.date <= m.date) { w = entry; lo = mid + 1; }
+        else hi = mid - 1;
+      }
+      return { label: format(parseISO(m.date), 'dd/MM'), weight: w?.weightKg ?? null };
+    });
   }, [measureStore.history, weightStore.entries, interval]);
 
   const nutritionStats = useMemo(() => {

@@ -101,6 +101,38 @@ export class SqliteStorage implements IStorage {
     return (res.values ?? []).map((r: { key: string }) => r.key);
   }
 
+  async listFiltered(prefix: string, where: Record<string, unknown>): Promise<string[]> {
+    let sql = 'SELECT key FROM kv WHERE key LIKE ?';
+    const params: unknown[] = [`${prefix}%`];
+    for (const [k, v] of Object.entries(where)) {
+      sql += ` AND json_extract(value, '$.${k}') = ?`;
+      params.push(v);
+    }
+    const res = await this.handle.query(sql, params);
+    return (res.values ?? []).map((r: { key: string }) => r.key);
+  }
+
+  async listByPrefix(prefix: string, limit?: number, offset?: number): Promise<string[]> {
+    let sql = 'SELECT key FROM kv WHERE key LIKE ? ORDER BY key';
+    const params: unknown[] = [`${prefix}%`];
+    if (limit !== undefined) { sql += ' LIMIT ?'; params.push(limit); }
+    if (offset !== undefined) { sql += ' OFFSET ?'; params.push(offset); }
+    const res = await this.handle.query(sql, params);
+    return (res.values ?? []).map((r: { key: string }) => r.key);
+  }
+
+  async aggregate(prefix: string, field: string, op: 'SUM' | 'AVG' | 'COUNT', where?: Record<string, unknown>): Promise<number> {
+    const extract = op === 'COUNT' ? '1' : `CAST(json_extract(value, '$.${field}') AS REAL)`;
+    let sql = `SELECT ${op}(${extract}) as result FROM kv WHERE key LIKE ?`;
+    const params: unknown[] = [`${prefix}%`];
+    for (const [k, v] of Object.entries(where ?? {})) {
+      sql += ` AND json_extract(value, '$.${k}') = ?`;
+      params.push(v);
+    }
+    const res = await this.handle.query(sql, params);
+    return (res.values?.[0] as { result?: number | null } | undefined)?.result ?? 0;
+  }
+
   async query<T>(table: string, where: Partial<T>, parse: ParseFn<T>): Promise<T[]> {
     const keys = await this.list(table);
     const results: T[] = [];

@@ -90,6 +90,74 @@ export class IndexedDBStorage implements IStorage {
     return keys.filter(k => k.startsWith(prefix));
   }
 
+  private idbCursorRange(prefix: string): IDBKeyRange {
+    return IDBKeyRange.bound(prefix, prefix + '￿', false, false);
+  }
+
+  async listFiltered(prefix: string, where: Record<string, unknown>): Promise<string[]> {
+    const s = await this.store('readonly');
+    const results: string[] = [];
+    await new Promise<void>((resolve, reject) => {
+      const req = s.openCursor(this.idbCursorRange(prefix));
+      req.onsuccess = () => {
+        const cursor = req.result;
+        if (!cursor) { resolve(); return; }
+        const obj = cursor.value as Record<string, unknown>;
+        if (Object.entries(where).every(([k, v]) => obj[k] === v)) {
+          results.push(cursor.key as string);
+        }
+        cursor.continue();
+      };
+      req.onerror = () => reject(req.error);
+    });
+    return results;
+  }
+
+  async listByPrefix(prefix: string, limit?: number, offset?: number): Promise<string[]> {
+    const s = await this.store('readonly');
+    const results: string[] = [];
+    let skipped = 0;
+    const skipCount = offset ?? 0;
+    await new Promise<void>((resolve, reject) => {
+      const req = s.openKeyCursor(this.idbCursorRange(prefix));
+      req.onsuccess = () => {
+        const cursor = req.result;
+        if (!cursor) { resolve(); return; }
+        if (skipped < skipCount) { skipped++; cursor.continue(); return; }
+        results.push(cursor.key as string);
+        if (limit !== undefined && results.length >= limit) { resolve(); return; }
+        cursor.continue();
+      };
+      req.onerror = () => reject(req.error);
+    });
+    return results;
+  }
+
+  async aggregate(prefix: string, field: string, op: 'SUM' | 'AVG' | 'COUNT', where?: Record<string, unknown>): Promise<number> {
+    const s = await this.store('readonly');
+    let sum = 0; let count = 0;
+    await new Promise<void>((resolve, reject) => {
+      const req = s.openCursor(this.idbCursorRange(prefix));
+      req.onsuccess = () => {
+        const cursor = req.result;
+        if (!cursor) { resolve(); return; }
+        const obj = cursor.value as Record<string, unknown>;
+        if (!where || Object.entries(where).every(([k, v]) => obj[k] === v)) {
+          count++;
+          if (op !== 'COUNT') {
+            const v = obj[field];
+            if (typeof v === 'number') sum += v;
+          }
+        }
+        cursor.continue();
+      };
+      req.onerror = () => reject(req.error);
+    });
+    if (op === 'COUNT') return count;
+    if (op === 'AVG') return count > 0 ? sum / count : 0;
+    return sum;
+  }
+
   async query<T>(table: string, where: Partial<T>, parse: ParseFn<T>): Promise<T[]> {
     const keys = await this.list(table);
     const results: T[] = [];
