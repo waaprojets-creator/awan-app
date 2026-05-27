@@ -19,7 +19,7 @@ function makeSession(
   const end = start + durationMin * 60000;
   return {
     id: `s-${date}`,
-    v: 2,
+    v: 3,
     name: 'Test Session',
     date,
     startTime: start,
@@ -27,16 +27,22 @@ function makeSession(
     workoutEndedAt: end,
     duration: durationMin,
     sessionRPE,
+    rpe: sessionRPE,
+    tonnage: tonnageKg,
+    durationMin,
     recoveryScore: 7,
     solo: true,
     isException: false,
     exercises: tonnageKg > 0 ? [{
+      rid: 'r1',
       exerciseId: 'ex1',
       name: 'Squat',
+      order: 0,
       sets: [{
-        id: 's1', v: 2, kind: 'working' as const,
+        v: 2 as const, kind: 'working' as const,
+        exerciseId: 'ex1',
         weightKg: tonnageKg / 5, reps: 5,
-        restActualSec: 90, isCompleted: true,
+        restActualSec: 90,
       }],
     }] : [],
   } as WorkoutSessionLatest;

@@ -269,7 +269,8 @@ export default function MensurationScreen() {
     const whtr = waist && profileHeight ? waist / profileHeight : undefined;
     const whr = waist && hip ? waist / hip : undefined;
     measureStore.save({
-      v: 1, id: uid(), savedAt: Date.now(), ...entry, date: selectedDate,
+      v: 2 as const, id: uid(), savedAt: Date.now(), ...entry, date: selectedDate,
+      s13_sum: null, bf_pct_jp7: null, bf_pct_dw4: null, ffmi: null,
       ...(whtr !== undefined ? { whtr } : {}),
       ...(whr !== undefined ? { whr } : {}),
     });

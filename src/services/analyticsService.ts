@@ -20,7 +20,8 @@ export function computeACWR(
 
   if (recent7.length === 0 || recent28.length < 4) return null;
 
-  const rpeOf = (s: WorkoutSessionLatest) => s.sessionRPE ?? 7;
+  // rpe (V3+) preferred; fallback to sessionRPE (V1/V2) for migrated data
+  const rpeOf = (s: WorkoutSessionLatest) => s.rpe ?? s.sessionRPE ?? 7;
   const avg7 = recent7.reduce((acc, s) => acc + rpeOf(s), 0) / 7;
   const avg28 = recent28.reduce((acc, s) => acc + rpeOf(s), 0) / 28;
 
@@ -60,10 +61,15 @@ export function computeWeeklyTonnage(
   let tonnage = 0;
   for (const session of sessions) {
     if (session.date < monStr || session.date > sunStr) continue;
-    for (const ex of session.exercises) {
-      for (const s of ex.sets) {
-        if (s.kind === 'working' && s.weightKg && s.reps) {
-          tonnage += s.weightKg * s.reps;
+    // V3+: tonnage pre-computed at save time; V1/V2: iterate sets as fallback
+    if (typeof session.tonnage === 'number') {
+      tonnage += session.tonnage;
+    } else {
+      for (const ex of session.exercises) {
+        for (const s of ex.sets) {
+          if (s.kind === 'working' && s.weightKg && s.reps) {
+            tonnage += s.weightKg * s.reps;
+          }
         }
       }
     }

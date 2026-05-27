@@ -452,7 +452,7 @@ export default function SportScreen() {
  }));
 
  const sessionBase: WorkoutSessionLatest = {
- v: 2,
+ v: 3,
  id: activeSession.id,
  routineId: activeSession.routineId,
  name: activeSession.routineName,
@@ -467,12 +467,15 @@ export default function SportScreen() {
  availableTimeMin: activeSession.availableTimeMin,
  feeling: summary.feeling,
  sessionRPE: summary.sessionRPE,
+ rpe: summary.sessionRPE,
  recoveryScore: activeSession.recoveryScore,
  note: summary.note,
  isException: activeSession.isException,
  exercises: exercisesLog,
  exitedAt: summary.exitedAt,
- adherence: sessionAdherence({ v: 2, id: activeSession.id, routineId: activeSession.routineId, name: activeSession.routineName, cycleLetter: activeSession.cycleLetter, date: ds(new Date()), startTime: activeSession.startTime, endTime, duration: 0, solo: activeSession.solo, isException: activeSession.isException, exercises: exercisesLog }),
+ tonnage: exercisesLog.reduce((t, ex) => t + ex.sets.reduce((s, set) => set.kind === 'working' ? s + (set.weightKg ?? 0) * (set.reps ?? 0) : s, 0), 0),
+ durationMin: Math.round((endTime - activeSession.startTime) / 60000),
+ adherence: sessionAdherence({ v: 3, id: activeSession.id, routineId: activeSession.routineId, name: activeSession.routineName, cycleLetter: activeSession.cycleLetter, date: ds(new Date()), startTime: activeSession.startTime, endTime, duration: 0, solo: activeSession.solo, isException: activeSession.isException, exercises: exercisesLog, tonnage: 0, durationMin: 0 }),
  };
  const session: WorkoutSessionLatest = {
  ...sessionBase,
@@ -2034,21 +2037,7 @@ function FinishWorkout({
  const volume = workingSets.reduce((acc, s) => acc + (s.weightKg ?? 0) * (s.reps ?? 0), 0);
 
  // S4: density + best 1RM — build pseudo WorkoutSessionLatest from active session
- const pseudoSession: WorkoutSessionLatest = {
- v: 2,
- id: session.id,
- routineId: session.routineId,
- name: session.routineName,
- cycleLetter: session.cycleLetter,
- date: ds(new Date()),
- startTime: session.startTime,
- endTime: Date.now(),
- duration: Math.floor((Date.now() - session.startTime) / 1000),
- warmupStartedAt: session.warmupStartedAt,
- workoutEndedAt: session.workoutEndedAt ?? Date.now(),
- solo: session.solo,
- isException: session.isException,
- exercises: session.exercises.map(ex => ({
+ const pseudoExercises = session.exercises.map(ex => ({
  rid: ex.rid,
  exerciseId: ex.exerciseId,
  name: ex.name,
@@ -2057,7 +2046,7 @@ function FinishWorkout({
  equipment: ex.equipment,
  order: ex.order,
  sets: ex.sets.filter(s => s.completed).map<ExerciseSetLatest>(s => ({
- v: 2,
+ v: 2 as const,
  exerciseId: ex.exerciseId,
  kind: s.kind,
  reps: s.reps,
@@ -2068,7 +2057,25 @@ function FinishWorkout({
  restActualSec: s.restActualSec,
  completedAt: s.completedAt,
  })),
- })),
+ }));
+ const now = Date.now();
+ const pseudoSession: WorkoutSessionLatest = {
+ v: 3,
+ id: session.id,
+ routineId: session.routineId,
+ name: session.routineName,
+ cycleLetter: session.cycleLetter,
+ date: ds(new Date()),
+ startTime: session.startTime,
+ endTime: now,
+ duration: Math.floor((now - session.startTime) / 1000),
+ warmupStartedAt: session.warmupStartedAt,
+ workoutEndedAt: session.workoutEndedAt ?? now,
+ solo: session.solo,
+ isException: session.isException,
+ exercises: pseudoExercises,
+ tonnage: pseudoExercises.reduce((t, ex) => t + ex.sets.reduce((s, set) => set.kind === 'working' ? s + (set.weightKg ?? 0) * (set.reps ?? 0) : s, 0), 0),
+ durationMin: Math.round((now - session.startTime) / 60000),
  };
  const density = sessionDensity(pseudoSession);
  const oneRmMap = bestOneRmFromSession(pseudoSession);
