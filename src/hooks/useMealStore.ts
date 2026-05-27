@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MealService } from '@/services/mealService';
 import type { MealEntryLatest } from '@/data/schemas/nutrition/mealEntry';
+import { DbFullError } from '@/data/storage/IStorage';
+
+function dispatchDbFull() { window.dispatchEvent(new CustomEvent('awan:db-full')); }
 
 export function useMealStore(date: string) {
   const [meals, setMeals] = useState<MealEntryLatest[]>([]);
@@ -15,8 +18,13 @@ export function useMealStore(date: string) {
   }, [date]);
 
   const add = useCallback(async (entry: MealEntryLatest): Promise<void> => {
-    await MealService.save(entry);
-    setMeals(prev => [...prev, entry].sort((a, b) => a.timestamp - b.timestamp));
+    try {
+      await MealService.save(entry);
+      setMeals(prev => [...prev, entry].sort((a, b) => a.timestamp - b.timestamp));
+    } catch (err) {
+      if (err instanceof DbFullError) { dispatchDbFull(); return; }
+      throw err;
+    }
   }, []);
 
   const remove = useCallback(async (id: string): Promise<void> => {
@@ -25,12 +33,17 @@ export function useMealStore(date: string) {
   }, []);
 
   const update = useCallback(async (entry: MealEntryLatest): Promise<void> => {
-    await MealService.save(entry);
-    setMeals(prev =>
-      prev
-        .map(e => (e.id === entry.id ? entry : e))
-        .sort((a, b) => a.timestamp - b.timestamp),
-    );
+    try {
+      await MealService.save(entry);
+      setMeals(prev =>
+        prev
+          .map(e => (e.id === entry.id ? entry : e))
+          .sort((a, b) => a.timestamp - b.timestamp),
+      );
+    } catch (err) {
+      if (err instanceof DbFullError) { dispatchDbFull(); return; }
+      throw err;
+    }
   }, []);
 
   const totals = MealService.totals(meals);

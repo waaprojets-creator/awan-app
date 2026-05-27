@@ -38,6 +38,7 @@ import { OrthometryTab } from './analyse/OrthometryTab';
 import { FluxDensiteTab } from './analyse/FluxDensiteTab';
 import { SynoptiqueTab } from './analyse/SynoptiqueTab';
 import { MetaboliqueTab } from './analyse/MetaboliqueTab';
+import { IslamTab } from './analyse/IslamTab';
 
 const FREE_KEY = '_free';
 const FREE_COLOR = 'rgba(212, 175, 55, 0.05)';
@@ -55,6 +56,7 @@ const TABS = [
   { id: 'measures',  label: 'CORPO',   Icon: Ruler },
   { id: 'ortho',     label: 'ORTHO',   Icon: Ruler },
   { id: 'cross',     label: 'CORRÉLA.',Icon: TrendingUp },
+  { id: 'islam',     label: 'ISLAM',   Icon: Heart },
 ];
 
 const RANGES = [
@@ -307,6 +309,8 @@ export default function AnalyseScreen() {
                 todayKcal={mealStoreToday.totals.kcal}
               />
             )}
+
+            {tab === 'islam' && <IslamTab />}
           </motion.div>
         </AnimatePresence>
       </ScrollView>

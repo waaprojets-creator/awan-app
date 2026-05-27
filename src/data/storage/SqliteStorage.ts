@@ -1,5 +1,6 @@
 import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite';
 import type { IStorage, ITransaction, ParseFn } from './IStorage';
+import { DbFullError } from './IStorage';
 
 const DB_VERSION = 1;
 
@@ -58,10 +59,18 @@ export class SqliteStorage implements IStorage {
 
   async set<T>(key: string, value: T): Promise<void> {
     const json = JSON.stringify(value);
-    await this.handle.run(
-      'INSERT INTO kv (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
-      [key, json],
-    );
+    try {
+      await this.handle.run(
+        'INSERT INTO kv (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+        [key, json],
+      );
+    } catch (err) {
+      const msg = String(err);
+      if (msg.includes('disk I/O error') || msg.includes('database or disk is full') || msg.includes('SQLITE_FULL')) {
+        throw new DbFullError();
+      }
+      throw err;
+    }
   }
 
   async delete(key: string): Promise<void> {

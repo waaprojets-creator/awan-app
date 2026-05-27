@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { WeightService } from '@/services/weightService';
 import type { WeightEntryLatest } from '@/data/schemas/body/weightEntry';
+import { DbFullError } from '@/data/storage/IStorage';
+
+function dispatchDbFull() { window.dispatchEvent(new CustomEvent('awan:db-full')); }
 
 export function useWeightStore() {
   const [entries, setEntries] = useState<WeightEntryLatest[]>([]);
@@ -15,17 +18,27 @@ export function useWeightStore() {
   }, []);
 
   const add = useCallback(async (entry: WeightEntryLatest): Promise<void> => {
-    await WeightService.save(entry);
-    setEntries(prev => [entry, ...prev.filter(e => e.id !== entry.id)]
-      .sort((a, b) => b.date.localeCompare(a.date)));
+    try {
+      await WeightService.save(entry);
+      setEntries(prev => [entry, ...prev.filter(e => e.id !== entry.id)]
+        .sort((a, b) => b.date.localeCompare(a.date)));
+    } catch (err) {
+      if (err instanceof DbFullError) { dispatchDbFull(); return; }
+      throw err;
+    }
   }, []);
 
   const update = useCallback(async (entry: WeightEntryLatest): Promise<void> => {
-    await WeightService.save(entry);
-    setEntries(prev =>
-      prev.map(e => e.id === entry.id ? entry : e)
-        .sort((a, b) => b.date.localeCompare(a.date)),
-    );
+    try {
+      await WeightService.save(entry);
+      setEntries(prev =>
+        prev.map(e => e.id === entry.id ? entry : e)
+          .sort((a, b) => b.date.localeCompare(a.date)),
+      );
+    } catch (err) {
+      if (err instanceof DbFullError) { dispatchDbFull(); return; }
+      throw err;
+    }
   }, []);
 
   const remove = useCallback(async (id: string): Promise<void> => {

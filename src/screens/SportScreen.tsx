@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { ScrollView, TextInput as RNTextInput, Modal, Alert, FlatList as RNFlatList } from 'react-native';
+import { ScrollView, TextInput as RNTextInput, Modal, FlatList as RNFlatList } from 'react-native';
 
 const TextInput = RNTextInput as React.ComponentType<any>;
 const FlatList = RNFlatList as React.ComponentType<any>;
@@ -281,6 +281,7 @@ export default function SportScreen() {
  const [resumeModal, setResumeModal] = useState<ActiveSession | null>(null);
  const [draftResumeModal, setDraftResumeModal] = useState<RoutineDraft | null>(null);
  const [draftToResume, setDraftToResume] = useState<RoutineDraft | null>(null);
+ const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
  const [timer, setTimer] = useState(0);
  const timerRef = useRef<any>(null);
  const prevSessionVolumeRef = useRef<number | null>(null);
@@ -517,11 +518,8 @@ export default function SportScreen() {
  }, [activeSession, workoutStore, addEntry]);
 
  const deleteRoutine = useCallback((r: RoutineLatest) => {
- Alert.alert('Suppression', `Supprimer la routine "${r.name}" ?`, [
- { text: 'Annuler', style: 'cancel' },
- { text: 'Supprimer', style: 'destructive', onPress: () => workoutStore.deleteRoutine(r.id) },
- ]);
- }, [workoutStore]);
+ setConfirmDeleteId(r.id);
+ }, []);
 
  if (view === 'recovery' && pendingRoutine) {
  return (
@@ -846,9 +844,20 @@ export default function SportScreen() {
  <Touch onPress={(e: any) => { e.stopPropagation(); setEditingRoutine(r); setView('edit'); }}>
  <Info size={16} className="text-awan-tx-mute" />
  </Touch>
+ {confirmDeleteId === r.id ? (
+ <div className="flex flex-row items-center gap-2">
+ <Touch onPress={(e: any) => { e.stopPropagation(); workoutStore.deleteRoutine(r.id); setConfirmDeleteId(null); }}>
+ <span style={{ color: 'var(--color-awan-status-error)', fontSize: 11, fontWeight: 900, letterSpacing: '0.1em' }}>SUPPR</span>
+ </Touch>
+ <Touch onPress={(e: any) => { e.stopPropagation(); setConfirmDeleteId(null); }}>
+ <X size={14} className="text-awan-tx-mute" />
+ </Touch>
+ </div>
+ ) : (
  <Touch onPress={(e: any) => { e.stopPropagation(); deleteRoutine(r); }}>
  <Trash2 size={16} className="text-white/20" />
  </Touch>
+ )}
  </div>
  </div>
  <div className="flex flex-row items-center gap-3">
@@ -959,6 +968,7 @@ function RoutineEditor({
  );
  const [isPicking, setIsPicking] = useState(false);
  const [viewingEx, setViewingEx] = useState<ExerciseEntry | null>(null);
+ const [saveError, setSaveError] = useState('');
 
  // S1.2 — Persistance debouncée du draft de routine
  useEffect(() => {
@@ -1006,8 +1016,9 @@ function RoutineEditor({
 
  const handleSave = useCallback(() => {
  const trimmed = name.trim();
- if (!trimmed) { Alert.alert('Erreur', 'Donne un nom à la routine'); return; }
- if (exercises.length === 0) { Alert.alert('Erreur', 'Ajoute au moins un exercice'); return; }
+ if (!trimmed) { setSaveError('Donne un nom à la routine'); return; }
+ if (exercises.length === 0) { setSaveError('Ajoute au moins un exercice'); return; }
+ setSaveError('');
  const routine: RoutineLatest = {
  v: 1,
  id: existing?.id ?? uid(),
@@ -1040,10 +1051,11 @@ function RoutineEditor({
  <TextInput
  className="bg-white/5 border border-white/5 p-5 text-awan-tx font-bold text-base"
  value={name}
- onChangeText={setName}
+ onChangeText={(v: string) => { setName(v); if (saveError) setSaveError(''); }}
  placeholder="Push, Pull, Legs..."
  placeholderTextColor="#3a3a3a"
  />
+ {saveError ? <span style={{ color: 'var(--color-awan-status-error)', fontSize: 11, fontWeight: 700, marginTop: 6, display: 'block' }}>{saveError}</span> : null}
  </div>
 
  <div className="mb-6">
@@ -1453,6 +1465,7 @@ function ActiveWorkout({
  const [restRemaining, setRestRemaining] = useState(0);
  const prevRestRef = useRef<number>(0);
  const [substituteTarget, setSubstituteTarget] = useState<{ exIdx: number; muscle: string } | null>(null);
+ const [confirmAbandon, setConfirmAbandon] = useState(false);
 
  useEffect(() => {
  if (prevRestRef.current > 0 && restRemaining === 0) notifyRestEnd();
@@ -1673,15 +1686,24 @@ function ActiveWorkout({
  </Card>
  ))}
 
+ {confirmAbandon ? (
+ <div className="mt-6 py-4 flex flex-row items-center justify-center gap-4">
+ <span style={{ color: 'var(--color-awan-tx-mute)', fontSize: 11, fontWeight: 700, letterSpacing: '0.15em' }}>QUITTER SANS SAUVEGARDER ?</span>
+ <Touch onPress={onAbort}>
+ <span style={{ color: 'var(--color-awan-status-error)', fontSize: 11, fontWeight: 900, letterSpacing: '0.1em' }}>OUI</span>
+ </Touch>
+ <Touch onPress={() => setConfirmAbandon(false)}>
+ <span style={{ color: 'var(--color-awan-tx-mute)', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em' }}>NON</span>
+ </Touch>
+ </div>
+ ) : (
  <Touch
  className="mt-6 py-4 items-center"
- onPress={() => Alert.alert('Abandon', 'Quitter la séance sans sauvegarder ?', [
- { text: 'Non', style: 'cancel' },
- { text: 'Oui', style: 'destructive', onPress: onAbort },
- ])}
+ onPress={() => setConfirmAbandon(true)}
  >
  <span className="text-awan-md font-black text-awan-status-error uppercase tracking-[0.3em] opacity-50">ANNULER LA SÉANCE</span>
  </Touch>
+ )}
  </ScrollView>
 
  {/* S3: Substitution modal */}

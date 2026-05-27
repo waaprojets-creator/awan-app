@@ -81,8 +81,6 @@ function CrescentMoon({ color }: { color: string }) {
            C13.6 6.9 12.96 5.24 11.9 3.96 C15.12 4.86 17.5 8.16 17.5 12 Z"
         stroke={color} strokeWidth="1.5" strokeLinejoin="round"
       />
-      <line x1="17.5" y1="4.5" x2="17.5" y2="2.8" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
-      <line x1="17.5" y1="19.5" x2="17.5" y2="21.2" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
     </svg>
   );
 }

@@ -1,6 +1,10 @@
 /** Parse + migrate function: accepts raw unknown, returns typed T or throws. */
 export type ParseFn<T> = (raw: unknown) => T;
 
+export class DbFullError extends Error {
+  constructor() { super('AWAN storage quota exceeded'); this.name = 'DbFullError'; }
+}
+
 export interface ITransaction {
   get<T>(key: string, parse: ParseFn<T>): Promise<T | null>;
   set<T>(key: string, value: T): Promise<void>;

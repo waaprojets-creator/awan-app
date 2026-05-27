@@ -139,4 +139,13 @@ export const IslamService = {
       .filter((s): s is QuranSessionLatest => s !== null && s.date >= from && s.date <= to)
       .sort((a, b) => a.date.localeCompare(b.date));
   },
+
+  async getPrayerLogsByDateRange(from: string, to: string): Promise<PrayerLogLatest[]> {
+    const storage = await getStorage();
+    const keys = await storage.listByPrefix(PRAYER_LOG_PREFIX);
+    const all = await Promise.all(keys.map(k => storage.get(k, migratePrayerLog)));
+    return all
+      .filter((l): l is PrayerLogLatest => l !== null && l.date >= from && l.date <= to)
+      .sort((a, b) => a.date.localeCompare(b.date));
+  },
 };

@@ -10,7 +10,7 @@ import { safeStorage } from '../utils/safeStorage';
 import { useAppState } from '../context/AppStateContext';
 import { usePrayerStore } from '../hooks/usePrayerStore';
 import { useQuranStore } from '../hooks/useQuranStore';
-import type { PrayerName } from '../data/schemas/islam/prayerLog';
+import type { PrayerNameV2 } from '../data/schemas/islam/prayerLog';
 import { InstrumentCard } from '../components/ui/InstrumentCard';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
@@ -230,6 +230,12 @@ export default function IslamScreen() {
   const prayerStore = usePrayerStore(selectedDate);
   const quranStore = useQuranStore();
 
+  const [sessionAyahs, setSessionAyahs] = useState('');
+  const [sessionTime, setSessionTime] = useState(() => {
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  });
+
   const isToday = selectedDate === todayStr;
   const isPast = selectedDate < todayStr;
 
@@ -320,7 +326,15 @@ export default function IslamScreen() {
     else setHijriMonth(m => m + 1);
   };
 
-  const prayers = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
+  const PRAYER_ROWS: { key: PrayerNameV2; label: string; fard: boolean }[] = [
+    { key: 'fajr',        label: 'FAJR',         fard: true  },
+    { key: 'fajr_sunnah', label: 'SUNNAH FAJR',  fard: false },
+    { key: 'dhuhr',       label: 'DHUHR',        fard: true  },
+    { key: 'asr',         label: 'ASR',          fard: true  },
+    { key: 'maghrib',     label: 'MAGHRIB',      fard: true  },
+    { key: 'isha',        label: "ISHA'",         fard: true  },
+    { key: 'witr',        label: 'WITR',         fard: false },
+  ];
   const canEdit = isPast || isToday;
 
   return (
@@ -416,44 +430,71 @@ export default function IslamScreen() {
               </span>
             )}
           </div>
-          {prayers.map((key) => {
-            const time: Date | undefined = (prayerTimesForDate as Record<string, Date | undefined>)[key];
+          {PRAYER_ROWS.map(({ key, label, fard }) => {
+            const computedTime: Date | undefined = (prayerTimesForDate as Record<string, Date | undefined>)[key];
             const isNext = isToday && prayerTimesForDate.next === key;
-            const isSunrise = key === 'sunrise';
-            const done = !isSunrise && prayerStore.isDone(key as PrayerName);
-            const timeLabel = time instanceof Date
-              ? `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`
-              : '--:--';
-            const canToggle = !isSunrise && (isToday || isPast);
+            const done = prayerStore.isDone(key);
+            const storedTime = prayerStore.getTime(key);
+            const computedLabel = computedTime instanceof Date
+              ? `${String(computedTime.getHours()).padStart(2, '0')}:${String(computedTime.getMinutes()).padStart(2, '0')}`
+              : undefined;
+            const displayTime = storedTime ?? computedLabel ?? '--:--';
+            const canToggle = isToday || isPast;
 
             return (
-              <Touch
+              <div
                 key={key}
-                onPress={() => canToggle && prayerStore.toggle(key as PrayerName)}
-                className="flex flex-row justify-between items-center px-4 py-4 border-b"
+                className="flex flex-row justify-between items-center px-4 py-3 border-b"
                 style={{ borderColor: 'var(--color-awan-border-soft)', backgroundColor: isNext ? 'rgba(212,175,55,0.06)' : done ? 'rgba(78,205,196,0.04)' : 'transparent' }}
               >
+                <Touch
+                  onPress={() => canToggle && prayerStore.toggle(key, storedTime)}
+                  className="flex flex-row items-center gap-3 flex-1"
+                >
+                  <div style={{ width: 3, height: 28, backgroundColor: done ? 'var(--color-awan-status-ok)' : isNext ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.08)' }} />
+                  <div className="flex flex-col">
+                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: done ? 'var(--color-awan-status-ok)' : isNext ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)' }}>
+                      {label}
+                    </span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', fontWeight: 700, letterSpacing: '0.2em', color: fard ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)', opacity: 0.6 }}>
+                      {fard ? 'FARD' : 'NAFL'}
+                    </span>
+                  </div>
+                </Touch>
                 <div className="flex flex-row items-center gap-3">
-                  <div style={{ width: 3, height: 32, backgroundColor: done ? 'var(--color-awan-status-ok)' : isNext ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.08)' }} />
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: done ? 'var(--color-awan-status-ok)' : isNext ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)' }}>
-                    {SpiritualService.translatePrayer(key)}
-                  </span>
-                </div>
-                <div className="flex flex-row items-center gap-4">
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', fontWeight: 700, color: done ? 'var(--color-awan-status-ok)' : isNext ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)' }}>
-                    {timeLabel}
-                  </span>
-                  {isSunrise ? <div style={{ width: 16 }} /> : done ? (
-                    <CheckCircle2 size={16} color="var(--color-awan-status-ok)" />
-                  ) : isNext ? (
-                    <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
-                      <Clock size={16} color="var(--color-awan-gold)" />
-                    </motion.div>
+                  {canToggle ? (
+                    <input
+                      type="time"
+                      value={storedTime ?? computedLabel ?? ''}
+                      disabled={done && !canEdit}
+                      onChange={(e) => { if (canEdit) void prayerStore.setTime(key, e.target.value); }}
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700,
+                        color: done ? 'var(--color-awan-status-ok)' : isNext ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)',
+                        backgroundColor: 'transparent', border: 'none', outline: 'none', width: 80,
+                        opacity: done ? 1 : 0.6,
+                        colorScheme: 'dark',
+                      }}
+                    />
                   ) : (
-                    <div style={{ width: 16, height: 16, border: '1px solid rgba(255,255,255,0.2)' }} />
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700, color: done ? 'var(--color-awan-status-ok)' : 'var(--color-awan-tx)' }}>
+                      {displayTime}
+                    </span>
                   )}
+                  <Touch onPress={() => canToggle && prayerStore.toggle(key, storedTime)}>
+                    {done ? (
+                      <CheckCircle2 size={16} color="var(--color-awan-status-ok)" />
+                    ) : isNext ? (
+                      <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
+                        <Clock size={16} color="var(--color-awan-gold)" />
+                      </motion.div>
+                    ) : (
+                      <div style={{ width: 16, height: 16, border: '1px solid rgba(255,255,255,0.2)' }} />
+                    )}
+                  </Touch>
                 </div>
-              </Touch>
+              </div>
             );
           })}
         </div>
@@ -649,18 +690,59 @@ export default function IslamScreen() {
                   </div>
                 </div>
                 <div className="h-px mb-4" style={{ backgroundColor: 'var(--color-awan-border)' }} />
-                <div className="flex flex-row gap-2">
-                  <Touch onPress={() => quranStore.advance(1)} className="flex-1 flex items-center justify-center gap-2 p-3 border" style={{ borderColor: 'rgba(212,175,55,0.3)', backgroundColor: 'rgba(212,175,55,0.06)' }}>
-                    <Plus size={14} color="var(--color-awan-gold)" />
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-gold)', letterSpacing: '0.2em' }}>+1</span>
-                  </Touch>
-                  <Touch onPress={() => quranStore.advance(5)} className="flex-1 flex items-center justify-center gap-2 p-3" style={{ backgroundColor: 'var(--color-awan-gold)' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-bg)', letterSpacing: '0.2em' }}>+5</span>
-                  </Touch>
-                  <Touch onPress={() => quranStore.advance(-1)} className="flex items-center justify-center p-3 border" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
-                    <Minus size={14} color="var(--color-awan-tx-mute)" />
+                {/* Formulaire session Wird */}
+                <div className="flex flex-row gap-2 mb-3">
+                  <input
+                    type="number"
+                    min="1"
+                    max="6236"
+                    placeholder="Versets"
+                    value={sessionAyahs}
+                    onChange={(e) => setSessionAyahs(e.target.value)}
+                    style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', padding: '8px 12px', fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700, color: 'var(--color-awan-tx)', outline: 'none', colorScheme: 'dark' }}
+                  />
+                  <input
+                    type="time"
+                    value={sessionTime}
+                    onChange={(e) => setSessionTime(e.target.value)}
+                    style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', padding: '8px 12px', fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700, color: 'var(--color-awan-gold)', outline: 'none', colorScheme: 'dark' }}
+                  />
+                  <Touch
+                    onPress={async () => {
+                      const n = parseInt(sessionAyahs, 10);
+                      if (!n || n < 1) return;
+                      const surah = quranStore.progress?.currentSurah ?? 1;
+                      const ayah = quranStore.progress?.currentAyah ?? 1;
+                      await quranStore.addSession(n, surah, ayah, sessionTime);
+                      setSessionAyahs('');
+                    }}
+                    className="flex items-center justify-center px-4"
+                    style={{ backgroundColor: 'var(--color-awan-gold)' }}
+                  >
+                    <Plus size={16} color="var(--color-awan-bg)" strokeWidth={3} />
                   </Touch>
                 </div>
+                {/* Liste sessions du jour */}
+                {quranStore.sessions.length > 0 && (
+                  <div className="flex flex-col gap-1">
+                    {quranStore.sessions.map(s => {
+                      const t = new Date(s.timestamp);
+                      const hhmm = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
+                      return (
+                        <div key={s.id} className="flex flex-row items-center justify-between px-3 py-2" style={{ backgroundColor: 'rgba(212,175,55,0.04)', borderLeft: '2px solid var(--color-awan-gold)' }}>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.15em' }}>{hhmm}</span>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 700, color: 'var(--color-awan-tx)' }}>{s.ayahsRead} versets</span>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.1em' }}>S{s.surahStart}:{s.ayahStart}</span>
+                        </div>
+                      );
+                    })}
+                    <div className="flex flex-row justify-end mt-1">
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-gold)', letterSpacing: '0.2em' }}>
+                        TOTAL : {quranStore.sessions.reduce((s, e) => s + e.ayahsRead, 0)} VERSETS
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="py-6 flex flex-col items-center gap-4">
