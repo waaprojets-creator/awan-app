@@ -223,7 +223,7 @@ export default function AnalyseScreen() {
                   onPress={() => setTab(id)}
                 >
                   <Icon size={16} className={tab === id ? 'text-awan-gold' : 'text-awan-tx-mute'} />
-                  <span className={`text-[9px] font-black uppercase tracking-widest mt-1 ${tab === id ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{label}</span>
+                  <span className={`awan-label-sm mt-1 ${tab === id ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{label}</span>
                 </Touch>
               ))}
             </div>
