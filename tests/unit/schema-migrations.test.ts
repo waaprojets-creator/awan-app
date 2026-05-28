@@ -103,8 +103,11 @@ describe('MeasurementEntry V1 → V2 migration', () => {
 
   it('champs V1 préservés après migration', () => {
     const migrated = migrateMeasurement(makeV1());
-    expect(migrated.weight).toBe(80);
+    // weight est retiré en V2 (stocké dans WeightEntry)
+    expect((migrated as any).weight).toBeUndefined();
     expect(migrated.date).toBe('2026-01-01');
+    expect(migrated.bpm_rest).toBe(60);
+    expect(migrated.body_fat_pct).toBe(15);
   });
 });
 
@@ -132,9 +135,10 @@ describe('PrayerLog V1 → V2 migration', () => {
     expect(migrated.prayers.witr).toBe(false);
   });
 
-  it('prières V1 préservées', () => {
+  it('prières V1 préservées (fajr → sobh en V2)', () => {
     const migrated = migratePrayerLog(makeV1({ fajr: true, dhuhr: true }));
-    expect(migrated.prayers.fajr).toBe(true);
+    // en V2, 'fajr' (V1) devient 'sobh'
+    expect(migrated.prayers.sobh).toBe(true);
     expect(migrated.prayers.dhuhr).toBe(true);
     expect(migrated.prayers.asr).toBe(false);
   });
@@ -164,7 +168,7 @@ describe('PrayerLog V1 → V2 migration', () => {
 describe('computePrayerScores', () => {
   it('7 prières vraies → adherenceScore = 1, fardScore = 1', () => {
     const scores = computePrayerScores({
-      fajr: true, fajr_sunnah: true, dhuhr: true,
+      sobh: true, fajr_sunnah: true, dhuhr: true,
       asr: true, maghrib: true, isha: true, witr: true,
     });
     expect(scores.adherenceScore).toBe(1);
@@ -173,7 +177,7 @@ describe('computePrayerScores', () => {
 
   it('aucune prière → scores = 0', () => {
     const scores = computePrayerScores({
-      fajr: false, fajr_sunnah: false, dhuhr: false,
+      sobh: false, fajr_sunnah: false, dhuhr: false,
       asr: false, maghrib: false, isha: false, witr: false,
     });
     expect(scores.adherenceScore).toBe(0);

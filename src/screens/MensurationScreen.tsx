@@ -983,11 +983,11 @@ export default function MensurationScreen() {
                     <div className="flex flex-row items-start justify-between mb-2">
                       <span className="text-awan-xxs font-black text-awan-gold tracking-widest uppercase">{label}</span>
                       <div className="flex flex-row gap-1">
-                        {isInJP7 && <span className="text-[9px] font-black tracking-wide px-1 py-0.5" style={{ background: 'rgba(212,175,55,0.15)', color: 'var(--color-awan-gold)' }}>JP7</span>}
-                        {isInDW4 && <span className="text-[9px] font-black tracking-wide px-1 py-0.5" style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--color-awan-tx-mute)' }}>DW4</span>}
+                        {isInJP7 && <span className="text-awan-sm font-black tracking-wide px-1 py-0.5" style={{ background: 'rgba(212,175,55,0.15)', color: 'var(--color-awan-gold)' }}>JP7</span>}
+                        {isInDW4 && <span className="text-awan-sm font-black tracking-wide px-1 py-0.5" style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--color-awan-tx-mute)' }}>DW4</span>}
                       </div>
                     </div>
-                    <span className="text-[9px] text-awan-tx-mute block mb-2 leading-tight">{note}</span>
+                    <span className="text-awan-sm text-awan-tx-mute block mb-2 leading-tight">{note}</span>
                     <div className="flex flex-row items-baseline gap-2">
                       <TextInput
                         className="text-2xl font-black font-mono text-awan-tx outline-none flex-1"
@@ -1025,7 +1025,7 @@ export default function MensurationScreen() {
                   <span className="text-awan-xs font-black text-awan-gold tracking-widest uppercase block mb-4">MATRICE DE SUIVI</span>
                   <div className="grid grid-cols-4 gap-2 mb-2">
                     {(['S13', '%G 13P', '%G JP7', '%G DW4'] as const).map(h => (
-                      <span key={h} className="text-[9px] font-black text-awan-tx-mute tracking-widest uppercase text-center">{h}</span>
+                      <span key={h} className="text-awan-sm font-black text-awan-tx-mute tracking-widest uppercase text-center">{h}</span>
                     ))}
                   </div>
                   <div className="grid grid-cols-4 gap-2 border-t border-white/5 pt-2">

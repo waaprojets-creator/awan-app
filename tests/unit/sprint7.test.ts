@@ -33,29 +33,29 @@ describe('IslamService — prayer log', () => {
   });
 
   it('togglePrayer crée un log et coche la prière', async () => {
-    const log = await IslamService.togglePrayer(DATE, 'fajr', UUID1);
-    expect(log.prayers.fajr).toBe(true);
+    const log = await IslamService.togglePrayer(DATE, 'sobh', UUID1);
+    expect(log.prayers.sobh).toBe(true);
     expect(log.prayers.dhuhr).toBe(false);
     expect(log.date).toBe(DATE);
   });
 
   it('togglePrayer décoche une prière déjà cochée', async () => {
-    await IslamService.togglePrayer(DATE, 'fajr', UUID1);
-    const log = await IslamService.togglePrayer(DATE, 'fajr', UUID1);
-    expect(log.prayers.fajr).toBe(false);
+    await IslamService.togglePrayer(DATE, 'sobh', UUID1);
+    const log = await IslamService.togglePrayer(DATE, 'sobh', UUID1);
+    expect(log.prayers.sobh).toBe(false);
   });
 
   it('plusieurs prières indépendantes', async () => {
-    await IslamService.togglePrayer(DATE, 'fajr', UUID1);
+    await IslamService.togglePrayer(DATE, 'sobh', UUID1);
     await IslamService.togglePrayer(DATE, 'dhuhr', UUID1);
     const log = await IslamService.getPrayerLog(DATE);
-    expect(log?.prayers.fajr).toBe(true);
+    expect(log?.prayers.sobh).toBe(true);
     expect(log?.prayers.dhuhr).toBe(true);
     expect(log?.prayers.asr).toBe(false);
   });
 
   it('toggle ne touche pas aux prières des autres jours', async () => {
-    await IslamService.togglePrayer(DATE, 'fajr', UUID1);
+    await IslamService.togglePrayer(DATE, 'sobh', UUID1);
     await IslamService.togglePrayer('2026-05-09', 'isha', UUID2);
     const log = await IslamService.getPrayerLog(DATE);
     expect(log?.prayers.isha).toBe(false);

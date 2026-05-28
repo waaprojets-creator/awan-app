@@ -80,7 +80,8 @@ describe('MeasurementService', () => {
   it('sauvegarde et récupère par date', async () => {
     await MeasurementService.save(makeMeasure('2026-05-10'));
     const entry = await MeasurementService.getByDate('2026-05-10');
-    expect(entry?.weight).toBe(82.5);
+    // weight est retiré en V2 (stocké dans WeightEntry séparément)
+    expect((entry as any)?.weight).toBeUndefined();
     expect(entry?.body_fat_pct).toBe(14.5);
   });
 
@@ -91,10 +92,11 @@ describe('MeasurementService', () => {
 
   it('écrase l\'entrée du même jour (un enregistrement par jour)', async () => {
     await MeasurementService.save(makeMeasure('2026-05-10'));
-    await MeasurementService.save({ ...makeMeasure('2026-05-10'), weight: 83.0 });
+    await MeasurementService.save({ ...makeMeasure('2026-05-10'), bpm_rest: 65 });
     const all = await MeasurementService.getAll();
     expect(all).toHaveLength(1);
-    expect(all[0].weight).toBe(83.0);
+    // bpm_rest mis à jour, weight absent (V2)
+    expect(all[0].bpm_rest).toBe(65);
   });
 
   it('getAll retourne l\'historique trié par date', async () => {

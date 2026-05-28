@@ -301,7 +301,7 @@ export default function ScanTab() {
               {r.label}
             </span>
             <span
-              className="text-[9px] font-black tracking-widest uppercase block mt-0.5"
+              className="text-awan-sm font-black tracking-widest uppercase block mt-0.5"
               style={{ color: scanRange === r.id ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)', opacity: 0.6 }}
             >
               {r.sublabel}
@@ -340,8 +340,8 @@ export default function ScanTab() {
               <circle cx="12" cy="5" r="3" fill="var(--color-awan-gold)" />
             </svg>
             <div>
-              <span className="text-[10px] font-black tracking-widest uppercase" style={{ color: 'var(--color-awan-gold)' }}>13 PLIS</span>
-              <span className="text-[9px] block" style={{ color: 'var(--color-awan-tx-mute)' }}>Haute densité · {has13 ? `${series13.filter(p => p.v !== null).length} pts` : '—'}</span>
+              <span className="text-awan-md font-black tracking-widest uppercase" style={{ color: 'var(--color-awan-gold)' }}>13 PLIS</span>
+              <span className="text-awan-sm block" style={{ color: 'var(--color-awan-tx-mute)' }}>Haute densité · {has13 ? `${series13.filter(p => p.v !== null).length} pts` : '—'}</span>
             </div>
           </div>
           <div className="flex flex-row items-center gap-2">
@@ -350,8 +350,8 @@ export default function ScanTab() {
               <circle cx="12" cy="5" r="3" fill="var(--color-awan-tx)" fillOpacity="0.8" />
             </svg>
             <div>
-              <span className="text-[10px] font-black tracking-widest uppercase" style={{ color: 'var(--color-awan-tx)' }}>JP7</span>
-              <span className="text-[9px] block" style={{ color: 'var(--color-awan-tx-mute)' }}>Athlétique · 7 sites · {hasJP7 ? `${seriesJP7.filter(p => p.v !== null).length} pts` : '—'}</span>
+              <span className="text-awan-md font-black tracking-widest uppercase" style={{ color: 'var(--color-awan-tx)' }}>JP7</span>
+              <span className="text-awan-sm block" style={{ color: 'var(--color-awan-tx-mute)' }}>Athlétique · 7 sites · {hasJP7 ? `${seriesJP7.filter(p => p.v !== null).length} pts` : '—'}</span>
             </div>
           </div>
           <div className="flex flex-row items-center gap-2">
@@ -360,8 +360,8 @@ export default function ScanTab() {
               <circle cx="12" cy="5" r="3" fill="var(--color-awan-tx-mute)" fillOpacity="0.7" />
             </svg>
             <div>
-              <span className="text-[10px] font-black tracking-widest uppercase" style={{ color: 'var(--color-awan-tx-mute)' }}>DW4</span>
-              <span className="text-[9px] block" style={{ color: 'var(--color-awan-tx-mute)' }}>Population générale · 4 sites · {hasDW4 ? `${seriesDW4.filter(p => p.v !== null).length} pts` : '—'}</span>
+              <span className="text-awan-md font-black tracking-widest uppercase" style={{ color: 'var(--color-awan-tx-mute)' }}>DW4</span>
+              <span className="text-awan-sm block" style={{ color: 'var(--color-awan-tx-mute)' }}>Population générale · 4 sites · {hasDW4 ? `${seriesDW4.filter(p => p.v !== null).length} pts` : '—'}</span>
             </div>
           </div>
         </div>
@@ -372,29 +372,29 @@ export default function ScanTab() {
         <div className="grid grid-cols-3 gap-3">
           {latest.bf13 !== null && (
             <Card className="p-4 bg-white/3 border-white/5" variant="flat">
-              <span className="text-[9px] font-black tracking-widest uppercase block mb-1" style={{ color: 'var(--color-awan-gold)' }}>13 PLIS</span>
+              <span className="text-awan-sm font-black tracking-widest uppercase block mb-1" style={{ color: 'var(--color-awan-gold)' }}>13 PLIS</span>
               <span className="text-2xl font-black font-mono" style={{ color: 'var(--color-awan-gold)' }}>
                 {latest.bf13}<span className="text-xs ml-0.5" style={{ color: 'var(--color-awan-tx-mute)' }}>%</span>
               </span>
-              <span className="text-[9px] font-black uppercase tracking-widest block mt-1" style={{ color: 'var(--color-awan-tx-mute)' }}>{latest.date.slice(5).replace('-', '/')}</span>
+              <span className="text-awan-sm font-black uppercase tracking-widest block mt-1" style={{ color: 'var(--color-awan-tx-mute)' }}>{latest.date.slice(5).replace('-', '/')}</span>
             </Card>
           )}
           {latest.bfJP7 !== null && (
             <Card className="p-4 bg-white/3 border-white/5" variant="flat">
-              <span className="text-[9px] font-black tracking-widest uppercase block mb-1" style={{ color: 'var(--color-awan-tx)' }}>JP7</span>
+              <span className="text-awan-sm font-black tracking-widest uppercase block mb-1" style={{ color: 'var(--color-awan-tx)' }}>JP7</span>
               <span className="text-2xl font-black font-mono" style={{ color: 'var(--color-awan-tx)' }}>
                 {latest.bfJP7}<span className="text-xs ml-0.5" style={{ color: 'var(--color-awan-tx-mute)' }}>%</span>
               </span>
-              <span className="text-[9px] font-black uppercase tracking-widest block mt-1" style={{ color: 'var(--color-awan-tx-mute)' }}>{latest.date.slice(5).replace('-', '/')}</span>
+              <span className="text-awan-sm font-black uppercase tracking-widest block mt-1" style={{ color: 'var(--color-awan-tx-mute)' }}>{latest.date.slice(5).replace('-', '/')}</span>
             </Card>
           )}
           {latest.bfDW4 !== null && (
             <Card className="p-4 bg-white/3 border-white/5" variant="flat">
-              <span className="text-[9px] font-black tracking-widest uppercase block mb-1" style={{ color: 'var(--color-awan-tx-mute)' }}>DW4</span>
+              <span className="text-awan-sm font-black tracking-widest uppercase block mb-1" style={{ color: 'var(--color-awan-tx-mute)' }}>DW4</span>
               <span className="text-2xl font-black font-mono" style={{ color: 'var(--color-awan-tx-mute)' }}>
                 {latest.bfDW4}<span className="text-xs ml-0.5">%</span>
               </span>
-              <span className="text-[9px] font-black uppercase tracking-widest block mt-1" style={{ color: 'var(--color-awan-tx-mute)' }}>{latest.date.slice(5).replace('-', '/')}</span>
+              <span className="text-awan-sm font-black uppercase tracking-widest block mt-1" style={{ color: 'var(--color-awan-tx-mute)' }}>{latest.date.slice(5).replace('-', '/')}</span>
             </Card>
           )}
         </div>
@@ -412,8 +412,8 @@ export default function ScanTab() {
           >
             <div className="flex flex-row items-center justify-between">
               <div>
-                <span className="text-[9px] font-black tracking-widest uppercase block mb-1" style={{ color: 'var(--color-awan-tx-mute)' }}>ÉCART MAX INTER-MÉTHODES</span>
-                <span className="text-[9px] block leading-relaxed" style={{ color: 'var(--color-awan-tx-mute)' }}>
+                <span className="text-awan-sm font-black tracking-widest uppercase block mb-1" style={{ color: 'var(--color-awan-tx-mute)' }}>ÉCART MAX INTER-MÉTHODES</span>
+                <span className="text-awan-sm block leading-relaxed" style={{ color: 'var(--color-awan-tx-mute)' }}>
                   {ecart <= 3 ? 'Cohérence mesure confirmée' : 'Vérifier la technique de saisie'}
                 </span>
               </div>
@@ -463,25 +463,25 @@ export default function ScanTab() {
                 <div className="flex flex-row gap-4">
                   {bf13 !== null && (
                     <div>
-                      <span className="text-[9px] font-black tracking-widest uppercase block" style={{ color: 'var(--color-awan-gold)' }}>13P</span>
+                      <span className="text-awan-sm font-black tracking-widest uppercase block" style={{ color: 'var(--color-awan-gold)' }}>13P</span>
                       <span className="text-base font-black font-mono" style={{ color: 'var(--color-awan-gold)' }}>{bf13}%</span>
                     </div>
                   )}
                   {bfJP7 !== null && (
                     <div>
-                      <span className="text-[9px] font-black tracking-widest uppercase block" style={{ color: 'var(--color-awan-tx)' }}>JP7</span>
+                      <span className="text-awan-sm font-black tracking-widest uppercase block" style={{ color: 'var(--color-awan-tx)' }}>JP7</span>
                       <span className="text-base font-black font-mono" style={{ color: 'var(--color-awan-tx)' }}>{bfJP7}%</span>
                     </div>
                   )}
                   {bfDW4 !== null && (
                     <div>
-                      <span className="text-[9px] font-black tracking-widest uppercase block" style={{ color: 'var(--color-awan-tx-mute)' }}>DW4</span>
+                      <span className="text-awan-sm font-black tracking-widest uppercase block" style={{ color: 'var(--color-awan-tx-mute)' }}>DW4</span>
                       <span className="text-base font-black font-mono" style={{ color: 'var(--color-awan-tx-mute)' }}>{bfDW4}%</span>
                     </div>
                   )}
                   {bf13 === null && bfJP7 === null && bfDW4 === null && m.body_fat_pct > 0 && (
                     <div>
-                      <span className="text-[9px] font-black tracking-widest uppercase block" style={{ color: 'var(--color-awan-tx-mute)' }}>MG</span>
+                      <span className="text-awan-sm font-black tracking-widest uppercase block" style={{ color: 'var(--color-awan-tx-mute)' }}>MG</span>
                       <span className="text-base font-black font-mono" style={{ color: 'var(--color-awan-tx-mute)' }}>{m.body_fat_pct}%</span>
                     </div>
                   )}

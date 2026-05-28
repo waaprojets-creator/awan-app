@@ -37,8 +37,12 @@ export const MAX_DB_BYTES = 10 * 1024 * 1024;
 export class DbFullError extends Error {
   readonly currentBytes: number;
   readonly maxBytes: number;
-  constructor(currentBytes: number, maxBytes: number = MAX_DB_BYTES) {
-    super(`Base utilisateur pleine (${(currentBytes / 1024 / 1024).toFixed(2)} / ${(maxBytes / 1024 / 1024).toFixed(0)} MB)`);
+  constructor(currentBytes: number = 0, maxBytes: number = MAX_DB_BYTES) {
+    super(
+      currentBytes > 0
+        ? `Base utilisateur pleine (${(currentBytes / 1024 / 1024).toFixed(2)} / ${(maxBytes / 1024 / 1024).toFixed(0)} MB)`
+        : 'AWAN storage quota exceeded',
+    );
     this.name = 'DbFullError';
     this.currentBytes = currentBytes;
     this.maxBytes = maxBytes;
