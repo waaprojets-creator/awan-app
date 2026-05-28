@@ -1,27 +1,26 @@
 import { getStorage } from '@/data/storage/storageService';
-import { migratePrayerLog, PRAYER_NAMES } from '@/data/schemas/islam/prayerLog';
+import {
+  migratePrayerLog,
+  PRAYER_NAMES_V2,
+  FARD_PRAYERS,
+  computePrayerScores,
+} from '@/data/schemas/islam/prayerLog';
 import { migrateQuranProgress } from '@/data/schemas/islam/quranProgress';
 import { migrateQuranSession } from '@/data/schemas/islam/quranSession';
-import type { PrayerLogLatest, PrayerName } from '@/data/schemas/islam/prayerLog';
+import type { PrayerLogLatest, PrayerNameV2 } from '@/data/schemas/islam/prayerLog';
 import type { QuranProgressLatest } from '@/data/schemas/islam/quranProgress';
-import type { QuranSessionLatest, QuranWirdSlot } from '@/data/schemas/islam/quranSession';
+import type { QuranSessionLatest } from '@/data/schemas/islam/quranSession';
 
-const PRAYER_LOG_PREFIX     = 'islam.prayer';
-const QURAN_KEY             = 'islam.quran.progress';
-const QURAN_SESSIONS_PREFIX = 'islam.quran.sessions';
+const PRAYER_LOG_PREFIX = 'islam.prayer';
+const QURAN_KEY = 'islam.quran.progress';
+const QURAN_SESSION_PREFIX = 'islam.quran.session';
 
 function prayerKey(date: string): string {
   return `${PRAYER_LOG_PREFIX}.${date}`;
 }
-function quranSessionsKey(date: string): string {
-  return `${QURAN_SESSIONS_PREFIX}.${date}`;
-}
 
-function emptyPrayers(): Record<PrayerName, boolean> {
-  return PRAYER_NAMES.reduce(
-    (acc, p) => ({ ...acc, [p]: false }),
-    {} as Record<PrayerName, boolean>,
-  );
+function quranSessionKey(date: string, id: string): string {
+  return `${QURAN_SESSION_PREFIX}.${date}.${id}`;
 }
 
 export const IslamService = {
@@ -36,33 +35,39 @@ export const IslamService = {
     await storage.set(prayerKey(log.date), log);
   },
 
-  /**
-   * Toggle une prière et persiste. Crée le log du jour si absent.
-   * `timeHHMM` = heure réelle saisie (optionnelle). Quand on dé-coche, l'heure est effacée.
-   */
+  /** Toggle une prière et persiste. Crée le log du jour si absent. */
   async togglePrayer(
     date: string,
-    prayer: PrayerName,
+    prayer: PrayerNameV2,
     id: string,
-    timeHHMM?: string | null,
+    timeHHMM?: string,
   ): Promise<PrayerLogLatest> {
     const existing = await this.getPrayerLog(date);
-    const current = existing?.prayers ?? {};
-    const nextDone = !current[prayer];
-    const updatedTimes: Record<string, string | null> = { ...(existing?.prayerTimes ?? {}) };
-    if (nextDone && timeHHMM != null) {
-      updatedTimes[prayer] = timeHHMM;
-    } else if (!nextDone) {
-      updatedTimes[prayer] = null;
-    }
+    const currentPrayers = existing?.prayers ?? {};
+
+    const prayers: Record<PrayerNameV2, boolean> = {
+      ...PRAYER_NAMES_V2.reduce(
+        (acc, p) => ({ ...acc, [p]: false }),
+        {} as Record<PrayerNameV2, boolean>,
+      ),
+      ...currentPrayers,
+      [prayer]: !currentPrayers[prayer],
+    };
+
+    const prayerTimes = timeHHMM
+      ? { ...(existing?.prayerTimes ?? {}), [prayer]: timeHHMM }
+      : existing?.prayerTimes;
+
     const updated: PrayerLogLatest = {
       v: 2,
       id: existing?.id ?? id,
       date,
-      prayers: { ...emptyPrayers(), ...current, [prayer]: nextDone },
-      prayerTimes: updatedTimes as Record<PrayerName, string | null>,
+      prayers,
       savedAt: Date.now(),
+      ...computePrayerScores(prayers),
+      ...(prayerTimes ? { prayerTimes } : {}),
     };
+
     await this.savePrayerLog(updated);
     return updated;
   },
@@ -102,43 +107,47 @@ export const IslamService = {
     return next;
   },
 
-  // ─── Coran : sessions fragmentées par date (Wird) ────────────────────────
-  async getQuranSessions(date: string): Promise<QuranSessionLatest | null> {
+  // ─── Sessions de lecture Coran ────────────────────────────────────────────
+
+  async addQuranSession(session: QuranSessionLatest): Promise<void> {
     const storage = await getStorage();
-    return storage.get(quranSessionsKey(date), migrateQuranSession);
+    await storage.set(quranSessionKey(session.date, session.id), session);
+    // Mettre à jour le progress singleton
+    const progress = await this.getQuranProgress();
+    if (progress) {
+      await this.saveQuranProgress({
+        ...progress,
+        totalAyahsRead: progress.totalAyahsRead + session.ayahsRead,
+        lastReadDate: session.date,
+        updatedAt: Date.now(),
+      });
+    }
   },
 
-  async saveQuranSessions(sessions: QuranSessionLatest): Promise<void> {
+  async getQuranSessionsByDate(date: string): Promise<QuranSessionLatest[]> {
     const storage = await getStorage();
-    await storage.set(quranSessionsKey(sessions.date), sessions);
+    const keys = await storage.listFiltered(QURAN_SESSION_PREFIX, { date });
+    const all = await Promise.all(keys.map(k => storage.get(k, migrateQuranSession)));
+    return all
+      .filter((s): s is QuranSessionLatest => s !== null)
+      .sort((a, b) => a.timestamp - b.timestamp);
   },
 
-  /**
-   * Ajoute une session Wird à la date + avance le compteur global.
-   */
-  async addQuranSession(
-    date: string,
-    slot: QuranWirdSlot,
-    id: string,
-  ): Promise<{ sessions: QuranSessionLatest; progress: QuranProgressLatest }> {
-    const existing = await this.getQuranSessions(date);
-    const next: QuranSessionLatest = existing
-      ? {
-          ...existing,
-          sessions: [...existing.sessions, slot].sort((a, b) =>
-            a.timeHHMM.localeCompare(b.timeHHMM),
-          ),
-          updatedAt: Date.now(),
-        }
-      : {
-          v: 1,
-          id,
-          date,
-          sessions: [slot],
-          updatedAt: Date.now(),
-        };
-    await this.saveQuranSessions(next);
-    const progress = await this.advanceReading(slot.ayahsRead, id, date);
-    return { sessions: next, progress };
+  async getQuranSessionsByDateRange(from: string, to: string): Promise<QuranSessionLatest[]> {
+    const storage = await getStorage();
+    const keys = await storage.listByPrefix(QURAN_SESSION_PREFIX);
+    const all = await Promise.all(keys.map(k => storage.get(k, migrateQuranSession)));
+    return all
+      .filter((s): s is QuranSessionLatest => s !== null && s.date >= from && s.date <= to)
+      .sort((a, b) => a.date.localeCompare(b.date));
+  },
+
+  async getPrayerLogsByDateRange(from: string, to: string): Promise<PrayerLogLatest[]> {
+    const storage = await getStorage();
+    const keys = await storage.listByPrefix(PRAYER_LOG_PREFIX);
+    const all = await Promise.all(keys.map(k => storage.get(k, migratePrayerLog)));
+    return all
+      .filter((l): l is PrayerLogLatest => l !== null && l.date >= from && l.date <= to)
+      .sort((a, b) => a.date.localeCompare(b.date));
   },
 };

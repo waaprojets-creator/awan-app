@@ -241,6 +241,12 @@ export default function IslamScreen() {
   });
   const [wirdError, setWirdError] = useState<string | null>(null);
 
+  const [sessionAyahs, setSessionAyahs] = useState('');
+  const [sessionTime, setSessionTime] = useState(() => {
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  });
+
   const isToday = selectedDate === todayStr;
   const isPast = selectedDate < todayStr;
 
@@ -667,7 +673,7 @@ export default function IslamScreen() {
           </div>
           {/* Navigation mois */}
           <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
-            <Touch onPress={prevMonth} className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-awan-border)' }}>
+            <Touch onPress={prevMonth} className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: 'var(--color-awan-surface-dim)', border: '1px solid var(--color-awan-border)' }}>
               <ChevronLeft size={14} color="var(--color-awan-tx-mute)" />
             </Touch>
             <div className="flex flex-col items-center">
@@ -678,7 +684,7 @@ export default function IslamScreen() {
                 {hijriYear}
               </span>
             </div>
-            <Touch onPress={nextMonth} className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-awan-border)' }}>
+            <Touch onPress={nextMonth} className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: 'var(--color-awan-surface-dim)', border: '1px solid var(--color-awan-border)' }}>
               <ChevronRight size={14} color="var(--color-awan-tx-mute)" />
             </Touch>
           </div>

@@ -58,14 +58,23 @@ export class SqliteStorage implements IStorage {
 
   async set<T>(key: string, value: T): Promise<void> {
     const json = JSON.stringify(value);
+    // Check storage quota before writing (bloqueur 10 MB)
     const current = await this.getSizeBytes();
     if (current + json.length > MAX_DB_BYTES) {
       throw new DbFullError(current);
     }
-    await this.handle.run(
-      'INSERT INTO kv (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
-      [key, json],
-    );
+    try {
+      await this.handle.run(
+        'INSERT INTO kv (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+        [key, json],
+      );
+    } catch (err) {
+      const msg = String(err);
+      if (msg.includes('disk I/O error') || msg.includes('database or disk is full') || msg.includes('SQLITE_FULL')) {
+        throw new DbFullError(current);
+      }
+      throw err;
+    }
     this.invalidateSizeCache();
   }
 

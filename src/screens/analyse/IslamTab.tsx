@@ -1,223 +1,141 @@
-import React, { useEffect, useState } from 'react';
-import { subDays, format, parseISO } from 'date-fns';
-import { IslamService } from '@/services/islamService';
-import { PRAYER_NAMES } from '@/data/schemas/islam/prayerLog';
-import { ds } from '@/utils/storage';
-import { Card } from '@/components/ui/Card';
+import React, { useState, useEffect } from 'react';
+import { Moon } from 'lucide-react';
+import { Card } from '../../components/ui/Card';
+import { Heading } from '../../components/ui/Heading';
+import { IslamService } from '../../services/islamService';
+import { BarChart, GuardCard, LoadingState } from './shared';
 
-// Obligatory prayers only (fard) for streak calculation
-const FARD_PRAYERS = ['sobh', 'dhuhr', 'asr', 'maghrib', 'isha'] as const;
-const TOTAL_PRAYERS = PRAYER_NAMES.length; // 7
-
-interface DayData {
-  date: string;
-  label: string;
-  count: number;
+function todayIso(): string { return new Date().toISOString().slice(0, 10); }
+function subDaysIso(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString().slice(0, 10);
+}
+function isoWeek(date: string): string {
+  const d = new Date(date);
+  const jan4 = new Date(d.getFullYear(), 0, 4);
+  const start = new Date(jan4);
+  start.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7));
+  const diff = d.getTime() - start.getTime();
+  const week = Math.floor(diff / (7 * 86400000)) + 1;
+  return `${d.getFullYear()}-W${String(week).padStart(2, '0')}`;
 }
 
-interface WeekData {
-  label: string;
-  ayahs: number;
-}
-
-interface Props {
-  today: string;
-  range: string;
-}
-
-export default function IslamTab({ today }: Props) {
-  const [days30, setDays30] = useState<DayData[]>([]);
-  const [weeks8, setWeeks8] = useState<WeekData[]>([]);
-  const [streak, setStreak] = useState(0);
+export function IslamTab() {
   const [loading, setLoading] = useState(true);
+  const [prayerData, setPrayerData] = useState<Array<{ date: string; fardScore: number }>>([]);
+  const [weeklyAyahs, setWeeklyAyahs] = useState<Array<{ week: string; ayahs: number }>>([]);
 
   useEffect(() => {
-    let active = true;
+    const today = todayIso();
+    const from30 = subDaysIso(29);
+    const from56 = subDaysIso(55);
 
-    async function load() {
-      // 30 days prayer adherence
-      const dayResults: DayData[] = [];
+    Promise.all([
+      IslamService.getPrayerLogsByDateRange(from30, today),
+      IslamService.getQuranSessionsByDateRange(from56, today),
+    ]).then(([logs, sessions]) => {
+      // Build 30-day fardScore array (0 if no log)
+      const dayMap: Record<string, number> = {};
+      for (const l of logs) dayMap[l.date] = l.fardScore ?? 0;
+      const days30: Array<{ date: string; fardScore: number }> = [];
       for (let i = 29; i >= 0; i--) {
-        const d = subDays(new Date(today), i);
-        const dateStr = ds(d);
-        const log = await IslamService.getPrayerLog(dateStr);
-        const count = log
-          ? PRAYER_NAMES.filter(p => log.prayers?.[p]).length
-          : 0;
-        dayResults.push({
-          date: dateStr,
-          label: format(d, 'dd/MM'),
-          count,
-        });
+        const d = subDaysIso(i);
+        days30.push({ date: d, fardScore: dayMap[d] ?? 0 });
       }
+      setPrayerData(days30);
 
-      // streak: consecutive days with 5+ fard prayers
-      let s = 0;
-      for (let i = dayResults.length - 1; i >= 0; i--) {
-        const d = dayResults[i];
-        const log = await IslamService.getPrayerLog(d.date);
-        const fardDone = log
-          ? FARD_PRAYERS.filter(p => log.prayers?.[p as keyof typeof log.prayers]).length
-          : 0;
-        if (fardDone >= 5) s++;
-        else break;
+      // Build 8-week ayahs totals
+      const weekMap: Record<string, number> = {};
+      for (const s of sessions) {
+        const wk = isoWeek(s.date);
+        weekMap[wk] = (weekMap[wk] ?? 0) + s.ayahsRead;
       }
+      const sortedWeeks = Object.keys(weekMap).sort().slice(-8);
+      setWeeklyAyahs(sortedWeeks.map(w => ({ week: w, ayahs: weekMap[w] ?? 0 })));
 
-      // 8 weeks Quran sessions
-      const weekResults: WeekData[] = [];
-      for (let w = 7; w >= 0; w--) {
-        let weekAyahs = 0;
-        for (let d = 6; d >= 0; d--) {
-          const dateStr = ds(subDays(new Date(today), w * 7 + d));
-          const sessions = await IslamService.getQuranSessions(dateStr);
-          if (sessions) {
-            weekAyahs += sessions.sessions.reduce((acc, s) => acc + s.ayahsRead, 0);
-          }
-        }
-        const refDate = subDays(new Date(today), w * 7);
-        weekResults.push({ label: format(refDate, 'dd/MM'), ayahs: weekAyahs });
-      }
+      setLoading(false);
+    });
+  }, []);
 
-      if (active) {
-        setDays30(dayResults);
-        setStreak(s);
-        setWeeks8(weekResults);
-        setLoading(false);
-      }
-    }
+  if (loading) return <LoadingState label="CHARGEMENT ISLAM..." />;
 
-    void load();
-    return () => { active = false; };
-  }, [today]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>CHARGEMENT...</span>
-      </div>
-    );
+  let streak = 0;
+  for (let i = 0; i < prayerData.length; i++) {
+    const d = subDaysIso(i);
+    const entry = prayerData.find(p => p.date === d);
+    if (!entry || entry.fardScore < 1) break;
+    streak++;
   }
 
-  const maxAyahs = Math.max(...weeks8.map(w => w.ayahs), 1);
-  const chartHeight = 100;
+  const avgAdherence = prayerData.length > 0
+    ? Math.round(prayerData.reduce((s, d) => s + d.fardScore, 0) / prayerData.length * 100)
+    : 0;
 
   return (
-    <div className="space-y-5">
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', fontWeight: 700, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em', display: 'block' }}>
-        ANALYSE ISLAM · 30 JOURS
-      </span>
-
-      {/* Streak */}
-      <div className="flex flex-row gap-3">
-        <Card className="flex-1 p-4" variant="flat">
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', display: 'block', marginBottom: 6 }}>
-            STREAK PRIÈRES
-          </span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '36px', fontWeight: 700, color: 'var(--color-awan-gold)', lineHeight: 1 }}>
-            {streak}
-          </span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.15em', display: 'block', marginTop: 4 }}>
-            jours consécutifs ≥5 fard
-          </span>
-        </Card>
-        <Card className="flex-1 p-4" variant="flat">
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', display: 'block', marginBottom: 6 }}>
-            MOY. ADHÉRENCE 30J
-          </span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '36px', fontWeight: 700, color: 'var(--color-awan-tx)', lineHeight: 1 }}>
-            {days30.length > 0
-              ? Math.round((days30.reduce((a, d) => a + d.count, 0) / (days30.length * TOTAL_PRAYERS)) * 100)
-              : 0}
-            <span style={{ fontSize: '14px', color: 'var(--color-awan-tx-mute)' }}>%</span>
-          </span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.15em', display: 'block', marginTop: 4 }}>
-            sur {TOTAL_PRAYERS} prières/jour
-          </span>
-        </Card>
-      </div>
-
-      {/* 30-day adherence bars */}
-      <Card className="p-4" variant="flat">
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-gold)', letterSpacing: '0.2em', display: 'block', marginBottom: 12 }}>
-          ADHÉRENCE PRIÈRES · 30J
-        </span>
-        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-end', gap: 2, height: 56 }}>
-          {days30.map((d, i) => {
-            const ratio = d.count / TOTAL_PRAYERS;
-            const barColor = ratio >= 0.85
-              ? 'var(--color-awan-status-ok)'
-              : ratio >= 0.5
-                ? 'var(--color-awan-gold)'
-                : ratio > 0
-                  ? 'color-mix(in srgb, var(--color-awan-status-warn) 60%, transparent)'
-                  : 'color-mix(in srgb, var(--color-awan-border) 60%, transparent)';
-            return (
-              <div
-                key={i}
-                title={`${d.label} — ${d.count}/${TOTAL_PRAYERS}`}
-                style={{
-                  flex: 1,
-                  height: `${Math.max(4, ratio * 100)}%`,
-                  backgroundColor: barColor,
-                  alignSelf: 'flex-end',
-                }}
-              />
-            );
-          })}
+    <div className="space-y-6">
+      {/* Section 1 — Adhérence 30j */}
+      <Card className="p-5 bg-white/5 border-white/5">
+        <div className="flex flex-row items-center justify-between mb-4">
+          <Heading level={4} mono>ADHÉRENCE PRIÈRES 30J</Heading>
+          <div className="px-3 py-1" style={{ backgroundColor: avgAdherence >= 80 ? 'rgba(78,205,196,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${avgAdherence >= 80 ? 'var(--color-awan-status-ok)' : 'rgba(255,255,255,0.1)'}` }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700, color: avgAdherence >= 80 ? 'var(--color-awan-status-ok)' : 'var(--color-awan-tx-mute)', letterSpacing: '0.1em' }}>
+              {avgAdherence}%
+            </span>
+          </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
-          {[days30[0], days30[14], days30[29]].map((d, i) => d ? (
-            <span key={i} style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', color: 'var(--color-awan-tx-mute)' }}>{d.label}</span>
-          ) : null)}
-        </div>
-        {/* Legend */}
-        <div style={{ display: 'flex', flexDirection: 'row', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
-          {[
-            { color: 'var(--color-awan-status-ok)', label: '≥6/7' },
-            { color: 'var(--color-awan-gold)', label: '4-5/7' },
-            { color: 'color-mix(in srgb, var(--color-awan-status-warn) 60%, transparent)', label: '1-3/7' },
-            { color: 'color-mix(in srgb, var(--color-awan-border) 60%, transparent)', label: '0/7' },
-          ].map(({ color, label }) => (
-            <div key={label} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: 8, height: 8, backgroundColor: color, flexShrink: 0 }} />
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.1em' }}>{label}</span>
-            </div>
-          ))}
-        </div>
+        {prayerData.every(d => d.fardScore === 0) ? (
+          <GuardCard message="Aucune prière enregistrée — saisie dans Islam → Chrono Prières" />
+        ) : (
+          <BarChart
+            data={prayerData}
+            dataKey="fardScore"
+            color="var(--color-awan-gold)"
+          />
+        )}
       </Card>
 
-      {/* 8-week Quran ayahs chart */}
-      <Card className="p-4" variant="flat">
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-gold)', letterSpacing: '0.2em', display: 'block', marginBottom: 12 }}>
-          VERSETS CORAN · 8 SEMAINES
-        </span>
-        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: chartHeight }}>
-          {weeks8.map((w, i) => {
-            const ratio = w.ayahs / maxAyahs;
-            return (
-              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, height: '100%', justifyContent: 'flex-end' }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', color: w.ayahs > 0 ? 'var(--color-awan-tx)' : 'transparent', letterSpacing: '0.05em' }}>
-                  {w.ayahs}
+      {/* Section 2 — Streak */}
+      <Card className="p-5 bg-white/5 border-white/5">
+        <Heading level={4} mono className="mb-4">SÉQUENCE FARD</Heading>
+        {streak === 0 ? (
+          <GuardCard message="Aucune séquence — compte à partir de ta prochaine prière complète" />
+        ) : (
+          <div className="flex flex-row items-center gap-6 py-4">
+            <Moon size={32} className="text-awan-gold" />
+            <div>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '48px', fontWeight: 700, color: 'var(--color-awan-gold)', lineHeight: 1 }}>
+                {streak}
+              </span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', display: 'block', marginTop: 4 }}>
+                JOUR{streak > 1 ? 'S' : ''} CONSÉCUTIF{streak > 1 ? 'S' : ''}
+              </span>
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* Section 3 — Versets par semaine */}
+      <Card className="p-5 bg-white/5 border-white/5">
+        <Heading level={4} mono className="mb-4">VERSETS / SEMAINE</Heading>
+        {weeklyAyahs.length === 0 ? (
+          <GuardCard message="Aucune session Coran — saisie dans Islam → Wird" />
+        ) : (
+          <>
+            <BarChart
+              data={weeklyAyahs}
+              dataKey="ayahs"
+              color="var(--color-awan-status-ok)"
+            />
+            <div className="mt-3 flex flex-row justify-between">
+              {weeklyAyahs.slice(-4).map(w => (
+                <span key={w.week} style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.1em' }}>
+                  {w.week.split('-')[1]}
                 </span>
-                <div
-                  style={{
-                    width: '100%',
-                    height: `${Math.max(ratio > 0 ? 4 : 0, ratio * (chartHeight - 20))}px`,
-                    backgroundColor: 'var(--color-awan-gold)',
-                    opacity: 0.6 + ratio * 0.4,
-                  }}
-                />
-              </div>
-            );
-          })}
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
-          {weeks8.map((w, i) => (
-            <span key={i} style={{ fontFamily: 'var(--font-mono)', fontSize: '6px', color: 'var(--color-awan-tx-mute)', flex: 1, textAlign: 'center' }}>
-              {w.label}
-            </span>
-          ))}
-        </div>
+              ))}
+            </div>
+          </>
+        )}
       </Card>
     </div>
   );

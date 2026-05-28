@@ -331,7 +331,7 @@ export default function TasksScreen() {
       </div>
 
       <Modal visible={showModal} transparent animationType="fade">
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', backgroundColor: 'var(--color-awan-overlay)' }}>
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', backgroundColor: 'var(--color-awan-overlay)', backdropFilter: 'blur(8px)' }}>
           <div style={{ backgroundColor: 'var(--color-awan-surface)', padding: 40, borderTop: '1px solid var(--color-awan-border)', width: '100%', maxWidth: 512, margin: '0 auto' }}>
             <Heading level={2} className="text-center mb-10" subtitle="Nouvelle tâche">AJOUTER</Heading>
 

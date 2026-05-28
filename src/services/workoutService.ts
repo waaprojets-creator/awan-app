@@ -70,7 +70,18 @@ export const WorkoutService = {
 
   async saveSession(session: WorkoutSessionLatest): Promise<void> {
     const storage = await getStorage();
-    await storage.set(`${SESSION_PREFIX}.${session.id}`, session);
+    const tonnage = session.exercises.reduce((t, ex) =>
+      t + ex.sets.reduce((s, set) =>
+        set.kind === 'working' ? s + (set.weightKg ?? 0) * (set.reps ?? 0) : s, 0), 0);
+    const durationMin = session.endTime && session.startTime
+      ? Math.round((session.endTime - session.startTime) / 60000) : 0;
+    const enriched: WorkoutSessionLatest = {
+      ...session,
+      tonnage,
+      durationMin,
+      rpe: session.sessionRPE,
+    };
+    await storage.set(`${SESSION_PREFIX}.${session.id}`, enriched);
     eventBus.emit('workout.completed', { workoutId: session.id, date: session.date });
   },
 

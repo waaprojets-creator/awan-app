@@ -103,12 +103,13 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
     if (durationH <= 0) return;
     setSaving(true);
     const entry: SleepEntryLatest = {
-      v: 1,
+      v: 2,
       id: todayEntry?.id ?? uid(),
       date: today,
       timestamp: Date.now(),
       durationH,
       quality,
+      sleepScore: Math.round((quality / 5) * 50 + (Math.min(9, Math.max(6, durationH)) - 6) / 3 * 50),
       bedtime:  bedtime || undefined,
       wakeTime: wakeTime || undefined,
     };

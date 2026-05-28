@@ -110,23 +110,51 @@ export const WorkoutSessionV2Schema = WorkoutSessionV1Schema.extend({
 
 export type WorkoutSessionV2 = z.infer<typeof WorkoutSessionV2Schema>;
 
+// ─── WorkoutSession V3: champs pré-calculés pour agrégation SQL ──────────────
+// tonnage et durationMin stockés à l'écriture → aggregate() sans itérer les sets
+// rpe = alias de sessionRPE → computeACWR() lit session.rpe directement
+
+export const WorkoutSessionV3Schema = WorkoutSessionV2Schema.extend({
+  v: z.literal(3),
+  tonnage: z.number().nonnegative(),          // sum(set.weightKg × set.reps, kind='working')
+  durationMin: z.number().nonnegative(),      // (endTime - startTime) / 60000
+  rpe: z.number().min(1).max(10).optional(),  // alias sessionRPE — top-level pour aggregate
+});
+
+export type WorkoutSessionV3 = z.infer<typeof WorkoutSessionV3Schema>;
+
 // ─── Union ────────────────────────────────────────────────────────────────────
 
 export const WorkoutSessionSchema = z.discriminatedUnion('v', [
   WorkoutSessionV1Schema,
   WorkoutSessionV2Schema,
+  WorkoutSessionV3Schema,
 ]);
 export type WorkoutSession = z.infer<typeof WorkoutSessionSchema>;
 
-export const WORKOUT_SESSION_LATEST_VERSION = 2;
-export type WorkoutSessionLatest = WorkoutSessionV2;
+export const WORKOUT_SESSION_LATEST_VERSION = 3;
+export type WorkoutSessionLatest = WorkoutSessionV3;
 
 // ─── Migrations ───────────────────────────────────────────────────────────────
+
+function computeTonnage(exercises: WorkoutSessionV1['exercises']): number {
+  return exercises.reduce((t, ex) =>
+    t + ex.sets.reduce((s, set) =>
+      set.kind === 'working' ? s + (set.weightKg ?? 0) * (set.reps ?? 0) : s, 0), 0);
+}
 
 const sessionMigrations = {
   1: (data: WorkoutSessionV1): WorkoutSessionV2 => ({
     ...data,
     v: 2,
+  }),
+  2: (data: WorkoutSessionV2): WorkoutSessionV3 => ({
+    ...data,
+    v: 3,
+    tonnage: computeTonnage(data.exercises),
+    durationMin: data.endTime && data.startTime
+      ? Math.round((data.endTime - data.startTime) / 60000) : 0,
+    rpe: data.sessionRPE,
   }),
 };
 

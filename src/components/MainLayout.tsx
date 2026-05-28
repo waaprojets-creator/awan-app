@@ -1,10 +1,10 @@
-import React, { Component, lazy, Suspense } from 'react';
+import React, { Component, lazy, Suspense, useEffect } from 'react';
 import { ActivityIndicator } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 import { Switch, Route, useLocation } from 'wouter';
 import { AnimatePresence, motion } from 'motion/react';
 import { useTheme, useThemeSync } from '../hooks/useTheme';
-import { ToastProvider } from './ui/Toast';
+import { ToastProvider, useToast } from './ui/Toast';
 import AppHeader from './AppHeader';
 import BottomNav from './BottomNav';
 import { useAndroidBack } from '../hooks/useAndroidBack';
@@ -66,6 +66,16 @@ function PageTransition({ children, direction = 1 }: { children: React.ReactNode
   );
 }
 
+function DbFullBridge() {
+  const { toast } = useToast();
+  useEffect(() => {
+    const handler = () => toast("Stockage plein — libère de l'espace dans Réglages → DB", 'error');
+    window.addEventListener('awan:db-full', handler);
+    return () => window.removeEventListener('awan:db-full', handler);
+  }, [toast]);
+  return null;
+}
+
 function routeToName(location: string): string {
   if (location.length <= 1) return 'Dashboard';
   const segment = location.substring(1).split('/')[0] ?? '';
@@ -99,6 +109,7 @@ export default function MainLayout() {
 
   return (
     <ToastProvider>
+    <DbFullBridge />
     <View style={[s.root, { backgroundColor: theme.bg }]}>
       <div
         className="absolute inset-0 pointer-events-none opacity-[0.03] z-0"

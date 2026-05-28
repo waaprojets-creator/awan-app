@@ -17,6 +17,11 @@ export const MeasurementV1Schema = z.object({
   whr:  z.number().nonnegative().optional(),
 });
 
+export type MeasurementV1 = z.infer<typeof MeasurementV1Schema>;
+
+// ─── V2: weight retiré + BF% pré-calculés à l'écriture pour aggregate() SQL ──
+// s13_sum, bf_pct_jp7, bf_pct_dw4, ffmi stockés top-level → SUM/AVG SQL sans itérer skinfolds
+
 export const MeasurementV2Schema = z.object({
   v: z.literal(2),
   id: IdSchema,
@@ -28,25 +33,41 @@ export const MeasurementV2Schema = z.object({
   savedAt: TimestampSchema,
   whtr: z.number().nonnegative().optional(),
   whr:  z.number().nonnegative().optional(),
+  s13_sum: z.number().nonnegative().nullable().optional(),     // somme 13 plis (mm)
+  bf_pct_jp7: z.number().nonnegative().nullable().optional(),  // Jackson-Pollock 7 sites
+  bf_pct_dw4: z.number().nonnegative().nullable().optional(),  // Durnin-Womersley 4 sites
+  ffmi: z.number().nonnegative().nullable().optional(),        // FFMI normalisé (Kouri 1995)
+  // measurements{} conserve la convention _left/_right pour symmetryService.analyzeSymmetry()
 });
 
-export type MeasurementV1 = z.infer<typeof MeasurementV1Schema>;
 export type MeasurementV2 = z.infer<typeof MeasurementV2Schema>;
 export type MeasurementLatest = MeasurementV2;
 
-export const MeasurementSchema = z.discriminatedUnion('v', [MeasurementV1Schema, MeasurementV2Schema]);
+export const MeasurementSchema = z.discriminatedUnion('v', [
+  MeasurementV1Schema,
+  MeasurementV2Schema,
+]);
 export type Measurement = z.infer<typeof MeasurementSchema>;
 
 export const MEASUREMENT_LATEST_VERSION = 2;
 
+const measurementMigrations = {
+  1: (data: MeasurementV1): MeasurementV2 => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { weight: _w, ...rest } = data;
+    return {
+      ...rest,
+      v: 2,
+      s13_sum: null,
+      bf_pct_jp7: null,
+      bf_pct_dw4: null,
+      ffmi: null,
+    };
+  },
+};
+
 export const migrateMeasurement = createMigrator<Measurement, MeasurementLatest>(
   MeasurementSchema,
-  {
-    1: (v1: MeasurementV1): MeasurementV2 => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { weight: _w, ...rest } = v1;
-      return { ...rest, v: 2 };
-    },
-  },
+  measurementMigrations,
   MEASUREMENT_LATEST_VERSION,
 );

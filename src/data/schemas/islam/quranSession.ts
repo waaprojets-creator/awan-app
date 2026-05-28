@@ -11,16 +11,26 @@ const QuranWirdSlotSchema = z.object({
 });
 export type QuranWirdSlot = z.infer<typeof QuranWirdSlotSchema>;
 
-// ─── V1 — Sessions fragmentées par date ───────────────────────────────────────
-// Liste des sessions de Wird (lecture Coran) pour une date donnée.
-// Clé storage : islam.quran.sessions.{date}
+// ─── V1 — Sessions Coran ─────────────────────────────────────────────────────
+// Chaque session de lecture — date top-level pour listFiltered() et aggregate() SQL
+// ayahsRead top-level pour SUM hebdomadaire sans charger les JSON
+// Clé : islam.quran.session.{YYYY-MM-DD}.{uuid}
+// sessions[] conservé pour compatibilité avec useQuranSessionStore (Wird slots)
 
 export const QuranSessionV1Schema = z.object({
   v: z.literal(1),
   id: IdSchema,
   date: DateStringSchema,
-  sessions: z.array(QuranWirdSlotSchema),
-  updatedAt: TimestampSchema,
+  ayahsRead: z.number().int().nonnegative(),
+  surahStart: z.number().int().min(1).max(114),
+  ayahStart: z.number().int().min(1),
+  surahEnd: z.number().int().min(1).max(114).optional(),
+  ayahEnd: z.number().int().min(1).optional(),
+  durationMin: z.number().nonnegative().optional(),
+  timestamp: TimestampSchema,
+  // Legacy Wird slot support
+  sessions: z.array(QuranWirdSlotSchema).optional(),
+  updatedAt: TimestampSchema.optional(),
 });
 
 export type QuranSessionV1 = z.infer<typeof QuranSessionV1Schema>;
