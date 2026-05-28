@@ -6,7 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemeMode } from '../hooks/useTheme';
 import { useAppStore } from '../store/appStore';
 import { useAppState } from '../context/AppStateContext';
-import { Shield, Database, Key, RefreshCw, Trash2, Navigation, Brain, BookOpen } from 'lucide-react';
+import { Shield, Database, Key, Trash2, Navigation, Brain, BookOpen, Check, X } from 'lucide-react';
+import { HexagonLogo } from '../constants/icons';
 import { useLocation } from 'wouter';
 import { safeStorage } from '../utils/safeStorage';
 import { PageWrapper } from '../components/Animated';
@@ -119,6 +120,7 @@ export default function SettingsScreen() {
  const setTheme = useAppStore((s: any) => s.setTheme);
  const [purgeModal, setPurgeModal] = useState(false);
  const [purging, setPurging] = useState(false);
+ const [cacheState, setCacheState] = useState<'idle' | 'loading' | 'ok'>('idle');
  const [exportState, setExportState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
  const [exportMsg, setExportMsg] = useState('');
  const [coachProfiles, setCoachProfiles] = useState<CoachProfile[]>(loadCoachProfiles);
@@ -141,13 +143,13 @@ export default function SettingsScreen() {
  };
 
  const purgeCache = () => {
- Alert.alert('Purge Système', 'Réinitialiser le cache et les vecteurs terminés ?', [
- { text: 'Annuler', style: 'cancel' },
- { text: 'Exécuter', onPress: () => {
- updateDb({ ...db, tasks: (db.tasks || []).filter((t: any) => !t.done) });
- Alert.alert('Succès', 'Optimisation terminée.');
- }}
- ]);
+   if (cacheState === 'loading') return;
+   setCacheState('loading');
+   setTimeout(() => {
+     updateDb({ ...db, tasks: (db.tasks || []).filter((t: any) => !t.done) });
+     setCacheState('ok');
+     setTimeout(() => setCacheState('idle'), 3000);
+   }, 600);
  };
 
  const handlePurgeConfirm = async () => {
@@ -332,11 +334,15 @@ export default function SettingsScreen() {
  <DbFillGauge />
  <Touch onPress={purgeCache} className="bg-white/3 border border-white/5 p-6 flex-row items-center gap-5">
  <div className="w-10 h-10 bg-white/5 flex items-center justify-center">
- <RefreshCw size={18} className="text-awan-tx-mute" />
+   {cacheState === 'loading' && <div style={{ animation: 'spin 1s linear infinite' }}><HexagonLogo size={20} color="var(--color-awan-gold)" /></div>}
+   {cacheState === 'ok'      && <Check size={18} color="var(--color-awan-status-ok)" />}
+   {cacheState === 'idle'    && <HexagonLogo size={20} color="var(--color-awan-tx-mute)" />}
  </div>
  <div className="flex-1">
  <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">OPTIMISATION CACHE</span>
- <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Nettoyage des archives terminées</span>
+   {cacheState === 'idle'    && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Nettoyage des archives terminées</span>}
+   {cacheState === 'loading' && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">OPTIMISATION EN COURS…</span>}
+   {cacheState === 'ok'      && <span className="text-awan-sm font-bold uppercase tracking-tighter" style={{ color: 'var(--color-awan-status-ok)' }}>Cache optimisé</span>}
  </div>
  </Touch>
 
@@ -358,7 +364,10 @@ export default function SettingsScreen() {
  className="bg-white/3 border border-white/5 p-6 flex-row items-center gap-5"
  >
  <div className="w-10 h-10 bg-white/5 flex items-center justify-center">
- <Database size={18} className={exportState === 'error' ? 'text-awan-status-error' : exportState === 'ok' ? 'text-awan-status-ok' : 'text-awan-tx-mute'} />
+   {exportState === 'loading' && <div style={{ animation: 'spin 1s linear infinite' }}><HexagonLogo size={20} color="var(--color-awan-gold)" /></div>}
+   {exportState === 'ok'      && <Check size={18} color="var(--color-awan-status-ok)" />}
+   {exportState === 'error'   && <X size={18} color="var(--color-awan-status-error)" />}
+   {exportState === 'idle'    && <Database size={18} className="text-awan-tx-mute" />}
  </div>
  <div className="flex-1">
  <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">EXPORTATION NOYAU</span>
@@ -434,9 +443,12 @@ export default function SettingsScreen() {
  className="bg-awan-status-error h-14 items-center justify-center"
  style={{ opacity: purging ? 0.5 : 1 }}
  >
- <span className="text-awan-lg font-black text-white uppercase tracking-[0.2em] font-mono">
- {purging ? 'SUPPRESSION...' : 'Purger données personnelles'}
- </span>
+ <div className="flex-row items-center justify-center gap-3">
+   {purging && <div style={{ animation: 'spin 1s linear infinite' }}><HexagonLogo size={18} color="#fff" /></div>}
+   <span className="text-awan-lg font-black text-white uppercase tracking-[0.2em] font-mono">
+     {purging ? 'SUPPRESSION…' : 'Purger données personnelles'}
+   </span>
+ </div>
  </Touch>
  <Touch onPress={() => setPurgeModal(false)} className="h-12 items-center justify-center border border-white/10">
  <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-[0.2em] font-mono">Annuler</span>
