@@ -136,7 +136,7 @@ const RANGES: Array<{ id: RangeId; label: string; sublabel: string }> = [
 interface PeriodOption { label: string; sublabel: string; anchorDate: Date }
 
 const DROPDOWN_COUNTS: Record<RangeId, number> = {
-  day: 60, week: 26, month: 24, quarter: 12, year: 10,
+  day: 0, week: 26, month: 24, quarter: 12, year: 10,
 };
 
 function buildPeriodOptions(range: RangeId): PeriodOption[] {
@@ -539,16 +539,43 @@ export default function AnalyseScreen() {
               })}
             </div>
 
-            {/* L2 — bouton dropdown période */}
-            <Touch
-              className="w-full border border-white/10 bg-white/3 py-3 px-4 flex flex-row items-center justify-between"
-              onPress={() => setShowPeriodPicker(true)}
-            >
-              <span className="text-awan-sm font-black font-mono tracking-widest text-awan-tx">
-                {periodButtonLabel(range, anchorDates[range] ?? new Date())}
-              </span>
-              <span className="text-awan-tx-mute font-mono text-lg">▾</span>
-            </Touch>
+            {/* L2 — sélecteur de période */}
+            {range === 'day' ? (
+              // JOUR : sélecteur calendrier natif — aucune limite de date
+              <div className="relative w-full">
+                <div className="w-full border border-white/10 bg-white/3 py-3 px-4 flex flex-row items-center justify-between pointer-events-none">
+                  <span className="text-awan-sm font-black font-mono tracking-widest text-awan-tx">
+                    {periodButtonLabel('day', anchorDates.day ?? new Date())}
+                  </span>
+                  <span className="text-awan-tx-mute font-mono text-lg">▾</span>
+                </div>
+                <input
+                  type="date"
+                  max={format(new Date(), 'yyyy-MM-dd')}
+                  value={format(anchorDates.day ?? new Date(), 'yyyy-MM-dd')}
+                  onChange={(e: any) => {
+                    const d = new Date(e.target.value + 'T12:00:00');
+                    if (!isNaN(d.getTime()))
+                      setAnchorDates((prev: Record<RangeId, Date>) => ({ ...prev, day: d }));
+                  }}
+                  style={{
+                    position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer',
+                    width: '100%', height: '100%',
+                  }}
+                />
+              </div>
+            ) : (
+              // Autres types : dropdown modal
+              <Touch
+                className="w-full border border-white/10 bg-white/3 py-3 px-4 flex flex-row items-center justify-between"
+                onPress={() => setShowPeriodPicker(true)}
+              >
+                <span className="text-awan-sm font-black font-mono tracking-widest text-awan-tx">
+                  {periodButtonLabel(range, anchorDates[range] ?? new Date())}
+                </span>
+                <span className="text-awan-tx-mute font-mono text-lg">▾</span>
+              </Touch>
+            )}
           </div>
         )}
 
