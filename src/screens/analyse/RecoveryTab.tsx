@@ -60,7 +60,7 @@ function ACWRGauge({ value }: { value: number }) {
           const a2 = Math.PI * 0;
           const x1 = cx + R * Math.cos(a1); const y1 = cy + R * Math.sin(a1);
           const x2 = cx + R * Math.cos(a2); const y2 = cy + R * Math.sin(a2);
-          return <SvgPath_ d={`M ${x1} ${y1} A ${R} ${R} 0 1 1 ${x2} ${y2}`} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />;
+          return <SvgPath_ d={`M ${x1} ${y1} A ${R} ${R} 0 1 1 ${x2} ${y2}`} fill="none" stroke="var(--color-awan-border-soft)" strokeWidth="12" />;
         })()}
 
         {/* Zone arcs */}
@@ -78,7 +78,7 @@ function ACWRGauge({ value }: { value: number }) {
 
         {/* ACWR value */}
         <SvgText_ x={cx} y={cy - 24} textAnchor="middle" fontSize="22" fontWeight="900"
-          fontFamily="JetBrains Mono" fill="var(--color-awan-tx)">{value.toFixed(2)}</SvgText_>
+          fontFamily="var(--font-mono)" fill="var(--color-awan-tx)">{value.toFixed(2)}</SvgText_>
 
         {/* Zone labels */}
         <SvgText_ x={16} y={cy + 20} fontSize="8" fontWeight="700" fill="var(--color-awan-tx-mute)">0.0</SvgText_>
@@ -226,7 +226,7 @@ export function RecoveryTab({ sessions }: RecoveryTabProps) {
                         ? d.score >= 7 ? 'var(--color-awan-status-ok)'
                           : d.score >= 4 ? 'var(--color-awan-status-warn)'
                           : 'var(--color-awan-status-error)'
-                        : 'rgba(255,255,255,0.08)',
+                        : 'var(--color-awan-border-soft)',
                     }}
                   />
                 </div>
