@@ -1,9 +1,10 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { ScrollView } from 'react-native';
+import { ScrollView, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   startOfDay, endOfDay, subDays,
   addDays, addWeeks, addMonths, addYears,
+  subWeeks, subMonths, subYears,
   startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear,
   getISOWeek, parseISO, format, eachDayOfInterval,
 } from 'date-fns';
@@ -123,56 +124,109 @@ const RANGE_SUB_TABS = new Set(['nutrition', 'volume', 'morphologie', 'performan
 type RangeId = 'day' | 'week' | 'month' | 'quarter' | 'year';
 
 const RANGES: Array<{ id: RangeId; label: string; sublabel: string }> = [
-  { id: 'day',     label: 'JOUR',   sublabel: 'AUJ.'  },
+  { id: 'day',     label: 'JOUR',   sublabel: 'COURT' },
   { id: 'week',    label: 'HEBDO',  sublabel: 'COURT' },
   { id: 'month',   label: 'MOIS',   sublabel: 'MOYEN' },
   { id: 'quarter', label: 'TRIM.',  sublabel: 'MOYEN' },
   { id: 'year',    label: 'AN',     sublabel: 'LONG'  },
 ];
 
-// Number of past periods shown in the scrollable picker per range type
-const RANGE_CHIP_COUNTS: Record<RangeId, number> = {
-  day: 14, week: 12, month: 18, quarter: 8, year: 5,
+// ─── Dropdown period options ──────────────────────────────────────────────────
+
+interface PeriodOption { label: string; sublabel: string; anchorDate: Date }
+
+const DROPDOWN_COUNTS: Record<RangeId, number> = {
+  day: 60, week: 26, month: 24, quarter: 12, year: 10,
 };
 
-interface PeriodChip { offset: number; label: string; sublabel: string }
-
-function buildPeriodChips(range: RangeId): PeriodChip[] {
+function buildPeriodOptions(range: RangeId): PeriodOption[] {
   const now = new Date();
-  const count = RANGE_CHIP_COUNTS[range];
-  const chips: PeriodChip[] = [];
+  const count = DROPDOWN_COUNTS[range];
+  const opts: PeriodOption[] = [];
 
-  for (let i = -(count - 1); i <= 0; i++) {
+  for (let i = 0; i < count; i++) {
     let label = '';
     let sublabel = '';
+    let anchorDate: Date;
 
     if (range === 'day') {
-      const d = addDays(now, i);
-      label  = i === 0 ? 'AUJ.' : format(d, 'EEE d', { locale: fr }).toUpperCase();
-      sublabel = format(d, 'MMM', { locale: fr }).toUpperCase();
+      const d = subDays(now, i);
+      label      = i === 0 ? "AUJOURD'HUI" : format(d, 'EEE d', { locale: fr }).toUpperCase();
+      sublabel   = format(d, 'MMM yyyy', { locale: fr }).toUpperCase();
+      anchorDate = d;
     } else if (range === 'week') {
-      const base = addWeeks(now, i);
+      const base = subWeeks(now, i);
+      const sun  = endOfWeek(base, { weekStartsOn: 1 });
       const mon  = startOfWeek(base, { weekStartsOn: 1 });
-      label    = `S${getISOWeek(mon)}`;
-      sublabel = format(mon, 'MMM', { locale: fr }).toUpperCase();
+      label      = `S${getISOWeek(mon)}`;
+      sublabel   = format(mon, 'MMM yyyy', { locale: fr }).toUpperCase();
+      anchorDate = sun < now ? sun : now;
     } else if (range === 'month') {
-      const d  = addMonths(now, i);
-      label    = format(d, 'MMM', { locale: fr }).toUpperCase();
-      sublabel = String(d.getFullYear());
+      const d    = subMonths(now, i);
+      label      = format(d, 'MMM', { locale: fr }).toUpperCase();
+      sublabel   = String(d.getFullYear());
+      anchorDate = i === 0 ? now : endOfMonth(d);
     } else if (range === 'quarter') {
-      const d = addMonths(now, i * 3);
-      const q = Math.ceil((d.getMonth() + 1) / 3);
-      label    = `T${q}`;
-      sublabel = String(d.getFullYear());
+      const d    = subMonths(now, i * 3);
+      const q    = Math.floor(d.getMonth() / 3);
+      const qEnd = endOfMonth(new Date(d.getFullYear(), q * 3 + 2, 1));
+      label      = `T${q + 1}`;
+      sublabel   = String(d.getFullYear());
+      anchorDate = qEnd < now ? qEnd : now;
     } else {
-      const d  = addYears(now, i);
-      label    = String(d.getFullYear());
-      sublabel = '';
+      const d    = subYears(now, i);
+      label      = String(d.getFullYear());
+      sublabel   = '';
+      anchorDate = i === 0 ? now : endOfYear(d);
     }
 
-    chips.push({ offset: i, label, sublabel });
+    opts.push({ label, sublabel, anchorDate });
   }
-  return chips;
+  return opts;
+}
+
+/** Label shown on the dropdown button for the current anchor date + range */
+function periodButtonLabel(range: RangeId, anchor: Date): string {
+  const now = new Date();
+  const isToday = ds(anchor) === ds(now);
+
+  if (range === 'day')     return isToday ? "AUJOURD'HUI" : format(anchor, 'EEE d MMM yyyy', { locale: fr }).toUpperCase();
+  if (range === 'week') {
+    const mon = startOfWeek(anchor, { weekStartsOn: 1 });
+    return `S${getISOWeek(mon)} · ${format(mon, 'MMM yyyy', { locale: fr }).toUpperCase()}`;
+  }
+  if (range === 'month')   return format(anchor, 'MMMM yyyy', { locale: fr }).toUpperCase();
+  if (range === 'quarter') {
+    const q = Math.floor(anchor.getMonth() / 3) + 1;
+    return `T${q} ${anchor.getFullYear()}`;
+  }
+  return String(anchor.getFullYear());
+}
+
+/** Compute interval from anchor date + range type, applying j-1 rule for non-day ranges */
+function computeInterval(range: RangeId, anchor: Date): { start: Date; end: Date } {
+  const now  = new Date();
+  const isCurrentPeriod = anchor >= startOfDay(now);
+
+  if (range === 'day') {
+    // JOUR : inclut la journée en cours si c'est aujourd'hui
+    return { start: startOfDay(anchor), end: endOfDay(anchor) };
+  }
+
+  // Pour tous les autres types : si période en cours → fin = hier (j-1), sinon fin naturelle
+  const naturalEnd = range === 'week'    ? endOfWeek(anchor, { weekStartsOn: 1 })
+                   : range === 'month'   ? endOfMonth(anchor)
+                   : range === 'quarter' ? endOfMonth(new Date(anchor.getFullYear(), Math.floor(anchor.getMonth() / 3) * 3 + 2, 1))
+                   :                      endOfYear(anchor);
+
+  const end = isCurrentPeriod ? endOfDay(subDays(now, 1)) : endOfDay(naturalEnd);
+
+  const start = range === 'week'    ? startOfWeek(anchor, { weekStartsOn: 1 })
+              : range === 'month'   ? startOfMonth(anchor)
+              : range === 'quarter' ? startOfDay(new Date(anchor.getFullYear(), Math.floor(anchor.getMonth() / 3) * 3, 1))
+              :                      startOfYear(anchor);
+
+  return { start, end };
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -185,10 +239,11 @@ export default function AnalyseScreen() {
   const [domain, setDomain] = useState<DomainId>('temps');
   const [subTab, setSubTab] = useState<string>('budget');
   const [range, setRange] = useState<RangeId>('week');
-  // Per-range offsets: 0 = most recent, -1 = one period back, etc. Persists across sub-tab switches.
-  const [rangeOffsets, setRangeOffsets] = useState<Record<RangeId, number>>({
-    day: 0, week: 0, month: 0, quarter: 0, year: 0,
+  // anchorDates: last selected end-date anchor per range type — persists across sub-tab switches
+  const [anchorDates, setAnchorDates] = useState<Record<RangeId, Date>>({
+    day: new Date(), week: new Date(), month: new Date(), quarter: new Date(), year: new Date(),
   });
+  const [showPeriodPicker, setShowPeriodPicker] = useState(false);
   const [aiSummary, setAiSummary] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [mealsByDay, setMealsByDay] = useState<Array<{ label: string; kcal: number; p: number }>>([]);
@@ -212,40 +267,10 @@ export default function AnalyseScreen() {
     SleepService.getAll().then(setSleepEntries).catch(() => {});
   }, [dataVersion]);
 
-  const interval = useMemo(() => {
-    const now  = new Date();
-    const off  = rangeOffsets[range] ?? 0;
-    const yesterday = subDays(now, 1);
-
-    if (range === 'day') {
-      // JOUR offset=0 → aujourd'hui (j+0 inclus) ; offset<0 → jour passé complet
-      const d = addDays(now, off);
-      return { start: startOfDay(d), end: endOfDay(d) };
-    }
-    if (range === 'week') {
-      const base  = addWeeks(now, off);
-      const start = startOfWeek(base, { weekStartsOn: 1 });
-      const end   = off === 0 ? endOfDay(yesterday) : endOfWeek(base, { weekStartsOn: 1 });
-      return { start, end };
-    }
-    if (range === 'month') {
-      const d   = addMonths(now, off);
-      const end = off === 0 ? endOfDay(yesterday) : endOfMonth(d);
-      return { start: startOfMonth(d), end };
-    }
-    if (range === 'quarter') {
-      const d   = addMonths(now, off * 3);
-      const q   = Math.floor(d.getMonth() / 3);
-      const qs  = new Date(d.getFullYear(), q * 3, 1);
-      const qe  = new Date(d.getFullYear(), q * 3 + 3, 0);
-      const end = off === 0 ? endOfDay(yesterday) : endOfDay(qe);
-      return { start: startOfDay(qs), end };
-    }
-    // year
-    const d   = addYears(now, off);
-    const end = off === 0 ? endOfDay(yesterday) : endOfYear(d);
-    return { start: startOfYear(d), end };
-  }, [range, rangeOffsets]);
+  const interval = useMemo(
+    () => computeInterval(range, anchorDates[range] ?? new Date()),
+    [range, anchorDates],
+  );
 
   const muscuStats = useMemo(() => {
     return workoutStore.sessions
@@ -489,11 +514,12 @@ export default function AnalyseScreen() {
           </div>
         )}
 
-        {/* Range selector — L1 type + L2 période défilante */}
+        {/* Range selector — L1 type + dropdown période */}
         {RANGE_SUB_TABS.has(subTab) && (
-          <div className="mt-5 mb-2">
-            {/* L1 — type de granularité */}
-            <div className="px-6 flex flex-row gap-2 mb-3">
+          <div className="mt-5 mb-2 px-6 space-y-3">
+
+            {/* L1 — granularité */}
+            <div className="flex flex-row gap-2">
               {RANGES.map(r => {
                 const active = range === r.id;
                 return (
@@ -505,7 +531,7 @@ export default function AnalyseScreen() {
                     <span className={`text-awan-xs font-black tracking-widest font-mono ${active ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
                       {r.label}
                     </span>
-                    <span className={`text-awan-xs font-mono opacity-50 ${active ? 'text-awan-gold' : 'text-awan-tx-mute'}`} style={{ fontSize: 8 }}>
+                    <span className={`font-mono opacity-50 ${active ? 'text-awan-gold' : 'text-awan-tx-mute'}`} style={{ fontSize: 8 }}>
                       {r.sublabel}
                     </span>
                   </Touch>
@@ -513,30 +539,68 @@ export default function AnalyseScreen() {
               })}
             </div>
 
-            {/* L2 — périodes défilantes (mémorisées par type) */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, gap: 8 }}>
-              {buildPeriodChips(range).map(chip => {
-                const active = (rangeOffsets[range] ?? 0) === chip.offset;
-                return (
-                  <Touch
-                    key={chip.offset}
-                    className={`px-3 py-2 border items-center min-w-[48px] ${active ? 'bg-awan-gold/20 border-awan-gold' : 'border-white/5 bg-white/3'}`}
-                    onPress={() => setRangeOffsets((prev: Record<RangeId, number>) => ({ ...prev, [range]: chip.offset }))}
-                  >
-                    <span className={`text-awan-sm font-black font-mono tracking-wider ${active ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
-                      {chip.label}
-                    </span>
-                    {chip.sublabel ? (
-                      <span className={`font-mono opacity-50 ${active ? 'text-awan-gold' : 'text-awan-tx-mute'}`} style={{ fontSize: 8 }}>
-                        {chip.sublabel}
-                      </span>
-                    ) : null}
-                  </Touch>
-                );
-              })}
-            </ScrollView>
+            {/* L2 — bouton dropdown période */}
+            <Touch
+              className="w-full border border-white/10 bg-white/3 py-3 px-4 flex flex-row items-center justify-between"
+              onPress={() => setShowPeriodPicker(true)}
+            >
+              <span className="text-awan-sm font-black font-mono tracking-widest text-awan-tx">
+                {periodButtonLabel(range, anchorDates[range] ?? new Date())}
+              </span>
+              <span className="text-awan-tx-mute font-mono text-lg">▾</span>
+            </Touch>
           </div>
         )}
+
+        {/* Period picker modal */}
+        <Modal visible={showPeriodPicker} transparent animationType="slide">
+          <div className="flex-1 bg-black/70 justify-end backdrop-blur-sm">
+            <div className="bg-awan-surface border-t border-white/10 max-h-[60vh]">
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-white/5 flex flex-row items-center justify-between">
+                <span className="text-awan-sm font-black uppercase tracking-widest font-mono text-awan-tx">
+                  SÉLECTIONNER LA PÉRIODE
+                </span>
+                <Touch onPress={() => setShowPeriodPicker(false)} className="px-3 py-1 border border-white/10">
+                  <span className="text-awan-xs font-black font-mono text-awan-tx-mute">FERMER</span>
+                </Touch>
+              </div>
+              {/* Options */}
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+                {buildPeriodOptions(range).map((opt, i) => {
+                  const anchor = anchorDates[range] ?? new Date();
+                  const active = i === 0
+                    ? ds(anchor) === ds(opt.anchorDate)
+                    : Math.abs(opt.anchorDate.getTime() - anchor.getTime()) < 86400000;
+                  return (
+                    <Touch
+                      key={i}
+                      className={`px-6 py-4 border-b flex flex-row items-center justify-between ${
+                        active ? 'bg-awan-gold/10 border-awan-gold/20' : 'border-white/5'
+                      }`}
+                      onPress={() => {
+                        setAnchorDates((prev: Record<RangeId, Date>) => ({ ...prev, [range]: opt.anchorDate }));
+                        setShowPeriodPicker(false);
+                      }}
+                    >
+                      <div>
+                        <span className={`text-awan-md font-black font-mono tracking-widest ${active ? 'text-awan-gold' : 'text-awan-tx'}`}>
+                          {opt.label}
+                        </span>
+                        {opt.sublabel ? (
+                          <span className={`text-awan-xs font-mono block mt-0.5 ${active ? 'text-awan-gold opacity-60' : 'text-awan-tx-mute'}`}>
+                            {opt.sublabel}
+                          </span>
+                        ) : null}
+                      </div>
+                      {active && <span className="text-awan-gold font-mono text-sm">●</span>}
+                    </Touch>
+                  );
+                })}
+              </ScrollView>
+            </div>
+          </div>
+        </Modal>
 
         {/* Content */}
         <AnimatePresence mode="wait">
