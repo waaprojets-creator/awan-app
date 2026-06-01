@@ -3,8 +3,11 @@ import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   startOfDay, endOfDay, subDays,
-  parseISO, format, eachDayOfInterval,
+  addDays, addWeeks, addMonths, addYears,
+  startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear,
+  getISOWeek, parseISO, format, eachDayOfInterval,
 } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { useTheme } from '../hooks/useTheme';
 import { ds } from '../utils/storage';
 import { LocalAIService } from '../services/localAIService';
@@ -117,12 +120,60 @@ const DOMAINS: Array<{
 // Sub-tabs that use the range selector
 const RANGE_SUB_TABS = new Set(['nutrition', 'volume', 'morphologie', 'performance', 'charge', 'activite']);
 
-const RANGES = [
-  { id: 'week',    label: '07D', sublabel: 'COURT' },
-  { id: 'month',   label: '30D', sublabel: 'MOYEN' },
-  { id: 'quarter', label: '90D', sublabel: 'MOYEN' },
-  { id: 'year',    label: '1AN', sublabel: 'LONG'  },
+type RangeId = 'day' | 'week' | 'month' | 'quarter' | 'year';
+
+const RANGES: Array<{ id: RangeId; label: string; sublabel: string }> = [
+  { id: 'day',     label: 'JOUR',   sublabel: 'AUJ.'  },
+  { id: 'week',    label: 'HEBDO',  sublabel: 'COURT' },
+  { id: 'month',   label: 'MOIS',   sublabel: 'MOYEN' },
+  { id: 'quarter', label: 'TRIM.',  sublabel: 'MOYEN' },
+  { id: 'year',    label: 'AN',     sublabel: 'LONG'  },
 ];
+
+// Number of past periods shown in the scrollable picker per range type
+const RANGE_CHIP_COUNTS: Record<RangeId, number> = {
+  day: 14, week: 12, month: 18, quarter: 8, year: 5,
+};
+
+interface PeriodChip { offset: number; label: string; sublabel: string }
+
+function buildPeriodChips(range: RangeId): PeriodChip[] {
+  const now = new Date();
+  const count = RANGE_CHIP_COUNTS[range];
+  const chips: PeriodChip[] = [];
+
+  for (let i = -(count - 1); i <= 0; i++) {
+    let label = '';
+    let sublabel = '';
+
+    if (range === 'day') {
+      const d = addDays(now, i);
+      label  = i === 0 ? 'AUJ.' : format(d, 'EEE d', { locale: fr }).toUpperCase();
+      sublabel = format(d, 'MMM', { locale: fr }).toUpperCase();
+    } else if (range === 'week') {
+      const base = addWeeks(now, i);
+      const mon  = startOfWeek(base, { weekStartsOn: 1 });
+      label    = `S${getISOWeek(mon)}`;
+      sublabel = format(mon, 'MMM', { locale: fr }).toUpperCase();
+    } else if (range === 'month') {
+      const d  = addMonths(now, i);
+      label    = format(d, 'MMM', { locale: fr }).toUpperCase();
+      sublabel = String(d.getFullYear());
+    } else if (range === 'quarter') {
+      const d = addMonths(now, i * 3);
+      const q = Math.ceil((d.getMonth() + 1) / 3);
+      label    = `T${q}`;
+      sublabel = String(d.getFullYear());
+    } else {
+      const d  = addYears(now, i);
+      label    = String(d.getFullYear());
+      sublabel = '';
+    }
+
+    chips.push({ offset: i, label, sublabel });
+  }
+  return chips;
+}
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -133,7 +184,11 @@ export default function AnalyseScreen() {
 
   const [domain, setDomain] = useState<DomainId>('temps');
   const [subTab, setSubTab] = useState<string>('budget');
-  const [range, setRange] = useState('week');
+  const [range, setRange] = useState<RangeId>('week');
+  // Per-range offsets: 0 = most recent, -1 = one period back, etc. Persists across sub-tab switches.
+  const [rangeOffsets, setRangeOffsets] = useState<Record<RangeId, number>>({
+    day: 0, week: 0, month: 0, quarter: 0, year: 0,
+  });
   const [aiSummary, setAiSummary] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [mealsByDay, setMealsByDay] = useState<Array<{ label: string; kcal: number; p: number }>>([]);
@@ -158,14 +213,39 @@ export default function AnalyseScreen() {
   }, [dataVersion]);
 
   const interval = useMemo(() => {
-    const now = new Date();
-    const end = endOfDay(now);
-    let start = startOfDay(subDays(now, 6));
-    if (range === 'month')   start = startOfDay(subDays(now, 29));
-    if (range === 'quarter') start = startOfDay(subDays(now, 89));
-    if (range === 'year')    start = startOfDay(subDays(now, 364));
-    return { start, end };
-  }, [range]);
+    const now  = new Date();
+    const off  = rangeOffsets[range] ?? 0;
+    const yesterday = subDays(now, 1);
+
+    if (range === 'day') {
+      // JOUR offset=0 → aujourd'hui (j+0 inclus) ; offset<0 → jour passé complet
+      const d = addDays(now, off);
+      return { start: startOfDay(d), end: endOfDay(d) };
+    }
+    if (range === 'week') {
+      const base  = addWeeks(now, off);
+      const start = startOfWeek(base, { weekStartsOn: 1 });
+      const end   = off === 0 ? endOfDay(yesterday) : endOfWeek(base, { weekStartsOn: 1 });
+      return { start, end };
+    }
+    if (range === 'month') {
+      const d   = addMonths(now, off);
+      const end = off === 0 ? endOfDay(yesterday) : endOfMonth(d);
+      return { start: startOfMonth(d), end };
+    }
+    if (range === 'quarter') {
+      const d   = addMonths(now, off * 3);
+      const q   = Math.floor(d.getMonth() / 3);
+      const qs  = new Date(d.getFullYear(), q * 3, 1);
+      const qe  = new Date(d.getFullYear(), q * 3 + 3, 0);
+      const end = off === 0 ? endOfDay(yesterday) : endOfDay(qe);
+      return { start: startOfDay(qs), end };
+    }
+    // year
+    const d   = addYears(now, off);
+    const end = off === 0 ? endOfDay(yesterday) : endOfYear(d);
+    return { start: startOfYear(d), end };
+  }, [range, rangeOffsets]);
 
   const muscuStats = useMemo(() => {
     return workoutStore.sessions
@@ -409,25 +489,52 @@ export default function AnalyseScreen() {
           </div>
         )}
 
-        {/* Range selector */}
+        {/* Range selector — L1 type + L2 période défilante */}
         {RANGE_SUB_TABS.has(subTab) && (
-          <div className="px-6 mt-6 mb-2 flex flex-row justify-center gap-3">
-            {RANGES.map(r => (
-              <Touch
-                key={r.id}
-                className={`px-4 py-1.5 border transition-all items-center ${
-                  range === r.id ? 'bg-awan-gold/20 border-awan-gold' : 'border-white/10'
-                }`}
-                onPress={() => setRange(r.id)}
-              >
-                <span className={`text-awan-md font-black tracking-[0.2em] font-mono ${
-                  range === r.id ? 'text-awan-gold' : 'text-awan-tx-mute'
-                }`}>{r.label}</span>
-                <span className={`text-awan-xs font-black tracking-widest font-mono ${
-                  range === r.id ? 'text-awan-gold opacity-60' : 'text-awan-tx-mute opacity-40'
-                }`}>{r.sublabel}</span>
-              </Touch>
-            ))}
+          <div className="mt-5 mb-2">
+            {/* L1 — type de granularité */}
+            <div className="px-6 flex flex-row gap-2 mb-3">
+              {RANGES.map(r => {
+                const active = range === r.id;
+                return (
+                  <Touch
+                    key={r.id}
+                    className={`flex-1 py-2 border items-center ${active ? 'bg-awan-gold/20 border-awan-gold' : 'border-white/10'}`}
+                    onPress={() => setRange(r.id)}
+                  >
+                    <span className={`text-awan-xs font-black tracking-widest font-mono ${active ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
+                      {r.label}
+                    </span>
+                    <span className={`text-awan-xs font-mono opacity-50 ${active ? 'text-awan-gold' : 'text-awan-tx-mute'}`} style={{ fontSize: 8 }}>
+                      {r.sublabel}
+                    </span>
+                  </Touch>
+                );
+              })}
+            </div>
+
+            {/* L2 — périodes défilantes (mémorisées par type) */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, gap: 8 }}>
+              {buildPeriodChips(range).map(chip => {
+                const active = (rangeOffsets[range] ?? 0) === chip.offset;
+                return (
+                  <Touch
+                    key={chip.offset}
+                    className={`px-3 py-2 border items-center min-w-[48px] ${active ? 'bg-awan-gold/20 border-awan-gold' : 'border-white/5 bg-white/3'}`}
+                    onPress={() => setRangeOffsets((prev: Record<RangeId, number>) => ({ ...prev, [range]: chip.offset }))}
+                  >
+                    <span className={`text-awan-sm font-black font-mono tracking-wider ${active ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
+                      {chip.label}
+                    </span>
+                    {chip.sublabel ? (
+                      <span className={`font-mono opacity-50 ${active ? 'text-awan-gold' : 'text-awan-tx-mute'}`} style={{ fontSize: 8 }}>
+                        {chip.sublabel}
+                      </span>
+                    ) : null}
+                  </Touch>
+                );
+              })}
+            </ScrollView>
           </div>
         )}
 
