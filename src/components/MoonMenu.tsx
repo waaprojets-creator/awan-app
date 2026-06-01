@@ -26,18 +26,18 @@ const NODES: Node[] = [
   { id: 'Dashboard',   label: n('hub'),        x: 50.0, y: 52.0, tier: 0 },
   // — Ring 1 (tier 1) — r=22% CH, bearings 0/72/144/216/288°
   { id: 'Islam',       label: n('spirit'),     x: 50.0, y: 30.0, tier: 1 },  // bearing   0°
-  { id: 'Trajet',      label: n('trajet'),     x: 70.9, y: 45.2, tier: 1 },  // bearing  72°
+  { id: 'Sante',       label: n('sante'),      x: 70.9, y: 45.2, tier: 1 },  // bearing  72° — cluster droite
   { id: 'Planning',    label: n('planning'),   x: 62.9, y: 69.8, tier: 1 },  // bearing 144°
-  { id: 'Journal',     label: n('journal'),    x: 37.1, y: 69.8, tier: 1 },  // bearing 216°
-  { id: 'Sante',       label: n('sante'),      x: 29.1, y: 45.2, tier: 1 },  // bearing 288°
-  // — Ring 2 (tier 2) — r=36% CH, Sante cluster bearings 255–309°
-  { id: 'Sport',       label: n('sport'),      x: 15.2, y: 61.3, tier: 2 },  // bearing 255°
-  { id: 'Nutrition',   label: n('nutrition'),  x: 14.0, y: 50.1, tier: 2 },  // bearing 273°
-  { id: 'Mensuration', label: n('mensuration'),x: 16.4, y: 39.1, tier: 2 },  // bearing 291°
-  { id: 'Sleep',       label: 'SOMMEIL',       x: 22.0, y: 29.4, tier: 2 },  // bearing 309°
+  { id: 'Trajet',      label: n('trajet'),     x: 37.1, y: 69.8, tier: 1 },  // bearing 216°
+  { id: 'Journal',     label: n('journal'),    x: 29.1, y: 45.2, tier: 1 },  // bearing 288° — gauche
+  // — Ring 2 (tier 2) — r=36% CH, Sante cluster bearings 54–96° (droite)
+  { id: 'Sleep',       label: 'SOMMEIL',       x: 79.1, y: 30.8, tier: 2 },  // bearing  54°
+  { id: 'Mensuration', label: n('mensuration'),x: 83.4, y: 38.5, tier: 2 },  // bearing  68°
+  { id: 'Nutrition',   label: n('nutrition'),  x: 85.6, y: 47.0, tier: 2 },  // bearing  82°
+  { id: 'Sport',       label: n('sport'),      x: 85.8, y: 55.8, tier: 2 },  // bearing  96°
   // — Ring 2 — Dashboard direct children
   { id: 'Coach',       label: n('coach'),      x: 70.6, y: 22.5, tier: 2 },  // bearing  35°
-  { id: 'Reglages',    label: n('reglages'),   x: 85.9, y: 55.1, tier: 2 },  // bearing  95°
+  { id: 'Reglages',    label: n('reglages'),   x: 74.9, y: 55.1, tier: 2 },  // bearing  95° (−11% x)
   // — Ring 2 — Planning cluster
   { id: 'Tasks',       label: n('tasks'),      x: 71.2, y: 81.1, tier: 2 },  // bearing 144°
 ];
