@@ -37,6 +37,34 @@ npm run build && npx cap sync android
 
 Développer sur `claude/account-access-questions-dV31p` (ou toute branche désignée), merger dans `main` avant chaque build.
 
+## Vision systémique — Objectifs par ordre de priorité
+
+> À relire en début de session pour ne pas dériver de l'objectif terminal.
+
+**Équation fondamentale :** Maximiser $T_{\text{slack}}$ sous contrainte $T_{\text{friction}} → 0$
+Avec : $T_{\text{éveil}}$ (112h/sem) = $T_{\text{production}}$ + $T_{\text{friction}}$ + $T_{\text{slack}}$
+
+| Priorité | Dimension | Objectif | État AWAN |
+|---|---|---|---|
+| 1 | **Somatique** | Maximiser le Healthspan (infrastructure biologique) — sommeil, nutrition, sport, composition corporelle | ✅ Bien couvert. Gap : HRV/VFC manquante |
+| 2 | **Axiologique** | Cohérence spirituelle islamique comme filtre de toute décision d'envergure | ✅ Module Islam complet |
+| 3 | **Temporelle** | Tracker $T_{\text{friction}}$, $T_{\text{production}}$, $T_{\text{slack}}$, $C_{et}$ hebdomadaire | ❌ Non implémenté |
+| 4 | **Coach systémique** | Le Coach doit diagnostiquer le système entier, pas des domaines isolés — règles cross-dimensionnelles (charge allostatique, dérive axiologique) | ⚠️ Partiel (26 règles domaine, 0 règle système) |
+| 5 | **Sommeil profond** | Qualité glymphatique (latence, réveils, profondeur auto-estimée) au-delà du score basique | ⚠️ Score grossier actuel |
+| 6 | **Économétrique** | VHN (Valeur Horaire Nette) + Runway financier + calculateur arbitrage délégation ($VHN/C_{\text{délég}} > 1$) | ❌ Non implémenté |
+| 7 | **Cognitive** | Blocs Deep Work sanctuarisés, tracking $T_{\text{production}}$ réel vs nominal, N-Back optionnel | ❌ Non implémenté |
+| 8 | **Conative** | Taux de complétude des intentions, ego depletion, latence à l'effort | ⚠️ Journal humeur 1-5 seulement |
+| 9 | **Environnementale** | Audit semestriel de la charge sensorielle et ergonomie | ❌ Non implémenté |
+| 10 | **Sociométrique** | Audit mensuel distribution Dunbar, capital de liens faibles (Granovetter/Chetty) | ❌ Non implémenté |
+| 11 | **Transmission** | Temps de présence qualitative descendance, journal de transmission capital humain | ❌ Non implémenté |
+
+**Règle d'arbitrage permanente :** Si $VHN / C_{\text{délég}} > 1$ → déléguer sans exception.
+**Cible $C_{et}$ :** > 86,6% (alerte si < 70%).
+**Cible $T_{\text{friction}}$ :** < 15h/semaine.
+**Cible $T_{\text{slack}}$ :** 20–30h/semaine non passif.
+
+---
+
 ## Règles anti-dérive Coach
 
 1. Chaque rule JSON Coach DOIT avoir un champ `"source"` avec URL DOI ou PMC (ex: `"source": "https://doi.org/10.xxxx/xxxxx"`) — même si Zod le strip au runtime, il sert de documentation auditée.
