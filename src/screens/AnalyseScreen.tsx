@@ -115,12 +115,13 @@ const DOMAINS: Array<{
 ];
 
 // Sub-tabs that use the range selector
-const RANGE_SUB_TABS = new Set(['nutrition', 'volume', 'morphologie']);
+const RANGE_SUB_TABS = new Set(['nutrition', 'volume', 'morphologie', 'performance', 'charge', 'activite']);
 
 const RANGES = [
-  { id: 'week',    label: '07D' },
-  { id: 'month',   label: '30D' },
-  { id: 'quarter', label: '90D' },
+  { id: 'week',    label: '07D', sublabel: 'COURT' },
+  { id: 'month',   label: '30D', sublabel: 'MOYEN' },
+  { id: 'quarter', label: '90D', sublabel: 'MOYEN' },
+  { id: 'year',    label: '1AN', sublabel: 'LONG'  },
 ];
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -160,8 +161,9 @@ export default function AnalyseScreen() {
     const now = new Date();
     const end = endOfDay(now);
     let start = startOfDay(subDays(now, 6));
-    if (range === 'month') start = startOfDay(subDays(now, 29));
+    if (range === 'month')   start = startOfDay(subDays(now, 29));
     if (range === 'quarter') start = startOfDay(subDays(now, 89));
+    if (range === 'year')    start = startOfDay(subDays(now, 364));
     return { start, end };
   }, [range]);
 
@@ -413,14 +415,17 @@ export default function AnalyseScreen() {
             {RANGES.map(r => (
               <Touch
                 key={r.id}
-                className={`px-6 py-1.5 border transition-all ${
+                className={`px-4 py-1.5 border transition-all items-center ${
                   range === r.id ? 'bg-awan-gold/20 border-awan-gold' : 'border-white/10'
                 }`}
                 onPress={() => setRange(r.id)}
               >
-                <span className={`text-awan-md font-black tracking-[0.2em] ${
+                <span className={`text-awan-md font-black tracking-[0.2em] font-mono ${
                   range === r.id ? 'text-awan-gold' : 'text-awan-tx-mute'
                 }`}>{r.label}</span>
+                <span className={`text-awan-xs font-black tracking-widest font-mono ${
+                  range === r.id ? 'text-awan-gold opacity-60' : 'text-awan-tx-mute opacity-40'
+                }`}>{r.sublabel}</span>
               </Touch>
             ))}
           </div>
