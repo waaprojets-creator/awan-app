@@ -70,11 +70,11 @@ const DraggableEvent = React.memo(({ ev, hourHeight, handleEventDragEnd, setEdit
 });
 
 const STABS = [
-  { id: 0, label: 'HEBDO', Icon: Columns },
-  { id: 1, label: 'MENSUEL', Icon: Grid3X3 },
-  { id: 2, label: 'ANNUEL', Icon: Calendar },
-  { id: 4, label: 'PLANIFICATEUR', Icon: Target },
-  { id: 5, label: 'TOUT', Icon: Layers },
+  { id: 0, label: 'SEMAINE', Icon: Columns },
+  { id: 1, label: 'MOIS', Icon: Grid3X3 },
+  { id: 2, label: 'ANNÉE', Icon: Calendar },
+  { id: 4, label: 'PLANIFIER', Icon: Target },
+  { id: 5, label: 'CHRONOLOGIE', Icon: Layers },
 ];
 
 function minToTime(min: number): string {
@@ -109,6 +109,7 @@ export default function PlanningScreen() {
   const [aiTitle, setAiTitle] = useState('');
   const [aiDuration, setAiDuration] = useState('30');
   const [aiPriority, setAiPriority] = useState(3);
+  const [aiTimeCategory, setAiTimeCategory] = useState<'production' | 'friction' | 'slack' | 'somatique' | null>(null);
 
   const categories = useMemo(() => {
     const base: any = { ...CATS };
@@ -400,7 +401,7 @@ export default function PlanningScreen() {
       const dur = parseInt(aiDuration, 10);
       if (!aiTitle.trim() || isNaN(dur) || dur < 5) return;
       await planner.saveTask({
-        v: 2,
+        v: 3,
         id: uid(),
         title: aiTitle.trim(),
         durationMin: dur,
@@ -409,9 +410,11 @@ export default function PlanningScreen() {
         tags: [],
         dependsOn: [],
         enabled: true,
+        timeCategory: aiTimeCategory,
       });
       setAiTitle('');
       setAiDuration('30');
+      setAiTimeCategory(null);
     };
 
     return (
@@ -453,6 +456,29 @@ export default function PlanningScreen() {
                       </Touch>
                     ))}
                   </div>
+                </div>
+              </div>
+              <div>
+                <span className="awan-label mb-2 block">CATÉGORIE TEMPS</span>
+                <div className="flex flex-row gap-1">
+                  {([null, 'production', 'friction', 'slack'] as const).map(cat => {
+                    const active = aiTimeCategory === cat;
+                    const label = cat === null ? 'AUCUNE' : cat.toUpperCase();
+                    const color = cat === 'production' ? 'var(--color-awan-status-ok)'
+                      : cat === 'friction' ? 'var(--color-awan-status-warn)'
+                      : cat === 'slack' ? 'var(--color-awan-status-info)'
+                      : 'var(--color-awan-tx-mute)';
+                    return (
+                      <Touch
+                        key={String(cat)}
+                        onPress={() => setAiTimeCategory(cat)}
+                        className={`flex-1 h-10 items-center justify-center border ${active ? 'bg-white/10' : 'bg-white/5'}`}
+                        style={{ borderColor: active ? color : 'var(--color-awan-border)' }}
+                      >
+                        <span className="text-awan-xs font-black font-mono" style={{ color: active ? color : 'var(--color-awan-tx-mute)' }}>{label}</span>
+                      </Touch>
+                    );
+                  })}
                 </div>
               </div>
               <Touch

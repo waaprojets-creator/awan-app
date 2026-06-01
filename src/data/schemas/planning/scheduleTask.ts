@@ -50,16 +50,32 @@ export const ScheduleTaskV2Schema = z.object({
 export type ScheduleTaskV1 = z.infer<typeof ScheduleTaskV1Schema>;
 export type ScheduleTaskV2 = z.infer<typeof ScheduleTaskV2Schema>;
 
+// ─── V3 — timeCategory field (T_friction/T_production/T_slack framework) ──────
+
+export const TimeCategorySchema = z.enum([
+  'production', 'friction', 'slack', 'somatique',
+]).nullable().optional();
+export type TimeCategory = z.infer<typeof TimeCategorySchema>;
+
+export const ScheduleTaskV3Schema = ScheduleTaskV2Schema.extend({
+  v: z.literal(3),
+  /** Classifies this task in the T_friction/T_production/T_slack/T_somatique
+   *  framework. null = unclassified (backward-compatible default). */
+  timeCategory: TimeCategorySchema,
+});
+export type ScheduleTaskV3 = z.infer<typeof ScheduleTaskV3Schema>;
+
 // ─── Union ────────────────────────────────────────────────────────────────────
 
 export const ScheduleTaskSchema = z.discriminatedUnion('v', [
   ScheduleTaskV1Schema,
   ScheduleTaskV2Schema,
+  ScheduleTaskV3Schema,
 ]);
 export type ScheduleTask = z.infer<typeof ScheduleTaskSchema>;
 
-export const SCHEDULE_TASK_LATEST_VERSION = 2;
-export type ScheduleTaskLatest = ScheduleTaskV2;
+export const SCHEDULE_TASK_LATEST_VERSION = 3;
+export type ScheduleTaskLatest = ScheduleTaskV3;
 
 export const migrateScheduleTask = createMigrator<ScheduleTask, ScheduleTaskLatest>(
   ScheduleTaskSchema,
@@ -69,6 +85,11 @@ export const migrateScheduleTask = createMigrator<ScheduleTask, ScheduleTaskLate
       const { energyLevel: _dropped, v: _v, ...rest } = old;
       return { ...rest, v: 2 };
     },
+    2: (old: ScheduleTaskV2): ScheduleTaskV3 => ({
+      ...old,
+      v: 3,
+      timeCategory: null,
+    }),
   },
   SCHEDULE_TASK_LATEST_VERSION,
 );

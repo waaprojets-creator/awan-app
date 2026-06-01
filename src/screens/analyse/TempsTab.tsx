@@ -35,6 +35,8 @@ import type { MealEntryLatest } from '@/data/schemas/nutrition/mealEntry';
 import type { SleepEntryLatest } from '@/data/schemas/sleep/sleepEntry';
 import type { WorkoutSessionLatest } from '@/data/schemas/sport/routine';
 import { ds } from '@/utils/storage';
+import { Planner } from '@/modules/planning/api';
+import type { ScheduleTaskLatest } from '@/data/schemas/planning/scheduleTask';
 
 // ─── SVG aliased wrappers (avoid implicit any on SVG elements) ────────────────
 const SvgRect = Rect as any;
@@ -70,6 +72,7 @@ interface AllData {
   sleepByDate: Record<string, SleepEntryLatest>;
   mealsByDate: Record<string, MealEntryLatest[]>;
   prayersByDate: Record<string, PrayerLogLatest>;
+  weeklyProductionH: number; // tasks timeCategory='production', spread evenly per day
 }
 
 // ─── Layer definitions ────────────────────────────────────────────────────────
@@ -110,7 +113,8 @@ function computeDayLayers(date: string, data: AllData): DayLayers {
   const meals = data.mealsByDate[date] ?? [];
   const nutritionH = meals.length * 0.5;
 
-  const travailH = 0;
+  // Distribute weekly production budget evenly — tasks lack intrinsic dates in V3
+  const travailH = parseFloat((data.weeklyProductionH / 7).toFixed(2));
 
   const daySessions = data.sessions.filter(s => s.date === date);
   const sportH = daySessions.reduce((sum, s) => sum + s.duration / 3600, 0);
@@ -780,6 +784,11 @@ export default function TempsTab() {
           SleepService.getAll(),
           getStorage(),
         ]);
+        const planner = new Planner(storage);
+        const allTasks = await planner.getTasks();
+        const weeklyProductionH = allTasks
+          .filter(t => t.enabled && (t as ScheduleTaskLatest).timeCategory === 'production')
+          .reduce((sum, t) => sum + (t.durationMin ?? 0) / 60, 0);
 
         const sleepByDate: Record<string, SleepEntryLatest> = {};
         sleepEntries.forEach(e => { sleepByDate[e.date] = e; });
@@ -808,7 +817,7 @@ export default function TempsTab() {
         });
 
         if (!active) return;
-        setAllData({ sessions, sleepByDate, mealsByDate, prayersByDate });
+        setAllData({ sessions, sleepByDate, mealsByDate, prayersByDate, weeklyProductionH });
       } catch (_) {
         // silently fail — show empty state
       } finally {
@@ -822,12 +831,12 @@ export default function TempsTab() {
 
   const period = computePeriod(view, offset);
 
-  const dayLayersList: DayLayers[] = allData
-    ? period.days.map(date => computeDayLayers(date, allData))
-    : period.days.map(date => ({
-        date,
-        sommeilH: 0, islamH: 0, nutritionH: 0, travailH: 0, sportH: 0, trajetH: 0, libreH: 24,
-      }));
+  const emptyAllData: AllData = {
+    sessions: [], sleepByDate: {}, mealsByDate: {}, prayersByDate: {}, weeklyProductionH: 0,
+  };
+  const dayLayersList: DayLayers[] = period.days.map(date =>
+    computeDayLayers(date, allData ?? emptyAllData),
+  );
 
   const daySlots: DaySlot[] =
     allData && view === 'jour' && period.days[0]

@@ -2,8 +2,8 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  startOfDay, endOfDay, subDays, subMonths,
-  parseISO, format, startOfWeek, eachDayOfInterval,
+  startOfDay, endOfDay, subDays,
+  parseISO, format, eachDayOfInterval,
 } from 'date-fns';
 import { useTheme } from '../hooks/useTheme';
 import { ds } from '../utils/storage';
@@ -18,18 +18,18 @@ import { usePrayerStore } from '../hooks/usePrayerStore';
 import { useAppStore } from '../data/store/appStore';
 import { PageWrapper, AnimatePresence } from '../components/Animated';
 import {
-  Activity, Dumbbell, Ruler, Flame, TrendingUp,
-  Trophy, Heart, BarChart2, Zap, Moon, Clock, Star,
+  Activity, Dumbbell, Flame, TrendingUp,
+  Trophy, Heart, BarChart2, Zap, Clock, Star, ScanLine,
 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Touch } from '../components/ui/Touch';
 import { BilanZen } from '../components/BilanZen';
 import { motion } from 'motion/react';
 import type { SleepEntryLatest } from '../data/schemas/sleep/sleepEntry';
-import TempsTab from './analyse/TempsTab';
-import ScanTab from './analyse/ScanTab';
 
 // ─── Tab components ───────────────────────────────────────────────────────────
+import TempsTab from './analyse/TempsTab';
+import ScanTab from './analyse/ScanTab';
 import { ActivityTab } from './analyse/ActivityTab';
 import { NutritionTab } from './analyse/NutritionTab';
 import { MuscuTab } from './analyse/MuscuTab';
@@ -42,55 +42,115 @@ import { FluxDensiteTab } from './analyse/FluxDensiteTab';
 import { SynoptiqueTab } from './analyse/SynoptiqueTab';
 import { MetaboliqueTab } from './analyse/MetaboliqueTab';
 import { IslamTab } from './analyse/IslamTab';
+import { BudgetTab } from './analyse/BudgetTab';
+import { ReadinessTab } from './analyse/ReadinessTab';
 
 const FREE_KEY = '_free';
 const FREE_COLOR = 'rgba(212, 175, 55, 0.05)';
 const FREE_LABEL = 'Temps libre';
 
-const TABS = [
-  { id: 'temps',      label: 'TEMPS',    Icon: Clock },
-  { id: 'activity',   label: 'FLUX',     Icon: Activity },
-  { id: 'nutrition',  label: 'NUTR.',    Icon: Flame },
-  { id: 'wn1',        label: 'DENSITÉ',  Icon: TrendingUp },
-  { id: 'wn4',        label: 'SYNOPT.',  Icon: BarChart2 },
-  { id: 'wn5',        label: 'MÉTABO',   Icon: Zap },
-  { id: 'muscu',      label: 'MUSCU',    Icon: Dumbbell },
-  { id: 'perf',       label: 'PERF',     Icon: Trophy },
-  { id: 'recup',      label: 'RÉCUP',    Icon: Heart },
-  { id: 'measures',   label: 'CORPO',    Icon: Ruler },
-  { id: 'scan',       label: 'SCAN',     Icon: Ruler },
-  { id: 'ortho',      label: 'ORTHO',    Icon: Ruler },
-  { id: 'cross',      label: 'CORRÉLA.', Icon: TrendingUp },
-  { id: 'islam',      label: 'ISLAM',    Icon: Star },
+// ─── 2-level navigation ───────────────────────────────────────────────────────
+
+type DomainId = 'temps' | 'corps' | 'energie' | 'ame' | 'systeme';
+
+interface SubTab { id: string; label: string; Icon: React.ComponentType<any> }
+
+const DOMAINS: Array<{
+  id: DomainId;
+  label: string;
+  Icon: React.ComponentType<any>;
+  subs: SubTab[];
+}> = [
+  {
+    id: 'temps',
+    label: 'TEMPS',
+    Icon: Clock,
+    subs: [
+      { id: 'budget',     label: 'BUDGET',     Icon: BarChart2 },
+      { id: 'repartition',label: 'RÉPARTITION',Icon: Clock },
+    ],
+  },
+  {
+    id: 'corps',
+    label: 'CORPS',
+    Icon: Dumbbell,
+    subs: [
+      { id: 'readiness',    label: 'READINESS',   Icon: Activity },
+      { id: 'charge',       label: 'CHARGE',      Icon: Heart },
+      { id: 'performance',  label: 'PERFORMANCE', Icon: Trophy },
+      { id: 'volume',       label: 'VOLUME',      Icon: Dumbbell },
+      { id: 'morphologie',  label: 'MORPHOLOGIE', Icon: BarChart2 },
+      { id: 'symetrie',     label: 'SYMÉTRIE',    Icon: ScanLine },
+    ],
+  },
+  {
+    id: 'energie',
+    label: 'ÉNERGIE',
+    Icon: Flame,
+    subs: [
+      { id: 'nutrition',  label: 'NUTRITION',  Icon: Flame },
+      { id: 'disponible', label: 'DISPONIBLE', Icon: TrendingUp },
+      { id: 'synoptique', label: 'SYNOPTIQUE', Icon: BarChart2 },
+      { id: 'metabolisme',label: 'MÉTABOLISME',Icon: Zap },
+    ],
+  },
+  {
+    id: 'ame',
+    label: 'ÂME',
+    Icon: Star,
+    subs: [
+      { id: 'islam', label: 'ISLAM', Icon: Star },
+    ],
+  },
+  {
+    id: 'systeme',
+    label: 'SYSTÈME',
+    Icon: TrendingUp,
+    subs: [
+      { id: 'activite',     label: 'ACTIVITÉ',     Icon: Activity },
+      { id: 'correlations', label: 'CORRÉLATIONS', Icon: TrendingUp },
+      { id: 'adiposite',    label: 'ADIPOSITÉ',    Icon: ScanLine },
+    ],
+  },
 ];
 
+// Sub-tabs that use the range selector
+const RANGE_SUB_TABS = new Set(['nutrition', 'volume', 'morphologie']);
+
 const RANGES = [
-  { id: 'week', label: '07D' },
-  { id: 'month', label: '30D' },
+  { id: 'week',    label: '07D' },
+  { id: 'month',   label: '30D' },
   { id: 'quarter', label: '90D' },
 ];
 
-// Tabs that use the range selector
-const RANGE_TABS = new Set(['activity', 'nutrition', 'muscu', 'measures']);
+// ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function AnalyseScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const today = ds(new Date());
-  const [tab, setTab] = useState('temps');
+
+  const [domain, setDomain] = useState<DomainId>('temps');
+  const [subTab, setSubTab] = useState<string>('budget');
   const [range, setRange] = useState('week');
   const [aiSummary, setAiSummary] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [mealsByDay, setMealsByDay] = useState<Array<{ label: string; kcal: number; p: number }>>([]);
   const [mealsLoading, setMealsLoading] = useState(false);
-
   const [sleepEntries, setSleepEntries] = useState<SleepEntryLatest[]>([]);
+
   const workoutStore = useWorkoutStore();
   const measureStore = useMeasurementStore();
   const weightStore = useWeightStore();
   const prayerStore = usePrayerStore(today);
   const mealStoreToday = useMealStore(today);
   const dataVersion = useAppStore((s) => s.dataVersion);
+
+  // Reset sub-tab to first when domain changes
+  useEffect(() => {
+    const d = DOMAINS.find(d => d.id === domain);
+    if (d && d.subs[0]) setSubTab(d.subs[0].id);
+  }, [domain]);
 
   useEffect(() => {
     SleepService.getAll().then(setSleepEntries).catch(() => {});
@@ -120,25 +180,8 @@ export default function AnalyseScreen() {
       });
   }, [workoutStore.sessions, interval]);
 
-  const sleepStats = useMemo(() => {
-    const filtered = sleepEntries.filter(e => {
-      const d = parseISO(e.date);
-      return d >= interval.start && d <= interval.end;
-    }).sort((a, b) => a.date.localeCompare(b.date));
-    const avgDuration = filtered.length > 0
-      ? filtered.reduce((s, e) => s + e.durationH, 0) / filtered.length : 0;
-    const avgQuality = filtered.length > 0
-      ? filtered.reduce((s, e) => s + e.quality, 0) / filtered.length : 0;
-    return {
-      entries: filtered,
-      avgDuration,
-      avgQuality,
-      data: filtered.map(e => ({ label: format(parseISO(e.date), 'dd/MM'), durationH: e.durationH, quality: e.quality })),
-    };
-  }, [sleepEntries, interval]);
-
   useEffect(() => {
-    if (!RANGE_TABS.has(tab)) return;
+    if (!RANGE_SUB_TABS.has(subTab)) return;
     let active = true;
     setMealsLoading(true);
     const days = eachDayOfInterval(interval);
@@ -153,16 +196,14 @@ export default function AnalyseScreen() {
       setMealsLoading(false);
     }).catch(() => { if (active) setMealsLoading(false); });
     return () => { active = false; };
-  }, [interval, tab]);
+  }, [interval, subTab]);
 
   const weightTrend = useMemo(() => {
     const sortedWeights = [...weightStore.entries].sort((a, b) => a.date.localeCompare(b.date));
     const filtered = measureStore.history
       .filter(m => { const d = parseISO(m.date); return d >= interval.start && d <= interval.end; })
-      .slice()
-      .sort((a, b) => a.date.localeCompare(b.date));
+      .slice().sort((a, b) => a.date.localeCompare(b.date));
     return filtered.map(m => {
-      // Binary search: last weight entry with date <= m.date — O(log n) vs O(n²)
       let lo = 0; let hi = sortedWeights.length - 1; let w: typeof sortedWeights[0] | undefined;
       while (lo <= hi) {
         const mid = (lo + hi) >>> 1;
@@ -178,7 +219,7 @@ export default function AnalyseScreen() {
     const sorted = weightStore.entries.slice().sort((a, b) => a.date.localeCompare(b.date));
     const latest = sorted.at(-1) ?? null;
     const prev = sorted.at(-2) ?? null;
-    const weightTrend = latest && prev
+    const wt = latest && prev
       ? latest.weightKg > prev.weightKg ? 'up' : latest.weightKg < prev.weightKg ? 'down' : 'stable'
       : null;
     setAiLoading(true);
@@ -188,14 +229,12 @@ export default function AnalyseScreen() {
       prayersTotal: prayerStore.total,
       lastWorkoutName: workoutStore.sessions.at(-1)?.name ?? null,
       weightKg: latest?.weightKg ?? null,
-      weightTrend,
+      weightTrend: wt,
     }).then(s => { setAiSummary(s); setAiLoading(false); });
   }, [weightStore.entries, mealsByDay, workoutStore.sessions, prayerStore.doneCount]);
 
-  // Poids pour EAT (FluxDensiteTab)
   const bodyWeightKg = weightStore.avg7d ?? weightStore.entries[0]?.weightKg ?? null;
 
-  // activityData: pie-chart slices from workout + meals + prayers + sleep
   const activityData = useMemo(() => {
     const workoutMins = workoutStore.sessions
       .filter(s => { const d = parseISO(s.date); return d >= interval.start && d <= interval.end; })
@@ -214,9 +253,75 @@ export default function AnalyseScreen() {
     return entries as { key: string; value: number; color: string; label: string }[];
   }, [workoutStore.sessions, sleepEntries, interval]);
 
+  const currentDomain = DOMAINS.find(d => d.id === domain)!;
+
+  // ─── Content renderer ────────────────────────────────────────────────────────
+
+  function renderContent() {
+    switch (subTab) {
+      // ── TEMPS ──────────────────────────────────────────────────────────────
+      case 'budget':       return <BudgetTab />;
+      case 'repartition':  return <TempsTab />;
+
+      // ── CORPS ──────────────────────────────────────────────────────────────
+      case 'readiness':    return <ReadinessTab />;
+      case 'charge':       return <RecoveryTab sessions={workoutStore.sessions} />;
+      case 'performance':  return <PerformanceTab sessions={workoutStore.sessions} />;
+      case 'volume':       return <MuscuTab stats={muscuStats} loading={workoutStore.loading} />;
+      case 'morphologie':  return (
+        <BiometrieTab
+          weightTrend={weightTrend}
+          history={measureStore.history}
+          loading={measureStore.loading}
+        />
+      );
+      case 'symetrie':     return (
+        <OrthometryTab
+          history={measureStore.history}
+          loading={measureStore.loading}
+        />
+      );
+
+      // ── ÉNERGIE ────────────────────────────────────────────────────────────
+      case 'nutrition':    return (
+        <NutritionTab
+          mealsByDay={mealsByDay}
+          mealsLoading={mealsLoading}
+          todayKcal={mealStoreToday.totals.kcal}
+          todayP={mealStoreToday.totals.p}
+          todayC={mealStoreToday.totals.c}
+          todayF={mealStoreToday.totals.f}
+        />
+      );
+      case 'disponible':   return (
+        <FluxDensiteTab sessions={workoutStore.sessions} weightKg={bodyWeightKg} />
+      );
+      case 'synoptique':   return <SynoptiqueTab sessions={workoutStore.sessions} />;
+      case 'metabolisme':  return <MetaboliqueTab />;
+
+      // ── ÂME ────────────────────────────────────────────────────────────────
+      case 'islam':        return <IslamTab />;
+
+      // ── SYSTÈME ────────────────────────────────────────────────────────────
+      case 'activite':     return <ActivityTab data={activityData} />;
+      case 'correlations': return (
+        <CorrelationTab
+          sessions={workoutStore.sessions}
+          history={measureStore.history}
+          weightEntries={weightStore.entries}
+          todayKcal={mealStoreToday.totals.kcal}
+        />
+      );
+      case 'adiposite':    return <ScanTab />;
+
+      default: return null;
+    }
+  }
+
   return (
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }}>
+        {/* Header */}
         <div className="px-6 pt-4 pb-4">
           <div className="mt-0">
             <span className="text-awan-xl font-black text-awan-tx tracking-[0.15em] uppercase block">ANALYSE TACTIQUE</span>
@@ -248,110 +353,89 @@ export default function AnalyseScreen() {
           </div>
         </div>
 
-        {/* Tab bar — horizontalement scrollable */}
-        <div className="mb-6">
+        {/* L1 — Domain bar */}
+        <div className="mb-0">
           <ScrollView horizontal showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 24 }}
-          >
+            contentContainerStyle={{ paddingHorizontal: 24 }}>
             <div className="border-b border-white/10 flex flex-row">
-              {TABS.map(({ id, label, Icon }) => (
+              {DOMAINS.map(({ id, label, Icon }) => (
                 <Touch
                   key={id}
-                  className={`px-3 py-3 items-center justify-center border-b-2 transition-all min-w-[56px] ${tab === id ? 'border-awan-gold' : 'border-transparent opacity-40'}`}
-                  onPress={() => setTab(id)}
+                  className={`px-4 py-3 items-center justify-center border-b-2 transition-all min-w-[64px] ${
+                    domain === id ? 'border-awan-gold' : 'border-transparent opacity-40'
+                  }`}
+                  onPress={() => setDomain(id)}
                 >
-                  <Icon size={16} className={tab === id ? 'text-awan-gold' : 'text-awan-tx-mute'} />
-                  <span className={`awan-label-sm mt-1 ${tab === id ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{label}</span>
+                  <Icon size={16} className={domain === id ? 'text-awan-gold' : 'text-awan-tx-mute'} />
+                  <span className={`awan-label-sm mt-1 ${domain === id ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
+                    {label}
+                  </span>
                 </Touch>
               ))}
             </div>
           </ScrollView>
         </div>
 
-        {/* Range selector — only for relevant tabs */}
-        {RANGE_TABS.has(tab) && (
-          <div className="px-6 mb-8 flex flex-row justify-center gap-3">
+        {/* L2 — Sub-tab bar (hidden when domain has only 1 sub-tab) */}
+        {currentDomain.subs.length > 1 && (
+          <div className="mb-0">
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 24 }}>
+              <div className="border-b border-white/5 flex flex-row">
+                {currentDomain.subs.map(({ id, label, Icon }) => (
+                  <Touch
+                    key={id}
+                    className={`px-3 py-2.5 items-center justify-center border-b-2 transition-all min-w-[64px] ${
+                      subTab === id ? 'border-awan-gold/70' : 'border-transparent opacity-30'
+                    }`}
+                    onPress={() => setSubTab(id)}
+                  >
+                    <Icon size={13}
+                      className={subTab === id ? 'text-awan-gold' : 'text-awan-tx-mute'}
+                      style={{ opacity: subTab === id ? 1 : 0.5 }}
+                    />
+                    <span className={`mt-1 uppercase font-black tracking-[0.15em] ${
+                      subTab === id ? 'text-awan-gold' : 'text-awan-tx-mute'
+                    }`}
+                      style={{ fontFamily: 'var(--font-mono)', fontSize: 9 }}>
+                      {label}
+                    </span>
+                  </Touch>
+                ))}
+              </div>
+            </ScrollView>
+          </div>
+        )}
+
+        {/* Range selector */}
+        {RANGE_SUB_TABS.has(subTab) && (
+          <div className="px-6 mt-6 mb-2 flex flex-row justify-center gap-3">
             {RANGES.map(r => (
               <Touch
                 key={r.id}
-                className={`px-6 py-1.5 border transition-all ${range === r.id ? 'bg-awan-gold/20 border-awan-gold' : 'border-white/10'}`}
+                className={`px-6 py-1.5 border transition-all ${
+                  range === r.id ? 'bg-awan-gold/20 border-awan-gold' : 'border-white/10'
+                }`}
                 onPress={() => setRange(r.id)}
               >
-                <span className={`text-awan-md font-black tracking-[0.2em] ${range === r.id ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{r.label}</span>
+                <span className={`text-awan-md font-black tracking-[0.2em] ${
+                  range === r.id ? 'text-awan-gold' : 'text-awan-tx-mute'
+                }`}>{r.label}</span>
               </Touch>
             ))}
           </div>
         )}
 
+        {/* Content */}
         <AnimatePresence mode="wait">
           <motion.div
-            key={tab + range}
+            key={subTab + range}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="px-6"
+            className="px-6 mt-6"
           >
-            {tab === 'temps' && <TempsTab />}
-
-            {tab === 'activity' && <ActivityTab data={activityData} />}
-
-            {tab === 'nutrition' && (
-              <NutritionTab
-                mealsByDay={mealsByDay}
-                mealsLoading={mealsLoading}
-                todayKcal={mealStoreToday.totals.kcal}
-                todayP={mealStoreToday.totals.p}
-                todayC={mealStoreToday.totals.c}
-                todayF={mealStoreToday.totals.f}
-              />
-            )}
-
-            {tab === 'wn1' && (
-              <FluxDensiteTab
-                sessions={workoutStore.sessions}
-                weightKg={bodyWeightKg}
-              />
-            )}
-
-            {tab === 'wn4' && <SynoptiqueTab sessions={workoutStore.sessions} />}
-
-            {tab === 'wn5' && <MetaboliqueTab />}
-
-            {tab === 'muscu' && (
-              <MuscuTab stats={muscuStats} loading={workoutStore.loading} />
-            )}
-
-            {tab === 'perf' && <PerformanceTab sessions={workoutStore.sessions} />}
-
-            {tab === 'recup' && <RecoveryTab sessions={workoutStore.sessions} />}
-
-            {tab === 'scan' && <ScanTab />}
-
-            {tab === 'measures' && (
-              <BiometrieTab
-                weightTrend={weightTrend}
-                history={measureStore.history}
-                loading={measureStore.loading}
-              />
-            )}
-
-            {tab === 'ortho' && (
-              <OrthometryTab
-                history={measureStore.history}
-                loading={measureStore.loading}
-              />
-            )}
-
-            {tab === 'cross' && (
-              <CorrelationTab
-                sessions={workoutStore.sessions}
-                history={measureStore.history}
-                weightEntries={weightStore.entries}
-                todayKcal={mealStoreToday.totals.kcal}
-              />
-            )}
-
-            {tab === 'islam' && <IslamTab />}
+            {renderContent()}
           </motion.div>
         </AnimatePresence>
       </ScrollView>
