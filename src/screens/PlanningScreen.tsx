@@ -709,7 +709,7 @@ export default function PlanningScreen() {
         </div>
       </div>
       <AnimatePresence mode="wait">
-        <motion.div key={subTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex-1">
+        <motion.div key={subTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex-1 min-h-0 overflow-hidden">
           {subTab === 0 && renderWeekly()}
           {subTab === 1 && renderMonthly()}
           {subTab === 2 && renderAnnual()}

@@ -118,8 +118,11 @@ export default function SettingsScreen() {
  const theme = useTheme();
  const themeMode = useThemeMode();
  const setTheme = useAppStore((s: any) => s.setTheme);
+ const jitFactor = useAppStore((s: any) => s.jitFactor);
+ const setJitFactor = useAppStore((s: any) => s.setJitFactor);
  const [purgeModal, setPurgeModal] = useState(false);
  const [purging, setPurging] = useState(false);
+ const [pendingAction, setPendingAction] = useState<'cache' | 'export' | 'lock' | null>(null);
  const [cacheState, setCacheState] = useState<'idle' | 'loading' | 'ok'>('idle');
  const [exportState, setExportState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
  const [exportMsg, setExportMsg] = useState('');
@@ -297,14 +300,14 @@ export default function SettingsScreen() {
  <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">FACTEUR JIT</span>
  <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Marge de sécurité temporelle</span>
  </div>
- <span className="text-2xl font-black text-awan-gold font-mono">{(Number(config.jitFactor) || 1.2).toFixed(1)}x</span>
+ <span className="text-2xl font-black text-awan-gold font-mono">{jitFactor.toFixed(1)}x</span>
  </div>
  <div className="flex flex-row bg-awan-surface p-1 gap-1">
  {[1.0, 1.1, 1.2, 1.3, 1.4, 1.5].map(v => {
- const active = Math.abs(Number(config.jitFactor || 1.2) - v) < 0.01;
+ const active = Math.abs(jitFactor - v) < 0.01;
  return (
- <Touch key={v} onPress={() => updateCfg('jitFactor', v)}
- className={`flex-1 py-3 items-center justify-center ${active ? 'bg-awan-gold' : 'transparent'}`}>
+ <Touch key={v} onPress={() => setJitFactor(v)}
+ className={`flex-1 py-3 items-center justify-center ${active ? 'bg-awan-gold' : 'bg-transparent'}`}>
  <span className={`text-awan-md font-black font-mono ${active ? 'text-black' : 'text-white/20'}`}>{v.toFixed(1)}</span>
  </Touch>
  );
@@ -330,84 +333,144 @@ export default function SettingsScreen() {
  {/* PROTOCOLES CRITIQUES */}
  <div className="mb-12">
  <Heading level={4} mono subtitle="Maintenance & Sécurité" className="mb-6">PROTOCOLES CRITIQUES</Heading>
- <div className="space-y-3">
+ <div className="flex flex-col gap-4">
  <DbFillGauge />
- <Touch onPress={purgeCache} className="bg-white/3 border border-white/5 p-6 flex-row items-center gap-5">
- <div className="w-10 h-10 bg-white/5 flex items-center justify-center">
-   {cacheState === 'loading' && <div style={{ animation: 'spin 1s linear infinite' }}><HexagonLogo size={20} color="var(--color-awan-gold)" /></div>}
-   {cacheState === 'ok'      && <Check size={18} color="var(--color-awan-status-ok)" />}
-   {cacheState === 'idle'    && <HexagonLogo size={20} color="var(--color-awan-tx-mute)" />}
- </div>
- <div className="flex-1">
- <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">OPTIMISATION CACHE</span>
-   {cacheState === 'idle'    && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Nettoyage des archives terminées</span>}
-   {cacheState === 'loading' && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">OPTIMISATION EN COURS…</span>}
-   {cacheState === 'ok'      && <span className="text-awan-sm font-bold uppercase tracking-tighter" style={{ color: 'var(--color-awan-status-ok)' }}>Cache optimisé</span>}
- </div>
+
+ {/* OPTIMISATION CACHE */}
+ <Touch
+   onPress={() => pendingAction === null && cacheState === 'idle' ? setPendingAction('cache') : undefined}
+   className={`min-h-[88px] border p-5 flex-row items-center gap-5 ${pendingAction === 'cache' ? 'bg-awan-gold/8 border-awan-gold/40' : 'bg-white/3 border-white/5'}`}
+ >
+   {pendingAction === 'cache' ? (
+     <div className="flex-1 flex flex-row items-center justify-between gap-3">
+       <span className="text-xs font-black text-awan-gold uppercase tracking-widest">CONFIRMER L'OPTIMISATION ?</span>
+       <div className="flex flex-row gap-2">
+         <Touch onPress={() => { setPendingAction(null); purgeCache(); }} className="px-5 py-2 bg-awan-gold items-center justify-center">
+           <span className="text-xs font-black text-black uppercase tracking-widest font-mono">OUI</span>
+         </Touch>
+         <Touch onPress={() => setPendingAction(null)} className="px-5 py-2 bg-white/5 border border-white/10 items-center justify-center">
+           <span className="text-xs font-black text-awan-tx-mute uppercase tracking-widest font-mono">NON</span>
+         </Touch>
+       </div>
+     </div>
+   ) : (
+     <>
+       <div className="w-10 h-10 bg-white/5 flex items-center justify-center flex-shrink-0">
+         {cacheState === 'loading' && <div style={{ animation: 'spin 1s linear infinite' }}><HexagonLogo size={20} color="var(--color-awan-gold)" /></div>}
+         {cacheState === 'ok'      && <Check size={18} color="var(--color-awan-status-ok)" />}
+         {cacheState === 'idle'    && <HexagonLogo size={20} color="var(--color-awan-tx-mute)" />}
+       </div>
+       <div className="flex-1">
+         <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">OPTIMISATION CACHE</span>
+         {cacheState === 'idle'    && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Nettoyage des archives terminées</span>}
+         {cacheState === 'loading' && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">OPTIMISATION EN COURS…</span>}
+         {cacheState === 'ok'      && <span className="text-awan-sm font-bold uppercase tracking-tighter" style={{ color: 'var(--color-awan-status-ok)' }}>Cache optimisé</span>}
+       </div>
+     </>
+   )}
  </Touch>
 
+ {/* EXPORTATION NOYAU */}
  <Touch
- onPress={async () => {
-   if (exportState === 'loading') return;
-   setExportState('loading');
-   setExportMsg('');
-   const result = await exportBackup();
-   if (result.ok) {
-     setExportState('ok');
-     setExportMsg(result.path ? `Enregistré dans ${result.path}` : 'Fichier téléchargé');
-   } else {
-     setExportState('error');
-     setExportMsg(result.error ?? 'Erreur inconnue');
-   }
-   setTimeout(() => setExportState('idle'), 4000);
- }}
- className="bg-white/3 border border-white/5 p-6 flex-row items-center gap-5"
+   onPress={() => pendingAction === null && exportState === 'idle' ? setPendingAction('export') : undefined}
+   className={`min-h-[88px] border p-5 flex-row items-center gap-5 ${pendingAction === 'export' ? 'bg-awan-gold/8 border-awan-gold/40' : 'bg-white/3 border-white/5'}`}
  >
- <div className="w-10 h-10 bg-white/5 flex items-center justify-center">
-   {exportState === 'loading' && <div style={{ animation: 'spin 1s linear infinite' }}><HexagonLogo size={20} color="var(--color-awan-gold)" /></div>}
-   {exportState === 'ok'      && <Check size={18} color="var(--color-awan-status-ok)" />}
-   {exportState === 'error'   && <X size={18} color="var(--color-awan-status-error)" />}
-   {exportState === 'idle'    && <Database size={18} className="text-awan-tx-mute" />}
- </div>
- <div className="flex-1">
- <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">EXPORTATION NOYAU</span>
- {exportState === 'idle' && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Écrit {buildExportFilename()} dans Téléchargements</span>}
- {exportState === 'loading' && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">EXPORT EN COURS…</span>}
- {exportState === 'ok' && <span className="text-awan-sm font-bold uppercase tracking-tighter" style={{ color: 'var(--color-awan-status-ok)' }}>{exportMsg}</span>}
- {exportState === 'error' && <span className="text-awan-sm font-bold uppercase tracking-tighter" style={{ color: 'var(--color-awan-status-error)' }}>{exportMsg}</span>}
- </div>
+   {pendingAction === 'export' ? (
+     <div className="flex-1 flex flex-row items-center justify-between gap-3">
+       <span className="text-xs font-black text-awan-gold uppercase tracking-widest">CONFIRMER L'EXPORT ?</span>
+       <div className="flex flex-row gap-2">
+         <Touch onPress={async () => {
+           setPendingAction(null);
+           setExportState('loading');
+           setExportMsg('');
+           const result = await exportBackup();
+           if (result.ok) {
+             setExportState('ok');
+             setExportMsg(result.path ? `Enregistré dans ${result.path}` : 'Fichier téléchargé');
+           } else {
+             setExportState('error');
+             setExportMsg(result.error ?? 'Erreur inconnue');
+           }
+           setTimeout(() => setExportState('idle'), 4000);
+         }} className="px-5 py-2 bg-awan-gold items-center justify-center">
+           <span className="text-xs font-black text-black uppercase tracking-widest font-mono">OUI</span>
+         </Touch>
+         <Touch onPress={() => setPendingAction(null)} className="px-5 py-2 bg-white/5 border border-white/10 items-center justify-center">
+           <span className="text-xs font-black text-awan-tx-mute uppercase tracking-widest font-mono">NON</span>
+         </Touch>
+       </div>
+     </div>
+   ) : (
+     <>
+       <div className="w-10 h-10 bg-white/5 flex items-center justify-center flex-shrink-0">
+         {exportState === 'loading' && <div style={{ animation: 'spin 1s linear infinite' }}><HexagonLogo size={20} color="var(--color-awan-gold)" /></div>}
+         {exportState === 'ok'      && <Check size={18} color="var(--color-awan-status-ok)" />}
+         {exportState === 'error'   && <X size={18} color="var(--color-awan-status-error)" />}
+         {exportState === 'idle'    && <Database size={18} className="text-awan-tx-mute" />}
+       </div>
+       <div className="flex-1">
+         <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">EXPORTATION NOYAU</span>
+         {exportState === 'idle'    && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Écrit {buildExportFilename()} dans Téléchargements</span>}
+         {exportState === 'loading' && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">EXPORT EN COURS…</span>}
+         {exportState === 'ok'      && <span className="text-awan-sm font-bold uppercase tracking-tighter" style={{ color: 'var(--color-awan-status-ok)' }}>{exportMsg}</span>}
+         {exportState === 'error'   && <span className="text-awan-sm font-bold uppercase tracking-tighter" style={{ color: 'var(--color-awan-status-error)' }}>{exportMsg}</span>}
+       </div>
+     </>
+   )}
  </Touch>
 
+ {/* VERROUILLAGE BIOMÉTRIQUE */}
  <Touch
- onPress={() => updateCfg('isLocked', !config.isLocked)}
- className={`border p-6 flex-row items-center gap-5 transition-all ${config.isLocked ? 'bg-awan-status-error/10 border-awan-status-error/30' : 'bg-white/3 border-white/5'}`}
+   onPress={() => pendingAction === null ? setPendingAction('lock') : undefined}
+   className={`min-h-[88px] border p-5 flex-row items-center gap-5 ${pendingAction === 'lock' ? 'bg-awan-gold/8 border-awan-gold/40' : config.isLocked ? 'bg-awan-status-error/10 border-awan-status-error/30' : 'bg-white/3 border-white/5'}`}
  >
- <div className={`w-10 h-10 flex items-center justify-center ${config.isLocked ? 'bg-awan-status-error/20' : 'bg-white/5'}`}>
- <Shield size={18} className={config.isLocked ? 'text-awan-status-error' : 'text-awan-tx-mute'} />
- </div>
- <div className="flex-1">
- <span className={`text-xs font-black uppercase tracking-widest block mb-1 ${config.isLocked ? 'text-awan-status-error' : 'text-awan-tx'}`}>VERROUILLAGE BIOMÉTRIQUE</span>
- <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Isolation du terminal actif</span>
- </div>
- <Switch
- value={!!config.isLocked}
- onValueChange={(v) => updateCfg('isLocked', v)}
- trackColor={{ false: '#1A1A1A', true: '#FF4B4B' }}
- thumbColor={config.isLocked ? '#fff' : '#444'}
- />
+   {pendingAction === 'lock' ? (
+     <div className="flex-1 flex flex-row items-center justify-between gap-3">
+       <span className="text-xs font-black text-awan-gold uppercase tracking-widest">
+         {config.isLocked ? 'DÉVERROUILLER ?' : 'VERROUILLER ?'}
+       </span>
+       <div className="flex flex-row gap-2">
+         <Touch onPress={() => { setPendingAction(null); updateCfg('isLocked', !config.isLocked); }} className="px-5 py-2 bg-awan-gold items-center justify-center">
+           <span className="text-xs font-black text-black uppercase tracking-widest font-mono">OUI</span>
+         </Touch>
+         <Touch onPress={() => setPendingAction(null)} className="px-5 py-2 bg-white/5 border border-white/10 items-center justify-center">
+           <span className="text-xs font-black text-awan-tx-mute uppercase tracking-widest font-mono">NON</span>
+         </Touch>
+       </div>
+     </div>
+   ) : (
+     <>
+       <div className={`w-10 h-10 flex items-center justify-center flex-shrink-0 ${config.isLocked ? 'bg-awan-status-error/20' : 'bg-white/5'}`}>
+         <Shield size={18} className={config.isLocked ? 'text-awan-status-error' : 'text-awan-tx-mute'} />
+       </div>
+       <div className="flex-1">
+         <span className={`text-xs font-black uppercase tracking-widest block mb-1 ${config.isLocked ? 'text-awan-status-error' : 'text-awan-tx'}`}>VERROUILLAGE BIOMÉTRIQUE</span>
+         <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">
+           {config.isLocked ? 'Terminal verrouillé — toucher pour déverrouiller' : 'Isolation du terminal actif'}
+         </span>
+       </div>
+       <Switch
+         value={!!config.isLocked}
+         onValueChange={() => setPendingAction('lock')}
+         trackColor={{ false: '#1A1A1A', true: '#FF4B4B' }}
+         thumbColor={config.isLocked ? '#fff' : '#444'}
+       />
+     </>
+   )}
  </Touch>
 
+ {/* PURGE DONNÉES — modal existant */}
  <Touch
- onPress={() => setPurgeModal(true)}
- className="bg-awan-status-error/10 border border-awan-status-error/30 p-6 flex-row items-center gap-5"
+   onPress={() => setPurgeModal(true)}
+   className="min-h-[88px] bg-awan-status-error/10 border border-awan-status-error/30 p-5 flex-row items-center gap-5"
  >
- <div className="w-10 h-10 bg-awan-status-error/20 flex items-center justify-center">
- <Trash2 size={18} className="text-awan-status-error" />
- </div>
- <div className="flex-1">
- <span className="text-xs font-black text-awan-status-error uppercase tracking-widest block mb-1">PURGE DONNÉES PERSONNELLES</span>
- <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Suppression totale et irréversible</span>
- </div>
+   <div className="w-10 h-10 bg-awan-status-error/20 flex items-center justify-center flex-shrink-0">
+     <Trash2 size={18} className="text-awan-status-error" />
+   </div>
+   <div className="flex-1">
+     <span className="text-xs font-black text-awan-status-error uppercase tracking-widest block mb-1">PURGE DONNÉES PERSONNELLES</span>
+     <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Suppression totale et irréversible</span>
+   </div>
  </Touch>
  </div>
  </div>

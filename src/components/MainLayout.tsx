@@ -1,4 +1,4 @@
-import React, { Component, lazy, Suspense, useEffect } from 'react';
+import React, { Component, lazy, Suspense, useEffect, useState } from 'react';
 import { ActivityIndicator } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 import { Switch, Route, useLocation } from 'wouter';
@@ -55,10 +55,10 @@ class ScreenErrorBoundary extends Component<{ children: React.ReactNode }, Error
 function PageTransition({ children, direction = 1 }: { children: React.ReactNode; direction?: number }) {
   return (
     <motion.div
-      initial={{ opacity: 0, x: 24 * direction }}
+      initial={{ opacity: 0, x: 28 * direction }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -24 * direction }}
-      transition={{ duration: 0.15, ease: 'easeOut' }}
+      exit={{ opacity: 0, x: -28 * direction }}
+      transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
       className="flex-1 flex flex-col h-full w-full min-h-0 overflow-hidden"
     >
       {children}
@@ -85,24 +85,31 @@ function routeToName(location: string): string {
 
 export default function MainLayout() {
   const [location, setLocation] = useLocation();
+  const [navDirection, setNavDirection] = useState(1);
   const theme = useTheme();
   useThemeSync();
 
   useAndroidBack(() => {
-    if (confirm('Quitter Awan ?')) {
+    // Back from sub-screen → return to Dashboard with reverse animation
+    if (location !== '/' && location !== '/dashboard') {
+      setNavDirection(-1);
+      setLocation('/');
+    } else if (confirm('Quitter Awan ?')) {
       import('@capacitor/app').then(({ App }) => App.exitApp()).catch(() => {});
     }
   });
 
   const navigate = (route: string) => {
     const path = route === 'Dashboard' ? '/' : `/${route.toLowerCase()}`;
+    // Returning to root = backward animation; entering a screen = forward
+    setNavDirection(path === '/' || path === '/dashboard' ? -1 : 1);
     setLocation(path);
   };
 
   const currentRoute = routeToName(location);
 
   const wrap = (Screen: React.ComponentType<{ navigate: (r: string) => void }>) => () => (
-    <PageTransition>
+    <PageTransition direction={navDirection}>
       <Screen navigate={navigate} />
     </PageTransition>
   );
