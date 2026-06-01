@@ -1,25 +1,33 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Coach } from '@/modules/coach/api';
-import { LocalStorageAdapter } from '@/modules/coach/localStorageAdapter';
+import { getUserStorage } from '@/data/storage/storageService';
 import type { AssessmentLatest } from '@/data/schemas/coach/assessment';
 import type { Domain } from '@/data/schemas/coach/rule';
 import { eventBus } from '@/data/events/bus';
 
 /**
- * Lazily-instantiated process-wide Coach singleton. The Coach itself wires the
- * EventBus, persists assessments to LocalStorage, and exposes a stable API to
- * React. Sharing one instance across the app avoids duplicate event handlers
- * and redundant rule re-loading.
+ * Process-wide Coach singleton, lazily initialised with the real user storage
+ * (IndexedDB on web, SQLite on native). Using LocalStorageAdapter was the root
+ * cause of "no advice ever shown" — signal data lives in IndexedDB, not LS.
  */
-let _coach: Coach | null = null;
+let _coachPromise: Promise<Coach> | null = null;
 let _unsubscribe: (() => void) | null = null;
 
-function getCoach(): Coach {
-  if (_coach === null) {
-    _coach = new Coach({ storage: new LocalStorageAdapter() });
-    _unsubscribe = _coach.subscribe();
+async function initCoach(): Promise<Coach> {
+  const storage = await getUserStorage();
+  const coach = new Coach({ storage });
+  _unsubscribe = coach.subscribe();
+  return coach;
+}
+
+function getCoachPromise(): Promise<Coach> {
+  if (_coachPromise === null) {
+    _coachPromise = initCoach().catch((err) => {
+      _coachPromise = null; // allow retry on next call
+      throw err;
+    });
   }
-  return _coach;
+  return _coachPromise;
 }
 
 const ALL_DOMAINS: Domain[] = ['sport', 'nutrition', 'anthropo', 'sleep', 'cross'];
@@ -31,24 +39,30 @@ export interface UseCoachResult {
   getAssessment: (date: string, domain: Domain) => Promise<AssessmentLatest | null>;
 }
 
-/**
- * React binding for the Coach engine.
- *
- * - Instantiates the singleton on first mount and subscribes to the EventBus.
- * - Exposes `assessments` for the current day, refreshed whenever the engine
- *   emits `coach.assessment.ready`.
- * - Provides `runAll(date)` to force a full re-evaluation (used by the
- *   "ANALYSER" button).
- */
 export function useCoach(date?: string): UseCoachResult {
-  const coachRef = useRef<Coach>(getCoach());
+  const coachRef = useRef<Coach | null>(null);
+  const [, forceUpdate] = useState(0);
   const [assessments, setAssessments] = useState<AssessmentLatest[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
   const today = date ?? new Date().toISOString().slice(0, 10);
 
+  // Initialise coach asynchronously on first mount
+  useEffect(() => {
+    let cancelled = false;
+    getCoachPromise()
+      .then((c) => {
+        if (cancelled) return;
+        coachRef.current = c;
+        forceUpdate((n) => n + 1);
+      })
+      .catch((err) => console.error('[useCoach] init failed:', err));
+    return () => { cancelled = true; };
+  }, []);
+
   const refresh = useCallback(async (d: string) => {
     const coach = coachRef.current;
+    if (!coach) return;
     const out: AssessmentLatest[] = [];
     for (const dom of ALL_DOMAINS) {
       const a = await coach.getAssessment(d, dom);
@@ -58,17 +72,21 @@ export function useCoach(date?: string): UseCoachResult {
   }, []);
 
   useEffect(() => {
+    if (!coachRef.current) return;
     void refresh(today);
     const off = eventBus.on('coach.assessment.ready', ({ date: emitDate }) => {
       if (emitDate === today) void refresh(today);
     });
     return () => { off(); };
-  }, [today, refresh]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [today, refresh, coachRef.current]);
 
   const runAll = useCallback(async (d: string) => {
+    const coach = coachRef.current;
+    if (!coach) return;
     setLoading(true);
     try {
-      await coachRef.current.runAll(d);
+      await coach.runAll(d);
       await refresh(d);
     } finally {
       setLoading(false);
@@ -76,19 +94,22 @@ export function useCoach(date?: string): UseCoachResult {
   }, [refresh]);
 
   const getAssessment = useCallback(
-    (d: string, domain: Domain) => coachRef.current.getAssessment(d, domain),
+    (d: string, domain: Domain) =>
+      coachRef.current ? coachRef.current.getAssessment(d, domain) : Promise.resolve(null),
     [],
   );
 
   return { assessments, loading, runAll, getAssessment };
 }
 
-/** Test-only: tear down the singleton (e.g. between tests). */
+/** Test-only: tear down the singleton between tests. */
 export function _resetCoach(): void {
   if (_unsubscribe !== null) {
     _unsubscribe();
     _unsubscribe = null;
   }
-  _coach?.unsubscribeAll();
-  _coach = null;
+  if (_coachPromise) {
+    _coachPromise.then((c) => c.unsubscribeAll()).catch(() => {});
+    _coachPromise = null;
+  }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { ScrollView } from 'react-native';
 import { Compass, BookOpen, RefreshCcw, Clock, CheckCircle2, Plus, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -222,6 +222,11 @@ export default function IslamScreen() {
   const [qiblaAngle, setQiblaAngle] = useState(0);
   const [compassHeading, setCompassHeading] = useState<number | null>(null);
   const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'ok' | 'cached' | 'denied'>('idle');
+  // Accumulated (continuous) rotations — prevents 0°/360° spin artifact
+  const northAccum = useRef(0);
+  const qiblaAccum = useRef(0);
+  const [northRot, setNorthRot] = useState(0);
+  const [qiblaRot, setQiblaRot] = useState(0);
   const [currentWord, setCurrentWord] = useState<any>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [calView, setCalView] = useState<'month' | 'year'>('month');
@@ -327,6 +332,23 @@ export default function IslamScreen() {
       window.removeEventListener('deviceorientation', handler as EventListener, true);
     };
   }, [showQibla]);
+
+  // Shortest-path angle accumulator — prevents full spin on 0°/360° wrap
+  useEffect(() => {
+    if (compassHeading === null) return;
+    const snap = (from: number, to: number): number => {
+      let delta = (to - from) % 360;
+      if (delta > 180) delta -= 360;
+      if (delta < -180) delta += 360;
+      return from + delta;
+    };
+    const newNorth = snap(northAccum.current, -compassHeading);
+    northAccum.current = newNorth;
+    setNorthRot(newNorth);
+    const newQibla = snap(qiblaAccum.current, qiblaAngle - compassHeading);
+    qiblaAccum.current = newQibla;
+    setQiblaRot(newQibla);
+  }, [compassHeading, qiblaAngle]);
 
   const prevMonth = () => {
     if (hijriMonth === 1) { setHijriMonth(12); setHijriYear(y => y - 1); }
@@ -613,7 +635,7 @@ export default function IslamScreen() {
 
                     {/* North needle — title color */}
                     <motion.div
-                      animate={{ rotate: compassHeading !== null ? -compassHeading : 0 }}
+                      animate={{ rotate: northRot }}
                       style={{ position: 'absolute', width: 4, height: 140, display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 10 }}
                       transition={{ type: 'spring', stiffness: 80, damping: 18 }}
                     >
@@ -623,7 +645,7 @@ export default function IslamScreen() {
 
                     {/* Qibla needle — gold */}
                     <motion.div
-                      animate={{ rotate: compassHeading !== null ? qiblaAngle - compassHeading : qiblaAngle }}
+                      animate={{ rotate: qiblaRot }}
                       style={{ position: 'absolute', width: 3, height: 140, display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 11 }}
                       transition={{ type: 'spring', stiffness: 80, damping: 18 }}
                     >
