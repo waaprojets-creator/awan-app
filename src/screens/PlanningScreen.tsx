@@ -21,7 +21,8 @@ import { useAppState } from '../context/AppStateContext';
 import { requestNotificationPermission, NOTIF_INTERVALS } from '../utils/notifications';
 
 import { useLongPressDrag } from '../hooks/useLongPressDrag';
-import { Clock, Plus, Download, ChevronLeft, ChevronRight, Calendar, Columns, Grid3X3, Zap, Target, Layers, Trash } from 'lucide-react';
+import { Clock, Plus, Download, ChevronLeft, ChevronRight, Calendar, Columns, Grid3X3, Zap, Target, Layers, Trash, TrendingUp } from 'lucide-react';
+import { dominantEnergy } from '../modules/planning/engine/energyModel';
 import { PageWrapper, AnimatePresence } from '../components/Animated';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
@@ -75,6 +76,7 @@ const STABS = [
   { id: 2, label: 'ANNÉE', Icon: Calendar },
   { id: 4, label: 'PLANIFIER', Icon: Target },
   { id: 5, label: 'CHRONOLOGIE', Icon: Layers },
+  { id: 6, label: 'ANALYSE', Icon: TrendingUp },
 ];
 
 function minToTime(min: number): string {
@@ -688,6 +690,118 @@ export default function PlanningScreen() {
     );
   }
 
+  function renderAnalyse() {
+    if (!planner.schedule) {
+      return (
+        <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+          <div className="px-6 pt-8 space-y-4">
+            <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+              <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest block text-center">
+                Lance l'optimiseur d'abord (onglet PLANIFIER)
+              </span>
+            </Card>
+          </div>
+        </ScrollView>
+      );
+    }
+
+    const taskMap = new Map(planner.tasks.map(t => [t.id, t]));
+    const { slots, unscheduled } = planner.schedule;
+
+    // Total slack = gaps between consecutive slots (minutes)
+    let totalSlackMin = 0;
+    for (let i = 0; i + 1 < slots.length; i++) {
+      const gap = slots[i + 1]!.startMin - slots[i]!.endMin;
+      if (gap > 0) totalSlackMin += gap;
+    }
+
+    // % high-priority tasks (priority ≥ 4) placed in high-energy slots
+    const highPrioSlots = slots.filter(s => (taskMap.get(s.taskId)?.priority ?? 0) >= 4);
+    const alignedSlots = highPrioSlots.filter(
+      s => dominantEnergy(s.startMin, s.endMin - s.startMin) === 'high'
+    );
+    const alignPct = highPrioSlots.length > 0
+      ? Math.round((alignedSlots.length / highPrioSlots.length) * 100)
+      : null;
+
+    const minToHH = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+
+    return (
+      <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+        <div className="px-6 pt-4 space-y-6">
+          {/* Summary cards */}
+          <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+            <Heading level={4} mono subtitle="Analyse du planning optimisé">RÉSULTATS</Heading>
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <div className="border border-white/5 p-4">
+                <span className="awan-label block mb-1">CRÉNEAUX PLACÉS</span>
+                <span className="text-2xl font-black font-mono text-awan-tx">{slots.length}</span>
+                {unscheduled.length > 0 && (
+                  <span className="text-awan-xs font-mono text-awan-status-warn block mt-1">
+                    {unscheduled.length} non placé{unscheduled.length > 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+              <div className="border border-white/5 p-4">
+                <span className="awan-label block mb-1">TEMPS LIBRE</span>
+                <span className="text-2xl font-black font-mono text-awan-tx">{Math.round(totalSlackMin / 60)}h{totalSlackMin % 60 > 0 ? `${totalSlackMin % 60}m` : ''}</span>
+                <span className="text-awan-xs font-mono text-awan-tx-mute block mt-1">entre créneaux</span>
+              </div>
+            </div>
+            {alignPct !== null && (
+              <div className="mt-4 border border-white/5 p-4">
+                <div className="flex flex-row justify-between items-baseline mb-2">
+                  <span className="awan-label">ALIGNEMENT ÉNERGIE</span>
+                  <span className="text-xl font-black font-mono"
+                    style={{ color: alignPct >= 80 ? 'var(--color-awan-status-ok)' : alignPct >= 50 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-error)' }}>
+                    {alignPct}%
+                  </span>
+                </div>
+                <span className="text-awan-xs text-awan-tx-mute">
+                  Tâches haute priorité placées en créneau haute énergie circadienne (06h–09h, 17h–19h)
+                </span>
+                <div className="mt-2 h-1.5 w-full" style={{ backgroundColor: 'var(--color-awan-border-soft)' }}>
+                  <div className="h-full" style={{
+                    width: `${alignPct}%`,
+                    backgroundColor: alignPct >= 80 ? 'var(--color-awan-status-ok)' : alignPct >= 50 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-error)',
+                  }} />
+                </div>
+              </div>
+            )}
+          </Card>
+
+          {/* Slot list */}
+          <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+            <Heading level={4} mono subtitle="Ordre chronologique">SÉQUENCE</Heading>
+            <div className="space-y-2 mt-4">
+              {slots.map((slot, i) => {
+                const task = taskMap.get(slot.taskId);
+                const energy = dominantEnergy(slot.startMin, slot.endMin - slot.startMin);
+                const energyColor = energy === 'high' ? 'var(--color-awan-status-ok)'
+                  : energy === 'medium' ? 'var(--color-awan-status-warn)'
+                  : 'var(--color-awan-tx-mute)';
+                return (
+                  <div key={i} className="flex flex-row items-center gap-3 border-b border-white/5 pb-2">
+                    <span className="text-awan-xs font-mono text-awan-tx-mute w-20">
+                      {minToHH(slot.startMin)}–{minToHH(slot.endMin)}
+                    </span>
+                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: energyColor }} />
+                    <span className="text-awan-sm font-black text-awan-tx flex-1 uppercase tracking-wide" numberOfLines={1}>
+                      {task?.title ?? slot.taskId}
+                    </span>
+                    {task && task.priority >= 4 && (
+                      <span className="text-awan-xs font-mono text-awan-gold">P{task.priority}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </div>
+      </ScrollView>
+    );
+  }
+
   return (
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
       <div className="px-6 pt-4 pb-1">
@@ -716,6 +830,7 @@ export default function PlanningScreen() {
           {subTab === 3 && renderDaily()}
           {subTab === 4 && renderAiSchedule()}
           {subTab === 5 && renderUnifiedTimeline()}
+          {subTab === 6 && renderAnalyse()}
         </motion.div>
       </AnimatePresence>
       <div className="px-6 pb-24 flex flex-row gap-4 mt-auto">

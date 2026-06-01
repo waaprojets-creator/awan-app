@@ -12,7 +12,9 @@ import {
   sessionDensity,
   sessionAdherence,
   oneRmTrendPerExercise,
+  tonnageByChain,
 } from '../../services/workoutAnalysisService';
+import type { ChainKey } from '../../constants/exerciseChains';
 import { computeWeeklyTonnage } from '../../services/analyticsService';
 import { PeriodizationService } from '../../services/periodizationService';
 import { BarChart, EmptyState } from './shared';
@@ -121,6 +123,16 @@ export function PerformanceTab({ sessions, assessments = [] }: PerformanceTabPro
     }
     return false;
   }, [sessions]);
+
+  // Tonnage Push/Pull/Legs/Core — 28 days
+  const chainTonnage = useMemo(() => tonnageByChain(sessions, 28), [sessions]);
+  const chainTotals = useMemo((): Record<ChainKey, number> => ({
+    push: chainTonnage.push.reduce((s: number, v: number) => s + v, 0),
+    pull: chainTonnage.pull.reduce((s: number, v: number) => s + v, 0),
+    legs: chainTonnage.legs.reduce((s: number, v: number) => s + v, 0),
+    core: chainTonnage.core.reduce((s: number, v: number) => s + v, 0),
+  }), [chainTonnage]);
+  const chainTotal = (Object.values(chainTotals) as number[]).reduce((s, v) => s + v, 0);
 
   // Density + adherence — last 7 sessions
   const sessionMetrics = useMemo(() =>
@@ -252,6 +264,39 @@ export function PerformanceTab({ sessions, assessments = [] }: PerformanceTabPro
           </div>
         )}
       </Card>
+
+      {/* Répartition Push/Pull/Legs/Core — 28j */}
+      {chainTotal > 0 && (
+        <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+          <Heading level={4} mono subtitle="Équilibre cinétique · 28 jours">CHAÎNES MUSCULAIRES</Heading>
+          <div className="space-y-3 mt-4">
+            {(['push', 'pull', 'legs', 'core'] as ChainKey[]).map(key => {
+              const kg = chainTotals[key];
+              const pct = chainTotal > 0 ? (kg / chainTotal) * 100 : 0;
+              const label = key.toUpperCase();
+              const color = key === 'push' ? 'var(--color-awan-status-ok)'
+                : key === 'pull' ? 'var(--color-awan-gold)'
+                : key === 'legs' ? 'var(--color-awan-status-info)'
+                : 'var(--color-awan-tx-mute)';
+              return (
+                <div key={key}>
+                  <div className="flex flex-row justify-between mb-1">
+                    <span className="text-awan-xs font-black font-mono uppercase" style={{ color }}>
+                      {label}
+                    </span>
+                    <span className="text-awan-xs font-mono text-awan-tx-mute">
+                      {kg > 0 ? `${(kg / 1000).toFixed(1)}t` : '—'} · {pct.toFixed(0)}%
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full" style={{ backgroundColor: 'var(--color-awan-border-soft)' }}>
+                    <div className="h-full" style={{ width: `${pct}%`, backgroundColor: color, opacity: 0.8 }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       {/* Tonnage hebdo 8 semaines */}
       <Card className="p-6 bg-white/5 border-white/5" variant="flat">

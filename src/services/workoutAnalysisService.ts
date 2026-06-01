@@ -1,4 +1,5 @@
 import type { WorkoutSessionLatest } from '@/data/schemas/sport/routine';
+import { getChain, type ChainKey } from '@/constants/exerciseChains';
 
 // ─── 1RM estimation ───────────────────────────────────────────────────────────
 // Three validated formulas, weighted average for best signal.
@@ -86,9 +87,44 @@ export function oneRmTrendPerExercise(
   }
   // Sort each series chronologically
   for (const key of Object.keys(trend)) {
-    trend[key].sort((a, b) => a.date.localeCompare(b.date));
+    trend[key]?.sort((a, b) => a.date.localeCompare(b.date));
   }
   return trend;
+}
+
+// ─── Tonnage by kinetic chain ─────────────────────────────────────────────────
+// Returns per-chain arrays of tonnage per session (chronological) for the window.
+
+export function tonnageByChain(
+  sessions: WorkoutSessionLatest[],
+  windowDays: number,
+): Record<ChainKey, number[]> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - windowDays);
+  const cutStr = cutoff.toISOString().slice(0, 10);
+
+  const filtered = [...sessions]
+    .filter(s => s.date >= cutStr)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const result: Record<ChainKey, number[]> = { push: [], pull: [], legs: [], core: [] };
+
+  for (const session of filtered) {
+    const byChain: Record<ChainKey, number> = { push: 0, pull: 0, legs: 0, core: 0 };
+    for (const ex of session.exercises) {
+      const chain = getChain(ex.exerciseId);
+      if (!chain) continue;
+      for (const s of ex.sets) {
+        if (s.kind !== 'working' || !s.weightKg || !s.reps) continue;
+        byChain[chain] += s.weightKg * s.reps;
+      }
+    }
+    for (const key of (['push', 'pull', 'legs', 'core'] as ChainKey[])) {
+      result[key].push(parseFloat(byChain[key].toFixed(1)));
+    }
+  }
+
+  return result;
 }
 
 // ─── Session adherence (actual vs planned) ───────────────────────────────────

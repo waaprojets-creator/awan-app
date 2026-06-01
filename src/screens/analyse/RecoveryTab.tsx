@@ -6,6 +6,7 @@ import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import type { WorkoutSessionLatest } from '../../data/schemas/sport/routine';
 import { computeACWR, computeACWRSeries } from '../../services/analyticsService';
+import { useCoach } from '../../hooks/useCoach';
 import { EmptyState } from './shared';
 
 const SvgPath_ = Path as any;
@@ -135,6 +136,14 @@ function ACWRCurve({ series }: { series: Array<{ date: string; acwr: number | nu
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function RecoveryTab({ sessions }: RecoveryTabProps) {
+  const today = new Date().toISOString().slice(0, 10);
+  const { assessments } = useCoach(today);
+
+  const hasDeloadForecast = useMemo(() =>
+    assessments.some(a =>
+      a.forecasts?.some(f => f.kind === 'deload' && f.horizonDays <= 7)
+    ), [assessments]);
+
   const acwr = useMemo(() => computeACWR(sessions), [sessions]);
   const acwrSeries = useMemo(() => computeACWRSeries(sessions), [sessions]);
 
@@ -161,6 +170,15 @@ export function RecoveryTab({ sessions }: RecoveryTabProps) {
 
   return (
     <div className="space-y-8">
+      {/* Deload forecast alert */}
+      {hasDeloadForecast && (
+        <Card className="p-4 border border-awan-status-warn bg-awan-status-warn/10" variant="flat">
+          <span className="text-awan-sm font-black uppercase tracking-widest text-awan-status-warn">
+            ⚠ DÉCHARGE PRÉVUE — Coach recommande une semaine de récupération dans les 7 prochains jours
+          </span>
+        </Card>
+      )}
+
       {/* ACWR Gauge */}
       <Card className="p-6 bg-white/5 border-white/5" variant="flat">
         <Heading level={4} mono subtitle="Charge Aiguë / Charge Chronique · Gabbett 2016">JAUGE ACWR</Heading>
