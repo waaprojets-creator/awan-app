@@ -64,7 +64,7 @@ function CetGauge({ value }: { value: number }) {
           const x1 = cx + R * Math.cos(a1); const y1 = cy + R * Math.sin(a1);
           const x2 = cx + R * Math.cos(a2); const y2 = cy + R * Math.sin(a2);
           return <SvgPath_ d={`M ${x1} ${y1} A ${R} ${R} 0 1 1 ${x2} ${y2}`}
-            fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />;
+            fill="none" stroke="var(--color-awan-border-soft)" strokeWidth="12" />;
         })()}
 
         {/* Zone arcs */}
@@ -88,7 +88,7 @@ function CetGauge({ value }: { value: number }) {
 
         {/* Cet value */}
         <SvgText_ x={cx} y={cy - 24} textAnchor="middle" fontSize="22" fontWeight="900"
-          fontFamily="JetBrains Mono" fill="var(--color-awan-tx)">{(value * 100).toFixed(1)}%</SvgText_>
+          fontFamily="var(--font-mono)" fill="var(--color-awan-tx)">{(value * 100).toFixed(1)}%</SvgText_>
 
         {/* Scale labels */}
         <SvgText_ x={14} y={cy + 20} fontSize="8" fontWeight="700" fill="var(--color-awan-tx-mute)">0%</SvgText_>
@@ -156,12 +156,8 @@ export function BudgetTab() {
     <div className="space-y-8">
       {/* Alert banner */}
       {frame.alert && (
-        <Card className="p-4 border" variant="flat" style={{
-          borderColor: 'var(--color-awan-status-error)',
-          backgroundColor: 'rgba(var(--color-awan-status-error-rgb, 180,50,50), 0.08)',
-        }}>
-          <span className="text-awan-sm font-black uppercase tracking-widest"
-            style={{ color: 'var(--color-awan-status-error)' }}>
+        <Card className="p-4 border border-awan-status-error bg-awan-status-error/10" variant="flat">
+          <span className="text-awan-sm font-black uppercase tracking-widest text-awan-status-error">
             ⚠ SYSTÈME FUYANT — Cet {cetPct}% · Priorité : réduire T_friction
           </span>
         </Card>
