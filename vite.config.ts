@@ -25,7 +25,10 @@ export default defineConfig(() => {
         output: {
           manualChunks(id: string) {
             if (!id.includes('node_modules')) return;
-            if (id.includes('react-dom')) return 'vendor-react';
+            // Toute la famille React dans un seul chunk — évite les dépendances
+            // circulaires entre vendor et vendor-react causées par react-native-web
+            // qui importe react-dom (et react-dom importe react).
+            if (id.includes('/react') || id.includes('react-native')) return 'vendor-react';
             if (id.includes('motion')) return 'vendor-motion';
             if (id.includes('date-fns')) return 'vendor-dates';
             if (id.includes('lucide')) return 'vendor-icons';

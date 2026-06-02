@@ -1,4 +1,3 @@
-@import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
 @import "tailwindcss";
 
 @keyframes spin {
@@ -7,22 +6,21 @@
 }
 
 @theme {
-  /* ALARM DEFAULTS — remplacés par useThemeSync au chargement.
-     Si magenta/cyan visible → variable non couverte par le système. */
-  --color-awan-bg:      #FF00FF;
-  --color-awan-surface: #FF00FF;
+  /* Defaults thème sombre — remplacés par useThemeSync au premier rendu. */
+  --color-awan-bg:      #1A1A1A;
+  --color-awan-surface: #4C4A44;
 
-  --color-awan-gold: #FF00FF;
+  --color-awan-gold: #D4AF37;
 
-  --color-awan-tx:      #00FFFF;
-  --color-awan-tx-dim:  #00FFFF;
-  --color-awan-tx-mute: #00FFFF;
+  --color-awan-tx:      #EDE8E2;
+  --color-awan-tx-dim:  #F8F5F2;
+  --color-awan-tx-mute: rgba(248,245,242,0.30);
 
-  --color-awan-status-ok:     #FF00FF;
-  --color-awan-status-warn:   #FF00FF;
-  --color-awan-status-error:  #FF00FF;
-  --color-awan-status-info:   #FF00FF;
-  --color-awan-status-spirit: #FF00FF;
+  --color-awan-status-ok:     #4ECDC4;
+  --color-awan-status-warn:   #FFE66D;
+  --color-awan-status-error:  #8A0C0C;
+  --color-awan-status-info:   #4FACFE;
+  --color-awan-status-spirit: #D4AF37;
 
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   --font-sans: "Cairo", ui-sans-serif, system-ui, sans-serif;
