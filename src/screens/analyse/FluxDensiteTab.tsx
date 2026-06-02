@@ -24,7 +24,9 @@ export function FluxDensiteTab({ sessions, weightKg }: FluxDensiteTabProps) {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    buildFluxData(8).then(d => { if (active) { setFluxData(d); setLoading(false); } });
+    buildFluxData(8)
+      .then(d => { if (active) { setFluxData(d); setLoading(false); } })
+      .catch(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
 

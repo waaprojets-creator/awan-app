@@ -46,7 +46,8 @@ export async function loadExerciseCatalog(): Promise<void> {
     .then((data: ExerciseEntry[]) => {
       _exercises = data;
       _loaded = true;
-    });
+    })
+    .catch((e) => { console.warn('[sportData] failed to load exercises:', e); });
   return _loadPromise;
 }
 

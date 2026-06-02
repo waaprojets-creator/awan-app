@@ -1,15 +1,21 @@
 import { create } from 'zustand';
 
-type Theme = 'dark' | 'light';
+type Theme = 'dark' | 'light' | 'black';
 
-const THEME_KEY = 'awan.theme';
-const JIT_KEY   = 'awan.jit-factor';
+const THEME_KEY          = 'awan.theme';
+const JIT_KEY            = 'awan.jit-factor';
+const NETWORK_BANNER_KEY = 'awan.network-banner';
 
 function savedTheme(): Theme {
   try {
     const t = localStorage.getItem(THEME_KEY);
-    return t === 'dark' || t === 'light' ? t : 'light';
+    return t === 'dark' || t === 'light' || t === 'black' ? t : 'light';
   } catch { return 'light'; }
+}
+
+function savedNetworkBanner(): boolean {
+  try { return localStorage.getItem(NETWORK_BANNER_KEY) === 'true'; }
+  catch { return false; }
 }
 
 function savedJitFactor(): number {
@@ -25,6 +31,7 @@ interface AppState {
   theme: Theme;
   jitFactor: number;
   isOfflineForced: boolean;
+  showNetworkBanner: boolean;
   dataVersion: number;
   unlock: () => void;
   lock: () => void;
@@ -33,6 +40,7 @@ interface AppState {
   setTheme: (mode: Theme) => void;
   setJitFactor: (v: number) => void;
   toggleOffline: () => void;
+  toggleNetworkBanner: () => void;
   bumpDataVersion: () => void;
 }
 
@@ -42,13 +50,15 @@ export const useAppStore = create<AppState>((set) => ({
   theme: savedTheme(),
   jitFactor: savedJitFactor(),
   isOfflineForced: false,
+  showNetworkBanner: savedNetworkBanner(),
   dataVersion: 0,
   unlock: () => set({ isUnlocked: true }),
   lock:   () => set({ isUnlocked: false }),
   setReady: () => set({ ready: true }),
   bumpDataVersion: () => set((s) => ({ dataVersion: s.dataVersion + 1 })),
   toggleTheme: () => set((s) => {
-    const next = s.theme === 'dark' ? 'light' : 'dark';
+    const cycle: Theme[] = ['light', 'dark', 'black'];
+    const next: Theme = cycle[(cycle.indexOf(s.theme) + 1) % cycle.length] as Theme;
     try { localStorage.setItem(THEME_KEY, next); } catch { /* ok */ }
     return { theme: next };
   }),
@@ -61,4 +71,9 @@ export const useAppStore = create<AppState>((set) => ({
     set({ jitFactor: v });
   },
   toggleOffline: () => set((s) => ({ isOfflineForced: !s.isOfflineForced })),
+  toggleNetworkBanner: () => set((s) => {
+    const next = !s.showNetworkBanner;
+    try { localStorage.setItem(NETWORK_BANNER_KEY, String(next)); } catch { /* ok */ }
+    return { showNetworkBanner: next };
+  }),
 }));

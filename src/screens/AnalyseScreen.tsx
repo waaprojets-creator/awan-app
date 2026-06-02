@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, lazy, Suspense } from 'react';
 import { ScrollView, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -31,23 +31,23 @@ import { BilanZen } from '../components/BilanZen';
 import { motion } from 'motion/react';
 import type { SleepEntryLatest } from '../data/schemas/sleep/sleepEntry';
 
-// ─── Tab components ───────────────────────────────────────────────────────────
-import TempsTab from './analyse/TempsTab';
-import ScanTab from './analyse/ScanTab';
-import { ActivityTab } from './analyse/ActivityTab';
-import { NutritionTab } from './analyse/NutritionTab';
-import { MuscuTab } from './analyse/MuscuTab';
-import { BiometrieTab } from './analyse/BiometrieTab';
-import { CorrelationTab } from './analyse/CorrelationTab';
-import { PerformanceTab } from './analyse/PerformanceTab';
-import { RecoveryTab } from './analyse/RecoveryTab';
-import { OrthometryTab } from './analyse/OrthometryTab';
-import { FluxDensiteTab } from './analyse/FluxDensiteTab';
-import { SynoptiqueTab } from './analyse/SynoptiqueTab';
-import { MetaboliqueTab } from './analyse/MetaboliqueTab';
-import { IslamTab } from './analyse/IslamTab';
-import { BudgetTab } from './analyse/BudgetTab';
-import { ReadinessTab } from './analyse/ReadinessTab';
+// ─── Tab components (lazy — parsed only when first rendered) ─────────────────
+const TempsTab       = lazy(() => import('./analyse/TempsTab'));
+const ScanTab        = lazy(() => import('./analyse/ScanTab'));
+const ActivityTab    = lazy(() => import('./analyse/ActivityTab').then(m => ({ default: m.ActivityTab })));
+const NutritionTab   = lazy(() => import('./analyse/NutritionTab').then(m => ({ default: m.NutritionTab })));
+const MuscuTab       = lazy(() => import('./analyse/MuscuTab').then(m => ({ default: m.MuscuTab })));
+const BiometrieTab   = lazy(() => import('./analyse/BiometrieTab').then(m => ({ default: m.BiometrieTab })));
+const CorrelationTab = lazy(() => import('./analyse/CorrelationTab').then(m => ({ default: m.CorrelationTab })));
+const PerformanceTab = lazy(() => import('./analyse/PerformanceTab').then(m => ({ default: m.PerformanceTab })));
+const RecoveryTab    = lazy(() => import('./analyse/RecoveryTab').then(m => ({ default: m.RecoveryTab })));
+const OrthometryTab  = lazy(() => import('./analyse/OrthometryTab').then(m => ({ default: m.OrthometryTab })));
+const FluxDensiteTab = lazy(() => import('./analyse/FluxDensiteTab').then(m => ({ default: m.FluxDensiteTab })));
+const SynoptiqueTab  = lazy(() => import('./analyse/SynoptiqueTab').then(m => ({ default: m.SynoptiqueTab })));
+const MetaboliqueTab = lazy(() => import('./analyse/MetaboliqueTab').then(m => ({ default: m.MetaboliqueTab })));
+const IslamTab       = lazy(() => import('./analyse/IslamTab').then(m => ({ default: m.IslamTab })));
+const BudgetTab      = lazy(() => import('./analyse/BudgetTab').then(m => ({ default: m.BudgetTab })));
+const ReadinessTab   = lazy(() => import('./analyse/ReadinessTab').then(m => ({ default: m.ReadinessTab })));
 
 const FREE_KEY = '_free';
 const FREE_COLOR = 'rgba(212, 175, 55, 0.05)';
@@ -638,7 +638,13 @@ export default function AnalyseScreen() {
             exit={{ opacity: 0, y: -20 }}
             className="px-6 mt-6"
           >
-            {renderContent()}
+            <Suspense fallback={
+              <div className="flex items-center justify-center py-20 opacity-40">
+                <div className="w-6 h-6 rounded-full border-2 border-awan-gold border-t-transparent animate-spin" />
+              </div>
+            }>
+              {renderContent()}
+            </Suspense>
           </motion.div>
         </AnimatePresence>
       </ScrollView>

@@ -118,6 +118,8 @@ export default function SettingsScreen() {
  const theme = useTheme();
  const themeMode = useThemeMode();
  const setTheme = useAppStore((s: any) => s.setTheme);
+ const showNetworkBanner = useAppStore((s: any) => s.showNetworkBanner);
+ const toggleNetworkBanner = useAppStore((s: any) => s.toggleNetworkBanner);
  const jitFactor = useAppStore((s: any) => s.jitFactor);
  const setJitFactor = useAppStore((s: any) => s.setJitFactor);
  const [purgeModal, setPurgeModal] = useState(false);
@@ -240,7 +242,7 @@ export default function SettingsScreen() {
  <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">MODE ACTIF</span>
  <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Bascule clair / sombre</span>
  </div>
- <span className="text-2xl font-black text-awan-gold font-mono">{themeMode === 'dark' ? 'DARK' : 'LIGHT'}</span>
+ <span className="text-2xl font-black text-awan-gold font-mono">{{ light: 'LIGHT', dark: 'DARK', black: 'BLACK' }[themeMode] ?? 'LIGHT'}</span>
  </div>
  <div className="flex flex-row bg-awan-surface p-1 gap-1">
  <Touch onPress={() => setTheme('light')}
@@ -250,6 +252,10 @@ export default function SettingsScreen() {
  <Touch onPress={() => setTheme('dark')}
  className={`flex-1 py-3 items-center justify-center ${themeMode === 'dark' ? 'bg-awan-gold' : 'transparent'}`}>
  <span className={`text-awan-md font-black font-mono ${themeMode === 'dark' ? 'text-black' : 'text-awan-tx-mute'}`}>DARK</span>
+ </Touch>
+ <Touch onPress={() => setTheme('black')}
+ className={`flex-1 py-3 items-center justify-center ${themeMode === 'black' ? 'bg-awan-gold' : 'transparent'}`}>
+ <span className={`text-awan-md font-black font-mono ${themeMode === 'black' ? 'text-black' : 'text-awan-tx-mute'}`}>BLACK</span>
  </Touch>
  </div>
  </Card>
@@ -266,6 +272,25 @@ export default function SettingsScreen() {
  <span className="text-awan-xs font-black text-awan-tx-mute font-mono tracking-widest">P{idx}</span>
  </div>
  ))}
+ </div>
+ </Card>
+ </div>
+
+ {/* CONNECTIVITÉ */}
+ <div className="mb-10">
+ <Heading level={4} mono subtitle="Indicateurs Réseau" className="mb-6">CONNECTIVITÉ</Heading>
+ <Card className="p-0 border-white/5 bg-awan-surface overflow-hidden">
+ <div className="flex flex-row justify-between items-center p-5">
+ <div>
+ <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">BANDEAU HORS-LIGNE</span>
+ <span className="text-awan-sm font-bold text-awan-tx-mute">Afficher un indicateur si réseau absent</span>
+ </div>
+ <Switch
+ value={showNetworkBanner}
+ onValueChange={toggleNetworkBanner}
+ trackColor={{ false: 'rgba(255,255,255,0.08)', true: 'var(--color-awan-status-warn)' }}
+ thumbColor="#fff"
+ />
  </div>
  </Card>
  </div>

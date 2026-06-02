@@ -65,7 +65,8 @@ export function SynoptiqueTab({ sessions }: SynoptiqueTabProps) {
         c: tot.c,
         f: tot.f,
       };
-    })).then(rows => { if (active) { setDayData(rows); setLoading(false); } });
+    })).then(rows => { if (active) { setDayData(rows); setLoading(false); } })
+      .catch(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [sessions]);
 

@@ -14,10 +14,16 @@ let foodsCache: FoodEntry[] | null = null;
 
 export async function loadFoodDatabase(): Promise<FoodEntry[]> {
   if (foodsCache) return foodsCache;
-  const res = await fetch('/data/foods.json');
-  const data = (await res.json()) as FoodEntry[];
-  foodsCache = data;
-  return foodsCache;
+  try {
+    const res = await fetch('/data/foods.json');
+    if (!res.ok) return [];
+    const data = (await res.json()) as FoodEntry[];
+    foodsCache = data;
+    return foodsCache;
+  } catch (e) {
+    console.warn('[nutritionData] failed to load foods:', e);
+    return [];
+  }
 }
 
 export function getFoods(): FoodEntry[] {

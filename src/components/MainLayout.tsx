@@ -4,6 +4,8 @@ import { View, StyleSheet } from 'react-native';
 import { Switch, Route, useLocation } from 'wouter';
 import { AnimatePresence, motion } from 'motion/react';
 import { useTheme, useThemeSync } from '../hooks/useTheme';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import { useAppStore } from '../data/store/appStore';
 import { ToastProvider, useToast } from './ui/Toast';
 import AppHeader from './AppHeader';
 import BottomNav from './BottomNav';
@@ -88,6 +90,8 @@ export default function MainLayout() {
   const [navDirection, setNavDirection] = useState(1);
   const theme = useTheme();
   useThemeSync();
+  const { isOnline } = useNetworkStatus();
+  const showNetworkBanner = useAppStore((s) => s.showNetworkBanner);
 
   useAndroidBack(() => {
     // Back from sub-screen → return to Dashboard with reverse animation
@@ -127,6 +131,11 @@ export default function MainLayout() {
       />
       <div className="absolute inset-0 pointer-events-none z-50 opacity-[0.015] awan-scan-line" />
 
+      {showNetworkBanner && !isOnline && (
+        <div className="w-full py-1.5 flex items-center justify-center" style={{ backgroundColor: 'var(--color-awan-status-warn)', zIndex: 9999 }}>
+          <span className="text-xs font-black text-black uppercase tracking-widest">HORS LIGNE</span>
+        </div>
+      )}
       <AppHeader currentRoute={currentRoute} onNavigate={navigate} />
       <View style={s.body}>
         <ScreenErrorBoundary key={location}>

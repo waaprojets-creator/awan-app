@@ -76,7 +76,8 @@ export function MetaboliqueTab() {
     let active = true;
     setLoading(true);
     Promise.all([load31Days(profile.targetKcal), load12Weeks(profile.targetKcal)])
-      .then(([d31, d12]) => { if (active) { setData31(d31); setData12(d12); setLoading(false); } });
+      .then(([d31, d12]) => { if (active) { setData31(d31); setData12(d12); setLoading(false); } })
+      .catch(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [profile?.targetKcal]);
 

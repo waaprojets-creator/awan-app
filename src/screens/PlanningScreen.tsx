@@ -83,6 +83,35 @@ function minToTime(min: number): string {
   return `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
 }
 
+interface MonthlyCellProps {
+  cell: { day: number; cur: boolean; dstr: string | null; isToday?: boolean; evs: any[] };
+  isSel: boolean;
+  onSelect: (dateStr: string) => void;
+}
+
+const MonthlyCellItem = React.memo(function MonthlyCellItem({ cell, isSel, onSelect }: MonthlyCellProps) {
+  const numClass = !cell.cur
+    ? 'opacity-10 text-awan-tx font-normal'
+    : isSel
+      ? 'text-black font-black'
+      : cell.isToday === true
+        ? 'text-awan-gold font-normal'
+        : 'text-awan-tx font-normal';
+  return (
+    <Touch
+      className={`w-[14.28%] h-16 items-center justify-center relative ${isSel ? 'bg-awan-gold' : ''}`}
+      onPress={() => cell.dstr && onSelect(cell.dstr)}
+    >
+      <span className={`text-sm ${numClass}`}>{cell.day}</span>
+      <div className="flex flex-row gap-0.5 mt-1">
+        {cell.evs.slice(0, 3).map((_ev: any, idx: number) => (
+          <div key={idx} className={`w-1 h-1 rounded-full ${isSel ? 'bg-black/60' : 'bg-awan-gold/60'}`} />
+        ))}
+      </div>
+    </Touch>
+  );
+});
+
 export default function PlanningScreen() {
   const insets = useSafeAreaInsets();
   const { db, updateDb, navigate } = useAppState() as any;
@@ -230,10 +259,10 @@ export default function PlanningScreen() {
     return cells;
   }, [calDate, db]);
 
-  function selectDate(dateStr: string) {
+  const selectDate = useCallback((dateStr: string) => {
     if (ds(selDate) === dateStr) { setPrevTab(subTab); setSubTab(3); }
     else setSelDate(parseDate(dateStr));
-  }
+  }, [selDate, subTab]);
 
   function renderMonthly() {
     return (
@@ -258,26 +287,14 @@ export default function PlanningScreen() {
           ))}
         </div>
         <div className="flex flex-row flex-wrap px-4 mb-6">
-          {monthlyCells.map((cell, i) => {
-            const isSel = cell.dstr && cell.dstr === ds(selDate);
-            const isToday = cell.isToday;
-            // Couleur du chiffre : sélectionné → noir gras sur fond doré, aujourd'hui → doré fin, autre → texte normal
-            const numClass = !cell.cur
-              ? 'opacity-10 text-awan-tx font-normal'
-              : isSel
-                ? 'text-black font-black'
-                : isToday
-                  ? 'text-awan-gold font-normal'
-                  : 'text-awan-tx font-normal';
-            return (
-              <Touch key={i} className={`w-[14.28%] h-16 items-center justify-center  relative ${isSel ? 'bg-awan-gold' : ''}`} onPress={() => cell.dstr && selectDate(cell.dstr)}>
-                <span className={`text-sm ${numClass}`}>{cell.day}</span>
-                <div className="flex flex-row gap-0.5 mt-1">
-                  {cell.evs.slice(0, 3).map((ev: any, idx: number) => <div key={idx} className={`w-1 h-1 rounded-full ${isSel ? 'bg-black/60' : 'bg-awan-gold/60'}`} />)}
-                </div>
-              </Touch>
-            );
-          })}
+          {monthlyCells.map((cell, i) => (
+            <MonthlyCellItem
+              key={i}
+              cell={cell}
+              isSel={!!(cell.dstr && cell.dstr === ds(selDate))}
+              onSelect={selectDate}
+            />
+          ))}
         </div>
         {/* Événements du jour sélectionné */}
         <div className="px-4 pb-6">

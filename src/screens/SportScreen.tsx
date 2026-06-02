@@ -1248,6 +1248,24 @@ const RoutineCard = React.memo(function RoutineCard({
   );
 });
 
+const MuscleFilterButton = React.memo(function MuscleFilterButton({
+  muscleId,
+  label,
+  isActive,
+  onPress,
+}: { muscleId: string; label: string; isActive: boolean; onPress: (id: string) => void }) {
+  return (
+    <Touch
+      onPress={() => onPress(muscleId)}
+      className={`px-4 py-2 border transition-all ${isActive ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'}`}
+    >
+      <span className={`text-awan-md font-black uppercase tracking-widest ${isActive ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
+        {label}
+      </span>
+    </Touch>
+  );
+});
+
 function ExercisePicker({
  visible,
  onClose,
@@ -1261,6 +1279,7 @@ function ExercisePicker({
 }) {
  const [search, setSearch] = useState('');
  const [filterMuscle, setFilterMuscle] = useState<string | null>(null);
+ const handleMusclePress = useCallback((id: string) => setFilterMuscle(id), []);
 
  const results = useMemo(() => {
  if (!visible) return [];
@@ -1301,17 +1320,13 @@ function ExercisePicker({
  <span className={`text-awan-md font-black uppercase tracking-widest ${!filterMuscle ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>Tous</span>
  </Touch>
  {Object.entries(MUSCLES).map(([id, label]) => (
- <Touch
- key={id}
- onPress={() => setFilterMuscle(id)}
- className={`px-4 py-2 border transition-all ${
- filterMuscle === id ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'
- }`}
- >
- <span className={`text-awan-md font-black uppercase tracking-widest ${filterMuscle === id ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
- {label}
- </span>
- </Touch>
+ <MuscleFilterButton
+   key={id}
+   muscleId={id}
+   label={label}
+   isActive={filterMuscle === id}
+   onPress={handleMusclePress}
+ />
  ))}
  </ScrollView>
  </div>

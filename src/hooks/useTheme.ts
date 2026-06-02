@@ -2,8 +2,9 @@ import { useEffect } from 'react';
 import { useAppStore } from '@/data/store/appStore';
 import * as lightTokens from '../constants/light';
 import * as darkTokens from '../constants/dark';
+import * as blackTokens from '../constants/black';
 
-export type ThemeMode = 'light' | 'dark';
+export type ThemeMode = 'light' | 'dark' | 'black';
 
 export interface AwanTheme {
   bg: string;
@@ -17,8 +18,15 @@ export interface AwanTheme {
 }
 
 function buildTheme(mode: ThemeMode): AwanTheme {
-  const src: any = mode === 'dark' ? darkTokens : lightTokens;
-  const suffix = mode === 'dark' ? 'Dark' : 'Light';
+  let src: any;
+  let suffix: string;
+  if (mode === 'dark') {
+    src = darkTokens; suffix = 'Dark';
+  } else if (mode === 'black') {
+    src = blackTokens; suffix = 'Black';
+  } else {
+    src = lightTokens; suffix = 'Light';
+  }
   return {
     bg:       src[`UiBg${suffix}`],
     surface:  src[`UiSurface${suffix}`],
@@ -35,11 +43,14 @@ function buildTheme(mode: ThemeMode): AwanTheme {
 }
 
 const LIGHT = buildTheme('light');
-const DARK = buildTheme('dark');
+const DARK  = buildTheme('dark');
+const BLACK = buildTheme('black');
 
 export function useTheme(): AwanTheme {
   const theme = useAppStore((s) => s.theme);
-  return theme === 'dark' ? DARK : LIGHT;
+  if (theme === 'dark')  return DARK;
+  if (theme === 'black') return BLACK;
+  return LIGHT;
 }
 
 export function useThemeMode(): ThemeMode {
