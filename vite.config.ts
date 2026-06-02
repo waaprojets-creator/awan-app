@@ -21,6 +21,19 @@ export default defineConfig(() => {
     build: {
       outDir: 'dist',
       assetsDir: 'assets',
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (!id.includes('node_modules')) return;
+            if (id.includes('react-dom')) return 'vendor-react';
+            if (id.includes('motion')) return 'vendor-motion';
+            if (id.includes('date-fns')) return 'vendor-dates';
+            if (id.includes('lucide')) return 'vendor-icons';
+            if (id.includes('zod')) return 'vendor-zod';
+            return 'vendor';
+          },
+        },
+      },
     },
     base: './',
     optimizeDeps: {

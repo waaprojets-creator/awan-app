@@ -7,23 +7,9 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import LockScreen from '@/screens/LockScreen';
 import MainLayout from '@/components/MainLayout';
 import { importFromJson } from '@/utils/importJson';
-import { Coach } from '@/modules/coach/api';
-import { LocalStorageAdapter } from '@/modules/coach/localStorageAdapter';
 import { safeStorage } from '@/utils/safeStorage';
 
 const SEED_FLAG = 'awan.seed.loaded';
-const COACH_RUN_KEY = 'awan.coach.lastRun';
-
-async function runCoachIfNeeded() {
-  try {
-    const today = new Date().toISOString().slice(0, 10);
-    if (safeStorage.get(COACH_RUN_KEY) === today) return;
-    const coach = new Coach({ storage: new LocalStorageAdapter() });
-    coach.subscribe();
-    await coach.runAll(today);
-    safeStorage.set(COACH_RUN_KEY, today);
-  } catch { /* silencieux — ne bloque pas l'app */ }
-}
 
 async function autoLoadSeed() {
   try {
@@ -61,7 +47,6 @@ function Root() {
   useEffect(() => {
     if (!isUnlocked) return;
     autoLoadSeed();
-    void runCoachIfNeeded();
   }, [isUnlocked]);
 
   if (!ready) return <SplashLoader />;

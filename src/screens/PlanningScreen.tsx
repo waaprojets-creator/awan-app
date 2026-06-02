@@ -786,7 +786,7 @@ export default function PlanningScreen() {
                       {minToHH(slot.startMin)}–{minToHH(slot.endMin)}
                     </span>
                     <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: energyColor }} />
-                    <span className="text-awan-sm font-black text-awan-tx flex-1 uppercase tracking-wide" numberOfLines={1}>
+                    <span className="text-awan-sm font-black text-awan-tx flex-1 uppercase tracking-wide overflow-hidden text-ellipsis whitespace-nowrap">
                       {task?.title ?? slot.taskId}
                     </span>
                     {task && task.priority >= 4 && (

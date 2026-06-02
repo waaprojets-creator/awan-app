@@ -82,7 +82,7 @@ export class Planner {
     if (params.recurringDays) tags.push(`every:${params.recurringDays}`);
 
     const task: ScheduleTaskLatest = {
-      v: 2,
+      v: 3,
       id: params.id,
       title: params.title,
       domain: params.domain,

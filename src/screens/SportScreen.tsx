@@ -521,6 +521,17 @@ export default function SportScreen() {
  setConfirmDeleteId(r.id);
  }, []);
 
+ const handleRoutineStart = useCallback((r: RoutineLatest) => {
+ setPendingRoutine({ routine: r }); setRecoveryScore(null); setView('recovery');
+ }, []);
+ const handleRoutineEdit = useCallback((r: RoutineLatest) => {
+ setEditingRoutine(r); setView('edit');
+ }, []);
+ const handleRoutineDeleteExecute = useCallback((id: string) => {
+ workoutStore.deleteRoutine(id); setConfirmDeleteId(null);
+ }, [workoutStore]);
+ const handleRoutineDeleteCancel = useCallback(() => setConfirmDeleteId(null), []);
+
  if (view === 'recovery' && pendingRoutine) {
  return (
    <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
@@ -837,43 +848,15 @@ export default function SportScreen() {
  <StaggerList>
  {workoutStore.routines.map(r => (
  <StaggerItem key={r.id} className="mb-4">
- <Card className="p-6 bg-awan-surface" onPress={() => { setPendingRoutine({ routine: r }); setRecoveryScore(null); setView('recovery'); }}>
- <div className="flex flex-row justify-between items-center mb-2">
- <span className="text-lg font-bold text-awan-tx uppercase tracking-tight flex-1">{r.name}</span>
- <div className="flex flex-row gap-2">
- <Touch onPress={(e: any) => { e.stopPropagation(); setEditingRoutine(r); setView('edit'); }}>
- <Info size={16} className="text-awan-tx-mute" />
- </Touch>
- {confirmDeleteId === r.id ? (
- <div className="flex flex-row items-center gap-2">
- <Touch onPress={(e: any) => { e.stopPropagation(); workoutStore.deleteRoutine(r.id); setConfirmDeleteId(null); }}>
- <span style={{ color: 'var(--color-awan-status-error)', fontSize: 11, fontWeight: 900, letterSpacing: '0.1em' }}>SUPPR</span>
- </Touch>
- <Touch onPress={(e: any) => { e.stopPropagation(); setConfirmDeleteId(null); }}>
- <X size={14} className="text-awan-tx-mute" />
- </Touch>
- </div>
- ) : (
- <Touch onPress={(e: any) => { e.stopPropagation(); deleteRoutine(r); }}>
- <Trash2 size={16} className="text-white/20" />
- </Touch>
- )}
- </div>
- </div>
- <div className="flex flex-row items-center gap-3">
- {r.cycleLetter && (
- <div className="bg-awan-gold/10 px-2 py-0.5 rounded border border-awan-gold/20">
- <span className="text-awan-sm font-black text-awan-gold tracking-widest">CYCLE {r.cycleLetter}</span>
- </div>
- )}
- <div className="bg-white/5 px-2 py-0.5 rounded">
- <span className="text-awan-sm font-black text-awan-tx-mute tracking-widest">{r.exercises.length} EX</span>
- </div>
- </div>
- <div className="absolute right-6 bottom-6 w-10 h-10 bg-awan-gold/20 flex items-center justify-center border border-awan-gold/20">
- <Play size={18} className="text-awan-gold" strokeWidth={3} />
- </div>
- </Card>
+ <RoutineCard
+ routine={r}
+ isConfirmingDelete={confirmDeleteId === r.id}
+ onStart={handleRoutineStart}
+ onEdit={handleRoutineEdit}
+ onDeleteExecute={handleRoutineDeleteExecute}
+ onDeleteCancel={handleRoutineDeleteCancel}
+ onDeleteRequest={deleteRoutine}
+ />
  </StaggerItem>
  ))}
  </StaggerList>
@@ -1208,6 +1191,62 @@ function NumField({
 }
 
 // ─── Exercise Picker ────────────────────────────────────────────────────────
+
+// ─── Routine card (memoized to prevent re-renders on unrelated state changes) ─
+
+interface RoutineCardProps {
+  routine: RoutineLatest;
+  isConfirmingDelete: boolean;
+  onStart: (r: RoutineLatest) => void;
+  onEdit: (r: RoutineLatest) => void;
+  onDeleteExecute: (id: string) => void;
+  onDeleteCancel: () => void;
+  onDeleteRequest: (r: RoutineLatest) => void;
+}
+
+const RoutineCard = React.memo(function RoutineCard({
+  routine: r, isConfirmingDelete, onStart, onEdit, onDeleteExecute, onDeleteCancel, onDeleteRequest,
+}: RoutineCardProps) {
+  return (
+    <Card className="p-6 bg-awan-surface" onPress={() => onStart(r)}>
+      <div className="flex flex-row justify-between items-center mb-2">
+        <span className="text-lg font-bold text-awan-tx uppercase tracking-tight flex-1">{r.name}</span>
+        <div className="flex flex-row gap-2">
+          <Touch onPress={(e: any) => { e.stopPropagation(); onEdit(r); }}>
+            <Info size={16} className="text-awan-tx-mute" />
+          </Touch>
+          {isConfirmingDelete ? (
+            <div className="flex flex-row items-center gap-2">
+              <Touch onPress={(e: any) => { e.stopPropagation(); onDeleteExecute(r.id); }}>
+                <span style={{ color: 'var(--color-awan-status-error)', fontSize: 11, fontWeight: 900, letterSpacing: '0.1em' }}>SUPPR</span>
+              </Touch>
+              <Touch onPress={(e: any) => { e.stopPropagation(); onDeleteCancel(); }}>
+                <X size={14} className="text-awan-tx-mute" />
+              </Touch>
+            </div>
+          ) : (
+            <Touch onPress={(e: any) => { e.stopPropagation(); onDeleteRequest(r); }}>
+              <Trash2 size={16} className="text-white/20" />
+            </Touch>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-row items-center gap-3">
+        {r.cycleLetter && (
+          <div className="bg-awan-gold/10 px-2 py-0.5 rounded border border-awan-gold/20">
+            <span className="text-awan-sm font-black text-awan-gold tracking-widest">CYCLE {r.cycleLetter}</span>
+          </div>
+        )}
+        <div className="bg-white/5 px-2 py-0.5 rounded">
+          <span className="text-awan-sm font-black text-awan-tx-mute tracking-widest">{r.exercises.length} EX</span>
+        </div>
+      </div>
+      <div className="absolute right-6 bottom-6 w-10 h-10 bg-awan-gold/20 flex items-center justify-center border border-awan-gold/20">
+        <Play size={18} className="text-awan-gold" strokeWidth={3} />
+      </div>
+    </Card>
+  );
+});
 
 function ExercisePicker({
  visible,
