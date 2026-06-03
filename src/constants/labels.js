@@ -12,7 +12,7 @@ const MODULES = {
   mesures:   { name: 'MESURES' },
   vigie:     { name: 'VIGIE SPIRITUELLE' },
   planning:  { name: 'PLANNING', display: 'Planning' },
-  analyse:   { display: 'Analyse' },
+  analyse:   { name: 'ANALYSE', display: 'Analyse' },
 };
 
 // Tag de livraison sprint — centralisé pour pouvoir le supprimer en bloc.
@@ -34,6 +34,7 @@ export const L = {
     mensuration:    'SCAN',
     reglages:       MODULES.reglages.name,
     tasks:          'TÂCHES',
+    analyse:        MODULES.analyse.name,
     coach:          'COACH',
     hubSub:         'HUB',
     spiritSub:      'VIGIE',

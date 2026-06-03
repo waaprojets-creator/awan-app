@@ -70,7 +70,7 @@ const DOMAINS: Array<{
     label: 'TEMPS',
     Icon: Clock,
     subs: [
-      { id: 'budget',     label: 'BUDGET',     Icon: BarChart2 },
+      { id: 'budget',     label: 'RATIO',      Icon: BarChart2 },
       { id: 'repartition',label: 'RÉPARTITION',Icon: Clock },
     ],
   },

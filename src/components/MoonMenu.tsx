@@ -18,43 +18,48 @@ interface Node { id: string; label: string; x: number; y: number; tier: 0 | 1 | 
 const nav = (L as any).nav as Record<string, string | undefined>;
 const n = (k: string): string => nav[k] ?? k;
 
-// Orbital layout — portrait-optimised, centre (50%, 52%), deux anneaux concentriques.
-// Ring 1 r=22% CH, Ring 2 r=36% CH. Bearings clockwise depuis 12h.
-// Aucune arête ne se croise : tous les nœuds tier-1 sont à 72° d'écart autour du centre ;
-// les clusters tier-2 se déploient en éventail depuis leur parent sans recoupement.
+// Hexagonal layout — portrait-optimised, centre (50%, 52%).
+// Ring 1 r=22% CH — 6 sommets à 60° d'écart (hexagone régulier), CW depuis 0° (haut).
+// Ring 2 r=33% CH — clusters tier-2 déployés en éventail depuis leur parent.
 const NODES: Node[] = [
-  { id: 'Dashboard',   label: n('hub'),        x: 50.0, y: 52.0, tier: 0 },
-  // — Ring 1 (tier 1) — r=22% CH, bearings 0/72/144/216/288°
-  { id: 'Islam',       label: n('spirit'),     x: 50.0, y: 30.0, tier: 1 },  // bearing   0°
-  { id: 'Sante',       label: n('sante'),      x: 70.9, y: 45.2, tier: 1 },  // bearing  72° — cluster droite
-  { id: 'Planning',    label: n('planning'),   x: 62.9, y: 69.8, tier: 1 },  // bearing 144°
-  { id: 'Trajet',      label: n('trajet'),     x: 37.1, y: 69.8, tier: 1 },  // bearing 216°
-  { id: 'Journal',     label: n('journal'),    x: 29.1, y: 45.2, tier: 1 },  // bearing 288° — gauche
-  // — Ring 2 (tier 2) — r=36% CH, Sante cluster bearings 54–96° (droite)
-  { id: 'Sleep',       label: 'SOMMEIL',       x: 79.1, y: 30.8, tier: 2 },  // bearing  54°
-  { id: 'Mensuration', label: n('mensuration'),x: 83.4, y: 38.5, tier: 2 },  // bearing  68°
-  { id: 'Nutrition',   label: n('nutrition'),  x: 85.6, y: 47.0, tier: 2 },  // bearing  82°
-  { id: 'Sport',       label: n('sport'),      x: 85.8, y: 55.8, tier: 2 },  // bearing  96°
-  // — Ring 2 — Dashboard direct children
-  { id: 'Coach',       label: n('coach'),      x: 70.6, y: 22.5, tier: 2 },  // bearing  35°
-  { id: 'Reglages',    label: n('reglages'),   x: 74.9, y: 55.1, tier: 2 },  // bearing  95° (−11% x)
-  // — Ring 2 — Planning cluster
-  { id: 'Tasks',       label: n('tasks'),      x: 71.2, y: 81.1, tier: 2 },  // bearing 144°
+  { id: 'Dashboard', label: n('hub'),      x: 50.0, y: 52.0, tier: 0 },
+  // — Ring 1 (tier 1) — hexagone régulier, bearings 0/60/120/180/240/300°
+  { id: 'Islam',     label: n('spirit'),   x: 50.0, y: 30.0, tier: 1 },  //   0° haut
+  { id: 'Reglages',  label: n('reglages'), x: 69.1, y: 41.0, tier: 1 },  //  60° SYSTÈME
+  { id: 'Planning',  label: n('planning'), x: 69.1, y: 63.0, tier: 1 },  // 120°
+  { id: 'Sante',     label: n('sante'),    x: 50.0, y: 74.0, tier: 1 },  // 180° bas
+  { id: 'Trajet',    label: n('trajet'),   x: 30.9, y: 63.0, tier: 1 },  // 240°
+  { id: 'Analyse',   label: n('analyse'),  x: 30.9, y: 41.0, tier: 1 },  // 300°
+  // — Ring 2 (tier 2) — Planning cluster
+  { id: 'Journal',   label: n('journal'),  x: 73.5, y: 75.0, tier: 2 },  // ~135°
+  { id: 'Tasks',     label: n('tasks'),    x: 79.0, y: 59.5, tier: 2 },  // ~108°
+  // — Ring 2 — Santé cluster (éventail bas)
+  { id: 'Sleep',       label: 'SOMMEIL',        x: 59.5, y: 83.5, tier: 2 },  // ~165°
+  { id: 'Mensuration', label: n('mensuration'), x: 53.5, y: 85.5, tier: 2 },  // ~175°
+  { id: 'Nutrition',   label: n('nutrition'),   x: 46.5, y: 85.5, tier: 2 },  // ~185°
+  { id: 'Sport',       label: n('sport'),       x: 40.5, y: 83.5, tier: 2 },  // ~195°
+  // — Ring 2 — Analyse cluster
+  { id: 'Coach',       label: n('coach'),       x: 22.0, y: 34.5, tier: 2 },  // ~305°
 ];
 
 const EDGES: [string, string][] = [
+  // Hub → tier 1 (6 arêtes hexagonales)
   ['Dashboard', 'Islam'],
-  ['Dashboard', 'Sante'],
   ['Dashboard', 'Reglages'],
-  ['Dashboard', 'Coach'],
-  ['Dashboard', 'Journal'],
   ['Dashboard', 'Planning'],
+  ['Dashboard', 'Sante'],
   ['Dashboard', 'Trajet'],
-  ['Sante', 'Sport'],
-  ['Sante', 'Nutrition'],
-  ['Sante', 'Mensuration'],
-  ['Sante', 'Sleep'],
+  ['Dashboard', 'Analyse'],
+  // Planning → tier 2
+  ['Planning', 'Journal'],
   ['Planning', 'Tasks'],
+  // Santé → tier 2
+  ['Sante', 'Sleep'],
+  ['Sante', 'Mensuration'],
+  ['Sante', 'Nutrition'],
+  ['Sante', 'Sport'],
+  // Analyse → tier 2
+  ['Analyse', 'Coach'],
 ];
 
 // Tier lookup for edge stroke scaling
@@ -139,11 +144,11 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
 
   const CH = H * 0.86;
 
-  // Orbital ring radii — matched to the new portrait layout (centre y=52% CH)
+  // Orbital ring radii — hexagonal layout, centre y=52% CH
   const orbitCX = W * 0.5;
   const orbitCY = CH * 0.52;
   const ring1R  = CH * 0.22;
-  const ring2R  = CH * 0.36;
+  const ring2R  = CH * 0.33;
 
   const resolvedNodes = NODES.map(node => ({
     ...node,
@@ -302,9 +307,9 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
                 const r = isTier0 ? 5 : node.tier === 1 ? 3.5 : 2.5;
                 const delay = editMode ? 0 : 0.12 + i * 0.04;
                 const { textX, textY, anchor } = labelPos(node);
-                const lColor = isActive ? 'var(--color-awan-gold)' : isTier0 ? 'rgba(255,255,255,0.92)' : node.tier === 1 ? 'rgba(255,255,255,0.68)' : 'rgba(255,255,255,0.42)';
-                const fSize = isTier0 ? 15 : node.tier === 1 ? 12 : 11;
-                const fWeight = isTier0 ? 800 : node.tier === 1 ? 700 : 600;
+                const lColor = isActive ? 'var(--color-awan-gold)' : node.tier <= 1 ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.42)';
+                const fSize = isTier0 ? 15 : node.tier === 1 ? 13 : 11;
+                const fWeight = node.tier <= 1 ? 800 : 600;
                 return (
                   <g key={node.id}
                     onClick={() => handleNavigate(node.id)}

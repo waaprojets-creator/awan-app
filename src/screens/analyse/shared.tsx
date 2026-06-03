@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Dimensions } from 'react-native';
-import Svg, { Line, Rect, G } from 'react-native-svg';
+import Svg, { Line, Rect, G, Text as SvgTextEl } from 'react-native-svg';
 
 const SvgLine = Line as any;
 const SvgRect = Rect as any;
 const SvgG = G as any;
+const SvgText = SvgTextEl as any;
 
 // ─── BarChart ─────────────────────────────────────────────────────────────────
 
@@ -14,34 +15,67 @@ interface BarChartProps {
   dataKey: string;
   color: string;
   height?: number;
+  yUnit?: string;       // ex: "kg", "kcal", "séries" — shown on Y axis
+  xLabels?: string[];   // labels below each bar
+  yTicks?: number;      // number of Y graduations (default 3)
 }
 
-export function BarChart({ data, dataKey, color, height = 180 }: BarChartProps) {
-  const width = Dimensions.get('window').width - 88;
-  const padding = 20;
-  const barWidth = Math.max(4, Math.min(24, (width - padding * 2) / Math.max(data.length, 1) - 6));
+export function BarChart({ data, dataKey, color, height = 180, yUnit, xLabels, yTicks = 3 }: BarChartProps) {
+  const totalWidth = Dimensions.get('window').width - 88;
+  const padLeft  = yUnit ? 36 : 8;
+  const padRight = 4;
+  const padTop   = 8;
+  const padBot   = xLabels ? 20 : 8;
+  const chartW   = totalWidth - padLeft - padRight;
+  const chartH   = height - padTop - padBot;
+
   const maxVal = Math.max(...data.map((d: any) => Number(d[dataKey]) || 0), 1);
+  const barWidth = Math.max(4, Math.min(24, chartW / Math.max(data.length, 1) - 6));
+
+  const ticks = Array.from({ length: yTicks }, (_, i) => (i / (yTicks - 1)) * maxVal);
 
   return (
     <View style={{ flex: 1, alignItems: 'center' }}>
-      <Svg width={width} height={height}>
-        {[0, 0.5, 1].map((v, i) => (
-          <SvgLine
-            key={i}
-            x1={0} y1={height - padding - v * (height - padding * 2)}
-            x2={width} y2={height - padding - v * (height - padding * 2)}
-            stroke="rgba(255,255,255,0.03)" strokeWidth="1"
-          />
-        ))}
-        {data.map((d: any, i: number) => {
-          const val = Number(d[dataKey]) || 0;
-          const barH = (val / maxVal) * (height - padding * 2);
-          const x = i * (width / data.length) + (width / data.length - barWidth) / 2;
-          const y = height - padding - barH;
+      <Svg width={totalWidth} height={height}>
+        {/* Y-axis ticks + grid */}
+        {ticks.map((v, i) => {
+          const y = padTop + chartH - (v / maxVal) * chartH;
+          const label = v >= 1000 ? `${(v / 1000).toFixed(1)}k` : Math.round(v).toString();
           return (
             <SvgG key={i}>
-              <SvgRect x={x} y={y} width={barWidth} height={barH} fill={color} rx={2} />
+              <SvgLine x1={padLeft} y1={y} x2={padLeft + chartW} y2={y}
+                stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+              {yUnit !== undefined && (
+                <SvgText x={padLeft - 4} y={y + 3} textAnchor="end" fontSize="7"
+                  fontFamily="var(--font-mono)" fontWeight="700"
+                  fill="rgba(255,255,255,0.35)">
+                  {i === ticks.length - 1 ? `${label}${yUnit}` : label}
+                </SvgText>
+              )}
+            </SvgG>
+          );
+        })}
+
+        {/* Bars */}
+        {data.map((d: any, i: number) => {
+          const val = Number(d[dataKey]) || 0;
+          const barH = (val / maxVal) * chartH;
+          const colW = chartW / data.length;
+          const x = padLeft + i * colW + (colW - barWidth) / 2;
+          const y = padTop + chartH - barH;
+          const xLabel = xLabels?.[i];
+          const xCenter = padLeft + i * colW + colW / 2;
+          return (
+            <SvgG key={i}>
+              <SvgRect x={x} y={y} width={barWidth} height={Math.max(barH, 0)} fill={color} rx={2} />
               {val > 0 && <SvgRect x={x} y={y} width={barWidth} height={2} fill="#FFF" opacity={0.5} />}
+              {xLabel !== undefined && (
+                <SvgText x={xCenter} y={padTop + chartH + padBot - 2} textAnchor="middle"
+                  fontSize="7" fontFamily="var(--font-mono)" fontWeight="700"
+                  fill="rgba(255,255,255,0.35)">
+                  {xLabel}
+                </SvgText>
+              )}
             </SvgG>
           );
         })}

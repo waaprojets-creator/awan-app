@@ -75,7 +75,7 @@ export function PerformanceTab({ sessions, assessments = [] }: PerformanceTabPro
   const top5 = useMemo((): OneRMEntry[] => {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 90);
-    const cutStr = cutoff.toISOString().slice(0, 10);
+    const cutStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
 
     const best: Record<string, OneRMEntry> = {};
     for (const session of sessions) {
@@ -109,7 +109,7 @@ export function PerformanceTab({ sessions, assessments = [] }: PerformanceTabPro
     const monday = new Date();
     monday.setDate(monday.getDate() - (day - 1));
     monday.setHours(0, 0, 0, 0);
-    const weekStr = monday.toISOString().slice(0, 10);
+    const weekStr = `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,'0')}-${String(monday.getDate()).padStart(2,'0')}`;
 
     for (const session of sessions) {
       if (session.date < weekStr) continue;
@@ -302,12 +302,13 @@ export function PerformanceTab({ sessions, assessments = [] }: PerformanceTabPro
       <Card className="p-6 bg-white/5 border-white/5" variant="flat">
         <Heading level={4} mono subtitle="Charge totale · 8 semaines glissantes">TONNAGE HEBDOMADAIRE</Heading>
         <div className="h-[200px] mt-6">
-          <BarChart data={weeklyTonnage} dataKey="weight" color={theme.title} />
-        </div>
-        <div className="flex flex-row justify-between px-2 mt-2">
-          {weeklyTonnage.map(w => (
-            <span key={w.label} className="text-awan-xs font-mono text-awan-tx-mute">{w.label}</span>
-          ))}
+          <BarChart
+            data={weeklyTonnage}
+            dataKey="weight"
+            color={theme.title}
+            yUnit="kg"
+            xLabels={weeklyTonnage.map(w => w.label)}
+          />
         </div>
       </Card>
     </div>

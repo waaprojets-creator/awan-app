@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { View, Dimensions } from 'react-native';
 import Svg, { Path, Circle, Line, Text as SvgText } from 'react-native-svg';
 import { Clock } from 'lucide-react';
+import { startOfWeek, differenceInCalendarWeeks } from 'date-fns';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import { InstrumentCard } from '../../components/ui/InstrumentCard';
+import { DateSelectPopup } from '../../components/ui/DateSelectPopup';
 import type { StatusVariant } from '../../components/ui/InstrumentCard';
 import { buildWeekTimeFrame, type WeekTimeFrame } from '../../services/timeFrameworkService';
 import { EmptyState } from './shared';
@@ -42,8 +44,8 @@ function CetGauge({ value }: { value: number }) {
     const a2 = Math.PI * (to - 1);
     const x1 = cx + R * Math.cos(a1); const y1 = cy + R * Math.sin(a1);
     const x2 = cx + R * Math.cos(a2); const y2 = cy + R * Math.sin(a2);
-    const large = to - from > 0.5 ? 1 : 0;
-    return `M ${x1} ${y1} A ${R} ${R} 0 ${large} 1 ${x2} ${y2}`;
+    // Semi-circle gauge: total span = π, no arc can exceed π → large always 0
+    return `M ${x1} ${y1} A ${R} ${R} 0 0 1 ${x2} ${y2}`;
   };
 
   // Target line at Cet = 0.866
@@ -128,19 +130,33 @@ function cetStatus(cet: number): StatusVariant {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
+function localToday(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export function BudgetTab() {
   const [frame, setFrame] = useState<WeekTimeFrame | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<string>(localToday);
+
+  // Convert selectedDate to weekOffset (0 = this week, -1 = last week, …)
+  const weekOffset = useMemo(() => {
+    const selMonday = startOfWeek(new Date(`${selectedDate}T00:00:00`), { weekStartsOn: 1 });
+    const nowMonday = startOfWeek(new Date(), { weekStartsOn: 1 });
+    return differenceInCalendarWeeks(selMonday, nowMonday, { weekStartsOn: 1 });
+  }, [selectedDate]);
 
   useEffect(() => {
     let active = true;
-    buildWeekTimeFrame(0).then(f => {
+    setLoading(true);
+    buildWeekTimeFrame(weekOffset).then(f => {
       if (active) { setFrame(f); setLoading(false); }
     }).catch(() => {
       if (active) setLoading(false);
     });
     return () => { active = false; };
-  }, []);
+  }, [weekOffset]);
 
   if (loading) return (
     <div className="flex items-center justify-center py-16">
@@ -154,6 +170,16 @@ export function BudgetTab() {
 
   return (
     <div className="space-y-8">
+      {/* Week selector */}
+      <div className="px-2">
+        <DateSelectPopup
+          value={selectedDate}
+          onChange={setSelectedDate}
+          max={localToday()}
+          label="SEMAINE DU"
+        />
+      </div>
+
       {/* Alert banner */}
       {frame.alert && (
         <Card className="p-4 border border-awan-status-error bg-awan-status-error/10" variant="flat">
@@ -189,7 +215,7 @@ export function BudgetTab() {
 
       {/* T_* instrument cards */}
       <Card className="p-6 bg-white/5 border-white/5" variant="flat">
-        <Heading level={4} mono subtitle="Répartition hebdomadaire · 168h">BUDGET TEMPOREL</Heading>
+        <Heading level={4} mono subtitle="Répartition hebdomadaire · 168h">RATIO TEMPOREL</Heading>
         <div className="grid grid-cols-2 gap-3 mt-4">
           <InstrumentCard
             label="T SOMATIQUE"

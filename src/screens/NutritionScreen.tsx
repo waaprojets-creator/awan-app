@@ -18,8 +18,6 @@ import {
  UtensilsCrossed,
  Trash2,
  Pencil,
- ChevronLeft,
- ChevronRight,
  Download,
  BarChart2,
 } from 'lucide-react';
@@ -34,6 +32,7 @@ import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
 import { InstrumentCard } from '../components/ui/InstrumentCard';
+import { DateSelectPopup } from '../components/ui/DateSelectPopup';
 import type { StatusVariant } from '../components/ui/InstrumentCard';
 import { L } from '../constants/labels';
 import { FIBER_TARGET_G_PER_DAY, ADHERENCE_OK_THRESHOLD, ADHERENCE_WARN_THRESHOLD } from '../constants/app';
@@ -1080,6 +1079,21 @@ export default function NutritionScreen() {
  );
  const totals = mealStore.totals;
 
+ // Per-slot daily summary (for synthesis card)
+ const slotSummaries = useMemo(() => {
+   const bySlot: Record<number, { kcal: number; p: number; c: number; f: number; count: number }> = {};
+   for (const e of dayEntries) {
+     const slot = e.mealSlot ?? (e.meal ? (MEAL_TYPE_TO_SLOT[e.meal] ?? 5) : 5);
+     if (!bySlot[slot]) bySlot[slot] = { kcal: 0, p: 0, c: 0, f: 0, count: 0 };
+     bySlot[slot]!.kcal += e.kcal;
+     bySlot[slot]!.p += e.p;
+     bySlot[slot]!.c += e.c;
+     bySlot[slot]!.f += e.f;
+     bySlot[slot]!.count += 1;
+   }
+   return bySlot;
+ }, [dayEntries]);
+
  // Load water data when date changes
  useEffect(() => {
    WaterService.getByDate(selectedDate).then(w => {
@@ -1320,38 +1334,7 @@ export default function NutritionScreen() {
  {activeTab === 'journal' && <>
  {/* Day Selector */}
  <div className="px-6 mb-6">
- <Card className="p-0 bg-white/5 border-white/5" variant="flat">
- <div className="flex flex-row items-center justify-between px-2 py-2">
- <Touch
- onPress={handlePrevDay}
- className="w-10 h-10 bg-white/5 border border-white/5 flex items-center justify-center"
- >
- <ChevronLeft size={18} className="text-awan-gold" />
- </Touch>
- <div className="flex flex-col items-center">
- <span className="text-awan-sm font-black uppercase tracking-widest text-awan-tx-mute font-mono">
- CYCLE
- </span>
- <span className="text-sm font-bold text-awan-gold uppercase tracking-widest font-mono">
- {formatDayLabel(selectedDate)}
- </span>
- </div>
- <Touch
- onPress={handleNextDay}
- disabled={!canGoNext}
- className={`w-10 h-10 border flex items-center justify-center ${
- canGoNext
- ? 'bg-white/5 border-white/5'
- : 'bg-white/5 border-white/5 opacity-30'
- }`}
- >
- <ChevronRight
- size={18}
- className={canGoNext ? 'text-awan-gold' : 'text-awan-tx-mute'}
- />
- </Touch>
- </div>
- </Card>
+   <DateSelectPopup value={selectedDate} onChange={setSelectedDate} label="CYCLE" />
  </div>
 
  {/* Meal Slot Selector — 5 modifiable slots (N1) */}
@@ -1533,6 +1516,31 @@ export default function NutritionScreen() {
  </div>
  )}
  </div>
+
+ {/* Synthèse repas du jour — 5 slots */}
+ {dayEntries.length > 0 && (
+ <div className="px-6 mb-6">
+   <Card className="p-4 bg-white/5 border-white/5" variant="flat">
+     <span className="text-awan-xs font-black font-mono uppercase tracking-widest text-awan-tx-mute mb-3 block">SYNTHÈSE JOURNALIÈRE</span>
+     <div className="space-y-2">
+       {([1, 2, 3, 4, 5] as const).map(slot => {
+         const s = slotSummaries[slot];
+         if (!s || s.count === 0) return null;
+         const label = slotLabels[slot] ?? `REPAS ${slot}`;
+         return (
+           <div key={slot} className="flex flex-row items-center justify-between py-1 border-b border-white/5">
+             <span className="text-awan-xs font-black font-mono uppercase text-awan-gold">{label}</span>
+             <div className="flex flex-row items-center gap-3">
+               <span className="text-awan-xs font-mono text-awan-tx font-black">{s.kcal} kcal</span>
+               <span className="text-awan-xs font-mono text-awan-tx-mute">P{s.p} G{s.c} L{s.f}</span>
+             </div>
+           </div>
+         );
+       })}
+     </div>
+   </Card>
+ </div>
+ )}
 
  {/* Meal Entries */}
  <div className="px-6 mb-8">

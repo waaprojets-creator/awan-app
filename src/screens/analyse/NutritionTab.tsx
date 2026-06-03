@@ -58,6 +58,7 @@ export function NutritionTab({
             <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase">Moy. Kcal</span>
           </div>
           <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">{avgKcal || '—'}</span>
+          {count > 0 && <span className="text-awan-xs text-awan-tx-mute font-mono mt-1 block">moy. sur {count} j</span>}
         </Card>
         <Card className="p-6 bg-white/5 border-white/5" variant="flat">
           <div className="flex flex-row items-center gap-2 mb-3">
@@ -67,13 +68,20 @@ export function NutritionTab({
           <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">
             {avgP || '—'}{avgP > 0 && <span className="text-sm ml-1">G</span>}
           </span>
+          {count > 0 && <span className="text-awan-xs text-awan-tx-mute font-mono mt-1 block">moy. sur {count} j</span>}
         </Card>
       </div>
 
       <Card className="p-6 bg-white/5 border-white/5" variant="flat">
         <Heading level={4} mono subtitle="Énergie">FLUX CALORIQUE</Heading>
         <div className="h-[200px] mt-6">
-          <BarChart data={mealsByDay} dataKey="kcal" color={theme.title} />
+          <BarChart
+            data={mealsByDay}
+            dataKey="kcal"
+            color={theme.title}
+            yUnit="kcal"
+            xLabels={mealsByDay.map(d => d.label)}
+          />
         </div>
       </Card>
     </div>
