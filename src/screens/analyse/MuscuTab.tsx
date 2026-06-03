@@ -23,13 +23,25 @@ export function MuscuTab({ stats, loading }: MuscuTabProps) {
       <Card className="p-6 bg-white/5 border-white/5" variant="flat">
         <Heading level={4} mono subtitle="Force de Projection">VOLUME TOTAL (KG)</Heading>
         <div className="h-[200px] mt-6">
-          <BarChart data={stats} dataKey="weight" color={theme.title} />
+          <BarChart
+            data={stats}
+            dataKey="weight"
+            color={theme.title}
+            yUnit="kg"
+            xLabels={stats.map(s => s.label.slice(0, 5))}
+          />
         </div>
       </Card>
       <Card className="p-6 bg-white/5 border-white/5" variant="flat">
         <Heading level={4} mono subtitle="Densité Opérative">SÉRIES COMPLÉTÉES</Heading>
         <div className="h-[200px] mt-6">
-          <BarChart data={stats} dataKey="sets" color="#FFF" />
+          <BarChart
+            data={stats}
+            dataKey="sets"
+            color="#FFF"
+            yUnit=""
+            xLabels={stats.map(s => s.label.slice(0, 5))}
+          />
         </div>
       </Card>
     </div>
