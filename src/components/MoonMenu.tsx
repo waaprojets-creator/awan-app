@@ -307,9 +307,9 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
                 const r = isTier0 ? 5 : node.tier === 1 ? 3.5 : 2.5;
                 const delay = editMode ? 0 : 0.12 + i * 0.04;
                 const { textX, textY, anchor } = labelPos(node);
-                const lColor = isActive ? 'var(--color-awan-gold)' : isTier0 ? 'rgba(255,255,255,0.92)' : node.tier === 1 ? 'rgba(255,255,255,0.68)' : 'rgba(255,255,255,0.42)';
-                const fSize = isTier0 ? 15 : node.tier === 1 ? 12 : 11;
-                const fWeight = isTier0 ? 800 : node.tier === 1 ? 700 : 600;
+                const lColor = isActive ? 'var(--color-awan-gold)' : node.tier <= 1 ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.42)';
+                const fSize = isTier0 ? 15 : node.tier === 1 ? 13 : 11;
+                const fWeight = node.tier <= 1 ? 800 : 600;
                 return (
                   <g key={node.id}
                     onClick={() => handleNavigate(node.id)}
