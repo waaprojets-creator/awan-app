@@ -1,8 +1,8 @@
 /**
  * AWAN — Generate full realistic seed (V5).
  *
- * Past biometric window : 2025-11-25 → 2026-05-28 (185 days)
- * Future planning window: 2026-05-28 → 2026-08-21 (85 days)
+ * Past biometric window : TODAY - 185 days
+ * Future planning window: TODAY + 85 days
  *
  * Outputs /public/data/seed-demo.json with payload { type:'seed.full', data:{...} }.
  * Validates every entry via its migrator → 0 fail required.
@@ -24,9 +24,14 @@ import { migrateDaySchedule } from '../src/data/schemas/planning/daySchedule';
 import { migrateWeightEntry } from '../src/data/schemas/body/weightEntry';
 
 // ─── Constantes temporelles ────────────────────────────────────────────────
-const TODAY = '2026-05-28';
-const PAST_START = '2025-11-25';
-const FUTURE_END = '2026-08-21';
+// TODAY est toujours le jour du build (heure locale)
+const _now = new Date();
+const TODAY = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
+const _past = new Date(_now); _past.setDate(_past.getDate() - 185);
+const PAST_START = `${_past.getFullYear()}-${String(_past.getMonth() + 1).padStart(2, '0')}-${String(_past.getDate()).padStart(2, '0')}`;
+const _future = new Date(_now); _future.setDate(_future.getDate() + 85);
+const FUTURE_END = `${_future.getFullYear()}-${String(_future.getMonth() + 1).padStart(2, '0')}-${String(_future.getDate()).padStart(2, '0')}`;
+// → fenêtres fixes : 185j passé + 85j futur, recentrées sur le jour du build
 
 // Profil du personnage (homme, 30 ans, 178 cm)
 const PROFILE_AGE = 30;
