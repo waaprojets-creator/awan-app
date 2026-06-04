@@ -1,3 +1,5 @@
+import { getStorage } from '@/data/storage/storageService';
+
 export interface FoodEntry {
   id: string;
   n: string;       // nom
@@ -10,7 +12,10 @@ export interface FoodEntry {
   barcode?: string | undefined;
 }
 
+const CUSTOM_FOOD_PREFIX = 'nutrition.food.custom.';
+
 let foodsCache: FoodEntry[] | null = null;
+let customFoodsCache: FoodEntry[] = [];
 
 export async function loadFoodDatabase(): Promise<FoodEntry[]> {
   if (foodsCache) return foodsCache;
@@ -26,8 +31,32 @@ export async function loadFoodDatabase(): Promise<FoodEntry[]> {
   }
 }
 
+export async function loadCustomFoods(): Promise<FoodEntry[]> {
+  try {
+    const storage = await getStorage();
+    const keys = await storage.list(CUSTOM_FOOD_PREFIX);
+    const entries: FoodEntry[] = [];
+    for (const key of keys) {
+      const food = await storage.get<FoodEntry>(key, (raw) => raw as FoodEntry);
+      if (food) entries.push(food);
+    }
+    customFoodsCache = entries;
+    return customFoodsCache;
+  } catch (e) {
+    console.warn('[nutritionData] failed to load custom foods:', e);
+    return [];
+  }
+}
+
+export async function saveCustomFood(food: FoodEntry): Promise<void> {
+  const storage = await getStorage();
+  await storage.set(`${CUSTOM_FOOD_PREFIX}${food.id}`, food);
+  // Update in-memory cache
+  customFoodsCache = [food, ...customFoodsCache.filter(f => f.id !== food.id)];
+}
+
 export function getFoods(): FoodEntry[] {
-  return foodsCache ?? [];
+  return [...(foodsCache ?? []), ...customFoodsCache];
 }
 
 export function searchFoods(query: string): FoodEntry[] {

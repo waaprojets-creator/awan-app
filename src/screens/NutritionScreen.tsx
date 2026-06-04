@@ -38,6 +38,8 @@ import { L } from '../constants/labels';
 import { FIBER_TARGET_G_PER_DAY, ADHERENCE_OK_THRESHOLD, ADHERENCE_WARN_THRESHOLD } from '../constants/app';
 import {
  loadFoodDatabase,
+ loadCustomFoods,
+ saveCustomFood,
  searchFoods,
  getRecentFoods,
  recordRecentFood,
@@ -524,6 +526,7 @@ function AddMealModal({
  halal: true,
  };
  const t = time.trim() ? time.trim() : undefined;
+ void saveCustomFood(customFood);
  onAdd(customFood, 100, t);
  };
 
@@ -1038,7 +1041,7 @@ export default function NutritionScreen() {
 
  const openAddMeal = useCallback(async () => {
  if (!foodsLoadedRef.current) {
- await loadFoodDatabase().catch(() => {});
+ await Promise.all([loadFoodDatabase(), loadCustomFoods()]).catch(() => {});
  foodsLoadedRef.current = true;
  setFoodsReady(true);
  }
@@ -1131,7 +1134,7 @@ export default function NutritionScreen() {
  f: macros.f,
  ...(macros.fiberG !== undefined ? { fiberG: macros.fiberG } : {}),
  timestamp: now,
- source: 'db',
+ source: food.id.startsWith('custom-') ? 'custom' : 'db',
  mealSlot: selectedSlot,
  mealLabel: slotLabels[selectedSlot],
  grams,
