@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from '../hooks/useTheme';
 
 export interface BodyMeasure {
   key: string;
@@ -162,11 +163,12 @@ interface Props {
   onSelect: (key: string) => void;
 }
 
-const GOLD = 'var(--color-awan-gold)';
-const DIM  = 'rgba(255,255,255,0.18)';
-const TX   = 'var(--color-awan-tx)';
+const DIM = 'rgba(255,255,255,0.18)';
 
 export function BodyMeasureSvg({ measurements, selectedKey, onSelect }: Props) {
+  const theme = useTheme();
+  const GOLD = theme.selected;
+  const TX   = theme.title;
   const FRONT_CX = 95;
   const BACK_CX  = 255;
 
