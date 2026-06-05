@@ -8,6 +8,8 @@ import { useSleepStore } from '../hooks/useSleepStore';
 import { ds, uid } from '../utils/storage';
 import type { NavProps } from '../types/nav';
 import type { SleepEntryLatest } from '../data/schemas/sleep/sleepEntry';
+import { useTheme, type AwanTheme } from '../hooks/useTheme';
+import { FontMono } from '../constants/typography';
 
 // Seuil OMS — 7h recommandées pour adulte
 const OMS_THRESHOLD_H = 7;
@@ -20,16 +22,18 @@ const QUALITY_LABELS: Record<number, string> = {
   5: 'Excellent',
 };
 
-function qualityColor(q: number): string {
-  if (q <= 2) return 'var(--color-awan-status-error)';
-  if (q === 3) return 'var(--color-awan-status-warn)';
-  return 'var(--color-awan-status-ok)';
+type ThemeColors = Pick<AwanTheme, 'danger' | 'statusWarn' | 'statusOk'>;
+
+function qualityColor(q: number, t: ThemeColors): string {
+  if (q <= 2) return t.danger;
+  if (q === 3) return t.statusWarn;
+  return t.statusOk;
 }
 
-function durationColor(h: number): string {
-  if (h < 6) return 'var(--color-awan-status-error)';
-  if (h < OMS_THRESHOLD_H) return 'var(--color-awan-status-warn)';
-  return 'var(--color-awan-status-ok)';
+function durationColor(h: number, t: ThemeColors): string {
+  if (h < 6) return t.danger;
+  if (h < OMS_THRESHOLD_H) return t.statusWarn;
+  return t.statusOk;
 }
 
 function formatDuration(h: number): string {
@@ -40,6 +44,7 @@ function formatDuration(h: number): string {
 
 // SVG courbe 7 jours
 function WeekChart({ entries }: { entries: SleepEntryLatest[] }) {
+  const theme = useTheme();
   const W = 280; const H = 80; const PAD = 8;
   const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date)).slice(-7);
   if (sorted.length < 2) return null;
@@ -55,24 +60,25 @@ function WeekChart({ entries }: { entries: SleepEntryLatest[] }) {
     <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
       {/* Ligne seuil OMS */}
       <line x1={PAD} y1={threshY} x2={W - PAD} y2={threshY}
-        stroke="var(--color-awan-tx-mute)" strokeWidth="0.5" strokeDasharray="3,3" />
+        stroke={theme.mute} strokeWidth="0.5" strokeDasharray="3,3" />
       <text x={W - PAD} y={threshY - 3} textAnchor="end"
-        style={{ fontSize: 8, fill: 'var(--color-awan-tx-mute)', fontFamily: 'var(--font-mono)' }}>
+        style={{ fontSize: 8, fill: theme.mute, fontFamily: FontMono }}>
         7h OMS
       </text>
       {/* Courbe */}
       <polyline points={points} fill="none"
-        stroke="var(--color-awan-gold)" strokeWidth="1.5" strokeLinejoin="round" />
+        stroke={theme.selected} strokeWidth="1.5" strokeLinejoin="round" />
       {/* Points */}
       {sorted.map((e, i) => (
         <circle key={e.id} cx={toX(i)} cy={toY(e.durationH)} r="3"
-          fill={durationColor(e.durationH)} />
+          fill={durationColor(e.durationH, theme)} />
       ))}
     </svg>
   );
 }
 
 export default function SleepScreen(_props: NavProps): React.ReactElement {
+  const theme = useTheme();
   const today = ds(new Date());
   const store = useSleepStore();
 
@@ -137,7 +143,7 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
       <ScreenHeader tag="SYSTÈME · SOMMEIL" title="SUIVI SOMMEIL" />
 
       {/* Saisie du jour */}
-      <div className="p-4 border mb-4" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border)' }}>
+      <div className="p-4 border mb-4" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
         <span className="awan-label block mb-4">
           {todayEntry ? 'MODIFIER AUJOURD\'HUI' : 'SAISIR AUJOURD\'HUI'}
         </span>
@@ -151,7 +157,7 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
                 <Touch key={h} onPress={() => setHours(h)}
                   className={`w-8 h-9 flex items-center justify-center border ${hours === h ? 'border-awan-gold bg-awan-gold/10' : 'border-white/10 bg-white/5'}`}>
                   <span className="font-mono text-xs font-bold"
-                    style={{ color: hours === h ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)' }}>
+                    style={{ color: hours === h ? theme.selected : theme.mute }}>
                     {h}h
                   </span>
                 </Touch>
@@ -163,14 +169,14 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
                 <Touch key={m} onPress={() => setMins(m)}
                   className={`w-8 h-9 flex items-center justify-center border ${mins === m ? 'border-awan-gold bg-awan-gold/10' : 'border-white/10 bg-white/5'}`}>
                   <span className="font-mono text-xs font-bold"
-                    style={{ color: mins === m ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)' }}>
+                    style={{ color: mins === m ? theme.selected : theme.mute }}>
                     {String(m).padStart(2, '0')}
                   </span>
                 </Touch>
               ))}
             </div>
           </div>
-          <span className="font-mono text-xs mt-2 block" style={{ color: durationColor(durationH) }}>
+          <span className="font-mono text-xs mt-2 block" style={{ color: durationColor(durationH, theme) }}>
             {formatDuration(durationH)}
             {durationH < OMS_THRESHOLD_H ? ` — en dessous des ${OMS_THRESHOLD_H}h recommandées` : ' — objectif atteint ✓'}
           </span>
@@ -183,15 +189,15 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
             {[1, 2, 3, 4, 5].map(q => (
               <Touch key={q} onPress={() => setQuality(q)}
                 className={`flex-1 h-12 flex items-center justify-center border ${quality === q ? 'border-awan-gold' : 'border-white/10 bg-white/5'}`}
-                style={{ backgroundColor: quality === q ? `${qualityColor(q)}20` : undefined }}>
+                style={{ backgroundColor: quality === q ? `${qualityColor(q, theme)}20` : undefined }}>
                 <span className="font-mono font-black text-base"
-                  style={{ color: quality === q ? qualityColor(q) : 'var(--color-awan-tx-mute)' }}>
+                  style={{ color: quality === q ? qualityColor(q, theme) : theme.mute }}>
                   {q}
                 </span>
               </Touch>
             ))}
           </div>
-          <span className="font-sans text-xs mt-1 block" style={{ color: qualityColor(quality) }}>
+          <span className="font-sans text-xs mt-1 block" style={{ color: qualityColor(quality, theme) }}>
             {QUALITY_LABELS[quality]}
           </span>
         </div>
@@ -205,7 +211,7 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
               value={bedtime}
               onChange={e => setBedtime(e.target.value)}
               className="w-full font-mono text-sm bg-white/5 border border-white/10 px-3 py-2"
-              style={{ color: 'var(--color-awan-tx)', outline: 'none' }}
+              style={{ color: theme.title, outline: 'none' }}
             />
           </div>
           <div className="flex-1">
@@ -215,14 +221,14 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
               value={wakeTime}
               onChange={e => setWakeTime(e.target.value)}
               className="w-full font-mono text-sm bg-white/5 border border-white/10 px-3 py-2"
-              style={{ color: 'var(--color-awan-tx)', outline: 'none' }}
+              style={{ color: theme.title, outline: 'none' }}
             />
           </div>
         </div>
 
         <Touch onPress={() => void handleSave()} disabled={saving || durationH <= 0}
           className="h-12 flex items-center justify-center"
-          style={{ backgroundColor: 'var(--color-awan-gold)', opacity: saving ? 0.5 : 1 }}>
+          style={{ backgroundColor: theme.selected, opacity: saving ? 0.5 : 1 }}>
           <span className="font-mono font-black text-sm text-black tracking-widest">
             {saving ? 'ENREGISTREMENT…' : todayEntry ? 'METTRE À JOUR' : 'ENREGISTRER'}
           </span>
@@ -231,10 +237,10 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
 
       {/* Tendance 7 jours */}
       {last7.length >= 2 && (
-        <div className="p-4 border mb-4" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border)' }}>
+        <div className="p-4 border mb-4" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
           <div className="flex flex-row justify-between items-baseline mb-3">
             <span className="awan-label">TENDANCE 7 JOURS</span>
-            <span className="font-mono font-bold text-sm" style={{ color: durationColor(store.avgDurationH) }}>
+            <span className="font-mono font-bold text-sm" style={{ color: durationColor(store.avgDurationH, theme) }}>
               moy. {formatDuration(store.avgDurationH)}
             </span>
           </div>
@@ -248,21 +254,21 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
           <span className="awan-label mb-1">HISTORIQUE</span>
           {store.entries.slice(0, 14).map(entry => (
             <Card key={entry.id} className="p-3 flex flex-row items-center gap-3">
-              <Moon size={16} color={durationColor(entry.durationH)} />
+              <Moon size={16} color={durationColor(entry.durationH, theme)} />
               <div className="flex-1 flex flex-col">
-                <span className="font-mono text-xs" style={{ color: 'var(--color-awan-tx-mute)' }}>
+                <span className="font-mono text-xs" style={{ color: theme.mute }}>
                   {entry.date}
                 </span>
-                <span className="font-mono font-bold text-sm" style={{ color: durationColor(entry.durationH) }}>
+                <span className="font-mono font-bold text-sm" style={{ color: durationColor(entry.durationH, theme) }}>
                   {formatDuration(entry.durationH)}
                 </span>
               </div>
               <div className="flex flex-row items-center gap-2">
-                <span className="font-mono font-bold text-sm" style={{ color: qualityColor(entry.quality) }}>
+                <span className="font-mono font-bold text-sm" style={{ color: qualityColor(entry.quality, theme) }}>
                   {'★'.repeat(entry.quality)}{'☆'.repeat(5 - entry.quality)}
                 </span>
                 <Touch onPress={() => handleDelete(entry)} className="p-1">
-                  <Trash2 size={14} color="var(--color-awan-tx-mute)" />
+                  <Trash2 size={14} color={theme.mute} />
                 </Touch>
               </div>
             </Card>
@@ -272,8 +278,8 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
 
       {store.entries.length === 0 && !store.loading && (
         <div className="p-6 flex flex-col items-center gap-2 border border-white/5"
-          style={{ backgroundColor: 'var(--color-awan-surface)' }}>
-          <Moon size={24} color="var(--color-awan-tx-mute)" />
+          style={{ backgroundColor: theme.surface }}>
+          <Moon size={24} color={theme.mute} />
           <span className="awan-label text-awan-tx-mute text-center">
             Aucune donnée — saisis ta première nuit
           </span>

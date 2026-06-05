@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { motion, useDragControls } from 'motion/react';
 import { CATS, MONTHS, MONTHS_S, DAYS_S } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
+import { FontSans, FontMono } from '../constants/typography';
 import { L } from '../constants/labels';
 import { ds, parseDate, uid } from '../utils/storage';
 import { eventsForDate, daysWithEvents } from '../utils/recurrence';
@@ -31,6 +32,10 @@ import { Touch } from '../components/ui/Touch';
 
 const DraggableEvent = React.memo(({ ev, hourHeight, handleEventDragEnd, setEditEv, setShowEvModal, categories, containerRef }: any) => {
   const theme = useTheme();
+  const s = StyleSheet.create({
+    evAbsolute: { position: 'absolute', left: 0, right: 0, backgroundColor: 'rgba(255,255,255,0.03)', borderLeftWidth: 4, borderRadius: 12, padding: 8, overflow: 'hidden', borderWidth: 1, borderColor: theme.borderSoft },
+    evAbsTitle: { fontSize: 10, fontWeight: '900', letterSpacing: -0.2, textTransform: 'uppercase' },
+  });
   const controls = useDragControls();
   const { isPressed, handlePointerDown, handlePointerMove, handlePointerUp, onDragEnd } = useLongPressDrag(controls, containerRef);
 
@@ -268,14 +273,14 @@ export default function PlanningScreen() {
     return (
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
         <div className="flex flex-row items-center justify-between px-6 mb-8">
-          <Touch onPress={() => setCalDate(new Date(calDate.getFullYear(), calDate.getMonth()-1, 1))} className="w-8 h-8 bg-white/5 flex items-center justify-center" style={{ border: '1px solid var(--color-awan-border)' }}>
+          <Touch onPress={() => setCalDate(new Date(calDate.getFullYear(), calDate.getMonth()-1, 1))} className="w-8 h-8 bg-white/5 flex items-center justify-center" style={{ border: `1px solid ${theme.border}` }}>
             <ChevronLeft size={20} className="text-awan-tx-mute" />
           </Touch>
           <div className="items-center">
             <span className="text-sm font-black text-awan-tx uppercase tracking-[0.3em] font-mono">{MONTHS[calDate.getMonth()]}</span>
             <span className="text-awan-sm font-black text-awan-gold uppercase tracking-widest text-center">{calDate.getFullYear()}</span>
           </div>
-          <Touch onPress={() => setCalDate(new Date(calDate.getFullYear(), calDate.getMonth()+1, 1))} className="w-8 h-8 bg-white/5 flex items-center justify-center" style={{ border: '1px solid var(--color-awan-border)' }}>
+          <Touch onPress={() => setCalDate(new Date(calDate.getFullYear(), calDate.getMonth()+1, 1))} className="w-8 h-8 bg-white/5 flex items-center justify-center" style={{ border: `1px solid ${theme.border}` }}>
             <ChevronRight size={20} className="text-awan-tx-mute" />
           </Touch>
         </div>
@@ -298,7 +303,7 @@ export default function PlanningScreen() {
         </div>
         {/* Événements du jour sélectionné */}
         <div className="px-4 pb-6">
-          <span className="uppercase block mb-3" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 700, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+          <span className="uppercase block mb-3" style={{ fontFamily: FontSans, fontSize: '7px', fontWeight: 700, color: theme.mute, letterSpacing: '0.3em' }}>
             {new Date(selDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
           </span>
           <EvListSection events={eventsForDate(db, ds(selDate))} categories={categories} onAdd={() => setShowEvModal(true)} onAddRt={() => setShowRtModal(true)} onEdit={(ev: any) => { setEditEv(ev); setShowEvModal(true); }} />
@@ -320,9 +325,9 @@ export default function PlanningScreen() {
     return (
       <View style={{ flex: 1 }}>
         <div className="flex flex-row items-center justify-between px-6 mb-8">
-          <Touch onPress={() => setWkDate(new Date(wkDate.getTime() - 7*86400000))} className="w-8 h-8 bg-white/5 flex items-center justify-center" style={{ border: '1px solid var(--color-awan-border)' }}><ChevronLeft size={20} className="text-awan-tx-mute" /></Touch>
+          <Touch onPress={() => setWkDate(new Date(wkDate.getTime() - 7*86400000))} className="w-8 h-8 bg-white/5 flex items-center justify-center" style={{ border: `1px solid ${theme.border}` }}><ChevronLeft size={20} className="text-awan-tx-mute" /></Touch>
           <span className="text-awan-md font-black text-awan-tx uppercase tracking-[0.4em] font-mono">{lbl.toUpperCase()}</span>
-          <Touch onPress={() => setWkDate(new Date(wkDate.getTime() + 7*86400000))} className="w-8 h-8 bg-white/5 flex items-center justify-center" style={{ border: '1px solid var(--color-awan-border)' }}><ChevronRight size={20} className="text-awan-tx-mute" /></Touch>
+          <Touch onPress={() => setWkDate(new Date(wkDate.getTime() + 7*86400000))} className="w-8 h-8 bg-white/5 flex items-center justify-center" style={{ border: `1px solid ${theme.border}` }}><ChevronRight size={20} className="text-awan-tx-mute" /></Touch>
         </div>
         <div className="flex flex-row pl-12 pr-4 mb-6">
           {cols.map((c, i) => (
@@ -356,9 +361,9 @@ export default function PlanningScreen() {
     return (
       <ScrollView showsVerticalScrollIndicator={false} style={{ paddingHorizontal: 24 }}>
         <div className="flex flex-row items-center justify-between mb-8 pb-4 border-b border-white/5">
-          <Touch onPress={() => setAnnDate(new Date(yr - 1, 0, 1))} className="w-8 h-8 bg-white/5 flex items-center justify-center" style={{ border: '1px solid var(--color-awan-border)' }}><ChevronLeft size={18} className="text-awan-tx-mute" /></Touch>
+          <Touch onPress={() => setAnnDate(new Date(yr - 1, 0, 1))} className="w-8 h-8 bg-white/5 flex items-center justify-center" style={{ border: `1px solid ${theme.border}` }}><ChevronLeft size={18} className="text-awan-tx-mute" /></Touch>
           <span className="text-3xl font-black text-awan-tx tracking-tighter tabular-nums">{yr}</span>
-          <Touch onPress={() => setAnnDate(new Date(yr + 1, 0, 1))} className="w-8 h-8 bg-white/5 flex items-center justify-center" style={{ border: '1px solid var(--color-awan-border)' }}><ChevronRight size={18} className="text-awan-tx-mute" /></Touch>
+          <Touch onPress={() => setAnnDate(new Date(yr + 1, 0, 1))} className="w-8 h-8 bg-white/5 flex items-center justify-center" style={{ border: `1px solid ${theme.border}` }}><ChevronRight size={18} className="text-awan-tx-mute" /></Touch>
         </div>
         <div className="grid grid-cols-2 gap-4 mb-24">
           {Array.from({ length: 12 }).map((_, mo) => {
@@ -391,9 +396,9 @@ export default function PlanningScreen() {
     return (
       <View style={{ flex: 1 }}>
         <div className="flex flex-row items-center px-6 mb-6">
-          <Touch onPress={() => setSubTab(prevTab)} className="w-8 h-8 bg-white/5 flex items-center justify-center" style={{ border: '1px solid var(--color-awan-border)' }}><ChevronLeft size={20} className="text-awan-tx-mute" /></Touch>
+          <Touch onPress={() => setSubTab(prevTab)} className="w-8 h-8 bg-white/5 flex items-center justify-center" style={{ border: `1px solid ${theme.border}` }}><ChevronLeft size={20} className="text-awan-tx-mute" /></Touch>
           <div className="flex-1 items-center"><span className="text-xs font-black text-awan-tx uppercase tracking-[0.4em] font-mono">{lbl.toUpperCase()}</span></div>
-          <Touch onPress={() => setShowEvModal(true)} className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: 'var(--color-awan-gold)' }}><Plus size={18} color="var(--color-awan-bg)" strokeWidth={3} /></Touch>
+          <Touch onPress={() => setShowEvModal(true)} className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: theme.selected }}><Plus size={18} color={theme.bg} strokeWidth={3} /></Touch>
         </div>
         <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: 100 }} scrollEnabled={!creatingEv} style={{ flex: 1 }}>
           <div className="flex flex-row">
@@ -446,7 +451,7 @@ export default function PlanningScreen() {
               <TextInput
                 className="bg-awan-bg border border-white/5  px-5 py-4 text-sm font-bold text-awan-tx"
                 placeholder="TITRE DE LA TÂCHE..."
-                placeholderTextColor="var(--color-awan-tx-mute)"
+                placeholderTextColor={theme.mute}
                 value={aiTitle}
                 onChangeText={setAiTitle}
               />
@@ -456,7 +461,7 @@ export default function PlanningScreen() {
                   <TextInput
                     className="bg-awan-bg border border-white/5  px-5 py-4 text-sm font-bold text-awan-tx font-mono"
                     placeholder="30"
-                    placeholderTextColor="var(--color-awan-tx-mute)"
+                    placeholderTextColor={theme.mute}
                     keyboardType="numeric"
                     value={aiDuration}
                     onChangeText={setAiDuration}
@@ -483,18 +488,18 @@ export default function PlanningScreen() {
                   {([null, 'production', 'friction', 'slack'] as const).map(cat => {
                     const active = aiTimeCategory === cat;
                     const label = cat === null ? 'AUCUNE' : cat.toUpperCase();
-                    const color = cat === 'production' ? 'var(--color-awan-status-ok)'
-                      : cat === 'friction' ? 'var(--color-awan-status-warn)'
-                      : cat === 'slack' ? 'var(--color-awan-status-info)'
-                      : 'var(--color-awan-tx-mute)';
+                    const color = cat === 'production' ? theme.statusOk
+                      : cat === 'friction' ? theme.statusWarn
+                      : cat === 'slack' ? theme.statusInfo
+                      : theme.mute;
                     return (
                       <Touch
                         key={String(cat)}
                         onPress={() => setAiTimeCategory(cat)}
                         className={`flex-1 h-10 items-center justify-center border ${active ? 'bg-white/10' : 'bg-white/5'}`}
-                        style={{ borderColor: active ? color : 'var(--color-awan-border)' }}
+                        style={{ borderColor: active ? color : theme.border }}
                       >
-                        <span className="text-awan-xs font-black font-mono" style={{ color: active ? color : 'var(--color-awan-tx-mute)' }}>{label}</span>
+                        <span className="text-awan-xs font-black font-mono" style={{ color: active ? color : theme.mute }}>{label}</span>
                       </Touch>
                     );
                   })}
@@ -518,20 +523,20 @@ export default function PlanningScreen() {
               <Heading level={4} mono subtitle={`${planner.tasks.length} missions`}>FILE D'ATTENTE</Heading>
               <div className="space-y-2">
                 {planner.tasks.map(t => {
-                  const domainColor = (categories[t.domain] ?? CATS[t.domain as keyof typeof CATS])?.c ?? 'var(--color-awan-tx-mute)';
+                  const domainColor = (categories[t.domain] ?? CATS[t.domain as keyof typeof CATS])?.c ?? theme.mute;
                   // priorité → poids typographique (1=900 dominant, 5=400 discret)
                   const titleWeight = t.priority <= 1 ? 900 : t.priority <= 2 ? 700 : t.priority <= 3 ? 600 : 400;
                   const titleSize = t.priority <= 1 ? '13px' : t.priority <= 3 ? '12px' : '11px';
                   return (
-                    <div key={t.id} className="flex-row items-center flex border" style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)' }}>
+                    <div key={t.id} className="flex-row items-center flex border" style={{ borderColor: theme.border, backgroundColor: theme.surface }}>
                       <div className="w-[3px] self-stretch" style={{ backgroundColor: domainColor }} />
                       <div className="flex-1 px-4 py-3">
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', fontWeight: 700, color: domainColor, letterSpacing: '0.3em', display: 'block', marginBottom: 2 }}>{(categories[t.domain]?.l ?? t.domain ?? '').toUpperCase()}</span>
-                        <span style={{ fontFamily: 'var(--font-sans)', fontSize: titleSize, fontWeight: titleWeight, color: 'var(--color-awan-tx)', letterSpacing: '0.04em', textTransform: 'uppercase', display: 'block' }}>{t.title}</span>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.1em', display: 'block', marginTop: 2 }}>{t.durationMin} MIN · P{t.priority}</span>
+                        <span style={{ fontFamily: FontMono, fontSize: '7px', fontWeight: 700, color: domainColor, letterSpacing: '0.3em', display: 'block', marginBottom: 2 }}>{(categories[t.domain]?.l ?? t.domain ?? '').toUpperCase()}</span>
+                        <span style={{ fontFamily: FontSans, fontSize: titleSize, fontWeight: titleWeight, color: theme.title, letterSpacing: '0.04em', textTransform: 'uppercase', display: 'block' }}>{t.title}</span>
+                        <span style={{ fontFamily: FontMono, fontSize: '8px', color: theme.mute, letterSpacing: '0.1em', display: 'block', marginTop: 2 }}>{t.durationMin} MIN · P{t.priority}</span>
                       </div>
-                      <Touch onPress={() => planner.deleteTask(t.id)} className="w-9 h-9 flex items-center justify-center" style={{ border: '1px solid var(--color-awan-border)' }}>
-                        <Trash size={14} color="var(--color-awan-tx-mute)" />
+                      <Touch onPress={() => planner.deleteTask(t.id)} className="w-9 h-9 flex items-center justify-center" style={{ border: `1px solid ${theme.border}` }}>
+                        <Trash size={14} color={theme.mute} />
                       </Touch>
                     </div>
                   );
@@ -625,7 +630,7 @@ export default function PlanningScreen() {
         type: 'workout',
         label: (s as any).name ?? 'SÉANCE',
         sub: `${Math.round(((s as any).duration ?? 0) / 60)} min · ${((s as any).exercises ?? []).length} exercices`,
-        color: 'var(--color-awan-gold)',
+        color: theme.selected,
       });
     }
 
@@ -640,7 +645,7 @@ export default function PlanningScreen() {
         type: 'measurement',
         label: 'MESURE CORPORELLE',
         sub: parts.join(' · ') || 'Mesures enregistrées',
-        color: 'var(--color-awan-status-ok)',
+        color: theme.statusOk,
       });
     }
 
@@ -680,24 +685,24 @@ export default function PlanningScreen() {
           <div key={g.date} className="mb-5">
             {/* Séparateur de jour */}
             <div className="flex flex-row items-center gap-3 mb-2">
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', fontWeight: 700, letterSpacing: '0.35em', color: g.isFuture ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)' }}>
+              <span style={{ fontFamily: FontMono, fontSize: '7px', fontWeight: 700, letterSpacing: '0.35em', color: g.isFuture ? theme.selected : theme.mute }}>
                 {g.date === today ? 'AUJOURD\'HUI' : g.dateLabel}
               </span>
-              <div className="h-px flex-1" style={{ backgroundColor: g.isFuture ? 'var(--color-awan-border-soft)' : 'var(--color-awan-border)' }} />
+              <div className="h-px flex-1" style={{ backgroundColor: g.isFuture ? theme.borderSoft : theme.border }} />
             </div>
             {g.items.map(item => (
-              <div key={item.key} className="flex flex-row gap-3 mb-1 py-2 border-b" style={{ borderColor: 'var(--color-awan-border-soft)' }}>
+              <div key={item.key} className="flex flex-row gap-3 mb-1 py-2 border-b" style={{ borderColor: theme.borderSoft }}>
                 {/* Barre couleur type */}
                 <div className="w-[3px] self-stretch" style={{ backgroundColor: item.color }} />
                 <div className="flex-1">
                   {/* Badge type */}
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', fontWeight: 700, color: item.color, letterSpacing: '0.3em', display: 'block', marginBottom: 2 }}>
+                  <span style={{ fontFamily: FontMono, fontSize: '7px', fontWeight: 700, color: item.color, letterSpacing: '0.3em', display: 'block', marginBottom: 2 }}>
                     {item.type === 'workout' ? 'SÉANCE' : item.type === 'measurement' ? 'MESURE' : 'ÉVÉN.'}
                   </span>
                   {/* Titre — hiérarchie principale */}
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.04em', textTransform: 'uppercase', display: 'block' }}>{item.label}</span>
+                  <span style={{ fontFamily: FontSans, fontSize: '12px', fontWeight: 700, color: theme.title, letterSpacing: '0.04em', textTransform: 'uppercase', display: 'block' }}>{item.label}</span>
                   {/* Métadonnées — hiérarchie secondaire */}
-                  {item.sub && <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.1em', display: 'block', marginTop: 2 }}>{item.sub}</span>}
+                  {item.sub && <span style={{ fontFamily: FontMono, fontSize: '8px', color: theme.mute, letterSpacing: '0.1em', display: 'block', marginTop: 2 }}>{item.sub}</span>}
                 </div>
               </div>
             ))}
@@ -770,17 +775,17 @@ export default function PlanningScreen() {
                 <div className="flex flex-row justify-between items-baseline mb-2">
                   <span className="awan-label">ALIGNEMENT ÉNERGIE</span>
                   <span className="text-xl font-black font-mono"
-                    style={{ color: alignPct >= 80 ? 'var(--color-awan-status-ok)' : alignPct >= 50 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-error)' }}>
+                    style={{ color: alignPct >= 80 ? theme.statusOk : alignPct >= 50 ? theme.statusWarn : theme.danger }}>
                     {alignPct}%
                   </span>
                 </div>
                 <span className="text-awan-xs text-awan-tx-mute">
                   Tâches haute priorité placées en créneau haute énergie circadienne (06h–09h, 17h–19h)
                 </span>
-                <div className="mt-2 h-1.5 w-full" style={{ backgroundColor: 'var(--color-awan-border-soft)' }}>
+                <div className="mt-2 h-1.5 w-full" style={{ backgroundColor: theme.borderSoft }}>
                   <div className="h-full" style={{
                     width: `${alignPct}%`,
-                    backgroundColor: alignPct >= 80 ? 'var(--color-awan-status-ok)' : alignPct >= 50 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-error)',
+                    backgroundColor: alignPct >= 80 ? theme.statusOk : alignPct >= 50 ? theme.statusWarn : theme.danger,
                   }} />
                 </div>
               </div>
@@ -794,9 +799,9 @@ export default function PlanningScreen() {
               {slots.map((slot, i) => {
                 const task = taskMap.get(slot.taskId);
                 const energy = dominantEnergy(slot.startMin, slot.endMin - slot.startMin);
-                const energyColor = energy === 'high' ? 'var(--color-awan-status-ok)'
-                  : energy === 'medium' ? 'var(--color-awan-status-warn)'
-                  : 'var(--color-awan-tx-mute)';
+                const energyColor = energy === 'high' ? theme.statusOk
+                  : energy === 'medium' ? theme.statusWarn
+                  : theme.mute;
                 return (
                   <div key={i} className="flex flex-row items-center gap-3 border-b border-white/5 pb-2">
                     <span className="text-awan-xs font-mono text-awan-tx-mute w-20">
@@ -826,8 +831,8 @@ export default function PlanningScreen() {
           <div className="flex-1">
             <ScreenHeader tag="TIME · PLANNING" title="PLANNING" className="mb-3" />
           </div>
-          <Touch onPress={() => setShowImportModal(true)} className="mb-6 w-8 h-8 flex items-center justify-center" style={{ border: '1px solid var(--color-awan-border)' }}>
-            <Download size={16} color="var(--color-awan-tx-mute)" />
+          <Touch onPress={() => setShowImportModal(true)} className="mb-6 w-8 h-8 flex items-center justify-center" style={{ border: `1px solid ${theme.border}` }}>
+            <Download size={16} color={theme.mute} />
           </Touch>
         </div>
         <div className="flex flex-row border-b border-white/10">
@@ -874,20 +879,20 @@ function EvListSection({ events, categories, onAdd, onAddRt, onEdit }: any) {
       {events.map((ev: any) => {
         const evColor = ev.color || categories[ev.category]?.c || theme.title;
         return (
-          <Touch key={ev.id} className="overflow-hidden flex flex-row border" style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'rgba(255,255,255,0.02)' }} onPress={() => !ev.isRt && onEdit(ev)}>
+          <Touch key={ev.id} className="overflow-hidden flex flex-row border" style={{ borderColor: theme.border, backgroundColor: 'rgba(255,255,255,0.02)' }} onPress={() => !ev.isRt && onEdit(ev)}>
             <div className="w-[3px]" style={{ backgroundColor: evColor }} />
             <div className="flex-1 px-4 py-3">
               <div className="flex flex-row justify-between items-center mb-1">
                 <div className="flex flex-row items-center gap-2">
-                  <Clock size={10} color="var(--color-awan-tx-mute)" />
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.05em' }}>{ev.time || '--:--'}</span>
+                  <Clock size={10} color={theme.mute} />
+                  <span style={{ fontFamily: FontMono, fontSize: '10px', fontWeight: 700, color: theme.title, letterSpacing: '0.05em' }}>{ev.time || '--:--'}</span>
                 </div>
                 {ev.isRt
-                  ? <div className="px-2 py-0.5" style={{ border: '1px solid var(--color-awan-gold)', backgroundColor: 'rgba(212,175,55,0.08)' }}><span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', fontWeight: 700, color: 'var(--color-awan-gold)', letterSpacing: '0.25em' }}>ROUTINE</span></div>
-                  : <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', fontWeight: 700, color: evColor, letterSpacing: '0.25em' }}>{(categories[ev.category]?.l || ev.category || '').toUpperCase()}</span>
+                  ? <div className="px-2 py-0.5" style={{ border: `1px solid ${theme.selected}`, backgroundColor: 'rgba(212,175,55,0.08)' }}><span style={{ fontFamily: FontMono, fontSize: '7px', fontWeight: 700, color: theme.selected, letterSpacing: '0.25em' }}>ROUTINE</span></div>
+                  : <span style={{ fontFamily: FontMono, fontSize: '7px', fontWeight: 700, color: evColor, letterSpacing: '0.25em' }}>{(categories[ev.category]?.l || ev.category || '').toUpperCase()}</span>
                 }
               </div>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.04em', textTransform: 'uppercase', display: 'block' }}>{ev.title}</span>
+              <span style={{ fontFamily: FontSans, fontSize: '13px', fontWeight: 700, color: theme.title, letterSpacing: '0.04em', textTransform: 'uppercase', display: 'block' }}>{ev.title}</span>
             </div>
           </Touch>
         );
@@ -901,6 +906,7 @@ function EvListSection({ events, categories, onAdd, onAddRt, onEdit }: any) {
 }
 
 function EventModal({ visible, initial, defaultDate, categories, onClose, onSave }: any) {
+  const theme = useTheme();
   const [title, setTitle] = useState('');
   const [cat, setCat] = useState('perso');
   const [time, setTime] = useState('12:00');
@@ -910,10 +916,10 @@ function EventModal({ visible, initial, defaultDate, categories, onClose, onSave
     <Modal visible={visible} transparent animationType="slide">
       <div className="flex-1 bg-black/70 justify-end backdrop-blur-sm">
         <div className="bg-awan-surface p-8 pt-4 rounded-none border-t border-white/10 w-full max-w-lg mx-auto">
-          <div className="w-12 h-px self-center mb-6" style={{ backgroundColor: 'var(--color-awan-border)' }} />
+          <div className="w-12 h-px self-center mb-6" style={{ backgroundColor: theme.border }} />
           <Heading level={2} subtitle="Paramètres du Segment" className="text-center mb-12">PLANIFICATION</Heading>
           <div className="space-y-8">
-            <div><span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest ml-1 mb-3 block font-mono">Identifiant de Mission</span><TextInput className="bg-awan-surface border border-white/5  p-5 text-awan-tx font-bold text-base" value={title} onChangeText={setTitle} placeholder="TITRE DE L'OPÉRATION..." placeholderTextColor="var(--color-awan-tx-mute)" /></div>
+            <div><span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest ml-1 mb-3 block font-mono">Identifiant de Mission</span><TextInput className="bg-awan-surface border border-white/5  p-5 text-awan-tx font-bold text-base" value={title} onChangeText={setTitle} placeholder="TITRE DE L'OPÉRATION..." placeholderTextColor={theme.mute} /></div>
             <div className="grid grid-cols-2 gap-6">
               <div><span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest ml-1 mb-3 block font-mono">Heure de Lancement</span><TextInput className="bg-awan-surface border border-white/5  p-5 text-awan-tx font-mono text-center text-lg" value={time} onChangeText={setTime} placeholder="12:00" /></div>
               <div><span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest ml-1 mb-3 block font-mono">Anticipation</span><Touch className="bg-awan-surface border border-white/5 h-16  items-center justify-center"><span className="text-xs font-black text-awan-gold uppercase tracking-widest font-mono">{reminder > 0 ? `${reminder}M` : 'OFF'}</span></Touch></div>
@@ -921,7 +927,7 @@ function EventModal({ visible, initial, defaultDate, categories, onClose, onSave
             <div>
               <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest ml-1 mb-4 block font-mono">Classification Stratégique</span>
               <div className="flex flex-row flex-wrap gap-2">
-                {Object.entries(categories).map(([k, c]: [any, any]) => <Touch key={k} className={`px-4 py-2 border transition-all ${cat === k ? 'border-awan-tx/30' : 'border-transparent opacity-40'}`} style={{ backgroundColor: cat === k ? 'rgba(255,255,255,0.06)' : 'var(--color-awan-surface)' }} onPress={() => setCat(k)}><div className="flex flex-row items-center gap-2"><div className="w-2 h-2" style={{ backgroundColor: c.c }} /><span className="text-awan-xs font-black text-awan-tx uppercase tracking-widest font-mono">{c.l}</span></div></Touch>)}
+                {Object.entries(categories).map(([k, c]: [any, any]) => <Touch key={k} className={`px-4 py-2 border transition-all ${cat === k ? 'border-awan-tx/30' : 'border-transparent opacity-40'}`} style={{ backgroundColor: cat === k ? 'rgba(255,255,255,0.06)' : theme.surface }} onPress={() => setCat(k)}><div className="flex flex-row items-center gap-2"><div className="w-2 h-2" style={{ backgroundColor: c.c }} /><span className="text-awan-xs font-black text-awan-tx uppercase tracking-widest font-mono">{c.l}</span></div></Touch>)}
               </div>
             </div>
             <div className="flex flex-row gap-4 pt-4">
@@ -936,14 +942,15 @@ function EventModal({ visible, initial, defaultDate, categories, onClose, onSave
 }
 
 function ImportModal({ visible, onClose, onImport }: any) {
+  const theme = useTheme();
   const [json, setJson] = useState('');
   return (
     <Modal visible={visible} transparent animationType="fade">
       <div className="flex-1 bg-black/80 justify-end backdrop-blur-md">
         <div className="bg-awan-surface p-8 pt-4 rounded-none border-t border-white/10 w-full max-w-lg mx-auto">
-          <div className="w-12 h-px mx-auto mb-6" style={{ backgroundColor: 'var(--color-awan-border)' }} />
+          <div className="w-12 h-px mx-auto mb-6" style={{ backgroundColor: theme.border }} />
           <Heading level={2} subtitle="Base de Données Routines" className="text-center mb-12">IMPORTATION</Heading>
-          <TextInput className="bg-awan-surface border border-white/5  p-6 text-awan-tx font-mono text-xs mb-10 min-h-[200px]" multiline value={json} onChangeText={setJson} placeholder="[{'name': 'Routine'}]" placeholderTextColor="var(--color-awan-tx-mute)" />
+          <TextInput className="bg-awan-surface border border-white/5  p-6 text-awan-tx font-mono text-xs mb-10 min-h-[200px]" multiline value={json} onChangeText={setJson} placeholder="[{'name': 'Routine'}]" placeholderTextColor={theme.mute} />
           <div className="flex flex-row gap-4">
             <Touch onPress={onClose} className="flex-1 h-16 items-center justify-center  bg-white/5 border border-white/5"><span className="text-xs font-black text-awan-tx-mute uppercase tracking-widest font-mono">Annuler</span></Touch>
             <Touch onPress={() => onImport(json)} className="flex-1 h-16 items-center justify-center  bg-awan-gold"><span className="text-xs font-black text-black uppercase tracking-widest font-mono">Exécuter Import</span></Touch>
@@ -953,8 +960,3 @@ function ImportModal({ visible, onClose, onImport }: any) {
     </Modal>
   );
 }
-
-const s = StyleSheet.create({
-  evAbsolute: { position: 'absolute', left: 0, right: 0, backgroundColor: 'rgba(255,255,255,0.03)', borderLeftWidth: 4, borderRadius: 12, padding: 8, overflow: 'hidden', borderWidth: 1, borderColor: 'var(--color-awan-border-soft)' },
-  evAbsTitle: { fontSize: 10, fontWeight: '900', letterSpacing: -0.2, textTransform: 'uppercase' },
-});

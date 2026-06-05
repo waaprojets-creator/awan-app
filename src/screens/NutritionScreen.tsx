@@ -57,6 +57,8 @@ import type { WeeklyNutritionReport } from '../services/weeklyNutritionReport';
 import { buildNutritionExport } from '../services/nutritionExportService';
 import { estimateAdaptiveTDEE } from '../services/tdeeAdaptiveService';
 import { scoreMeal } from '../services/nutritionScoreService';
+import { useTheme, type AwanTheme } from '../hooks/useTheme';
+import { FontSans, FontMono } from '../constants/typography';
 
 // ─── Nutrition Profile (TDEE) ─────────────────────────────────────────────────
 
@@ -172,13 +174,13 @@ function calcMacros(
 
 // ─── Progress Bar ─────────────────────────────────────────────────────────────
 
-function statusColor(actual: number, target: number): string {
- if (target <= 0) return 'var(--color-awan-status-warn)';
+function statusColor(actual: number, target: number, t: Pick<AwanTheme, 'statusOk' | 'statusWarn' | 'danger'>): string {
+ if (target <= 0) return t.statusWarn;
  const ratio = actual / target;
  const delta = Math.abs(ratio - 1);
- if (delta <= 0.1) return 'var(--color-awan-status-ok)';
- if (delta <= 0.2) return 'var(--color-awan-status-warn)';
- return 'var(--color-awan-status-error)';
+ if (delta <= 0.1) return t.statusOk;
+ if (delta <= 0.2) return t.statusWarn;
+ return t.danger;
 }
 
 interface ProgressBarProps {
@@ -190,7 +192,8 @@ interface ProgressBarProps {
 }
 
 function ProgressBar({ label, actual, target, unit, accent }: ProgressBarProps) {
- const color = statusColor(actual, target);
+ const theme = useTheme();
+ const color = statusColor(actual, target, theme);
  const pct = target > 0 ? Math.min((actual / target) * 100, 120) : 0;
  return (
  <div className="bg-awan-surface p-3 border border-white/5">
@@ -228,6 +231,7 @@ interface OnboardingProps {
 }
 
 function OnboardingModal({ onComplete }: OnboardingProps) {
+ const theme = useTheme();
  const [step, setStep] = useState<1 | 2 | 3>(1);
  const [weight, setWeight] = useState('75');
  const [height, setHeight] = useState('175');
@@ -254,7 +258,7 @@ function OnboardingModal({ onComplete }: OnboardingProps) {
  <Modal visible={true} transparent animationType="fade">
  <div
  className="flex-1 flex justify-center items-end"
- style={{ backgroundColor: 'var(--color-awan-overlay)' }}
+ style={{ backgroundColor: theme.overlay }}
  >
  <motion.div
  initial={{ opacity: 0, y: 40 }}
@@ -460,6 +464,7 @@ function AddMealModal({
  onClose,
  onAdd,
 }: AddModalProps) {
+ const theme = useTheme();
  const [query, setQuery] = useState('');
  const [selected, setSelected] = useState<FoodEntry | null>(null);
  const [grams, setGrams] = useState('100');
@@ -536,7 +541,7 @@ function AddMealModal({
  <Modal visible={visible} transparent animationType="fade">
  <div
  className="flex-1 flex justify-center items-end"
- style={{ backgroundColor: 'var(--color-awan-overlay)' }}
+ style={{ backgroundColor: theme.overlay }}
  >
  <motion.div
  initial={{ opacity: 0, y: 40 }}
@@ -779,6 +784,7 @@ interface EditModalProps {
 }
 
 function EditMealModal({ visible, entry, onClose, onUpdate }: EditModalProps) {
+ const theme = useTheme();
  const [grams, setGrams] = useState('');
  const [time, setTime] = useState('');
 
@@ -827,7 +833,7 @@ function EditMealModal({ visible, entry, onClose, onUpdate }: EditModalProps) {
  <Modal visible={visible} transparent animationType="fade">
  <div
  className="flex-1 flex justify-center items-end"
- style={{ backgroundColor: 'var(--color-awan-overlay)' }}
+ style={{ backgroundColor: theme.overlay }}
  >
  <motion.div
  initial={{ opacity: 0, y: 40 }}
@@ -950,6 +956,7 @@ function EditMealModal({ visible, entry, onClose, onUpdate }: EditModalProps) {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function NutritionScreen() {
+ const theme = useTheme();
  useAppState();
  const { addEntry } = useDaily();
 
@@ -1271,7 +1278,7 @@ export default function NutritionScreen() {
        <span className="awan-label mb-1 block">KCAL MOY/J</span>
        <span className="text-2xl font-mono font-bold text-awan-gold">{weeklyReport.avgKcal}</span>
        {weeklyReport.kcalAdherence !== null && (
-         <span className="text-awan-xs font-mono font-bold" style={{ color: weeklyReport.kcalAdherence >= 0.85 && weeklyReport.kcalAdherence <= 1.15 ? 'var(--color-awan-status-ok)' : 'var(--color-awan-status-warn)' }}>
+         <span className="text-awan-xs font-mono font-bold" style={{ color: weeklyReport.kcalAdherence >= 0.85 && weeklyReport.kcalAdherence <= 1.15 ? theme.statusOk : theme.statusWarn }}>
            {Math.round(weeklyReport.kcalAdherence * 100)}% cible
          </span>
        )}
@@ -1280,7 +1287,7 @@ export default function NutritionScreen() {
        <span className="awan-label mb-1 block">PROTÉINES MOY</span>
        <span className="text-2xl font-mono font-bold text-awan-gold">{weeklyReport.avgP}g</span>
        {weeklyReport.proteinAdherence !== null && (
-         <span className="text-awan-xs font-mono font-bold" style={{ color: weeklyReport.proteinAdherence >= 0.8 ? 'var(--color-awan-status-ok)' : 'var(--color-awan-status-error)' }}>
+         <span className="text-awan-xs font-mono font-bold" style={{ color: weeklyReport.proteinAdherence >= 0.8 ? theme.statusOk : theme.danger }}>
            {Math.round(weeklyReport.proteinAdherence * 100)}% cible
          </span>
        )}
@@ -1291,7 +1298,7 @@ export default function NutritionScreen() {
      </Card>
      <Card className="p-4 bg-white/5">
        <span className="awan-label mb-1 block">FIBRES MOY</span>
-       <span className="text-2xl font-mono font-bold" style={{ color: weeklyReport.avgFiberG >= 20 ? 'var(--color-awan-status-ok)' : 'var(--color-awan-status-warn)' }}>{weeklyReport.avgFiberG}g</span>
+       <span className="text-2xl font-mono font-bold" style={{ color: weeklyReport.avgFiberG >= 20 ? theme.statusOk : theme.statusWarn }}>{weeklyReport.avgFiberG}g</span>
      </Card>
    </div>
    {adaptiveTDEE && (
@@ -1359,7 +1366,7 @@ export default function NutritionScreen() {
  {editing ? (
  <input
  className="w-full text-center text-awan-xxs font-black uppercase tracking-wider bg-transparent border-b border-awan-gold/50 outline-none text-awan-gold"
- style={{ color: 'var(--color-awan-gold)', fontSize: 9 }}
+ style={{ color: theme.selected, fontSize: 9 }}
  value={slotLabelInput}
  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlotLabelInput(e.target.value.toUpperCase())}
  onBlur={() => {
@@ -1425,7 +1432,7 @@ export default function NutritionScreen() {
  actual={totals.kcal}
  target={profile.targetKcal}
  unit="kcal"
- accent="var(--color-awan-gold)"
+ accent={theme.selected}
  />
  </div>
  )}
@@ -1458,7 +1465,7 @@ export default function NutritionScreen() {
  actual={totals.fiberG}
  target={FIBER_TARGET_G_PER_DAY}
  unit="g"
- accent="var(--color-awan-status-spirit)"
+ accent={theme.statusSpirit}
  />
  </div>
  )}
@@ -1605,9 +1612,9 @@ export default function NutritionScreen() {
  </span>
  {profile && (() => {
  const score = m.nutritionScore ?? scoreMeal(m, { kcal: profile.targetKcal, p: profile.targetP, c: profile.targetC, f: profile.targetF }).total;
- const color = score >= 70 ? 'var(--color-awan-status-ok)'
-             : score >= 40 ? 'var(--color-awan-status-warn)'
-             : 'var(--color-awan-status-error)';
+ const color = score >= 70 ? theme.statusOk
+             : score >= 40 ? theme.statusWarn
+             : theme.danger;
  return (
  <span className="text-awan-xs font-mono font-black mt-1 inline-block uppercase tracking-widest" style={{ color }}>
  SCORE {score}/100
@@ -1664,13 +1671,13 @@ export default function NutritionScreen() {
  </span>
  </div>
  <span className="text-awan-sm font-black font-mono"
- style={{ color: waterMl >= waterTarget ? 'var(--color-awan-status-ok)' : waterMl >= waterTarget * 0.7 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-error)' }}>
+ style={{ color: waterMl >= waterTarget ? theme.statusOk : waterMl >= waterTarget * 0.7 ? theme.statusWarn : theme.danger }}>
  {Math.round((waterMl / waterTarget) * 100)}%
  </span>
  </div>
  <div className="w-full h-1.5 bg-white/10 mb-4">
  <div className="h-full transition-all"
- style={{ width: `${Math.min(100, (waterMl / waterTarget) * 100)}%`, backgroundColor: 'var(--color-awan-gold)' }} />
+ style={{ width: `${Math.min(100, (waterMl / waterTarget) * 100)}%`, backgroundColor: theme.selected }} />
  </div>
  <div className="flex flex-row gap-3">
  <Touch

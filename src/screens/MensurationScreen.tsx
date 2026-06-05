@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { View, ScrollView, TextInput as RNTextInput, Alert } from 'react-native';
+import { useTheme } from '../hooks/useTheme';
 
 const TextInput = RNTextInput as React.ComponentType<any>;
 import { motion, AnimatePresence } from 'motion/react';
@@ -57,6 +58,7 @@ const BILATERAL_MEASURES = [
 ] as const;
 
 export default function MensurationScreen() {
+  const theme = useTheme();
   const { navigate } = useAppState() as any;
   const { getEntriesByDate, addEntry, removeEntry, moveEntry } = useDaily();
 
@@ -402,10 +404,10 @@ export default function MensurationScreen() {
           <Touch
             onPress={() => navigate?.('settings')}
             className="flex flex-row items-center gap-3 mt-3 px-4 py-3 border"
-            style={{ borderColor: 'var(--color-awan-status-warn)', backgroundColor: 'var(--color-awan-status-warn)14' }}
+            style={{ borderColor: theme.statusWarn, backgroundColor: `${theme.statusWarn}14` }}
           >
-            <AlertTriangle size={14} style={{ color: 'var(--color-awan-status-warn)' }} />
-            <span className="text-awan-xs font-black tracking-widest uppercase flex-1" style={{ color: 'var(--color-awan-status-warn)' }}>
+            <AlertTriangle size={14} style={{ color: theme.statusWarn }} />
+            <span className="text-awan-xs font-black tracking-widest uppercase flex-1" style={{ color: theme.statusWarn }}>
               PROFIL INITIAL À COMPLÉTER →
             </span>
           </Touch>
@@ -505,13 +507,13 @@ export default function MensurationScreen() {
                     <svg viewBox="0 0 300 100" width="100%" height="100" preserveAspectRatio="none">
                       <polyline
                         fill="none"
-                        stroke="var(--color-awan-gold)"
+                        stroke={theme.selected}
                         strokeOpacity={0.7}
                         strokeWidth={1.5}
                         points={polyline}
                       />
                       {points.map((p, i) => (
-                        <circle key={i} cx={p.x} cy={p.y} r={3} fill="var(--color-awan-gold)" />
+                        <circle key={i} cx={p.x} cy={p.y} r={3} fill={theme.selected} />
                       ))}
                     </svg>
                     {/* S2.2 — Tendance hebdomadaire */}
@@ -522,7 +524,7 @@ export default function MensurationScreen() {
                           const d = weeklyTrend.delta;
                           if (d === 0) {
                             return (
-                              <span className="text-sm font-mono font-bold" style={{ color: 'var(--color-awan-tx-mute)' }}>
+                              <span className="text-sm font-mono font-bold" style={{ color: theme.mute }}>
                                 → Stable
                               </span>
                             );
@@ -530,7 +532,7 @@ export default function MensurationScreen() {
                           const isUp = d > 0;
                           const arrow = isUp ? '▲' : '▼';
                           const sign = isUp ? '+' : '−';
-                          const color = isUp ? 'var(--color-awan-status-error)' : 'var(--color-awan-status-ok)';
+                          const color = isUp ? theme.danger : theme.statusOk;
                           return (
                             <span className="text-sm font-mono font-bold" style={{ color }}>
                               {arrow} {sign}{Math.abs(d).toFixed(1)} kg
@@ -592,9 +594,9 @@ export default function MensurationScreen() {
                     style={{
                       width: `${goalProgress.pct}%`,
                       backgroundColor:
-                        goalProgress.status === 'ok' ? 'var(--color-awan-status-ok)'
-                        : goalProgress.status === 'warn' ? 'var(--color-awan-status-warn)'
-                        : 'var(--color-awan-status-error)',
+                        goalProgress.status === 'ok' ? theme.statusOk
+                        : goalProgress.status === 'warn' ? theme.statusWarn
+                        : theme.danger,
                     }}
                   />
                 </div>
@@ -602,9 +604,9 @@ export default function MensurationScreen() {
                   className="text-awan-xs font-mono font-bold mt-2 block uppercase tracking-widest"
                   style={{
                     color:
-                      goalProgress.status === 'ok' ? 'var(--color-awan-status-ok)'
-                      : goalProgress.status === 'warn' ? 'var(--color-awan-status-warn)'
-                      : 'var(--color-awan-status-error)',
+                      goalProgress.status === 'ok' ? theme.statusOk
+                      : goalProgress.status === 'warn' ? theme.statusWarn
+                      : theme.danger,
                   }}
                 >
                   Δ {goalProgress.diff.toFixed(1)} KG
@@ -701,7 +703,7 @@ export default function MensurationScreen() {
                   <Card className="p-4 bg-white/3 border-white/5" variant="flat">
                     <span className="text-awan-sm font-black text-awan-gold tracking-widest mb-1 block uppercase">WHtR</span>
                     <span className="text-2xl font-black font-mono"
-                      style={{ color: indices.whtr < 0.50 ? 'var(--color-awan-status-ok)' : indices.whtr < 0.55 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-error)' }}>
+                      style={{ color: indices.whtr < 0.50 ? theme.statusOk : indices.whtr < 0.55 ? theme.statusWarn : theme.danger }}>
                       {indices.whtr}
                     </span>
                     <span className="text-awan-xs font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">cible &lt; 0,50</span>
@@ -711,7 +713,7 @@ export default function MensurationScreen() {
                   <Card className="p-4 bg-white/3 border-white/5" variant="flat">
                     <span className="text-awan-sm font-black text-awan-gold tracking-widest mb-1 block uppercase">WHR</span>
                     <span className="text-2xl font-black font-mono"
-                      style={{ color: indices.whr < 0.90 ? 'var(--color-awan-status-ok)' : indices.whr < 0.95 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-error)' }}>
+                      style={{ color: indices.whr < 0.90 ? theme.statusOk : indices.whr < 0.95 ? theme.statusWarn : theme.danger }}>
                       {indices.whr}
                     </span>
                     <span className="text-awan-xs font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">cible &lt; 0,90</span>
@@ -886,9 +888,9 @@ export default function MensurationScreen() {
                 <>
                   {hasAsymmetry && (
                     <div className="mb-4 px-4 py-3 border flex flex-row items-center gap-3"
-                      style={{ borderColor: 'var(--color-awan-status-warn)', backgroundColor: 'var(--color-awan-status-warn)14' }}>
-                      <AlertTriangle size={14} style={{ color: 'var(--color-awan-status-warn)' }} />
-                      <span className="text-awan-xs font-black tracking-widest uppercase" style={{ color: 'var(--color-awan-status-warn)' }}>
+                      style={{ borderColor: theme.statusWarn, backgroundColor: `${theme.statusWarn}14` }}>
+                      <AlertTriangle size={14} style={{ color: theme.statusWarn }} />
+                      <span className="text-awan-xs font-black tracking-widest uppercase" style={{ color: theme.statusWarn }}>
                         ASYMÉTRIE DÉTECTÉE (&gt;5%)
                       </span>
                     </div>
@@ -901,9 +903,9 @@ export default function MensurationScreen() {
                       const warn = result?.asymmetric;
                       return (
                         <Card key={base} className="p-4 bg-white/3 border-white/5" variant="flat"
-                          style={warn ? { borderColor: 'var(--color-awan-status-warn)' } : {}}>
+                          style={warn ? { borderColor: theme.statusWarn } : {}}>
                           <span className="text-awan-xs font-black tracking-widest uppercase mb-3 block"
-                            style={{ color: warn ? 'var(--color-awan-status-warn)' : 'var(--color-awan-gold)' }}>
+                            style={{ color: warn ? theme.statusWarn : theme.selected }}>
                             {label} {warn && '⚠'}
                           </span>
                           <div className="flex flex-row gap-3">
@@ -946,7 +948,7 @@ export default function MensurationScreen() {
                           {result && lVal > 0 && rVal > 0 && (
                             <div className="mt-2 pt-2 border-t border-white/5">
                               <span className="text-awan-xxs font-black tracking-widest"
-                                style={{ color: warn ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-ok)' }}>
+                                style={{ color: warn ? theme.statusWarn : theme.statusOk }}>
                                 Δ {result.diffPct.toFixed(1)}%
                               </span>
                             </div>
@@ -983,8 +985,8 @@ export default function MensurationScreen() {
                     <div className="flex flex-row items-start justify-between mb-2">
                       <span className="text-awan-xxs font-black text-awan-gold tracking-widest uppercase">{label}</span>
                       <div className="flex flex-row gap-1">
-                        {isInJP7 && <span className="text-awan-sm font-black tracking-wide px-1 py-0.5" style={{ background: 'rgba(212,175,55,0.15)', color: 'var(--color-awan-gold)' }}>JP7</span>}
-                        {isInDW4 && <span className="text-awan-sm font-black tracking-wide px-1 py-0.5" style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--color-awan-tx-mute)' }}>DW4</span>}
+                        {isInJP7 && <span className="text-awan-sm font-black tracking-wide px-1 py-0.5" style={{ background: 'rgba(212,175,55,0.15)', color: theme.selected }}>JP7</span>}
+                        {isInDW4 && <span className="text-awan-sm font-black tracking-wide px-1 py-0.5" style={{ background: 'rgba(255,255,255,0.08)', color: theme.mute }}>DW4</span>}
                       </div>
                     </div>
                     <span className="text-awan-sm text-awan-tx-mute block mb-2 leading-tight">{note}</span>
@@ -1030,20 +1032,20 @@ export default function MensurationScreen() {
                   </div>
                   <div className="grid grid-cols-4 gap-2 border-t border-white/5 pt-2">
                     <span className="text-base font-black font-mono text-awan-tx text-center">{s13Total > 0 ? s13Total : '–'}</span>
-                    <span className="text-base font-black font-mono text-center" style={{ color: bf13 !== null ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)' }}>
+                    <span className="text-base font-black font-mono text-center" style={{ color: bf13 !== null ? theme.selected : theme.mute }}>
                       {bf13 !== null ? `${bf13}%` : '–'}
                     </span>
-                    <span className="text-base font-black font-mono text-center" style={{ color: bfJP7 !== null ? 'var(--color-awan-tx)' : 'var(--color-awan-tx-mute)' }}>
+                    <span className="text-base font-black font-mono text-center" style={{ color: bfJP7 !== null ? theme.title : theme.mute }}>
                       {bfJP7 !== null ? `${bfJP7}%` : '–'}
                     </span>
-                    <span className="text-base font-black font-mono text-center" style={{ color: bfDW4 !== null ? 'var(--color-awan-tx)' : 'var(--color-awan-tx-mute)' }}>
+                    <span className="text-base font-black font-mono text-center" style={{ color: bfDW4 !== null ? theme.title : theme.mute }}>
                       {bfDW4 !== null ? `${bfDW4}%` : '–'}
                     </span>
                   </div>
                   {ecartMax !== null && (
                     <div className="mt-3 pt-3 border-t border-white/5 flex flex-row justify-between items-center">
                       <span className="text-awan-xs font-black text-awan-tx-mute tracking-widest uppercase">ÉCART MAX</span>
-                      <span className="text-sm font-black font-mono" style={{ color: ecartMax > 3 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-ok)' }}>
+                      <span className="text-sm font-black font-mono" style={{ color: ecartMax > 3 ? theme.statusWarn : theme.statusOk }}>
                         {ecartMax}%
                       </span>
                     </div>

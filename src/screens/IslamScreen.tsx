@@ -16,6 +16,8 @@ import { StaggerList, StaggerItem } from '../components/Animated';
 import { InstrumentCard } from '../components/ui/InstrumentCard';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
+import { useTheme } from '../hooks/useTheme';
+import { FontSans, FontMono, FwMute, FwBody, FwLabel, FwValue, FwDisplay } from '../constants/typography';
 
 // ─── Hijri calendar utilities ──────────────────────────────────────────────────
 
@@ -98,6 +100,7 @@ function HijriCalendar({
   hijriYear: number; hijriMonth: number;
   onSelect: (dateStr: string) => void; selectedDate: string; todayStr: string;
 }) {
+  const theme = useTheme();
   const days = hijriDaysInMonth(hijriMonth);
   const firstJdn = hToJdn(hijriYear, hijriMonth, 1);
   const firstDow = (firstJdn + 1) % 7; // 0=Sun
@@ -115,7 +118,7 @@ function HijriCalendar({
       {/* Weekday headers */}
       <div className="grid grid-cols-7 gap-1 mb-1">
         {WEEKDAYS_FR.map((d, i) => (
-          <span key={i} className="text-center" style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.1em' }}>{d}</span>
+          <span key={i} className="text-center" style={{ fontFamily: FontMono, fontSize: '8px', color: theme.mute, letterSpacing: '0.1em' }}>{d}</span>
         ))}
       </div>
       {/* Calendar grid */}
@@ -134,19 +137,19 @@ function HijriCalendar({
               <div
                 className="flex flex-col items-center py-1 border"
                 style={{
-                  backgroundColor: isSelected ? 'var(--color-awan-gold)' : isToday ? 'rgba(212,175,55,0.12)' : 'transparent',
-                  borderColor: isToday ? 'var(--color-awan-gold)' : holiday ? 'rgba(212,175,55,0.3)' : 'var(--color-awan-border-soft)',
+                  backgroundColor: isSelected ? theme.selected : isToday ? 'rgba(212,175,55,0.12)' : 'transparent',
+                  borderColor: isToday ? theme.selected : holiday ? 'rgba(212,175,55,0.3)' : theme.borderSoft,
                   minHeight: 38,
                 }}
               >
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 700, color: isSelected ? 'var(--color-awan-bg)' : isToday ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)', lineHeight: 1.2 }}>
+                <span style={{ fontFamily: FontMono, fontSize: '12px', fontWeight: 700, color: isSelected ? theme.bg : isToday ? theme.selected : theme.title, lineHeight: 1.2 }}>
                   {hd}
                 </span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: isSelected ? 'var(--color-awan-bg)' : 'var(--color-awan-tx-mute)', lineHeight: 1 }}>
+                <span style={{ fontFamily: FontMono, fontSize: '8px', color: isSelected ? theme.bg : theme.mute, lineHeight: 1 }}>
                   {gd}
                 </span>
                 {holiday && (
-                  <div style={{ width: 4, height: 4, backgroundColor: isSelected ? 'var(--color-awan-bg)' : 'var(--color-awan-gold)', borderRadius: 0, marginTop: 1 }} />
+                  <div style={{ width: 4, height: 4, backgroundColor: isSelected ? theme.bg : theme.selected, borderRadius: 0, marginTop: 1 }} />
                 )}
               </div>
             </Touch>
@@ -156,8 +159,8 @@ function HijriCalendar({
       {/* Holiday legend for this month */}
       {ISLAMIC_HOLIDAYS.filter(([m]) => m === hijriMonth).map(([, hd, name]) => (
         <div key={`${hijriMonth}-${hd}`} className="flex flex-row items-center gap-2 mt-1">
-          <div style={{ width: 4, height: 4, backgroundColor: 'var(--color-awan-gold)', borderRadius: 0, flexShrink: 0 }} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-gold)', letterSpacing: '0.15em' }}>
+          <div style={{ width: 4, height: 4, backgroundColor: theme.selected, borderRadius: 0, flexShrink: 0 }} />
+          <span style={{ fontFamily: FontMono, fontSize: '8px', color: theme.selected, letterSpacing: '0.15em' }}>
             {hd} — {name}
           </span>
         </div>
@@ -212,6 +215,7 @@ async function cancelPrayerNotifications(): Promise<void> {
 // ─── Main component ─────────────────────────────────────────────────────────────
 
 export default function IslamScreen() {
+  const theme = useTheme();
   useAppState() as any;
 
   const todayStr = ds(new Date());
@@ -418,17 +422,17 @@ export default function IslamScreen() {
           if (next) void schedulePrayerNotifications(prayerTimesForDate as Record<string, unknown>);
           else void cancelPrayerNotifications();
         }}>
-          <div className="flex flex-row items-center justify-between mb-3 px-4 py-3 border" style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)' }}>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>RAPPELS PRIÈRES</span>
+          <div className="flex flex-row items-center justify-between mb-3 px-4 py-3 border" style={{ borderColor: theme.border, backgroundColor: theme.surface }}>
+            <span style={{ fontFamily: FontSans, fontSize: '10px', fontWeight: 700, color: theme.title, letterSpacing: '0.2em' }}>RAPPELS PRIÈRES</span>
             <div style={{
               width: 36, height: 20, borderRadius: 10, position: 'relative',
-              backgroundColor: notifEnabled ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.12)',
+              backgroundColor: notifEnabled ? theme.selected : 'rgba(255,255,255,0.12)',
               transition: 'background-color 0.2s',
             }}>
               <div style={{
                 position: 'absolute', top: 2, left: notifEnabled ? 18 : 2,
                 width: 16, height: 16, borderRadius: 8,
-                backgroundColor: 'var(--color-awan-bg)',
+                backgroundColor: theme.bg,
                 transition: 'left 0.2s',
               }} />
             </div>
@@ -436,22 +440,22 @@ export default function IslamScreen() {
         </Touch>
 
         {/* ── Sélecteur de date ──────────────────────────────────────────────── */}
-        <div className="flex flex-row items-center justify-between mb-3 p-3 border" style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)' }}>
+        <div className="flex flex-row items-center justify-between mb-3 p-3 border" style={{ borderColor: theme.border, backgroundColor: theme.surface }}>
           <Touch onPress={() => {
             const d = new Date(selectedDate);
             d.setDate(d.getDate() - 1);
             setSelectedDate(ds(d));
           }}>
-            <ChevronLeft size={18} color="var(--color-awan-gold)" />
+            <ChevronLeft size={18} color={theme.selected} />
           </Touch>
           <div className="flex flex-col items-center">
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+            <span style={{ fontFamily: FontMono, fontSize: '8px', color: theme.mute, letterSpacing: '0.3em' }}>
               {isToday ? 'AUJOURD\'HUI' : selectedDate}
             </span>
             {(() => {
               const [hy, hm, hd] = gToH(...(selectedDate.split('-').map(Number) as [number, number, number]));
               return (
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.05em' }}>
+                <span style={{ fontFamily: FontSans, fontSize: '13px', fontWeight: 700, color: theme.title, letterSpacing: '0.05em' }}>
                   {hd} {HIJRI_MONTHS[hm - 1]} {hy}
                 </span>
               );
@@ -462,16 +466,16 @@ export default function IslamScreen() {
             d.setDate(d.getDate() + 1);
             if (ds(d) <= todayStr) setSelectedDate(ds(d));
           }} disabled={isToday}>
-            <ChevronRight size={18} color={isToday ? 'var(--color-awan-tx-mute)' : 'var(--color-awan-gold)'} />
+            <ChevronRight size={18} color={isToday ? theme.mute : theme.selected} />
           </Touch>
         </div>
 
         {/* ── Chrono prières ────────────────────────────────────────────────── */}
-        <div className="mb-4 border" style={{ borderColor: 'var(--color-awan-border)', overflow: 'hidden' }}>
-          <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>CHRONO PRIÈRES</span>
+        <div className="mb-4 border" style={{ borderColor: theme.border, overflow: 'hidden' }}>
+          <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: theme.border }}>
+            <span style={{ fontFamily: FontSans, fontSize: '10px', fontWeight: 700, color: theme.title, letterSpacing: '0.2em' }}>CHRONO PRIÈRES</span>
             {isPast && (
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-mute)' }}>
+              <span style={{ fontFamily: FontSans, fontSize: '8px', color: theme.mute }}>
                 tap pour modifier
               </span>
             )}
@@ -489,18 +493,18 @@ export default function IslamScreen() {
             const draftValue = draftTimes[key] ?? realTime ?? (isToday ? currentHHMM() : theoLabel);
 
             const badge = type === 'sunnah' ? 'SUNNAH' : type === 'fard' ? 'FARD' : null;
-            const badgeColor = type === 'sunnah' ? 'var(--color-awan-tx-mute)' : 'var(--color-awan-gold)';
+            const badgeColor = type === 'sunnah' ? theme.mute : theme.selected;
 
             return (
               <div
                 key={key}
                 className="flex flex-row justify-between items-center px-4 py-4 border-b"
                 style={{
-                  borderColor: 'var(--color-awan-border-soft)',
+                  borderColor: theme.borderSoft,
                   backgroundColor: isNext
-                    ? 'color-mix(in srgb, var(--color-awan-gold) 6%, transparent)'
+                    ? 'rgba(212,175,55,0.06)'
                     : done
-                      ? 'color-mix(in srgb, var(--color-awan-status-ok) 4%, transparent)'
+                      ? 'rgba(78,205,196,0.04)'
                       : 'transparent',
                 }}
               >
@@ -508,22 +512,22 @@ export default function IslamScreen() {
                   <div style={{
                     width: 3, height: 32,
                     backgroundColor: done
-                      ? 'var(--color-awan-status-ok)'
-                      : isNext ? 'var(--color-awan-gold)'
-                      : 'color-mix(in srgb, var(--color-awan-tx) 12%, transparent)',
+                      ? theme.statusOk
+                      : isNext ? theme.selected
+                      : 'rgba(237,232,226,0.12)',
                   }} />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
                     <span style={{
-                      fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700,
+                      fontFamily: FontSans, fontSize: '11px', fontWeight: 700,
                       letterSpacing: '0.15em', textTransform: 'uppercase',
-                      color: done ? 'var(--color-awan-status-ok)' : isNext ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)',
+                      color: done ? theme.statusOk : isNext ? theme.selected : theme.title,
                     }}>
                       {SpiritualService.translatePrayer(key)}
                     </span>
                     <div className="flex flex-row items-center gap-2">
                       {badge && (
                         <span style={{
-                          fontFamily: 'var(--font-mono)', fontSize: '7px', fontWeight: 700,
+                          fontFamily: FontMono, fontSize: '7px', fontWeight: 700,
                           letterSpacing: '0.2em', color: badgeColor,
                           padding: '1px 4px', border: `1px solid ${badgeColor}`,
                         }}>
@@ -531,8 +535,8 @@ export default function IslamScreen() {
                         </span>
                       )}
                       <span style={{
-                        fontFamily: 'var(--font-mono)', fontSize: '9px',
-                        color: 'var(--color-awan-tx-mute)', letterSpacing: '0.1em',
+                        fontFamily: FontMono, fontSize: '9px',
+                        color: theme.mute, letterSpacing: '0.1em',
                       }}>
                         THÉO {theoLabel}
                       </span>
@@ -542,16 +546,16 @@ export default function IslamScreen() {
 
                 <div className="flex flex-row items-center gap-3">
                   {isInfo ? (
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', fontWeight: 700, color: 'var(--color-awan-tx-mute)' }}>
+                    <span style={{ fontFamily: FontMono, fontSize: '18px', fontWeight: 700, color: theme.mute }}>
                       {theoLabel}
                     </span>
                   ) : done ? (
                     <>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '16px', fontWeight: 700, color: 'var(--color-awan-status-ok)' }}>
+                      <span style={{ fontFamily: FontMono, fontSize: '16px', fontWeight: 700, color: theme.statusOk }}>
                         {realTime ?? '--:--'}
                       </span>
                       <Touch onPress={() => { void prayerStore.toggle(key as PrayerName); setDraftTime(key, ''); }} disabled={!canToggle}>
-                        <CheckCircle2 size={20} color="var(--color-awan-status-ok)" />
+                        <CheckCircle2 size={20} color={theme.statusOk} />
                       </Touch>
                     </>
                   ) : (
@@ -562,9 +566,9 @@ export default function IslamScreen() {
                         onChange={e => setDraftTime(key, e.target.value)}
                         disabled={!canToggle}
                         style={{
-                          fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700,
-                          color: 'var(--color-awan-tx)', backgroundColor: 'transparent',
-                          border: '1px solid var(--color-awan-border-soft)', padding: '4px 6px',
+                          fontFamily: FontMono, fontSize: '14px', fontWeight: 700,
+                          color: theme.title, backgroundColor: 'transparent',
+                          border: `1px solid ${theme.borderSoft}`, padding: '4px 6px',
                           width: 72, textAlign: 'center',
                         }}
                       />
@@ -574,10 +578,10 @@ export default function IslamScreen() {
                       >
                         {isNext ? (
                           <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
-                            <Clock size={20} color="var(--color-awan-gold)" />
+                            <Clock size={20} color={theme.selected} />
                           </motion.div>
                         ) : (
-                          <div style={{ width: 20, height: 20, border: '1px solid var(--color-awan-border)' }} />
+                          <div style={{ width: 20, height: 20, border: `1px solid ${theme.border}` }} />
                         )}
                       </Touch>
                     </>
@@ -591,10 +595,10 @@ export default function IslamScreen() {
         {/* ── Qibla compass ─────────────────────────────────────────────────── */}
         <Touch onPress={activateQibla} className="block mb-4">
           <div className="flex flex-row items-center gap-4 p-4 border" style={{ borderColor: 'rgba(212,175,55,0.25)', backgroundColor: 'rgba(212,175,55,0.04)' }}>
-            <div className="p-3 border" style={{ borderColor: 'var(--color-awan-gold)', backgroundColor: 'rgba(212,175,55,0.1)' }}>
-              <Compass size={22} color="var(--color-awan-gold)" />
+            <div className="p-3 border" style={{ borderColor: theme.selected, backgroundColor: 'rgba(212,175,55,0.1)' }}>
+              <Compass size={22} color={theme.selected} />
             </div>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700, color: 'var(--color-awan-gold)', letterSpacing: '0.2em' }}>
+            <span style={{ fontFamily: FontSans, fontSize: '11px', fontWeight: 700, color: theme.selected, letterSpacing: '0.2em' }}>
               INSTRUMENT DE QIBLA
             </span>
           </div>
@@ -607,14 +611,14 @@ export default function IslamScreen() {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               className="mb-4 border overflow-hidden flex flex-col items-center p-8"
-              style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)' }}
+              style={{ borderColor: theme.border, backgroundColor: theme.surface }}
             >
               {locationStatus === 'loading' ? (
                 <div className="flex flex-col items-center gap-4 py-8">
                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}>
-                    <Compass size={32} color="var(--color-awan-gold)" />
+                    <Compass size={32} color={theme.selected} />
                   </motion.div>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>ACQUISITION GPS...</span>
+                  <span style={{ fontFamily: FontMono, fontSize: '10px', color: theme.mute, letterSpacing: '0.3em' }}>ACQUISITION GPS...</span>
                 </div>
               ) : (
                 <>
@@ -626,7 +630,7 @@ export default function IslamScreen() {
                       const rad = (angle - 90) * Math.PI / 180;
                       const r = 88;
                       return (
-                        <span key={dir} style={{ position: 'absolute', left: `calc(50% + ${r * Math.cos(rad)}px - 5px)`, top: `calc(50% + ${r * Math.sin(rad)}px - 7px)`, fontFamily: 'var(--font-mono)', fontSize: '8px', fontWeight: 700, color: dir === 'N' ? 'var(--color-awan-tx)' : 'rgba(255,255,255,0.2)' }}>
+                        <span key={dir} style={{ position: 'absolute', left: `calc(50% + ${r * Math.cos(rad)}px - 5px)`, top: `calc(50% + ${r * Math.sin(rad)}px - 7px)`, fontFamily: FontMono, fontSize: '8px', fontWeight: 700, color: dir === 'N' ? theme.title : 'rgba(255,255,255,0.2)' }}>
                           {dir}
                         </span>
                       );
@@ -639,7 +643,7 @@ export default function IslamScreen() {
                       style={{ position: 'absolute', width: 4, height: 140, display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 10 }}
                       transition={{ type: 'spring', stiffness: 80, damping: 18 }}
                     >
-                      <div style={{ width: 4, height: 70, backgroundColor: 'var(--color-awan-tx)', opacity: 0.7 }} />
+                      <div style={{ width: 4, height: 70, backgroundColor: theme.title, opacity: 0.7 }} />
                       <div style={{ width: 4, height: 70, backgroundColor: 'rgba(255,255,255,0.15)' }} />
                     </motion.div>
 
@@ -649,29 +653,29 @@ export default function IslamScreen() {
                       style={{ position: 'absolute', width: 3, height: 140, display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 11 }}
                       transition={{ type: 'spring', stiffness: 80, damping: 18 }}
                     >
-                      <div style={{ width: 3, height: 70, backgroundColor: 'var(--color-awan-gold)', boxShadow: '0 0 12px var(--color-awan-gold)' }} />
+                      <div style={{ width: 3, height: 70, backgroundColor: theme.selected, boxShadow: `0 0 12px ${theme.selected}` }} />
                       <div style={{ width: 3, height: 70, backgroundColor: 'rgba(212,175,55,0.2)' }} />
                     </motion.div>
 
                     {/* Center hub */}
-                    <div style={{ width: 52, height: 52, borderRadius: '50%', backgroundColor: 'var(--color-awan-bg)', border: '2px solid var(--color-awan-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, color: 'var(--color-awan-gold)' }}>{Math.round(qiblaAngle)}°</span>
+                    <div style={{ width: 52, height: 52, borderRadius: '50%', backgroundColor: theme.bg, border: `2px solid ${theme.selected}`, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
+                      <span style={{ fontFamily: FontMono, fontSize: '11px', fontWeight: 700, color: theme.selected }}>{Math.round(qiblaAngle)}°</span>
                     </div>
                   </div>
 
                   <div className="flex flex-row items-center gap-4 mt-6">
                     <div className="flex flex-row items-center gap-2">
-                      <div style={{ width: 12, height: 3, backgroundColor: 'var(--color-awan-tx)', opacity: 0.7 }} />
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>NORD</span>
+                      <div style={{ width: 12, height: 3, backgroundColor: theme.title, opacity: 0.7 }} />
+                      <span style={{ fontFamily: FontMono, fontSize: '8px', color: theme.mute, letterSpacing: '0.2em' }}>NORD</span>
                     </div>
                     <div className="flex flex-row items-center gap-2">
-                      <div style={{ width: 12, height: 3, backgroundColor: 'var(--color-awan-gold)' }} />
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-gold)', letterSpacing: '0.2em' }}>QIBLA</span>
+                      <div style={{ width: 12, height: 3, backgroundColor: theme.selected }} />
+                      <span style={{ fontFamily: FontMono, fontSize: '8px', color: theme.selected, letterSpacing: '0.2em' }}>QIBLA</span>
                     </div>
                   </div>
                   <div className="flex flex-row items-center gap-2 mt-3">
-                    <div style={{ width: 6, height: 6, backgroundColor: locationStatus === 'ok' ? 'var(--color-awan-status-ok)' : locationStatus === 'cached' ? 'var(--color-awan-gold)' : 'var(--color-awan-status-warn)' }} />
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>
+                    <div style={{ width: 6, height: 6, backgroundColor: locationStatus === 'ok' ? theme.statusOk : locationStatus === 'cached' ? theme.selected : theme.statusWarn }} />
+                    <span style={{ fontFamily: FontMono, fontSize: '9px', color: theme.mute, letterSpacing: '0.2em' }}>
                       {locationStatus === 'ok' ? 'GPS ACTIF' : locationStatus === 'cached' ? 'POSITION MÉMORISÉE' : 'DÉFAUT'}
                     </span>
                   </div>
@@ -682,32 +686,32 @@ export default function IslamScreen() {
         </AnimatePresence>
 
         {/* ── Calendrier hégirien ───────────────────────────────────────────── */}
-        <div className="mb-4 border" style={{ borderColor: 'var(--color-awan-border)', overflow: 'hidden' }}>
+        <div className="mb-4 border" style={{ borderColor: theme.border, overflow: 'hidden' }}>
           {/* Tabs — même pattern que Planning */}
-          <div className="flex flex-row border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
+          <div className="flex flex-row border-b" style={{ borderColor: theme.border }}>
             {(['month', 'year'] as const).map(v => (
               <Touch key={v} className={`flex-1 py-3 flex items-center justify-center border-b-2 transition-all ${calView === v ? 'border-awan-gold' : 'border-transparent opacity-40'}`} onPress={() => setCalView(v)}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', fontWeight: 700, color: calView === v ? 'var(--color-awan-tx)' : 'var(--color-awan-tx-mute)', letterSpacing: '0.25em' }}>
+                <span style={{ fontFamily: FontMono, fontSize: '9px', fontWeight: 700, color: calView === v ? theme.title : theme.mute, letterSpacing: '0.25em' }}>
                   {v === 'month' ? 'MOIS' : 'ANNÉE'}
                 </span>
               </Touch>
             ))}
           </div>
           {/* Navigation mois */}
-          <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
-            <Touch onPress={prevMonth} className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: 'var(--color-awan-surface-dim)', border: '1px solid var(--color-awan-border)' }}>
-              <ChevronLeft size={14} color="var(--color-awan-tx-mute)" />
+          <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: theme.border }}>
+            <Touch onPress={prevMonth} className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: theme.surfaceDim, border: `1px solid ${theme.border}` }}>
+              <ChevronLeft size={14} color={theme.mute} />
             </Touch>
             <div className="flex flex-col items-center">
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.25em' }}>
+              <span style={{ fontFamily: FontMono, fontSize: '10px', fontWeight: 700, color: theme.title, letterSpacing: '0.25em' }}>
                 {(HIJRI_MONTHS[hijriMonth - 1] ?? '').toUpperCase()}
               </span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', fontWeight: 400, color: 'var(--color-awan-gold)', letterSpacing: '0.3em' }}>
+              <span style={{ fontFamily: FontMono, fontSize: '8px', fontWeight: 400, color: theme.selected, letterSpacing: '0.3em' }}>
                 {hijriYear}
               </span>
             </div>
-            <Touch onPress={nextMonth} className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: 'var(--color-awan-surface-dim)', border: '1px solid var(--color-awan-border)' }}>
-              <ChevronRight size={14} color="var(--color-awan-tx-mute)" />
+            <Touch onPress={nextMonth} className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: theme.surfaceDim, border: `1px solid ${theme.border}` }}>
+              <ChevronRight size={14} color={theme.mute} />
             </Touch>
           </div>
 
@@ -732,15 +736,15 @@ export default function IslamScreen() {
                   const holidays = ISLAMIC_HOLIDAYS.filter(([m]) => m === hm);
                   return (
                     <Touch key={hm} onPress={() => { setHijriMonth(hm); setCalView('month'); }}>
-                      <div className="flex flex-row items-start justify-between p-3 border" style={{ borderColor: hm === hijriMonth ? 'var(--color-awan-gold)' : 'var(--color-awan-border)', backgroundColor: hm === hijriMonth ? 'rgba(212,175,55,0.06)' : 'transparent' }}>
+                      <div className="flex flex-row items-start justify-between p-3 border" style={{ borderColor: hm === hijriMonth ? theme.selected : theme.border, backgroundColor: hm === hijriMonth ? 'rgba(212,175,55,0.06)' : 'transparent' }}>
                         <div>
-                          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', fontWeight: 700, color: hm === hijriMonth ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)', letterSpacing: '0.1em' }}>{monthName}</span>
-                          <span style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', marginTop: 2 }}>{gregLabel}</span>
+                          <span style={{ fontFamily: FontSans, fontSize: '12px', fontWeight: 700, color: hm === hijriMonth ? theme.selected : theme.title, letterSpacing: '0.1em' }}>{monthName}</span>
+                          <span style={{ display: 'block', fontFamily: FontMono, fontSize: '8px', color: theme.mute, marginTop: 2 }}>{gregLabel}</span>
                         </div>
                         {holidays.length > 0 && (
                           <div className="flex flex-col items-end gap-1">
                             {holidays.map(([, hd, name]) => (
-                              <span key={`${hm}-${hd}`} style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-gold)', letterSpacing: '0.1em' }}>{hd} {name}</span>
+                              <span key={`${hm}-${hd}`} style={{ fontFamily: FontMono, fontSize: '8px', color: theme.selected, letterSpacing: '0.1em' }}>{hd} {name}</span>
                             ))}
                           </div>
                         )}
@@ -754,32 +758,32 @@ export default function IslamScreen() {
         </div>
 
         {/* ── Wird coranique ────────────────────────────────────────────────── */}
-        <div className="mb-4 border" style={{ borderColor: 'var(--color-awan-border)', overflow: 'hidden' }}>
-          <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
+        <div className="mb-4 border" style={{ borderColor: theme.border, overflow: 'hidden' }}>
+          <div className="px-4 py-3 border-b" style={{ borderColor: theme.border }}>
             <div className="flex flex-row items-center justify-between">
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>WIRD CORANIQUE</span>
+              <span style={{ fontFamily: FontSans, fontSize: '10px', fontWeight: 700, color: theme.title, letterSpacing: '0.2em' }}>WIRD CORANIQUE</span>
               <div className="flex flex-row items-center gap-3">
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-awan-gold)', letterSpacing: '0.2em' }}>
+                <span style={{ fontFamily: FontMono, fontSize: '9px', color: theme.selected, letterSpacing: '0.2em' }}>
                   {quranSessionStore.totalAyahs} VERSETS
                 </span>
-                <TrendingUp size={14} color="var(--color-awan-gold)" />
+                <TrendingUp size={14} color={theme.selected} />
               </div>
             </div>
           </div>
 
           {/* Résumé global */}
           {quranStore.progress && (
-            <div className="flex flex-row justify-between items-center px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
+            <div className="flex flex-row justify-between items-center px-4 py-3 border-b" style={{ borderColor: theme.border }}>
               <div className="flex flex-col">
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', marginBottom: 2 }}>SOURATE · VERSET</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '16px', fontWeight: 700, color: 'var(--color-awan-tx)' }}>
+                <span style={{ fontFamily: FontMono, fontSize: '7px', color: theme.mute, letterSpacing: '0.2em', marginBottom: 2 }}>SOURATE · VERSET</span>
+                <span style={{ fontFamily: FontMono, fontSize: '16px', fontWeight: 700, color: theme.title }}>
                   S{quranStore.progress.currentSurah} · V{quranStore.progress.currentAyah}
                 </span>
               </div>
               <div className="flex flex-col items-end">
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', marginBottom: 2 }}>TOTAL GLOBAL</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '16px', fontWeight: 700, color: 'var(--color-awan-gold)' }}>
-                  {quranStore.progress.totalAyahsRead} <span style={{ fontSize: '9px', color: 'var(--color-awan-tx-mute)' }}>versets</span>
+                <span style={{ fontFamily: FontMono, fontSize: '7px', color: theme.mute, letterSpacing: '0.2em', marginBottom: 2 }}>TOTAL GLOBAL</span>
+                <span style={{ fontFamily: FontMono, fontSize: '16px', fontWeight: 700, color: theme.selected }}>
+                  {quranStore.progress.totalAyahsRead} <span style={{ fontSize: '9px', color: theme.mute }}>versets</span>
                 </span>
               </div>
             </div>
@@ -787,7 +791,7 @@ export default function IslamScreen() {
 
           {/* Formulaire ajout session */}
           {canEdit && (
-            <div className="px-4 py-4 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
+            <div className="px-4 py-4 border-b" style={{ borderColor: theme.border }}>
               <div className="flex flex-row gap-2 items-center">
                 <input
                   type="number"
@@ -796,9 +800,9 @@ export default function IslamScreen() {
                   value={wirdAyahs}
                   onChange={e => { setWirdAyahs(e.target.value); if (wirdError) setWirdError(null); }}
                   style={{
-                    flex: 1, fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700,
-                    color: 'var(--color-awan-tx)', backgroundColor: 'transparent',
-                    border: '1px solid var(--color-awan-border-soft)', padding: '8px 10px',
+                    flex: 1, fontFamily: FontMono, fontSize: '14px', fontWeight: 700,
+                    color: theme.title, backgroundColor: 'transparent',
+                    border: `1px solid ${theme.borderSoft}`, padding: '8px 10px',
                     textAlign: 'center',
                   }}
                 />
@@ -807,9 +811,9 @@ export default function IslamScreen() {
                   value={wirdTime}
                   onChange={e => { setWirdTime(e.target.value); if (wirdError) setWirdError(null); }}
                   style={{
-                    fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700,
-                    color: 'var(--color-awan-tx)', backgroundColor: 'transparent',
-                    border: '1px solid var(--color-awan-border-soft)', padding: '8px 8px',
+                    fontFamily: FontMono, fontSize: '14px', fontWeight: 700,
+                    color: theme.title, backgroundColor: 'transparent',
+                    border: `1px solid ${theme.borderSoft}`, padding: '8px 8px',
                     width: 84,
                   }}
                 />
@@ -825,13 +829,13 @@ export default function IslamScreen() {
                     setWirdTime(`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`);
                   }}
                   className="flex items-center justify-center p-3"
-                  style={{ backgroundColor: 'var(--color-awan-gold)', flexShrink: 0 }}
+                  style={{ backgroundColor: theme.selected, flexShrink: 0 }}
                 >
-                  <Plus size={18} color="var(--color-awan-bg)" />
+                  <Plus size={18} color={theme.bg} />
                 </Touch>
               </div>
               {wirdError && (
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-awan-status-error)', letterSpacing: '0.1em', marginTop: 6, display: 'block' }}>
+                <span style={{ fontFamily: FontMono, fontSize: '9px', color: theme.danger, letterSpacing: '0.1em', marginTop: 6, display: 'block' }}>
                   {wirdError}
                 </span>
               )}
@@ -842,11 +846,11 @@ export default function IslamScreen() {
           <div>
             {quranSessionStore.loading ? (
               <div className="py-6 flex items-center justify-center">
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>CHARGEMENT...</span>
+                <span style={{ fontFamily: FontMono, fontSize: '9px', color: theme.mute, letterSpacing: '0.2em' }}>CHARGEMENT...</span>
               </div>
             ) : quranSessionStore.sessions.length === 0 ? (
               <div className="py-6 flex flex-col items-center gap-2">
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>AUCUNE SESSION CE JOUR</span>
+                <span style={{ fontFamily: FontMono, fontSize: '9px', color: theme.mute, letterSpacing: '0.2em' }}>AUCUNE SESSION CE JOUR</span>
               </div>
             ) : (
               <StaggerList>
@@ -854,16 +858,16 @@ export default function IslamScreen() {
                   <StaggerItem key={`${s.timeHHMM}-${i}`}>
                     <div
                       className="flex flex-row items-center justify-between px-4 py-3 border-b"
-                      style={{ borderColor: 'var(--color-awan-border-soft)' }}
+                      style={{ borderColor: theme.borderSoft }}
                     >
                       <div className="flex flex-row items-center gap-3">
-                        <div style={{ width: 3, height: 24, backgroundColor: 'var(--color-awan-gold)' }} />
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 700, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.15em' }}>
+                        <div style={{ width: 3, height: 24, backgroundColor: theme.selected }} />
+                        <span style={{ fontFamily: FontMono, fontSize: '12px', fontWeight: 700, color: theme.mute, letterSpacing: '0.15em' }}>
                           {s.timeHHMM}
                         </span>
                       </div>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700, color: 'var(--color-awan-tx)' }}>
-                        {s.ayahsRead} <span style={{ fontSize: '9px', color: 'var(--color-awan-tx-mute)', fontWeight: 400 }}>versets</span>
+                      <span style={{ fontFamily: FontMono, fontSize: '14px', fontWeight: 700, color: theme.title }}>
+                        {s.ayahsRead} <span style={{ fontSize: '9px', color: theme.mute, fontWeight: 400 }}>versets</span>
                       </span>
                     </div>
                   </StaggerItem>
@@ -874,34 +878,34 @@ export default function IslamScreen() {
         </div>
 
         {/* ── Vocabulaire ───────────────────────────────────────────────────── */}
-        <div className="mb-8 border" style={{ borderColor: 'var(--color-awan-border)', overflow: 'hidden' }}>
-          <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>VOCABULAIRE</span>
+        <div className="mb-8 border" style={{ borderColor: theme.border, overflow: 'hidden' }}>
+          <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: theme.border }}>
+            <span style={{ fontFamily: FontSans, fontSize: '10px', fontWeight: 700, color: theme.title, letterSpacing: '0.2em' }}>VOCABULAIRE</span>
             <div className="flex flex-row items-center gap-2">
-              <BookOpen size={13} color="var(--color-awan-tx-mute)" />
+              <BookOpen size={13} color={theme.mute} />
               <Touch onPress={pickNewWord}>
-                <RefreshCcw size={13} color="var(--color-awan-tx-mute)" />
+                <RefreshCcw size={13} color={theme.mute} />
               </Touch>
             </div>
           </div>
           <div className="p-6">
             {currentWord ? (
               <div className="flex flex-col items-center">
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-gold)', letterSpacing: '0.4em', marginBottom: 16, opacity: 0.6 }}>
+                <span style={{ fontFamily: FontMono, fontSize: '8px', color: theme.selected, letterSpacing: '0.4em', marginBottom: 16, opacity: 0.6 }}>
                   {currentWord.category?.toUpperCase()}
                 </span>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '20px', fontWeight: 700, color: 'var(--color-awan-tx)', textAlign: 'center', marginBottom: 24, letterSpacing: '0.05em' }}>
+                <span style={{ fontFamily: FontSans, fontSize: '20px', fontWeight: 700, color: theme.title, textAlign: 'center', marginBottom: 24, letterSpacing: '0.05em' }}>
                   {currentWord.fr}
                 </span>
                 <AnimatePresence mode="wait">
                   {!showAnswer ? (
-                    <Touch onPress={() => setShowAnswer(true)} className="w-full flex items-center justify-center py-3" style={{ backgroundColor: 'var(--color-awan-gold)' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-bg)', letterSpacing: '0.3em' }}>RÉVÉLER</span>
+                    <Touch onPress={() => setShowAnswer(true)} className="w-full flex items-center justify-center py-3" style={{ backgroundColor: theme.selected }}>
+                      <span style={{ fontFamily: FontMono, fontSize: '10px', fontWeight: 700, color: theme.bg, letterSpacing: '0.3em' }}>RÉVÉLER</span>
                     </Touch>
                   ) : (
                     <motion.div key="answer" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center w-full">
-                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: '52px', fontWeight: 700, color: 'var(--color-awan-gold)', marginBottom: 8 }}>{currentWord.ar}</span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+                      <span style={{ fontFamily: FontSans, fontSize: '52px', fontWeight: 700, color: theme.selected, marginBottom: 8 }}>{currentWord.ar}</span>
+                      <span style={{ fontFamily: FontMono, fontSize: '10px', color: theme.mute, letterSpacing: '0.3em' }}>
                         [{currentWord.phonetic?.toUpperCase()}]
                       </span>
                     </motion.div>
@@ -910,7 +914,7 @@ export default function IslamScreen() {
               </div>
             ) : (
               <div className="py-12 flex items-center justify-center">
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>CHARGEMENT...</span>
+                <span style={{ fontFamily: FontMono, fontSize: '10px', color: theme.mute, letterSpacing: '0.2em' }}>CHARGEMENT...</span>
               </div>
             )}
           </div>

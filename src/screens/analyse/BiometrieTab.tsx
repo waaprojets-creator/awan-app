@@ -2,7 +2,8 @@ import React, { useMemo } from 'react';
 import { View, Dimensions } from 'react-native';
 import Svg, { Path, Circle, Line, Text as SvgText } from 'react-native-svg';
 import { Ruler } from 'lucide-react';
-import { useTheme } from '../../hooks/useTheme';
+import { useTheme, type AwanTheme } from '../../hooks/useTheme';
+import { FontMono } from '../../constants/typography';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import type { MeasurementLatest } from '../../data/schemas/anthropo/measurement';
@@ -58,7 +59,7 @@ function MeasureLine({ points, color }: { points: Array<{ label: string; value: 
         {/* Y labels */}
         {yLabels.map((v, i) => (
           <SvgText_ key={i} x={pad.l - 4} y={toY(v) + 3} textAnchor="end" fontSize="7"
-            fontFamily="var(--font-mono)" fontWeight="700" fill="rgba(255,255,255,0.4)">
+            fontFamily={FontMono} fontWeight="700" fill="rgba(255,255,255,0.4)">
             {Math.round(v)}
           </SvgText_>
         ))}
@@ -70,16 +71,16 @@ function MeasureLine({ points, color }: { points: Array<{ label: string; value: 
         ))}
         {/* Last value label */}
         <SvgText_ x={toX(n - 1) + 4} y={toY(last.value) + 3} fontSize="8"
-          fontFamily="var(--font-mono)" fontWeight="800" fill={color}>
+          fontFamily={FontMono} fontWeight="800" fill={color}>
           {last.value}cm
         </SvgText_>
         {/* X labels — first and last */}
         <SvgText_ x={toX(0)} y={H - 2} textAnchor="middle" fontSize="7"
-          fontFamily="var(--font-mono)" fontWeight="700" fill="rgba(255,255,255,0.35)">
+          fontFamily={FontMono} fontWeight="700" fill="rgba(255,255,255,0.35)">
           {points[0]?.label ?? ''}
         </SvgText_>
         <SvgText_ x={toX(n - 1)} y={H - 2} textAnchor="middle" fontSize="7"
-          fontFamily="var(--font-mono)" fontWeight="700" fill="rgba(255,255,255,0.35)">
+          fontFamily={FontMono} fontWeight="700" fill="rgba(255,255,255,0.35)">
           {last.label}
         </SvgText_>
       </Svg>
@@ -89,21 +90,24 @@ function MeasureLine({ points, color }: { points: Array<{ label: string; value: 
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-const MEASUREMENT_COLORS: Record<string, string> = {
-  waist:   'var(--color-awan-gold)',
-  taille:  'var(--color-awan-gold)',
-  hips:    'var(--color-awan-status-ok)',
-  hanches: 'var(--color-awan-status-ok)',
-  chest:   'var(--color-awan-status-info)',
-  poitrine: 'var(--color-awan-status-info)',
-  arm:     'var(--color-awan-status-warn)',
-  bras:    'var(--color-awan-status-warn)',
-  thigh:   'var(--color-awan-status-spirit)',
-  cuisse:  'var(--color-awan-status-spirit)',
-};
+function getMeasurementColors(t: Pick<AwanTheme, 'selected' | 'statusOk' | 'statusInfo' | 'statusWarn' | 'statusSpirit'>): Record<string, string> {
+  return {
+    waist:    t.selected,
+    taille:   t.selected,
+    hips:     t.statusOk,
+    hanches:  t.statusOk,
+    chest:    t.statusInfo,
+    poitrine: t.statusInfo,
+    arm:      t.statusWarn,
+    bras:     t.statusWarn,
+    thigh:    t.statusSpirit,
+    cuisse:   t.statusSpirit,
+  };
+}
 
 export function BiometrieTab({ weightTrend, history, loading }: BiometrieTabProps) {
   const theme = useTheme();
+  const MEASUREMENT_COLORS = getMeasurementColors(theme);
 
   // Build per-key measurement series from history (sorted by date asc)
   const measurementSeries = useMemo(() => {
@@ -146,7 +150,7 @@ export function BiometrieTab({ weightTrend, history, loading }: BiometrieTabProp
       {Object.entries(measurementSeries)
         .filter(([, pts]) => pts.length >= 2)
         .map(([key, pts]) => {
-          const color = MEASUREMENT_COLORS[key.toLowerCase()] ?? 'var(--color-awan-tx-mute)';
+          const color = MEASUREMENT_COLORS[key.toLowerCase()] ?? theme.mute;
           return (
             <Card key={key} className="p-6 bg-white/5 border-white/5" variant="flat">
               <Heading level={4} mono subtitle={`${pts.length} mesures · cm`}>

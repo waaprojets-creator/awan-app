@@ -10,6 +10,8 @@ import { DateSelectPopup } from '../../components/ui/DateSelectPopup';
 import type { StatusVariant } from '../../components/ui/InstrumentCard';
 import { buildWeekTimeFrame, type WeekTimeFrame } from '../../services/timeFrameworkService';
 import { EmptyState } from './shared';
+import { useTheme, type AwanTheme } from '../../hooks/useTheme';
+import { FontMono } from '../../constants/typography';
 
 const SvgPath_ = Path as any;
 const SvgCircle_ = Circle as any;
@@ -21,6 +23,7 @@ const SvgText_ = SvgText as any;
 // Source: cadre systémique CLAUDE.md — T_éveil = 112h, T_somatique = 56h
 
 function CetGauge({ value }: { value: number }) {
+  const theme = useTheme();
   const W = Dimensions.get('window').width - 88;
   const H = W / 2 + 30;
   const cx = W / 2; const cy = H - 20;
@@ -33,10 +36,10 @@ function CetGauge({ value }: { value: number }) {
   const needleY = cy + R * 0.75 * Math.sin(angle);
 
   const zones = [
-    { from: 0, to: 0.60, color: 'var(--color-awan-status-error)', label: 'CRITIQUE' },
-    { from: 0.60, to: 0.70, color: 'var(--color-awan-status-warn)', label: 'BAS' },
-    { from: 0.70, to: 0.866, color: 'var(--color-awan-tx-mute)', label: 'STANDARD' },
-    { from: 0.866, to: 1.0, color: 'var(--color-awan-status-ok)', label: 'EFFICIENT' },
+    { from: 0, to: 0.60, color: theme.danger, label: 'CRITIQUE' },
+    { from: 0.60, to: 0.70, color: theme.statusWarn, label: 'BAS' },
+    { from: 0.70, to: 0.866, color: theme.mute, label: 'STANDARD' },
+    { from: 0.866, to: 1.0, color: theme.statusOk, label: 'EFFICIENT' },
   ];
 
   const arcPath = (from: number, to: number) => {
@@ -66,7 +69,7 @@ function CetGauge({ value }: { value: number }) {
           const x1 = cx + R * Math.cos(a1); const y1 = cy + R * Math.sin(a1);
           const x2 = cx + R * Math.cos(a2); const y2 = cy + R * Math.sin(a2);
           return <SvgPath_ d={`M ${x1} ${y1} A ${R} ${R} 0 1 1 ${x2} ${y2}`}
-            fill="none" stroke="var(--color-awan-border-soft)" strokeWidth="12" />;
+            fill="none" stroke={theme.borderSoft} strokeWidth="12" />;
         })()}
 
         {/* Zone arcs */}
@@ -81,20 +84,20 @@ function CetGauge({ value }: { value: number }) {
 
         {/* Target line at 86.6% */}
         <SvgLine_ x1={tx1} y1={ty1} x2={tx2} y2={ty2}
-          stroke="var(--color-awan-gold)" strokeWidth="2" strokeDasharray="3 2" opacity={0.8} />
+          stroke={theme.selected} strokeWidth="2" strokeDasharray="3 2" opacity={0.8} />
 
         {/* Needle */}
         <SvgLine_ x1={cx} y1={cy} x2={needleX} y2={needleY}
-          stroke="var(--color-awan-gold)" strokeWidth="2.5" strokeLinecap="round" />
-        <SvgCircle_ cx={cx} cy={cy} r={6} fill="var(--color-awan-gold)" />
+          stroke={theme.selected} strokeWidth="2.5" strokeLinecap="round" />
+        <SvgCircle_ cx={cx} cy={cy} r={6} fill={theme.selected} />
 
         {/* Cet value */}
         <SvgText_ x={cx} y={cy - 24} textAnchor="middle" fontSize="22" fontWeight="900"
-          fontFamily="var(--font-mono)" fill="var(--color-awan-tx)">{(value * 100).toFixed(1)}%</SvgText_>
+          fontFamily={FontMono} fill={theme.title}>{(value * 100).toFixed(1)}%</SvgText_>
 
         {/* Scale labels */}
-        <SvgText_ x={14} y={cy + 20} fontSize="8" fontWeight="700" fill="var(--color-awan-tx-mute)">0%</SvgText_>
-        <SvgText_ x={W - 26} y={cy + 20} fontSize="8" fontWeight="700" fill="var(--color-awan-tx-mute)">100%</SvgText_>
+        <SvgText_ x={14} y={cy + 20} fontSize="8" fontWeight="700" fill={theme.mute}>0%</SvgText_>
+        <SvgText_ x={W - 26} y={cy + 20} fontSize="8" fontWeight="700" fill={theme.mute}>100%</SvgText_>
         <SvgText_ x={cx} y={cy + 20} textAnchor="middle" fontSize="8" fontWeight="900"
           fill={activeZone.color}>{activeZone.label}</SvgText_>
       </Svg>
@@ -136,6 +139,8 @@ function localToday(): string {
 }
 
 export function BudgetTab() {
+  const theme = useTheme();
+  const STATUS_COLOR_MAP = getStatusColorMap(theme);
   const [frame, setFrame] = useState<WeekTimeFrame | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>(localToday);
@@ -198,10 +203,10 @@ export function BudgetTab() {
           <CetGauge value={frame.Cet} />
           <div className="flex flex-row justify-center gap-4 mt-4">
             {[
-              { label: 'CRITIQUE', color: 'var(--color-awan-status-error)' },
-              { label: 'BAS', color: 'var(--color-awan-status-warn)' },
-              { label: 'STANDARD', color: 'var(--color-awan-tx-mute)' },
-              { label: 'EFFICIENT', color: 'var(--color-awan-status-ok)' },
+              { label: 'CRITIQUE', color: theme.danger },
+              { label: 'BAS', color: theme.statusWarn },
+              { label: 'STANDARD', color: theme.mute },
+              { label: 'EFFICIENT', color: theme.statusOk },
             ].map(z => (
               <div key={z.label} className="flex flex-row items-center gap-1">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: z.color }} />
@@ -267,7 +272,7 @@ export function BudgetTab() {
           T_éveil {frame.T_eveil.toFixed(0)}h · semaine du {frame.weekStart}
         </div>
         {frame.T_production === 0 && frame.T_friction === 0 && (
-          <div className="mt-3 text-awan-xs" style={{ color: 'var(--color-awan-tx-mute)' }}>
+          <div className="mt-3 text-awan-xs" style={{ color: theme.mute }}>
             Astuce : classe tes tâches (Planifier → catégorie Production / Friction) pour un calcul automatique.
           </div>
         )}
@@ -276,10 +281,6 @@ export function BudgetTab() {
   );
 }
 
-const STATUS_COLOR_MAP: Record<import('../../components/ui/InstrumentCard').StatusVariant, string> = {
-  ok: 'var(--color-awan-status-ok)',
-  warn: 'var(--color-awan-status-warn)',
-  error: 'var(--color-awan-status-error)',
-  spirit: 'var(--color-awan-status-spirit)',
-  mute: 'var(--color-awan-tx-mute)',
-};
+function getStatusColorMap(t: Pick<AwanTheme, 'statusOk' | 'statusWarn' | 'danger' | 'statusSpirit' | 'mute'>): Record<StatusVariant, string> {
+  return { ok: t.statusOk, warn: t.statusWarn, error: t.danger, spirit: t.statusSpirit, mute: t.mute };
+}

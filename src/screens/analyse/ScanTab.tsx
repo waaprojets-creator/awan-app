@@ -8,6 +8,8 @@ import { Card } from '@/components/ui/Card';
 import { Touch } from '@/components/ui/Touch';
 import { Heading } from '@/components/ui/Heading';
 import { ds } from '@/utils/storage';
+import { useTheme } from '@/hooks/useTheme';
+import { FontMono } from '@/constants/typography';
 
 // ─── Site lists (must match MensurationScreen) ────────────────────────────────
 const JP7_SITES = ['pectoral', 'axillaire', 'triceps', 'subscapular', 'abdominal', 'suprailiac', 'thigh_anterior'] as const;
@@ -82,6 +84,7 @@ interface MultiLineChartProps {
 }
 
 function MultiLineChart({ series13, seriesJP7, seriesDW4 }: MultiLineChartProps) {
+  const theme = useTheme();
   const W = 300;
   const H = 120;
 
@@ -155,7 +158,7 @@ function MultiLineChart({ series13, seriesJP7, seriesDW4 }: MultiLineChartProps)
       {/* Y-axis labels */}
       <div style={{ position: 'absolute', left: 0, top: 0, height: H, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', paddingTop: 4, paddingBottom: 4 }}>
         {[...yLabels].reverse().map(v => (
-          <span key={v} style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--color-awan-tx-mute)', lineHeight: '12px' }}>
+          <span key={v} style={{ fontSize: 9, fontFamily: FontMono, color: theme.mute, lineHeight: '12px' }}>
             {v}%
           </span>
         ))}
@@ -179,14 +182,14 @@ function MultiLineChart({ series13, seriesJP7, seriesDW4 }: MultiLineChartProps)
             <path
               d={pathDW4}
               fill="none"
-              stroke="var(--color-awan-tx-mute)"
+              stroke={theme.mute}
               strokeWidth={1.5}
               strokeDasharray="4 3"
               strokeOpacity={0.7}
             />
           )}
           {dotsDW4.map((p, i) => (
-            <circle key={i} cx={p.cx} cy={p.cy} r={3} fill="var(--color-awan-tx-mute)" fillOpacity={0.7} />
+            <circle key={i} cx={p.cx} cy={p.cy} r={3} fill={theme.mute} fillOpacity={0.7} />
           ))}
 
           {/* JP7 — dashed, tx */}
@@ -194,14 +197,14 @@ function MultiLineChart({ series13, seriesJP7, seriesDW4 }: MultiLineChartProps)
             <path
               d={pathJP7}
               fill="none"
-              stroke="var(--color-awan-tx)"
+              stroke={theme.title}
               strokeWidth={1.5}
               strokeDasharray="6 3"
               strokeOpacity={0.8}
             />
           )}
           {dotsJP7.map((p, i) => (
-            <circle key={i} cx={p.cx} cy={p.cy} r={3} fill="var(--color-awan-tx)" fillOpacity={0.8} />
+            <circle key={i} cx={p.cx} cy={p.cy} r={3} fill={theme.title} fillOpacity={0.8} />
           ))}
 
           {/* 13-plis — solid gold (primary) */}
@@ -209,21 +212,21 @@ function MultiLineChart({ series13, seriesJP7, seriesDW4 }: MultiLineChartProps)
             <path
               d={path13}
               fill="none"
-              stroke="var(--color-awan-gold)"
+              stroke={theme.selected}
               strokeWidth={2}
             />
           )}
           {dots13.map((p, i) => (
-            <circle key={i} cx={p.cx} cy={p.cy} r={4} fill="var(--color-awan-gold)" />
+            <circle key={i} cx={p.cx} cy={p.cy} r={4} fill={theme.selected} />
           ))}
         </svg>
 
         {/* X-axis: first and last date */}
         <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-          <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--color-awan-tx-mute)' }}>
+          <span style={{ fontSize: 9, fontFamily: FontMono, color: theme.mute }}>
             {allDates[0]?.slice(5).replace('-', '/')}
           </span>
-          <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--color-awan-tx-mute)' }}>
+          <span style={{ fontSize: 9, fontFamily: FontMono, color: theme.mute }}>
             {allDates[allDates.length - 1]?.slice(5).replace('-', '/')}
           </span>
         </div>
@@ -234,6 +237,7 @@ function MultiLineChart({ series13, seriesJP7, seriesDW4 }: MultiLineChartProps)
 
 // ─── ScanTab ──────────────────────────────────────────────────────────────────
 export default function ScanTab() {
+  const theme = useTheme();
   const measureStore = useMeasurementStore();
   const weightStore = useWeightStore();
   const [scanRange, setScanRange] = useState<ScanRange>(90);
@@ -290,19 +294,19 @@ export default function ScanTab() {
             onPress={() => setScanRange(r.id)}
             className="flex-1 py-2 border items-center transition-all"
             style={{
-              borderColor: scanRange === r.id ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.08)',
+              borderColor: scanRange === r.id ? theme.selected : 'rgba(255,255,255,0.08)',
               backgroundColor: scanRange === r.id ? 'rgba(212,175,55,0.1)' : 'transparent',
             }}
           >
             <span
               className="text-awan-md font-black tracking-[0.2em] block"
-              style={{ color: scanRange === r.id ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)' }}
+              style={{ color: scanRange === r.id ? theme.selected : theme.mute }}
             >
               {r.label}
             </span>
             <span
               className="text-awan-sm font-black tracking-widest uppercase block mt-0.5"
-              style={{ color: scanRange === r.id ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)', opacity: 0.6 }}
+              style={{ color: scanRange === r.id ? theme.selected : theme.mute, opacity: 0.6 }}
             >
               {r.sublabel}
             </span>
@@ -323,7 +327,7 @@ export default function ScanTab() {
           >
             <span
               className="text-awan-xs font-black tracking-widest uppercase"
-              style={{ color: 'var(--color-awan-tx-mute)' }}
+              style={{ color: theme.mute }}
             >
               SAISIR LES PLIS CUTANÉS POUR AFFICHER LES COURBES
             </span>
@@ -336,32 +340,32 @@ export default function ScanTab() {
         <div className="flex flex-row flex-wrap gap-x-5 gap-y-2 mt-5 pt-4 border-t border-white/5">
           <div className="flex flex-row items-center gap-2">
             <svg width="24" height="10">
-              <line x1="0" y1="5" x2="24" y2="5" stroke="var(--color-awan-gold)" strokeWidth="2" />
-              <circle cx="12" cy="5" r="3" fill="var(--color-awan-gold)" />
+              <line x1="0" y1="5" x2="24" y2="5" stroke={theme.selected} strokeWidth="2" />
+              <circle cx="12" cy="5" r="3" fill={theme.selected} />
             </svg>
             <div>
-              <span className="text-awan-md font-black tracking-widest uppercase" style={{ color: 'var(--color-awan-gold)' }}>13 PLIS</span>
-              <span className="text-awan-sm block" style={{ color: 'var(--color-awan-tx-mute)' }}>Haute densité · {has13 ? `${series13.filter(p => p.v !== null).length} pts` : '—'}</span>
+              <span className="text-awan-md font-black tracking-widest uppercase" style={{ color: theme.selected }}>13 PLIS</span>
+              <span className="text-awan-sm block" style={{ color: theme.mute }}>Haute densité · {has13 ? `${series13.filter(p => p.v !== null).length} pts` : '—'}</span>
             </div>
           </div>
           <div className="flex flex-row items-center gap-2">
             <svg width="24" height="10">
-              <line x1="0" y1="5" x2="24" y2="5" stroke="var(--color-awan-tx)" strokeWidth="1.5" strokeDasharray="6 3" strokeOpacity="0.8" />
-              <circle cx="12" cy="5" r="3" fill="var(--color-awan-tx)" fillOpacity="0.8" />
+              <line x1="0" y1="5" x2="24" y2="5" stroke={theme.title} strokeWidth="1.5" strokeDasharray="6 3" strokeOpacity="0.8" />
+              <circle cx="12" cy="5" r="3" fill={theme.title} fillOpacity="0.8" />
             </svg>
             <div>
-              <span className="text-awan-md font-black tracking-widest uppercase" style={{ color: 'var(--color-awan-tx)' }}>JP7</span>
-              <span className="text-awan-sm block" style={{ color: 'var(--color-awan-tx-mute)' }}>Athlétique · 7 sites · {hasJP7 ? `${seriesJP7.filter(p => p.v !== null).length} pts` : '—'}</span>
+              <span className="text-awan-md font-black tracking-widest uppercase" style={{ color: theme.title }}>JP7</span>
+              <span className="text-awan-sm block" style={{ color: theme.mute }}>Athlétique · 7 sites · {hasJP7 ? `${seriesJP7.filter(p => p.v !== null).length} pts` : '—'}</span>
             </div>
           </div>
           <div className="flex flex-row items-center gap-2">
             <svg width="24" height="10">
-              <line x1="0" y1="5" x2="24" y2="5" stroke="var(--color-awan-tx-mute)" strokeWidth="1.5" strokeDasharray="4 3" strokeOpacity="0.7" />
-              <circle cx="12" cy="5" r="3" fill="var(--color-awan-tx-mute)" fillOpacity="0.7" />
+              <line x1="0" y1="5" x2="24" y2="5" stroke={theme.mute} strokeWidth="1.5" strokeDasharray="4 3" strokeOpacity="0.7" />
+              <circle cx="12" cy="5" r="3" fill={theme.mute} fillOpacity="0.7" />
             </svg>
             <div>
-              <span className="text-awan-md font-black tracking-widest uppercase" style={{ color: 'var(--color-awan-tx-mute)' }}>DW4</span>
-              <span className="text-awan-sm block" style={{ color: 'var(--color-awan-tx-mute)' }}>Population générale · 4 sites · {hasDW4 ? `${seriesDW4.filter(p => p.v !== null).length} pts` : '—'}</span>
+              <span className="text-awan-md font-black tracking-widest uppercase" style={{ color: theme.mute }}>DW4</span>
+              <span className="text-awan-sm block" style={{ color: theme.mute }}>Population générale · 4 sites · {hasDW4 ? `${seriesDW4.filter(p => p.v !== null).length} pts` : '—'}</span>
             </div>
           </div>
         </div>
@@ -372,29 +376,29 @@ export default function ScanTab() {
         <div className="grid grid-cols-3 gap-3">
           {latest.bf13 !== null && (
             <Card className="p-4 bg-white/3 border-white/5" variant="flat">
-              <span className="text-awan-sm font-black tracking-widest uppercase block mb-1" style={{ color: 'var(--color-awan-gold)' }}>13 PLIS</span>
-              <span className="text-2xl font-black font-mono" style={{ color: 'var(--color-awan-gold)' }}>
-                {latest.bf13}<span className="text-xs ml-0.5" style={{ color: 'var(--color-awan-tx-mute)' }}>%</span>
+              <span className="text-awan-sm font-black tracking-widest uppercase block mb-1" style={{ color: theme.selected }}>13 PLIS</span>
+              <span className="text-2xl font-black font-mono" style={{ color: theme.selected }}>
+                {latest.bf13}<span className="text-xs ml-0.5" style={{ color: theme.mute }}>%</span>
               </span>
-              <span className="text-awan-sm font-black uppercase tracking-widest block mt-1" style={{ color: 'var(--color-awan-tx-mute)' }}>{latest.date.slice(5).replace('-', '/')}</span>
+              <span className="text-awan-sm font-black uppercase tracking-widest block mt-1" style={{ color: theme.mute }}>{latest.date.slice(5).replace('-', '/')}</span>
             </Card>
           )}
           {latest.bfJP7 !== null && (
             <Card className="p-4 bg-white/3 border-white/5" variant="flat">
-              <span className="text-awan-sm font-black tracking-widest uppercase block mb-1" style={{ color: 'var(--color-awan-tx)' }}>JP7</span>
-              <span className="text-2xl font-black font-mono" style={{ color: 'var(--color-awan-tx)' }}>
-                {latest.bfJP7}<span className="text-xs ml-0.5" style={{ color: 'var(--color-awan-tx-mute)' }}>%</span>
+              <span className="text-awan-sm font-black tracking-widest uppercase block mb-1" style={{ color: theme.title }}>JP7</span>
+              <span className="text-2xl font-black font-mono" style={{ color: theme.title }}>
+                {latest.bfJP7}<span className="text-xs ml-0.5" style={{ color: theme.mute }}>%</span>
               </span>
-              <span className="text-awan-sm font-black uppercase tracking-widest block mt-1" style={{ color: 'var(--color-awan-tx-mute)' }}>{latest.date.slice(5).replace('-', '/')}</span>
+              <span className="text-awan-sm font-black uppercase tracking-widest block mt-1" style={{ color: theme.mute }}>{latest.date.slice(5).replace('-', '/')}</span>
             </Card>
           )}
           {latest.bfDW4 !== null && (
             <Card className="p-4 bg-white/3 border-white/5" variant="flat">
-              <span className="text-awan-sm font-black tracking-widest uppercase block mb-1" style={{ color: 'var(--color-awan-tx-mute)' }}>DW4</span>
-              <span className="text-2xl font-black font-mono" style={{ color: 'var(--color-awan-tx-mute)' }}>
+              <span className="text-awan-sm font-black tracking-widest uppercase block mb-1" style={{ color: theme.mute }}>DW4</span>
+              <span className="text-2xl font-black font-mono" style={{ color: theme.mute }}>
                 {latest.bfDW4}<span className="text-xs ml-0.5">%</span>
               </span>
-              <span className="text-awan-sm font-black uppercase tracking-widest block mt-1" style={{ color: 'var(--color-awan-tx-mute)' }}>{latest.date.slice(5).replace('-', '/')}</span>
+              <span className="text-awan-sm font-black uppercase tracking-widest block mt-1" style={{ color: theme.mute }}>{latest.date.slice(5).replace('-', '/')}</span>
             </Card>
           )}
         </div>
@@ -412,14 +416,14 @@ export default function ScanTab() {
           >
             <div className="flex flex-row items-center justify-between">
               <div>
-                <span className="text-awan-sm font-black tracking-widest uppercase block mb-1" style={{ color: 'var(--color-awan-tx-mute)' }}>ÉCART MAX INTER-MÉTHODES</span>
-                <span className="text-awan-sm block leading-relaxed" style={{ color: 'var(--color-awan-tx-mute)' }}>
+                <span className="text-awan-sm font-black tracking-widest uppercase block mb-1" style={{ color: theme.mute }}>ÉCART MAX INTER-MÉTHODES</span>
+                <span className="text-awan-sm block leading-relaxed" style={{ color: theme.mute }}>
                   {ecart <= 3 ? 'Cohérence mesure confirmée' : 'Vérifier la technique de saisie'}
                 </span>
               </div>
               <span
                 className="text-2xl font-black font-mono"
-                style={{ color: ecart > 3 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-ok)' }}
+                style={{ color: ecart > 3 ? theme.statusWarn : theme.statusOk }}
               >
                 {ecart}%
               </span>
@@ -431,7 +435,7 @@ export default function ScanTab() {
       {/* Measurement list */}
       {history.length > 0 && (
         <div className="space-y-3">
-          <span className="text-awan-xs font-black tracking-[0.3em] uppercase" style={{ color: 'var(--color-awan-tx-mute)' }}>
+          <span className="text-awan-xs font-black tracking-[0.3em] uppercase" style={{ color: theme.mute }}>
             HISTORIQUE · {scanRange}J
           </span>
           {history.slice(0, 10).map((m, i) => {
@@ -451,11 +455,11 @@ export default function ScanTab() {
             return (
               <Card key={i} className="p-4 bg-white/3 border-white/5" variant="flat">
                 <div className="flex flex-row items-center justify-between mb-3">
-                  <span className="text-awan-sm font-mono font-bold tracking-widest" style={{ color: 'var(--color-awan-gold)' }}>
+                  <span className="text-awan-sm font-mono font-bold tracking-widest" style={{ color: theme.selected }}>
                     {m.date.slice(5).replace('-', '/')}
                   </span>
                   {w && (
-                    <span className="text-awan-sm font-black font-mono" style={{ color: 'var(--color-awan-tx-mute)' }}>
+                    <span className="text-awan-sm font-black font-mono" style={{ color: theme.mute }}>
                       {w.weightKg} KG
                     </span>
                   )}
@@ -463,26 +467,26 @@ export default function ScanTab() {
                 <div className="flex flex-row gap-4">
                   {bf13 !== null && (
                     <div>
-                      <span className="text-awan-sm font-black tracking-widest uppercase block" style={{ color: 'var(--color-awan-gold)' }}>13P</span>
-                      <span className="text-base font-black font-mono" style={{ color: 'var(--color-awan-gold)' }}>{bf13}%</span>
+                      <span className="text-awan-sm font-black tracking-widest uppercase block" style={{ color: theme.selected }}>13P</span>
+                      <span className="text-base font-black font-mono" style={{ color: theme.selected }}>{bf13}%</span>
                     </div>
                   )}
                   {bfJP7 !== null && (
                     <div>
-                      <span className="text-awan-sm font-black tracking-widest uppercase block" style={{ color: 'var(--color-awan-tx)' }}>JP7</span>
-                      <span className="text-base font-black font-mono" style={{ color: 'var(--color-awan-tx)' }}>{bfJP7}%</span>
+                      <span className="text-awan-sm font-black tracking-widest uppercase block" style={{ color: theme.title }}>JP7</span>
+                      <span className="text-base font-black font-mono" style={{ color: theme.title }}>{bfJP7}%</span>
                     </div>
                   )}
                   {bfDW4 !== null && (
                     <div>
-                      <span className="text-awan-sm font-black tracking-widest uppercase block" style={{ color: 'var(--color-awan-tx-mute)' }}>DW4</span>
-                      <span className="text-base font-black font-mono" style={{ color: 'var(--color-awan-tx-mute)' }}>{bfDW4}%</span>
+                      <span className="text-awan-sm font-black tracking-widest uppercase block" style={{ color: theme.mute }}>DW4</span>
+                      <span className="text-base font-black font-mono" style={{ color: theme.mute }}>{bfDW4}%</span>
                     </div>
                   )}
                   {bf13 === null && bfJP7 === null && bfDW4 === null && m.body_fat_pct > 0 && (
                     <div>
-                      <span className="text-awan-sm font-black tracking-widest uppercase block" style={{ color: 'var(--color-awan-tx-mute)' }}>MG</span>
-                      <span className="text-base font-black font-mono" style={{ color: 'var(--color-awan-tx-mute)' }}>{m.body_fat_pct}%</span>
+                      <span className="text-awan-sm font-black tracking-widest uppercase block" style={{ color: theme.mute }}>MG</span>
+                      <span className="text-base font-black font-mono" style={{ color: theme.mute }}>{m.body_fat_pct}%</span>
                     </div>
                   )}
                 </div>

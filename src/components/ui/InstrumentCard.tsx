@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Touch } from './Touch';
+import { useTheme, type AwanTheme } from '../../hooks/useTheme';
+import { FontSans, FontMono } from '../../constants/typography';
 
 export type StatusVariant = 'ok' | 'warn' | 'error' | 'spirit' | 'mute';
 
@@ -16,13 +18,9 @@ interface InstrumentCardProps {
  className?: string;
 }
 
-const STATUS_COLOR: Record<StatusVariant, string> = {
- ok: 'var(--color-awan-status-ok)',
- warn: 'var(--color-awan-status-warn)',
- error: 'var(--color-awan-status-error)',
- spirit: 'var(--color-awan-status-spirit)',
- mute: 'var(--color-awan-tx-mute)',
-};
+function getStatusColor(t: Pick<AwanTheme, 'statusOk' | 'statusWarn' | 'danger' | 'statusSpirit' | 'mute'>): Record<StatusVariant, string> {
+  return { ok: t.statusOk, warn: t.statusWarn, error: t.danger, spirit: t.statusSpirit, mute: t.mute };
+}
 
 export function InstrumentCard({
  label,
@@ -35,14 +33,16 @@ export function InstrumentCard({
  onPress,
  className = '',
 }: InstrumentCardProps) {
+ const theme = useTheme();
+ const STATUS_COLOR = getStatusColor(theme);
  const statusColor = STATUS_COLOR[status];
 
  const inner = (
  <div
  className={`relative flex flex-col justify-between p-4 border overflow-hidden ${className}`}
  style={{
- backgroundColor: 'var(--color-awan-surface)',
- borderColor: 'var(--color-awan-border)',
+ backgroundColor: theme.surface,
+ borderColor: theme.border,
  minHeight: 96,
  }}
  >
@@ -51,10 +51,10 @@ export function InstrumentCard({
  <span
  className="absolute top-2 right-2"
  style={{
- fontFamily: 'var(--font-mono)',
+ fontFamily: FontMono,
  fontSize: '7px',
  fontWeight: 400,
- color: 'var(--color-awan-tx-mute)',
+ color: theme.mute,
  opacity: 0.5,
  letterSpacing: '0.1em',
  }}
@@ -67,10 +67,10 @@ export function InstrumentCard({
  <span
  className="uppercase tracking-[0.2em] block"
  style={{
- fontFamily: 'var(--font-sans)',
+ fontFamily: FontSans,
  fontSize: '8px',
  fontWeight: 300,
- color: 'var(--color-awan-tx-mute)',
+ color: theme.mute,
  }}
  >
  {label}
@@ -80,7 +80,7 @@ export function InstrumentCard({
  <div className="flex items-baseline gap-1 mt-1">
  <span
  style={{
- fontFamily: 'var(--font-mono)',
+ fontFamily: FontMono,
  fontSize: '22px',
  fontWeight: 700,
  color: statusColor,
@@ -93,10 +93,10 @@ export function InstrumentCard({
  {unit && (
  <span
  style={{
- fontFamily: 'var(--font-mono)',
+ fontFamily: FontMono,
  fontSize: '9px',
  fontWeight: 400,
- color: 'var(--color-awan-tx-mute)',
+ color: theme.mute,
  }}
  >
  {unit}
@@ -109,12 +109,10 @@ export function InstrumentCard({
  <span
  className="mt-0.5 block"
  style={{
- fontFamily: 'var(--font-sans)',
+ fontFamily: FontSans,
  fontSize: '9px',
  fontWeight: 300,
- color: delta.startsWith('+')
- ? 'var(--color-awan-status-ok)'
- : 'var(--color-awan-status-error)',
+ color: delta.startsWith('+') ? theme.statusOk : theme.danger,
  }}
  >
  {delta}
