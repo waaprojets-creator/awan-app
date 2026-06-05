@@ -3,6 +3,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAppStore } from '@/data/store/appStore';
 import { useTheme, useThemeSync } from '@/hooks/useTheme';
+import { useDayBoundary } from '@/hooks/useDayBoundary';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import LockScreen from '@/screens/LockScreen';
 import MainLayout from '@/components/MainLayout';
@@ -50,6 +51,7 @@ function SplashLoader() {
 function Root() {
   const { isUnlocked, ready } = useAppStore();
   useThemeSync();
+  useDayBoundary();
 
   useEffect(() => {
     if (!isUnlocked) return;

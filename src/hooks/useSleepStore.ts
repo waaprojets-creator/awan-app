@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { SleepService } from '@/services/sleepService';
 import type { SleepEntryLatest } from '@/data/schemas/sleep/sleepEntry';
 import { useAppStore } from '@/data/store/appStore';
+import { eventBus } from '@/data/events/bus';
 
 export function useSleepStore() {
   const [entries, setEntries] = useState<SleepEntryLatest[]>([]);
@@ -18,12 +19,14 @@ export function useSleepStore() {
 
   const add = useCallback(async (entry: SleepEntryLatest): Promise<void> => {
     await SleepService.save(entry);
+    eventBus.emit('day.ended', { date: entry.date });
     setEntries(prev => [entry, ...prev.filter(e => e.id !== entry.id)]
       .sort((a, b) => b.date.localeCompare(a.date)));
   }, []);
 
   const update = useCallback(async (entry: SleepEntryLatest): Promise<void> => {
     await SleepService.save(entry);
+    eventBus.emit('day.ended', { date: entry.date });
     setEntries(prev =>
       prev.map(e => e.id === entry.id ? entry : e)
         .sort((a, b) => b.date.localeCompare(a.date)),

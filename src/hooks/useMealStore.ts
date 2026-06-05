@@ -3,6 +3,7 @@ import { MealService } from '@/services/mealService';
 import type { MealEntryLatest } from '@/data/schemas/nutrition/mealEntry';
 import { useAppStore } from '@/data/store/appStore';
 import { DbFullError } from '@/data/storage/IStorage';
+import { eventBus } from '@/data/events/bus';
 
 function dispatchDbFull() { window.dispatchEvent(new CustomEvent('awan:db-full')); }
 
@@ -22,6 +23,7 @@ export function useMealStore(date: string) {
   const add = useCallback(async (entry: MealEntryLatest): Promise<void> => {
     try {
       await MealService.save(entry);
+      eventBus.emit('meal.logged', { mealId: entry.id, date: entry.date });
       setMeals(prev => [...prev, entry].sort((a, b) => a.timestamp - b.timestamp));
     } catch (err) {
       if (err instanceof DbFullError) { dispatchDbFull(); return; }
@@ -37,6 +39,7 @@ export function useMealStore(date: string) {
   const update = useCallback(async (entry: MealEntryLatest): Promise<void> => {
     try {
       await MealService.save(entry);
+      eventBus.emit('meal.logged', { mealId: entry.id, date: entry.date });
       setMeals(prev =>
         prev
           .map(e => (e.id === entry.id ? entry : e))

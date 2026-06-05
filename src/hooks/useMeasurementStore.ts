@@ -3,6 +3,7 @@ import { MeasurementService } from '@/services/measurementService';
 import type { MeasurementLatest } from '@/data/schemas/anthropo/measurement';
 import { useAppStore } from '@/data/store/appStore';
 import { DbFullError } from '@/data/storage/IStorage';
+import { eventBus } from '@/data/events/bus';
 
 function dispatchDbFull() { window.dispatchEvent(new CustomEvent('awan:db-full')); }
 
@@ -22,6 +23,7 @@ export function useMeasurementStore() {
   const save = useCallback(async (entry: MeasurementLatest): Promise<void> => {
     try {
       await MeasurementService.save(entry);
+      eventBus.emit('measurement.recorded', { measurementId: entry.id, date: entry.date });
       setHistory(prev => {
         const idx = prev.findIndex(e => e.date === entry.date);
         if (idx >= 0) {

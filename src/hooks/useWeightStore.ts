@@ -3,6 +3,7 @@ import { WeightService } from '@/services/weightService';
 import type { WeightEntryLatest } from '@/data/schemas/body/weightEntry';
 import { useAppStore } from '@/data/store/appStore';
 import { DbFullError } from '@/data/storage/IStorage';
+import { eventBus } from '@/data/events/bus';
 
 function dispatchDbFull() { window.dispatchEvent(new CustomEvent('awan:db-full')); }
 
@@ -23,6 +24,7 @@ export function useWeightStore() {
   const add = useCallback(async (entry: WeightEntryLatest): Promise<void> => {
     try {
       await WeightService.save(entry);
+      eventBus.emit('measurement.recorded', { measurementId: entry.id, date: entry.date });
       setEntries(prev => [entry, ...prev.filter(e => e.id !== entry.id)]
         .sort((a, b) => b.date.localeCompare(a.date)));
     } catch (err) {
@@ -34,6 +36,7 @@ export function useWeightStore() {
   const update = useCallback(async (entry: WeightEntryLatest): Promise<void> => {
     try {
       await WeightService.save(entry);
+      eventBus.emit('measurement.recorded', { measurementId: entry.id, date: entry.date });
       setEntries(prev =>
         prev.map(e => e.id === entry.id ? entry : e)
           .sort((a, b) => b.date.localeCompare(a.date)),
