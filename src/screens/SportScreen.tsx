@@ -115,18 +115,13 @@ function loadBestOneRMs(): Record<string, number> {
 
 async function notifyRestEnd() {
  try {
- const { LocalNotifications } = await import('@capacitor/local-notifications');
- const perm = await LocalNotifications.checkPermissions();
- if (perm.display !== 'granted') {
- await LocalNotifications.requestPermissions();
- }
- await LocalNotifications.schedule({
- notifications: [{
- id: 9001,
- title: 'AWAN SPORT',
- body: 'Repos terminé — Série suivante !',
- schedule: { at: new Date() },
- }],
+ const Notifications = await import('expo-notifications');
+ const { status } = await Notifications.getPermissionsAsync();
+ if (status !== 'granted') { await Notifications.requestPermissionsAsync(); }
+ await Notifications.scheduleNotificationAsync({
+ identifier: '9001',
+ content: { title: 'AWAN SPORT', body: 'Repos terminé — Série suivante !', sound: true },
+ trigger: null,
  });
  } catch {
  try {

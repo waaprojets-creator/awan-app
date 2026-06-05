@@ -8,7 +8,8 @@ import { useAppStore } from '../store/appStore';
 import { useAppState } from '../context/AppStateContext';
 import { Shield, Database, Key, Trash2, Navigation, Brain, BookOpen, Check, X } from 'lucide-react';
 import { HexagonLogo } from '../constants/icons';
-import { useLocation } from 'wouter';
+import { Platform } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { safeStorage } from '../utils/safeStorage';
 import { PageWrapper } from '../components/Animated';
 import { Card } from '../components/ui/Card';
@@ -61,11 +62,7 @@ function buildExportFilename(): string {
 }
 
 function isNativePlatform(): boolean {
-  return (
-    typeof (globalThis as Record<string, unknown>)['Capacitor'] !== 'undefined' &&
-    (globalThis as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor
-      ?.isNativePlatform?.() === true
-  );
+  return Platform.OS === 'android' || Platform.OS === 'ios';
 }
 
 async function exportBackup(): Promise<{ ok: boolean; path?: string; error?: string }> {
@@ -75,14 +72,12 @@ async function exportBackup(): Promise<{ ok: boolean; path?: string; error?: str
 
   if (isNativePlatform()) {
     try {
-      const { Filesystem, Directory } = await import('@capacitor/filesystem');
-      await Filesystem.writeFile({
-        path: `Download/${filename}`,
-        data: json,
-        directory: Directory.ExternalStorage,
-        encoding: 'utf8' as any,
-      });
-      return { ok: true, path: `Téléchargements/${filename}` };
+      const FileSystem = await import('expo-file-system');
+      const Sharing = await import('expo-sharing');
+      const uri = (FileSystem.documentDirectory ?? '') + filename;
+      await FileSystem.writeAsStringAsync(uri, json, { encoding: FileSystem.EncodingType.UTF8 });
+      await Sharing.shareAsync(uri);
+      return { ok: true, path: filename };
     } catch (e) {
       return { ok: false, error: String(e) };
     }
@@ -113,7 +108,7 @@ async function purgeAllData() {
 
 export default function SettingsScreen() {
  const insets = useSafeAreaInsets();
- const [, setLocation] = useLocation();
+ const navigation = useNavigation();
  const { db, updateDb } = useAppState() as any;
  const theme = useTheme();
  const themeMode = useThemeMode();
@@ -185,7 +180,7 @@ export default function SettingsScreen() {
    onPress={() => {
      safeStorage.set('awan.moonmenu.pending-edit', '1');
      window.dispatchEvent(new Event('moonmenu:open-edit'));
-     setLocation('/');
+     navigation.navigate('Dashboard' as never);
    }}
    className="bg-white/3 border border-white/5 p-6 flex-row items-center gap-5 mb-3"
  >
@@ -344,7 +339,7 @@ export default function SettingsScreen() {
  {/* MANIFESTE */}
  <div className="mb-10">
  <Heading level={4} mono subtitle="Identité & Vision" className="mb-6">MANIFESTE</Heading>
- <Touch onPress={() => setLocation('/philosophie')} className="bg-white/3 border border-white/5 p-6 flex-row items-center gap-5">
+ <Touch onPress={() => navigation.navigate('Philosophie' as never)} className="bg-white/3 border border-white/5 p-6 flex-row items-center gap-5">
    <div className="w-10 h-10 bg-awan-gold/10 flex items-center justify-center">
      <BookOpen size={18} color={theme.selected} />
    </div>

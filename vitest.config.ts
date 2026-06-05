@@ -10,6 +10,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      'react-native': 'react-native-web',
+      'expo-status-bar': path.resolve(__dirname, 'src/__mocks__/expo-status-bar.ts'),
     },
   },
 });

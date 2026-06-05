@@ -1,15 +1,9 @@
+import { Platform } from 'react-native';
 import type { IStorage } from './IStorage';
 import { safeStorage } from '../../utils/safeStorage';
 
-const AWAN_DB_PASSPHRASE = 'awan-v4-local';
-
-export async function initStorageEncryption(): Promise<void> {
-  if (!isNativePlatform()) return;
-  try {
-    const { CapacitorSQLite } = await import('@capacitor-community/sqlite');
-    await CapacitorSQLite.setEncryptionSecret({ passphrase: AWAN_DB_PASSPHRASE });
-  } catch { /* web ou plugin absent — ignoré */ }
-}
+// Stub retained for API compat (LockScreen imports it); encryption handled by OS on expo-sqlite
+export async function initStorageEncryption(): Promise<void> {}
 
 const MIGRATION_FLAG = 'awan.migration.multidb';
 
@@ -18,11 +12,7 @@ let _userInstance: IStorage | null = null;
 let _migrationPromise: Promise<void> | null = null;
 
 function isNativePlatform(): boolean {
-  return (
-    typeof (globalThis as Record<string, unknown>)['Capacitor'] !== 'undefined' &&
-    (globalThis as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor
-      ?.isNativePlatform?.() === true
-  );
+  return Platform.OS === 'android' || Platform.OS === 'ios';
 }
 
 async function createStorage(role: 'app' | 'user'): Promise<IStorage> {

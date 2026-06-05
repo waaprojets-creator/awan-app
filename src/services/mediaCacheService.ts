@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core';
+import { Platform } from 'react-native';
 import { MEDIA_CACHE_MAX_BYTES } from '@/constants/app';
 
 // Media cache — 3-level structure: CDN-base / exercise-folder / {0|1}.jpg
@@ -12,7 +12,7 @@ interface LruEntry { size: number; lastAccess: number; }
 const _mem = new Map<string, string>();
 
 function isNative(): boolean {
-  return Capacitor.isNativePlatform();
+  return Platform.OS !== 'web';
 }
 
 function lruKey(exerciseId: string, imgIndex: 0 | 1): string {

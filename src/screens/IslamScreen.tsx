@@ -173,42 +173,39 @@ function HijriCalendar({
 
 async function schedulePrayerNotifications(times: Record<string, unknown>): Promise<void> {
   try {
-    const { LocalNotifications } = await import('@capacitor/local-notifications');
-    const perm = await LocalNotifications.checkPermissions();
-    if (perm.display !== 'granted') {
-      const req = await LocalNotifications.requestPermissions();
-      if (req.display !== 'granted') return;
+    const Notifications = await import('expo-notifications');
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== 'granted') {
+      const { status: next } = await Notifications.requestPermissionsAsync();
+      if (next !== 'granted') return;
     }
-    await LocalNotifications.cancel({ notifications: [
-      { id: 1001 }, { id: 1002 }, { id: 1003 }, { id: 1004 }, { id: 1005 },
-    ]});
+    for (const id of ['1001', '1002', '1003', '1004', '1005']) {
+      await Notifications.cancelScheduledNotificationAsync(id).catch(() => {});
+    }
     const prayers = [
-      { id: 1001, name: 'Fajr',    time: times['fajr'] as Date },
-      { id: 1002, name: 'Dhuhr',   time: times['dhuhr'] as Date },
-      { id: 1003, name: 'Asr',     time: times['asr'] as Date },
-      { id: 1004, name: 'Maghrib', time: times['maghrib'] as Date },
-      { id: 1005, name: 'Isha',    time: times['isha'] as Date },
+      { id: '1001', name: 'Fajr',    time: times['fajr'] as Date },
+      { id: '1002', name: 'Dhuhr',   time: times['dhuhr'] as Date },
+      { id: '1003', name: 'Asr',     time: times['asr'] as Date },
+      { id: '1004', name: 'Maghrib', time: times['maghrib'] as Date },
+      { id: '1005', name: 'Isha',    time: times['isha'] as Date },
     ];
     const now = new Date();
-    const future = prayers.filter(p => p.time instanceof Date && p.time > now);
-    if (future.length === 0) return;
-    await LocalNotifications.schedule({
-      notifications: future.map(p => ({
-        id: p.id,
-        title: 'AWAN · ISLAM',
-        body: `${p.name} — heure de la prière`,
-        schedule: { at: p.time },
-      })),
-    });
+    for (const p of prayers.filter(p => p.time instanceof Date && p.time > now)) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: p.id,
+        content: { title: 'AWAN · ISLAM', body: `${p.name} — heure de la prière`, sound: true },
+        trigger: { date: p.time } as any,
+      });
+    }
   } catch { /* notifications non supportées sur ce contexte */ }
 }
 
 async function cancelPrayerNotifications(): Promise<void> {
   try {
-    const { LocalNotifications } = await import('@capacitor/local-notifications');
-    await LocalNotifications.cancel({ notifications: [
-      { id: 1001 }, { id: 1002 }, { id: 1003 }, { id: 1004 }, { id: 1005 },
-    ]});
+    const Notifications = await import('expo-notifications');
+    for (const id of ['1001', '1002', '1003', '1004', '1005']) {
+      await Notifications.cancelScheduledNotificationAsync(id).catch(() => {});
+    }
   } catch { /* ok */ }
 }
 
