@@ -218,3 +218,37 @@ Migration vers React Navigation (J0.5).
 ---
 
 *Tracker généré le 2026-06-04 — audit direct commit `4aae919`.*
+
+---
+
+## Section G — Checklist de clôture J0 (à valider en J0.8)
+
+**Ces critères doivent tous être cochés avant de merger `feat/expo-migration` dans `main`.**
+
+### G1 — Intégrité des données SQLite
+
+- [ ] **Checksum de migration** : row-count identique entre base Capacitor (avant) et base expo-sqlite (après). Vérifier pour chaque préfixe clé : `nutrition.meal`, `sport.session`, `sleep.entry`, `body.weight`, `anthropo.measurement`, `islam.prayer`
+- [ ] **WAL actif** : `PRAGMA journal_mode;` retourne `wal` au démarrage (log console confirmé)
+- [ ] **IStorage inchangée** : aucune modification de signature dans `src/data/storage/IStorage.ts` — tous les services appellent la même interface
+
+### G2 — Parité fonctionnelle et design
+
+- [ ] **CSS vars purgées** : `grep -rn "var(--" src/` → 0 résultat
+- [ ] **Tokens couverts** : tous les tokens manquants (Section D) ajoutés dans `light.js`/`dark.js`/`black.js`
+- [ ] **Parité visuelle** : thème light + dark + black validés sur émulateur (captures d'écran comparatives)
+- [ ] **120 Hz** : profiler React Native — aucun drop de frame lors des transitions et du scroll timeline
+
+### G3 — Stabilité technique
+
+- [ ] **TypeScript** : `npx tsc --noEmit` → 0 erreurs
+- [ ] **Tests** : `npm test` (vitest) → suite existante 100% verte
+- [ ] **Build physique** : APK signé installé et démarré sur appareil réel Android sans crash ni écran blanc
+- [ ] **Question de clôture** : `rm -rf node_modules android/ ios/ && eas build` → build réussi, base de données lue avec 0 erreur de schéma
+
+### G4 — Gouvernance et sécurité
+
+- [ ] **Audit réseau** : network monitor Android Studio — aucune requête sortante émise pendant une session complète
+- [ ] **Zéro Capacitor** : `grep -rn "@capacitor" src/` → 0 résultat
+- [ ] **Zéro motion** : `grep -rn "from 'motion" src/` → 0 résultat
+- [ ] **Zéro wouter** : `grep -rn "from 'wouter" src/` → 0 résultat
+- [ ] **Critères j0_plan_migration_expo.md** : toutes les cases J0.0→J0.8 cochées
