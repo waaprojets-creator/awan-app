@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { useAppStore } from '@/data/store/appStore';
 import * as lightTokens from '../constants/light';
 import * as darkTokens from '../constants/dark';
@@ -63,6 +64,7 @@ export function useColorMap(): Record<string, string> {
 
 export function useThemeSync(): void {
   const theme = useTheme();
+  const mode = useThemeMode();
 
   useEffect(() => {
     const root = document.documentElement;
@@ -86,5 +88,15 @@ export function useThemeSync(): void {
     // Status liés au thème
     root.style.setProperty('--color-awan-status-error',  theme.danger);
     root.style.setProperty('--color-awan-status-spirit', theme.selected);
-  }, [theme]);
+
+    // Synchronisation native StatusBar (Android/iOS uniquement)
+    if (Capacitor.isNativePlatform()) {
+      import('@capacitor/status-bar').then(({ StatusBar, Style }) => {
+        void StatusBar.setBackgroundColor({ color: theme.bg });
+        // Thème clair → icônes sombres ; dark/black → icônes claires
+        const style = mode === 'light' ? Style.Dark : Style.Light;
+        void StatusBar.setStyle({ style });
+      }).catch(() => {});
+    }
+  }, [theme, mode]);
 }
