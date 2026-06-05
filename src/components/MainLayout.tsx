@@ -125,14 +125,14 @@ export default function MainLayout() {
       <div
         className="absolute inset-0 pointer-events-none opacity-[0.03] z-0"
         style={{
-          backgroundImage: 'radial-gradient(circle, var(--color-awan-gold) 1px, transparent 1px)',
+          backgroundImage: `radial-gradient(circle, ${theme.selected} 1px, transparent 1px)`,
           backgroundSize: '32px 32px',
         }}
       />
       <div className="absolute inset-0 pointer-events-none z-50 opacity-[0.015] awan-scan-line" />
 
       {showNetworkBanner && !isOnline && (
-        <div className="w-full py-1.5 flex items-center justify-center" style={{ backgroundColor: 'var(--color-awan-status-warn)', zIndex: 9999 }}>
+        <div className="w-full py-1.5 flex items-center justify-center" style={{ backgroundColor: theme.statusWarn, zIndex: 9999 }}>
           <span className="text-xs font-black text-black uppercase tracking-widest">HORS LIGNE</span>
         </div>
       )}
@@ -140,8 +140,8 @@ export default function MainLayout() {
       <View style={s.body}>
         <ScreenErrorBoundary key={location}>
           <Suspense fallback={
-            <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: 'var(--color-awan-bg)' }}>
-              <ActivityIndicator size="small" color="var(--color-awan-gold)" />
+            <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: theme.bg }}>
+              <ActivityIndicator size="small" color={theme.selected} />
             </div>
           }>
           <AnimatePresence mode="wait">
