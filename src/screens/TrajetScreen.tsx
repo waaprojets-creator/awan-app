@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 
 import { useTheme } from '../hooks/useTheme';
+import { FontSans } from '../constants/typography';
 import { ds, uid } from '../utils/storage';
 import { TRANSPORT_ICONS } from '../constants/icons';
 import { L as LABELS, TRANSPORT_OPTIONS } from '../constants/labels';
@@ -248,8 +249,8 @@ export default function TrajetScreen() {
           )}
 
           {/* Widget choix de véhicule */}
-          <div className="p-4 border mb-6" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border)' }}>
-            <span className="uppercase block mb-3" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 700, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+          <div className="p-4 border mb-6" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
+            <span className="uppercase block mb-3" style={{ fontFamily: FontSans, fontSize: '7px', fontWeight: 700, color: theme.mute, letterSpacing: '0.3em' }}>
               {(LABELS as any).dash.widgets.transport}
             </span>
             <div className="flex flex-row gap-2">
@@ -259,10 +260,10 @@ export default function TrajetScreen() {
                 const active = activeKey === opt.key;
                 return (
                   <Touch key={opt.key} className="flex-1 flex flex-col items-center p-3 border transition-all"
-                    style={{ backgroundColor: active ? 'rgba(212,175,55,0.08)' : 'transparent', borderColor: active ? 'var(--color-awan-gold)' : 'var(--color-awan-border)' }}
+                    style={{ backgroundColor: active ? 'rgba(212,175,55,0.08)' : 'transparent', borderColor: active ? theme.selected : theme.border }}
                     onPress={() => setMode(ORS_MODE[opt.key] ?? 'driving-car')}>
-                    {Icon && <Icon size={18} color={active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)'} />}
-                    <span className="mt-1 uppercase" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: active ? 700 : 400, color: active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>
+                    {Icon && <Icon size={18} color={active ? theme.selected : theme.mute} />}
+                    <span className="mt-1 uppercase" style={{ fontFamily: FontSans, fontSize: '7px', fontWeight: active ? 700 : 400, color: active ? theme.selected : theme.mute, letterSpacing: '0.2em' }}>
                       {opt.label}
                     </span>
                   </Touch>
