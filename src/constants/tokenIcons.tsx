@@ -4,6 +4,7 @@ import {
   Map, Moon, Ruler, Flag, Plus, Brain, Flame, Radio,
   FileText, Zap, Clipboard, Dna, Activity, Droplets,
 } from 'lucide-react';
+import { useTheme } from '../hooks/useTheme';
 
 // Token icon keys (strings stored in entry.tokens[].icon)
 export const TOKEN_ICON_MAP: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
@@ -49,7 +50,8 @@ interface TokenIconProps {
   color?: string;
 }
 
-export function TokenIcon({ iconKey = 'file', size = 16, color = 'var(--color-awan-gold)' }: TokenIconProps) {
+export function TokenIcon({ iconKey = 'file', size = 16, color }: TokenIconProps) {
+  const theme = useTheme();
   const Icon = TOKEN_ICON_MAP[iconKey] ?? FileText;
-  return <Icon size={size} color={color} strokeWidth={1.5} />;
+  return <Icon size={size} color={color ?? theme.selected} strokeWidth={1.5} />;
 }

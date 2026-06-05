@@ -16,6 +16,7 @@ import { ChevronLeft, Plus, History, Layout, Filter, Terminal, BookMarked, Trash
 import { motion, AnimatePresence } from 'motion/react';
 import { TokenIcon, MODULE_ICON_KEY } from '../constants/tokenIcons';
 import { L } from '../constants/labels';
+import { useTheme } from '../hooks/useTheme';
 
 const MODULE_LABELS: Record<string, string> = {
   nutrition:   (L as any).modules.nutrition?.name ?? 'NUTRITION',
@@ -42,6 +43,7 @@ export default function JournalScreen() {
 
   const entries = getEntriesByDate(selectedDate);
   const journalStore = useJournalStore(selectedDate);
+  const theme = useTheme();
 
   const handleAddEntry = () => {
     if (!inputText.trim()) return;
@@ -125,7 +127,7 @@ export default function JournalScreen() {
                     onPress={() => setActiveModule(mod)}
                   >
                     <div className="flex flex-row items-center gap-2">
-                       <TokenIcon iconKey={MODULE_ICON_KEY[mod.toLowerCase()] ?? 'file'} size={12} color={activeModule === mod ? '#000' : 'var(--color-awan-tx-mute)'} />
+                       <TokenIcon iconKey={MODULE_ICON_KEY[mod.toLowerCase()] ?? 'file'} size={12} color={activeModule === mod ? '#000' : theme.mute} />
                        <span className={`text-awan-md font-black uppercase tracking-widest ${activeModule === mod ? 'text-black' : 'text-awan-tx-mute'}`}>{MODULE_LABELS[mod] ?? mod.toUpperCase()}</span>
                     </div>
                   </Touch>
