@@ -18,12 +18,15 @@ Cette devise est la raison d'être d'AWAN. Toute décision produit/design/code d
 
 Quand l'utilisateur demande de builder l'APK (toute formulation : "build AWAN", "fais le build", "lance le build", etc.) :
 
-1. Merger la branche feature courante dans `main`
-2. Pusher `main` vers le remote
-3. Exécuter `npm run build && npx cap sync android`
-4. Informer l'utilisateur de lancer `./gradlew assembleDebug` en local (Android SDK non disponible dans cet environnement)
+1. **Régénérer le seed** avec `npx ts-node scripts/generate-seed.ts` — `TODAY` est automatiquement le jour du build
+2. Merger la branche feature courante dans `main`
+3. Pusher `main` vers le remote
+4. Exécuter `npm run build && npx cap sync android`
+5. Informer l'utilisateur de lancer `./gradlew assembleDebug` en local (Android SDK non disponible dans cet environnement)
 
 ```bash
+npx ts-node scripts/generate-seed.ts          # seed calé sur aujourd'hui
+git add public/data/seed-demo.json && git commit -m "chore(seed): régénération au $(date +%Y-%m-%d)"
 git checkout main
 git merge <feature-branch> --no-edit
 git push https://waaprojets-creator:<PAT>@github.com/waaprojets-creator/awan-app.git main
