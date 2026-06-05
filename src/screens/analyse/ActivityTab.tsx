@@ -58,7 +58,7 @@ function PieChart({ data, size = 180 }: { data: ActivityEntry[]; size?: number }
   const cx = size / 2; const cy = size / 2; const r = size / 2 - 15;
 
   if (total === 0) {
-    return <Svg width={size} height={size}><SvgCircle cx={cx} cy={cy} r={r} fill="var(--color-awan-border-soft)" /></Svg>;
+    return <Svg width={size} height={size}><SvgCircle cx={cx} cy={cy} r={r} fill={theme.borderSoft} /></Svg>;
   }
 
   let cumulative = 0;
