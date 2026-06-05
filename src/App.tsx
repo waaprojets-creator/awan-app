@@ -7,9 +7,12 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import LockScreen from '@/screens/LockScreen';
 import MainLayout from '@/components/MainLayout';
 import { importFromJson } from '@/utils/importJson';
-import { safeStorage } from '@/utils/safeStorage';
+import { getStorage } from '@/data/storage/storageService';
 
-const SEED_FLAG = 'awan.seed.loaded';
+// Flag stocké dans le même storage (SQLite/IndexedDB) que les données.
+// Si la base est vidée (réinstall, clear data), le flag l'est aussi → re-seed automatique.
+// (Avec safeStorage/localStorage le flag survivait au clear SQLite → 0 entrées pour toujours)
+const SEED_FLAG_KEY = 'awan.seed.loaded';
 
 async function autoLoadSeed() {
   try {
@@ -18,10 +21,14 @@ async function autoLoadSeed() {
     const text = await res.text();
     let seedTs = '1';
     try { seedTs = (JSON.parse(text) as { generatedAt?: string }).generatedAt ?? '1'; } catch { /* ignore */ }
-    if (safeStorage.get(SEED_FLAG) === seedTs) return;
+
+    const storage = await getStorage();
+    const storedTs = await storage.get<string>(SEED_FLAG_KEY, (raw) => String(raw));
+    if (storedTs === seedTs) return;
+
     const result = await importFromJson(text);
     if (result.success) {
-      safeStorage.set(SEED_FLAG, seedTs);
+      await storage.set(SEED_FLAG_KEY, seedTs);
       useAppStore.getState().bumpDataVersion();
     } else {
       console.warn('[Seed] import failed:', result.message);
