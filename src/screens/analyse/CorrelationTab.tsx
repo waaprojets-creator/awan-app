@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from '../../hooks/useTheme';
 import { ds } from '../../utils/storage';
 import type { WorkoutSessionLatest } from '../../data/schemas/sport/routine';
 import type { MeasurementLatest } from '../../data/schemas/anthropo/measurement';
@@ -13,6 +14,7 @@ interface CorrelationTabProps {
 }
 
 export function CorrelationTab({ sessions, history, weightEntries, todayKcal }: CorrelationTabProps) {
+  const theme = useTheme();
   const last30 = React.useMemo(() => Array.from({ length: 30 }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (29 - i));
     const str = ds(d);
@@ -48,17 +50,17 @@ export function CorrelationTab({ sessions, history, weightEntries, todayKcal }: 
               {d.weight && avgWeight ? (
                 <div className="w-full" style={{
                   height: `${Math.max(4, Math.min(48, (d.weight / avgWeight) * 32))}px`,
-                  backgroundColor: d.hasWorkout ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.12)',
+                  backgroundColor: d.hasWorkout ? theme.selected : 'rgba(255,255,255,0.12)',
                 }} />
               ) : (
-                <div className="w-full h-1" style={{ backgroundColor: d.hasWorkout ? 'var(--color-awan-gold)' : 'transparent' }} />
+                <div className="w-full h-1" style={{ backgroundColor: d.hasWorkout ? theme.selected : 'transparent' }} />
               )}
             </div>
           ))}
         </div>
         <div className="flex flex-row gap-4 mt-3">
           <div className="flex flex-row items-center gap-1.5">
-            <div className="w-3 h-3" style={{ backgroundColor: 'var(--color-awan-gold)' }} />
+            <div className="w-3 h-3" style={{ backgroundColor: theme.selected }} />
             <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">Séance</span>
           </div>
           <div className="flex flex-row items-center gap-1.5">

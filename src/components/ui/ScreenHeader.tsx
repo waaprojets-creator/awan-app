@@ -1,4 +1,6 @@
 import React from 'react';
+import { useTheme } from '../../hooks/useTheme';
+import { FontSans, FwLabel } from '../../constants/typography';
 
 interface ScreenHeaderProps {
   tag?: string;
@@ -7,14 +9,15 @@ interface ScreenHeaderProps {
 }
 
 export function ScreenHeader({ title, className = '' }: ScreenHeaderProps) {
+  const theme = useTheme();
   return (
     <div className={`flex justify-between items-baseline mb-6 ${className}`}>
       <span
         style={{
-          fontFamily: 'var(--font-sans)',
+          fontFamily: FontSans,
           fontSize: '14px',
-          fontWeight: 'var(--fw-label)' as any,
-          color: 'var(--color-awan-tx)',
+          fontWeight: FwLabel as any,
+          color: theme.title,
           letterSpacing: '0.05em',
         }}
       >

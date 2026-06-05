@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTheme, type AwanTheme } from '../../hooks/useTheme';
 import { Activity } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
@@ -20,16 +21,16 @@ interface ReadinessData {
   mood: number | null;            // last journal mood 1-5
 }
 
-function readinessBadge(data: ReadinessData): { label: string; color: string } {
+function readinessBadge(data: ReadinessData, t: Pick<AwanTheme, 'danger' | 'statusWarn' | 'statusOk'>): { label: string; color: string } {
   let alerts = 0;
   if (data.bpmRest !== null && data.bpmRest > 70) alerts++;
   if (data.sleepH !== null && data.sleepH < 6) alerts++;
   if (data.sleepQuality !== null && data.sleepQuality <= 2) alerts++;
   if (data.mood !== null && data.mood <= 2) alerts++;
 
-  if (alerts >= 2) return { label: 'REPOS RECOMMANDÉ', color: 'var(--color-awan-status-error)' };
-  if (alerts === 1) return { label: 'VIGILANCE', color: 'var(--color-awan-status-warn)' };
-  return { label: 'OPTIMAL', color: 'var(--color-awan-status-ok)' };
+  if (alerts >= 2) return { label: 'REPOS RECOMMANDÉ', color: t.danger };
+  if (alerts === 1) return { label: 'VIGILANCE', color: t.statusWarn };
+  return { label: 'OPTIMAL', color: t.statusOk };
 }
 
 function bpmStatus(bpm: number | null): StatusVariant {
@@ -56,6 +57,7 @@ function moodStatus(m: number | null): StatusVariant {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function ReadinessTab() {
+  const theme = useTheme();
   const [data, setData] = useState<ReadinessData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -93,7 +95,7 @@ export function ReadinessTab() {
 
   if (!data) return <EmptyState Icon={Activity} label="Données insuffisantes" />;
 
-  const badge = readinessBadge(data);
+  const badge = readinessBadge(data, theme);
 
   return (
     <div className="space-y-8">
