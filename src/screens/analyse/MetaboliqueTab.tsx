@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTheme } from '../../hooks/useTheme';
 import { View, Dimensions } from 'react-native';
 import Svg, { Rect, Line, Path } from 'react-native-svg';
 import { Zap } from 'lucide-react';
@@ -65,6 +66,7 @@ async function load12Weeks(targetKcal: number): Promise<WeekMetabo[]> {
 }
 
 export function MetaboliqueTab() {
+  const theme = useTheme();
   const [mode, setMode] = useState<ViewMode>('31j');
   const [data31, setData31] = useState<DayMetabo[] | null>(null);
   const [data12, setData12] = useState<WeekMetabo[] | null>(null);
@@ -121,11 +123,11 @@ export function MetaboliqueTab() {
         <MetaboliqueChart data={barData} targetKcal={profile.targetKcal} />
         <div className="flex flex-row gap-4 mt-3">
           <div className="flex flex-row items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'var(--color-awan-status-ok)' }} />
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: theme.statusOk }} />
             <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">Anabolisme</span>
           </div>
           <div className="flex flex-row items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'var(--color-awan-status-error)' }} />
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: theme.danger }} />
             <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">Déficit</span>
           </div>
         </div>
@@ -143,6 +145,7 @@ export function MetaboliqueTab() {
 interface BarDatum { label: string; anabPct: number; catabPct: number; kcal: number }
 
 function MetaboliqueChart({ data, targetKcal }: { data: BarDatum[]; targetKcal: number }) {
+  const theme = useTheme();
   const W = Dimensions.get('window').width - 88;
   const H = 180;
   const pad = { t: 10, b: 20 };
@@ -183,7 +186,7 @@ function MetaboliqueChart({ data, targetKcal }: { data: BarDatum[]; targetKcal: 
                 <SvgRect_
                   x={x} y={pad.t + chartH - anabH}
                   width={barW} height={anabH}
-                  fill="var(--color-awan-status-ok)" opacity={0.7}
+                  fill={theme.statusOk} opacity={0.7}
                 />
               )}
               {/* Déficit (rouge, overlay) */}
@@ -191,7 +194,7 @@ function MetaboliqueChart({ data, targetKcal }: { data: BarDatum[]; targetKcal: 
                 <SvgRect_
                   x={x} y={pad.t + chartH - catabH}
                   width={barW} height={catabH}
-                  fill="var(--color-awan-status-error)" opacity={0.5}
+                  fill={theme.danger} opacity={0.5}
                 />
               )}
             </React.Fragment>

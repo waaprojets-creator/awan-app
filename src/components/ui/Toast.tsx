@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { useTheme } from '../../hooks/useTheme';
+import { FontMono } from '../../constants/typography';
 import { motion, AnimatePresence } from 'motion/react';
 
 type ToastType = 'success' | 'error' | 'info';
@@ -10,6 +12,7 @@ const Ctx = createContext<{ toast: (msg: string, type?: ToastType) => void }>({ 
 export function useToast() { return useContext(Ctx); }
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const theme = useTheme();
   const [toasts, setToasts] = useState<ToastMsg[]>([]);
 
   const toast = useCallback((message: string, type: ToastType = 'info') => {
@@ -19,9 +22,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const COLOR: Record<ToastType, string> = {
-    success: 'var(--color-awan-status-ok)',
-    error:   'var(--color-awan-status-error)',
-    info:    'var(--color-awan-gold)',
+    success: theme.statusOk,
+    error:   theme.danger,
+    info:    theme.selected,
   };
 
   return (
@@ -37,10 +40,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.22 }}
               style={{
-                backgroundColor: 'var(--color-awan-surface)',
+                backgroundColor: theme.surface,
                 borderLeft: `3px solid ${COLOR[t.type]}`,
                 color: COLOR[t.type],
-                fontFamily: 'var(--font-mono)',
+                fontFamily: FontMono,
                 fontSize: '10px',
                 fontWeight: 700,
                 letterSpacing: '0.2em',
