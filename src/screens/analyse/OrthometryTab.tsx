@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTheme } from '../../hooks/useTheme';
 import { Ruler } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
@@ -27,6 +28,7 @@ interface OrthometryTabProps {
 }
 
 export function OrthometryTab({ history, loading }: OrthometryTabProps) {
+  const theme = useTheme();
   const latest = useMemo(
     () => history.slice().sort((a, b) => b.date.localeCompare(a.date))[0] ?? null,
     [history],
@@ -80,7 +82,7 @@ export function OrthometryTab({ history, loading }: OrthometryTabProps) {
                   <span className="text-awan-xs font-mono text-awan-tx-mute">{r.leftCm}↔{r.rightCm}</span>
                   <span
                     className="text-awan-sm font-black font-mono"
-                    style={{ color: r.asymmetric ? 'var(--color-awan-status-error)' : 'var(--color-awan-status-ok)' }}
+                    style={{ color: r.asymmetric ? theme.danger : theme.statusOk }}
                   >
                     Δ{r.diffPct.toFixed(1)}%
                   </span>
@@ -93,7 +95,7 @@ export function OrthometryTab({ history, loading }: OrthometryTabProps) {
 
       {results.some(r => r.asymmetric) && (
         <Card className="p-5 bg-awan-status-error/5 border-awan-status-error/20" variant="flat">
-          <span className="awan-label mb-3 block" style={{ color: 'var(--color-awan-status-error)' }}>ASYMÉTRIES DÉTECTÉES</span>
+          <span className="awan-label mb-3 block" style={{ color: theme.danger }}>ASYMÉTRIES DÉTECTÉES</span>
           <div className="space-y-1">
             {results.filter(r => r.asymmetric).map(r => (
               <span key={r.muscleKey} className="block text-awan-md text-awan-tx">

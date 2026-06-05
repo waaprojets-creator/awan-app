@@ -4,6 +4,8 @@ import { motion } from 'motion/react';
 import { HexagonLogo, ICON_SIZE } from '../constants/icons';
 import { L } from '../constants/labels';
 import { Touch } from './ui/Touch';
+import { useTheme } from '../hooks/useTheme';
+import { FontSans } from '../constants/typography';
 
 interface AppHeaderProps {
   currentRoute: string;
@@ -11,7 +13,7 @@ interface AppHeaderProps {
 }
 
 const LABEL_STYLE_BASE = {
-  fontFamily: 'var(--font-sans)',
+  fontFamily: FontSans,
   fontWeight: 900,
   letterSpacing: '0.33em',
   textTransform: 'uppercase' as const,
@@ -19,6 +21,7 @@ const LABEL_STYLE_BASE = {
 } as const;
 
 export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) {
+  const theme = useTheme();
   const insets = useSafeAreaInsets();
   const isOn = (name: string) => currentRoute === name;
 
@@ -27,7 +30,7 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
       className="flex flex-row items-center justify-between px-6 pb-2 border-b border-white/5"
       style={{
         paddingTop: insets.top + 8,
-        backgroundColor: 'var(--color-awan-bg)',
+        backgroundColor: theme.bg,
       }}
     >
       {/* AWAN latin → Analyse */}
@@ -41,7 +44,7 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
             style={{
               ...LABEL_STYLE_BASE,
               fontSize: '13px',
-              color: isOn('Analyse') ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)',
+              color: isOn('Analyse') ? theme.selected : theme.title,
             }}
           >
             {(L as { header: { latin: string } }).header.latin}
@@ -63,7 +66,7 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
             <HexagonLogo
               size={(ICON_SIZE as { header: number }).header}
               variant="simple"
-              color={isOn('Dashboard') ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)'}
+              color={isOn('Dashboard') ? theme.selected : theme.mute}
             />
           </motion.div>
         </Touch>
@@ -80,7 +83,7 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
             style={{
               ...LABEL_STYLE_BASE,
               fontSize: '14px',
-              color: isOn('Islam') ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)',
+              color: isOn('Islam') ? theme.selected : theme.title,
             }}
           >
             {(L as { header: { arabic: string } }).header.arabic}
