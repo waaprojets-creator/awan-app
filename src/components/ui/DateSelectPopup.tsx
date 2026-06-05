@@ -93,7 +93,7 @@ export function DateSelectPopup({ value, onChange, max, min, label }: DateSelect
           disabled={!canPrev}
           style={{
             width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
+            background: theme.surfaceDim, border: `1px solid ${theme.borderSoft}`,
             opacity: canPrev ? 1 : 0.3,
           }}
         >
@@ -106,7 +106,7 @@ export function DateSelectPopup({ value, onChange, max, min, label }: DateSelect
           style={{
             flex: 1, height: 36, display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
-            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
+            background: theme.surfaceDim, border: `1px solid ${theme.borderSoft}`,
           }}
         >
           {label && (
@@ -125,7 +125,7 @@ export function DateSelectPopup({ value, onChange, max, min, label }: DateSelect
           disabled={!canNext}
           style={{
             width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
+            background: theme.surfaceDim, border: `1px solid ${theme.borderSoft}`,
             opacity: canNext ? 1 : 0.3,
           }}
         >
