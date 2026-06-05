@@ -10,6 +10,7 @@ import {
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTheme } from '../hooks/useTheme';
+import { FontMono } from '../constants/typography';
 import { ds } from '../utils/storage';
 import { LocalAIService } from '../services/localAIService';
 import { MealService } from '../services/mealService';
@@ -353,7 +354,7 @@ export default function AnalyseScreen() {
     const used = workoutMins + sleepMins;
     const free = Math.max(0, totalMins - used);
     const entries = [
-      workoutMins > 0 && { key: 'sport', value: workoutMins, color: 'var(--color-awan-gold)', label: 'Sport' },
+      workoutMins > 0 && { key: 'sport', value: workoutMins, color: theme.selected, label: 'Sport' },
       sleepMins > 0 && { key: 'sleep', value: sleepMins, color: 'rgba(78,205,196,0.8)', label: 'Sommeil' },
       { key: FREE_KEY, value: free, color: FREE_COLOR, label: FREE_LABEL },
     ].filter(Boolean);
@@ -504,7 +505,7 @@ export default function AnalyseScreen() {
                     <span className={`mt-1 uppercase font-black tracking-[0.15em] ${
                       subTab === id ? 'text-awan-gold' : 'text-awan-tx-mute'
                     }`}
-                      style={{ fontFamily: 'var(--font-mono)', fontSize: 9 }}>
+                      style={{ fontFamily: FontMono, fontSize: 9 }}>
                       {label}
                     </span>
                   </Touch>

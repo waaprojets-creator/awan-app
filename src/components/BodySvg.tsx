@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from '../hooks/useTheme';
 import {
   BODY_MEASURES,
   BodyMeasureSvg,
@@ -88,6 +89,7 @@ function HeatmapSvg({
   onMusclePress?: ((muscleId: MuscleId) => void) | undefined;
   highlightedMuscle?: MuscleId | undefined;
 }) {
+  const theme = useTheme();
   const DIM = 'rgba(255,255,255,0.18)';
 
   return (
@@ -118,10 +120,10 @@ function HeatmapSvg({
               rx={reg.rx}
               ry={reg.ry}
               style={{
-                fill: 'var(--color-awan-gold)',
+                fill: theme.selected,
                 opacity,
                 cursor: onMusclePress ? 'pointer' : 'default',
-                stroke: isHighlighted ? 'var(--color-awan-gold)' : 'none',
+                stroke: isHighlighted ? theme.selected : 'none',
                 strokeWidth: isHighlighted ? 1.5 : 0,
               }}
               onClick={() => onMusclePress?.(id)}

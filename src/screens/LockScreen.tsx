@@ -5,20 +5,23 @@ import { HexagonLogo, ICON_SIZE } from '../constants/icons';
 import { useAppStore } from '@/data/store/appStore';
 import { initStorageEncryption } from '@/data/storage/storageService';
 import { L } from '../constants/labels';
+import { useTheme } from '../hooks/useTheme';
+import { FontSans } from '../constants/typography';
 
 const MotionDiv = motion.div as React.ComponentType<any>;
 
-const TEXT_STYLE = {
-  fontFamily: 'var(--font-sans)',
-  fontSize: '28px',
-  fontWeight: 900,
-  letterSpacing: '0.25em',
-  color: 'var(--color-awan-tx)',
-} as const;
-
 export default function LockScreen() {
+  const theme = useTheme();
   const unlock = useAppStore((s) => s.unlock);
   const [isUnlocking, setIsUnlocking] = useState(false);
+
+  const TEXT_STYLE = {
+    fontFamily: FontSans,
+    fontSize: '28px',
+    fontWeight: 900,
+    letterSpacing: '0.25em',
+    color: theme.title,
+  } as const;
 
   const letters = ['A', 'W', 'A', 'N'];
 
@@ -33,7 +36,7 @@ export default function LockScreen() {
 
   return (
     <div
-      style={{ backgroundColor: 'var(--color-awan-bg)' }}
+      style={{ backgroundColor: theme.bg }}
       className="flex-1 flex items-center justify-center min-h-screen"
     >
       <MotionDiv
