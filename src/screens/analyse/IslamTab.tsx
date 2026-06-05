@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '../../hooks/useTheme';
+import { FontMono } from '../../constants/typography';
 import { Moon } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
@@ -22,6 +24,7 @@ function isoWeek(date: string): string {
 }
 
 export function IslamTab() {
+  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [prayerData, setPrayerData] = useState<Array<{ date: string; fardScore: number }>>([]);
   const [weeklyAyahs, setWeeklyAyahs] = useState<Array<{ week: string; ayahs: number }>>([]);
@@ -78,8 +81,8 @@ export function IslamTab() {
       <Card className="p-5 bg-white/5 border-white/5">
         <div className="flex flex-row items-center justify-between mb-4">
           <Heading level={4} mono>ADHÉRENCE PRIÈRES 30J</Heading>
-          <div className="px-3 py-1" style={{ backgroundColor: avgAdherence >= 80 ? 'rgba(78,205,196,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${avgAdherence >= 80 ? 'var(--color-awan-status-ok)' : 'rgba(255,255,255,0.1)'}` }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700, color: avgAdherence >= 80 ? 'var(--color-awan-status-ok)' : 'var(--color-awan-tx-mute)', letterSpacing: '0.1em' }}>
+          <div className="px-3 py-1" style={{ backgroundColor: avgAdherence >= 80 ? 'rgba(78,205,196,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${avgAdherence >= 80 ? theme.statusOk : 'rgba(255,255,255,0.1)'}` }}>
+            <span style={{ fontFamily: FontMono, fontSize: '14px', fontWeight: 700, color: avgAdherence >= 80 ? theme.statusOk : theme.mute, letterSpacing: '0.1em' }}>
               {avgAdherence}%
             </span>
           </div>
@@ -90,7 +93,7 @@ export function IslamTab() {
           <BarChart
             data={prayerData}
             dataKey="fardScore"
-            color="var(--color-awan-gold)"
+            color={theme.selected}
           />
         )}
       </Card>
@@ -104,10 +107,10 @@ export function IslamTab() {
           <div className="flex flex-row items-center gap-6 py-4">
             <Moon size={32} className="text-awan-gold" />
             <div>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '48px', fontWeight: 700, color: 'var(--color-awan-gold)', lineHeight: 1 }}>
+              <span style={{ fontFamily: FontMono, fontSize: '48px', fontWeight: 700, color: theme.selected, lineHeight: 1 }}>
                 {streak}
               </span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', display: 'block', marginTop: 4 }}>
+              <span style={{ fontFamily: FontMono, fontSize: '11px', color: theme.mute, letterSpacing: '0.2em', display: 'block', marginTop: 4 }}>
                 JOUR{streak > 1 ? 'S' : ''} CONSÉCUTIF{streak > 1 ? 'S' : ''}
               </span>
             </div>
@@ -125,11 +128,11 @@ export function IslamTab() {
             <BarChart
               data={weeklyAyahs}
               dataKey="ayahs"
-              color="var(--color-awan-status-ok)"
+              color={theme.statusOk}
             />
             <div className="mt-3 flex flex-row justify-between">
               {weeklyAyahs.slice(-4).map(w => (
-                <span key={w.week} style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.1em' }}>
+                <span key={w.week} style={{ fontFamily: FontMono, fontSize: '8px', color: theme.mute, letterSpacing: '0.1em' }}>
                   {w.week.split('-')[1]}
                 </span>
               ))}
