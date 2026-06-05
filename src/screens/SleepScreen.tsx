@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { ScrollView, Alert } from 'react-native';
-import { Moon, Trash2 } from 'lucide-react';
+import { Moon, Trash2 } from 'lucide-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 import { Card } from '../components/ui/Card';

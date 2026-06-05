@@ -1,7 +1,7 @@
 // @ts-nocheck — legacy, rewritten per sprint
 import React from 'react';
-import { motion } from 'motion/react';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { motion } from '@/components/motion';
+import { Sparkles, ArrowRight } from 'lucide-react-native';
 import { Card } from './ui/Card';
 import { Heading } from './ui/Heading';
 import { Touch } from './ui/Touch';

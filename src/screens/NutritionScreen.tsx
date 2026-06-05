@@ -20,8 +20,8 @@ import {
  Pencil,
  Download,
  BarChart2,
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+} from 'lucide-react-native';
+import { motion, AnimatePresence } from '@/components/motion';
 import { PageWrapper } from '../components/Animated';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useAppState } from '../context/AppStateContext';

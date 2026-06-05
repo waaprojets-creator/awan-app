@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { Touch } from './Touch';
 import { useTheme } from '../../hooks/useTheme';
 import { FontMono } from '../../constants/typography';
@@ -97,7 +97,7 @@ export function DateSelectPopup({ value, onChange, max, min, label }: DateSelect
             opacity: canPrev ? 1 : 0.3,
           }}
         >
-          <ChevronLeft size={16} style={{ color: theme.selected }} />
+          <ChevronLeft size={16} color={theme.selected} />
         </Touch>
 
         {/* Date label — clickable */}
@@ -129,7 +129,7 @@ export function DateSelectPopup({ value, onChange, max, min, label }: DateSelect
             opacity: canNext ? 1 : 0.3,
           }}
         >
-          <ChevronRight size={16} style={{ color: canNext ? theme.selected : theme.mute }} />
+          <ChevronRight size={16} color={canNext ? theme.selected : theme.mute} />
         </Touch>
       </div>
 
@@ -146,13 +146,13 @@ export function DateSelectPopup({ value, onChange, max, min, label }: DateSelect
             {/* Month header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <Touch onPress={prevMonth} style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ChevronLeft size={13} style={{ color: theme.text }} />
+                <ChevronLeft size={13} color={theme.text} />
               </Touch>
               <span style={{ fontFamily: FontMono, fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', color: theme.title, textTransform: 'uppercase' }}>
                 {MONTHS_FR[calM]} {calYear}
               </span>
               <Touch onPress={nextMonth} style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ChevronRight size={13} style={{ color: theme.text }} />
+                <ChevronRight size={13} color={theme.text} />
               </Touch>
             </div>
 

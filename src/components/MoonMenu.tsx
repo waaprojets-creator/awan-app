@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { L } from '../constants/labels';
 import { safeStorage } from '../utils/safeStorage';
 import { useTheme } from '../hooks/useTheme';
@@ -226,11 +225,8 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
 
   return (
     <>
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.35, ease: 'easeOut' }}
+      {isOpen && (
+          <div
             style={{ position: 'fixed', inset: 0, zIndex: 90, background: editMode ? theme.overlayDeep : 'rgba(0,0,0,0.88)' }}
             onClick={() => { if (editMode) cancelEdit(); else setIsOpen(false); }}
             onMouseMove={e => onDragMove(e.clientX, e.clientY)}
@@ -266,19 +262,15 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
               {/* Orbital rings — structural guides, hidden in edit mode */}
               {!editMode && (
                 <>
-                  <motion.circle
+                  <circle
                     cx={orbitCX} cy={orbitCY} r={ring1R}
                     stroke="rgba(212,175,55,0.09)" strokeWidth={0.7} strokeDasharray="3 11"
                     fill="none"
-                    initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.55, ease: 'easeOut' }}
                   />
-                  <motion.circle
+                  <circle
                     cx={orbitCX} cy={orbitCY} r={ring2R}
                     stroke="rgba(212,175,55,0.055)" strokeWidth={0.5} strokeDasharray="2 16"
                     fill="none"
-                    initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.65, delay: 0.06, ease: 'easeOut' }}
                   />
                 </>
               )}
@@ -290,13 +282,11 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
                 // Primary bonds (tier 0→1) are thicker than secondary bonds (tier 1→2)
                 const isPrimary = TIER_MAP[fromId] === 0 && TIER_MAP[toId] === 1;
                 return (
-                  <motion.line key={`${fromId}-${toId}`}
+                  <line key={`${fromId}-${toId}`}
                     x1={(from.x/100)*W} y1={(from.y/100)*CH} x2={(to.x/100)*W} y2={(to.y/100)*CH}
                     stroke={editMode ? 'rgba(212,175,55,0.15)' : 'rgba(212,175,55,0.22)'}
                     strokeWidth={isPrimary ? 1.8 : 1.2}
                     strokeDasharray={isPrimary ? '4 5' : '2 6'}
-                    initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
-                    transition={{ duration: 0.3, delay: editMode ? 0 : 0.05 + i * 0.024, ease: 'easeOut' }}
                   />
                 );
               })}
@@ -325,35 +315,29 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
                       <circle cx={cx} cy={cy} r={r + 10} fill="rgba(212,175,55,0.08)" stroke="rgba(212,175,55,0.25)" strokeWidth={0.8} strokeDasharray="4 3" />
                     )}
                     {!editMode && (isTier0 || isActive) && (
-                      <motion.circle cx={cx} cy={cy} r={r+7} fill="rgba(212,175,55,0.06)" stroke="rgba(212,175,55,0.18)" strokeWidth={0.6}
-                        initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay, duration: 0.4 }} />
+                      <circle cx={cx} cy={cy} r={r+7} fill="rgba(212,175,55,0.06)" stroke="rgba(212,175,55,0.18)" strokeWidth={0.6} />
                     )}
-                    <motion.circle cx={cx} cy={cy} r={r}
-                      fill={isDragging ? theme.selected : isActive ? theme.selected : isTier0 ? 'rgba(212,175,55,0.9)' : node.tier===1 ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.3)'}
-                      initial={{ scale: 0, opacity: 0 }} animate={{ scale: isDragging ? 1.4 : 1, opacity: 1 }}
-                      transition={{ delay, duration: 0.28, type: 'spring', stiffness: 320 }} />
-                    <motion.text x={textX} y={textY} textAnchor={anchor as any} fill={lColor} fontSize={fSize}
-                      fontFamily={FontSans} fontWeight={fWeight} letterSpacing="0.12em"
-                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: delay+0.1, duration: 0.25 }}>
+                    <circle cx={cx} cy={cy} r={isDragging ? r * 1.4 : r}
+                      fill={isDragging ? theme.selected : isActive ? theme.selected : isTier0 ? 'rgba(212,175,55,0.9)' : node.tier===1 ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.3)'} />
+                    <text x={textX} y={textY} textAnchor={anchor as any} fill={lColor} fontSize={fSize}
+                      fontFamily={FontSans} fontWeight={fWeight} letterSpacing="0.12em">
                       {node.label}
-                    </motion.text>
+                    </text>
                   </g>
                 );
               })}
             </svg>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
 
-      <motion.button onClick={toggle}
-        style={{ position: 'fixed', left: 20, bottom: 16, zIndex: 100, width: 40, height: 40, background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        whileTap={{ scale: 0.88 }}>
-        <motion.div animate={{ rotate: isOpen ? 360 : 0 }} transition={{ duration: 0.65, ease: [0.4,0,0.2,1] }} style={{ width: 24, height: 24 }}>
+      <button onClick={toggle}
+        style={{ position: 'fixed', left: 20, bottom: 16, zIndex: 100, width: 40, height: 40, background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 24, height: 24 }}>
           {isOpen
             ? <CrescentMoon color={theme.selected} />
             : <FullMoon color={theme.title} />}
-        </motion.div>
-      </motion.button>
+        </div>
+      </button>
     </>
   );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dumbbell } from 'lucide-react';
+import { Dumbbell } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';

@@ -5,7 +5,7 @@ import {
 
 const TextInput = RNTextInput as React.ComponentType<any>;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { motion } from 'motion/react';
+import { motion } from '@/components/motion';
 import { CATS } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
 import { FontSans, FontMono } from '../constants/typography';
@@ -13,7 +13,7 @@ import { uid, ds } from '../utils/storage';
 import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
 import { NOTIF_INTERVALS } from '../utils/notifications';
-import { StopCircle, Trash2, ChevronLeft, Plus, Filter, CheckCircle, Circle, Zap, Target, Layers, Clock } from 'lucide-react';
+import { StopCircle, Trash2, ChevronLeft, Plus, Filter, CheckCircle, Circle, Zap, Target, Layers, Clock } from 'lucide-react-native';
 import { LocalDbService } from '../services/localDbService';
 import { PageWrapper, StaggerList, StaggerItem } from '../components/Animated';
 import { Card } from '../components/ui/Card';

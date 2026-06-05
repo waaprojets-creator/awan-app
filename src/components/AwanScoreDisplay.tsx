@@ -1,6 +1,6 @@
 import React from 'react';
-import { motion } from 'motion/react';
-import { Info } from 'lucide-react';
+import { motion } from '@/components/motion';
+import { Info } from 'lucide-react-native';
 import type { AwanScore, ScoreStatus } from '@/hooks/useAwanScore';
 import type { TemporalState } from '@/hooks/useTemporalMode';
 import { Touch } from './ui/Touch';

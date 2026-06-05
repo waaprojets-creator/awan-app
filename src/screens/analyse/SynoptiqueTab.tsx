@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '../../hooks/useTheme';
 import { View, Dimensions } from 'react-native';
 import Svg, { Rect, Line, Path, Circle } from 'react-native-svg';
-import { BarChart2 } from 'lucide-react';
+import { BarChart2 } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import type { WorkoutSessionLatest } from '../../data/schemas/sport/routine';

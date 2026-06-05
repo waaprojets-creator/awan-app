@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X } from 'lucide-react-native';
 import { Touch } from './Touch';
 import { useTheme } from '../../hooks/useTheme';
 import { FontMono, FontSans } from '../../constants/typography';
@@ -42,7 +42,7 @@ export function WidgetInfo({ id, title, content }: WidgetInfoProps) {
                 <span style={{ fontFamily: FontMono, fontSize: 11, fontWeight: 800, letterSpacing: '0.15em', color: theme.title, textTransform: 'uppercase' }}>{title}</span>
               </div>
               <Touch onPress={() => setOpen(false)} style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <X size={14} style={{ color: theme.mute }} />
+                <X size={14} color={theme.mute} />
               </Touch>
             </div>
             <p style={{ fontFamily: FontSans, fontSize: 12, color: theme.title, lineHeight: 1.6, margin: 0 }}>

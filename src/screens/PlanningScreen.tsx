@@ -11,7 +11,8 @@ import { ds as dsDate } from '../utils/storage';
 
 const TextInput = RNTextInput as React.ComponentType<any>;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { motion, useDragControls } from 'motion/react';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring, runOnJS } from 'react-native-reanimated';
 import { CATS, MONTHS, MONTHS_S, DAYS_S } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
 import { FontSans, FontMono } from '../constants/typography';
@@ -21,57 +22,60 @@ import { eventsForDate, daysWithEvents } from '../utils/recurrence';
 import { useAppState } from '../context/AppStateContext';
 import { requestNotificationPermission, NOTIF_INTERVALS } from '../utils/notifications';
 
-import { useLongPressDrag } from '../hooks/useLongPressDrag';
-import { Clock, Plus, Download, ChevronLeft, ChevronRight, Calendar, Columns, Grid3X3, Zap, Target, Layers, Trash, TrendingUp } from 'lucide-react';
+import { Clock, Plus, Download, ChevronLeft, ChevronRight, Calendar, Columns, Grid3X3, Zap, Target, Layers, Trash, TrendingUp } from 'lucide-react-native';
 import { dominantEnergy } from '../modules/planning/engine/energyModel';
-import { PageWrapper, AnimatePresence } from '../components/Animated';
+import { PageWrapper } from '../components/Animated';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 
-const DraggableEvent = React.memo(({ ev, hourHeight, handleEventDragEnd, setEditEv, setShowEvModal, categories, containerRef }: any) => {
+const DraggableEvent = React.memo(({ ev, hourHeight, handleEventDragEnd, setEditEv, setShowEvModal, categories }: any) => {
   const theme = useTheme();
   const s = StyleSheet.create({
     evAbsolute: { position: 'absolute', left: 0, right: 0, backgroundColor: 'rgba(255,255,255,0.03)', borderLeftWidth: 4, borderRadius: 12, padding: 8, overflow: 'hidden', borderWidth: 1, borderColor: theme.borderSoft },
     evAbsTitle: { fontSize: 10, fontWeight: '900', letterSpacing: -0.2, textTransform: 'uppercase' },
   });
-  const controls = useDragControls();
-  const { isPressed, handlePointerDown, handlePointerMove, handlePointerUp, onDragEnd } = useLongPressDrag(controls, containerRef);
 
-  const wrappedOnDragEnd = (e: any, info: any) => {
-    onDragEnd();
-    handleEventDragEnd(ev, info, hourHeight);
-  };
+  const translateY = useSharedValue(0);
+  const dragging = useSharedValue(0);
 
   const [hh, mm] = (ev.time || '00:00').split(':').map(Number);
   const top = (hh + mm / 60) * hourHeight;
   const height = hourHeight;
 
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+    opacity: dragging.value ? 0.9 : 1,
+    zIndex: 10,
+  }));
+
+  // Long-press (500ms) puis drag vertical → snap-to-origin, mise à jour de l'heure au drop.
+  const pan = Gesture.Pan()
+    .activateAfterLongPress(500)
+    .onStart(() => { dragging.value = 1; })
+    .onUpdate((e) => { translateY.value = e.translationY; })
+    .onEnd((e) => {
+      runOnJS(handleEventDragEnd)(ev, { offset: { y: e.translationY } }, hourHeight);
+      translateY.value = withSpring(0);
+      dragging.value = 0;
+    })
+    .onFinalize(() => { dragging.value = 0; });
+
   return (
-    <motion.div
-      drag="y"
-      dragListener={false}
-      dragControls={controls}
-      dragSnapToOrigin={true}
-      onDragEnd={wrappedOnDragEnd}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
-      onContextMenu={(e) => e.preventDefault()}
-      style={{ position: 'absolute', top, left: 2, right: 2, zIndex: 10, WebkitUserSelect: 'none', userSelect: 'none', opacity: isPressed ? 0.9 : 1 }}
-    >
-      <Touch 
-        style={StyleSheet.flatten([s.evAbsolute, { height, borderLeftColor: ev.color || categories[ev.category]?.c || theme.title, position: 'relative', top: 0, left: 0, right: 0 }])}
-        onPress={() => !ev.isRt && (setEditEv(ev), setShowEvModal(true))}
-      >
-        <div className="flex flex-row items-center gap-1">
-           {ev.isRt && <Zap size={6} className="text-white/40" />}
-           <Text style={[s.evAbsTitle, { color: theme.title }]} numberOfLines={hourHeight === 20 ? 1 : 2}>{hourHeight === 20 ? ev.title : `${ev.time} - ${ev.title}`}</Text>
-        </div>
-      </Touch>
-    </motion.div>
+    <GestureDetector gesture={pan}>
+      <Animated.View style={[{ position: 'absolute', top, left: 2, right: 2 }, animStyle]}>
+        <Touch
+          style={StyleSheet.flatten([s.evAbsolute, { height, borderLeftColor: ev.color || categories[ev.category]?.c || theme.title, position: 'relative', top: 0, left: 0, right: 0 }])}
+          onPress={() => !ev.isRt && (setEditEv(ev), setShowEvModal(true))}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+             {ev.isRt && <Zap size={6} color={theme.mute} />}
+             <Text style={[s.evAbsTitle, { color: theme.title }]} numberOfLines={hourHeight === 20 ? 1 : 2}>{hourHeight === 20 ? ev.title : `${ev.time} - ${ev.title}`}</Text>
+          </View>
+        </Touch>
+      </Animated.View>
+    </GestureDetector>
   );
 });
 
@@ -346,7 +350,7 @@ export default function PlanningScreen() {
               {cols.map((c, i) => (
                 <div key={i} className="flex-1 border-r border-white/5 relative">
                   {hours.map((_, h) => <div key={h} className="h-20 border-b border-white/5 opacity-5" />)}
-                  {c.evs.map((ev: any) => ev.time && <DraggableEvent key={ev.id} ev={ev} hourHeight={20} handleEventDragEnd={handleEventDragEnd} setEditEv={setEditEv} setShowEvModal={setShowEvModal} categories={categories} containerRef={scrollRef} />)}
+                  {c.evs.map((ev: any) => ev.time && <DraggableEvent key={ev.id} ev={ev} hourHeight={20} handleEventDragEnd={handleEventDragEnd} setEditEv={setEditEv} setShowEvModal={setShowEvModal} categories={categories} />)}
                 </div>
               ))}
             </div>
@@ -409,7 +413,7 @@ export default function PlanningScreen() {
               <div onPointerDown={handleGridPointerDown} onPointerMove={handleGridPointerMove} onPointerUp={handleGridPointerUp} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }} />
               {hours.map((_, h) => <div key={h} className="h-20 border-b border-white/5 opacity-5" />)}
               {creatingEv && <div className="absolute left-1 right-1 bg-awan-gold/20 border-l-4 border-awan-gold  p-3 z-10" style={{ top: (creatingEv.startMins / 60) * 80, height: (creatingEv.duration / 60) * 80 }}><span className="text-awan-md font-black text-awan-tx uppercase tracking-widest">{creatingEv.title}</span></div>}
-              {eventsForDate(db, dstr).map((ev: any) => ev.time && <DraggableEvent key={ev.id} ev={ev} hourHeight={80} handleEventDragEnd={handleEventDragEnd} setEditEv={setEditEv} setShowEvModal={setShowEvModal} categories={categories} containerRef={scrollRef} />)}
+              {eventsForDate(db, dstr).map((ev: any) => ev.time && <DraggableEvent key={ev.id} ev={ev} hourHeight={80} handleEventDragEnd={handleEventDragEnd} setEditEv={setEditEv} setShowEvModal={setShowEvModal} categories={categories} />)}
             </div>
           </div>
         </ScrollView>
@@ -844,17 +848,15 @@ export default function PlanningScreen() {
           ))}
         </div>
       </div>
-      <AnimatePresence mode="wait">
-        <motion.div key={subTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex-1 min-h-0 overflow-hidden">
-          {subTab === 0 && renderWeekly()}
-          {subTab === 1 && renderMonthly()}
-          {subTab === 2 && renderAnnual()}
-          {subTab === 3 && renderDaily()}
-          {subTab === 4 && renderAiSchedule()}
-          {subTab === 5 && renderUnifiedTimeline()}
-          {subTab === 6 && renderAnalyse()}
-        </motion.div>
-      </AnimatePresence>
+      <Animated.View key={subTab} entering={FadeInDown.duration(220)} style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        {subTab === 0 && renderWeekly()}
+        {subTab === 1 && renderMonthly()}
+        {subTab === 2 && renderAnnual()}
+        {subTab === 3 && renderDaily()}
+        {subTab === 4 && renderAiSchedule()}
+        {subTab === 5 && renderUnifiedTimeline()}
+        {subTab === 6 && renderAnalyse()}
+      </Animated.View>
       <div className="px-6 pb-24 flex flex-row gap-4 mt-auto">
         <Card className="flex-1 flex-row items-center gap-4 py-6 px-6 bg-white/5 border-white/5" variant="flat">
           <div className="w-10 h-10  bg-awan-gold/10 flex items-center justify-center border border-awan-gold/20"><Zap size={18} className="text-awan-gold" /></div>

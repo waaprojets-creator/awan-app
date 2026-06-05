@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion } from '@/components/motion';
 
 interface HeadingProps {
   children: React.ReactNode;

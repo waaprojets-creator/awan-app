@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Dimensions } from 'react-native';
 import Svg, { Path, Circle, Line, Text as SvgText } from 'react-native-svg';
-import { Ruler } from 'lucide-react';
+import { Ruler } from 'lucide-react-native';
 import { useTheme, type AwanTheme } from '../../hooks/useTheme';
 import { FontMono } from '../../constants/typography';
 import { Card } from '../../components/ui/Card';

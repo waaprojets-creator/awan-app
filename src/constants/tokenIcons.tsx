@@ -3,7 +3,7 @@ import {
   Dumbbell, Utensils, Scale, Repeat, Clock, Hash, Star,
   Map, Moon, Ruler, Flag, Plus, Brain, Flame, Radio,
   FileText, Zap, Clipboard, Dna, Activity, Droplets,
-} from 'lucide-react';
+} from 'lucide-react-native';
 import { useTheme } from '../hooks/useTheme';
 
 // Token icon keys (strings stored in entry.tokens[].icon)

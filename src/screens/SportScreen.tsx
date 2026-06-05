@@ -3,7 +3,7 @@ import { ScrollView, TextInput as RNTextInput, Modal, FlatList as RNFlatList } f
 
 const TextInput = RNTextInput as React.ComponentType<any>;
 const FlatList = RNFlatList as React.ComponentType<any>;
-import { motion } from 'motion/react';
+import { motion } from '@/components/motion';
 import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
 import {
@@ -29,7 +29,7 @@ import {
  Minus,
  Timer,
  Flame,
-} from 'lucide-react';
+} from 'lucide-react-native';
 import { PageWrapper, StaggerList, StaggerItem } from '../components/Animated';
 import { InstrumentCard } from '../components/ui/InstrumentCard';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
@@ -59,7 +59,7 @@ import { suggestProgression } from '../services/autoProgressionService';
 import { BodySvg } from '../components/BodySvg';
 import type { MuscleId } from '../components/BodySvg';
 import { buildIAExport } from '../services/iaExportService';
-import { Download } from 'lucide-react';
+import { Download } from 'lucide-react-native';
 import { WorkoutListView } from '../modules/sport/components/WorkoutListView';
 import { RoutineGeneratorView } from '../modules/sport/components/RoutineGeneratorView';
 import { cacheForRoutine } from '../services/mediaCacheService';

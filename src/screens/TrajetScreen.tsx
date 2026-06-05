@@ -12,11 +12,11 @@ import {
 } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from '@/components/motion';
 import { 
   Navigation, MapPin, Search, Navigation2, 
   Trash2, ChevronRight, Map as MapIcon, Layers, Info, Trash, X, Zap
-} from 'lucide-react';
+} from 'lucide-react-native';
 
 import { useTheme } from '../hooks/useTheme';
 import { FontSans } from '../constants/typography';

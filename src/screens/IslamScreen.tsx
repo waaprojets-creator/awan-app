@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { ScrollView } from 'react-native';
-import { Compass, BookOpen, RefreshCcw, Clock, CheckCircle2, Plus, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { Compass, BookOpen, RefreshCcw, Clock, CheckCircle2, Plus, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { motion, AnimatePresence } from '@/components/motion';
 import { SpiritualService } from '../utils/spiritualService';
 import arabicData from '../assets/data/1.json';
 import { PageWrapper } from '../components/Animated';

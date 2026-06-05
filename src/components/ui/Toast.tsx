@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { useTheme } from '../../hooks/useTheme';
 import { FontMono } from '../../constants/typography';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from '@/components/motion';
 
 type ToastType = 'success' | 'error' | 'info';
 

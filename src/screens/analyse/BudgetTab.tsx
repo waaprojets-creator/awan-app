@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { View, Dimensions } from 'react-native';
 import Svg, { Path, Circle, Line, Text as SvgText } from 'react-native-svg';
-import { Clock } from 'lucide-react';
+import { Clock } from 'lucide-react-native';
 import { startOfWeek, differenceInCalendarWeeks } from 'date-fns';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';

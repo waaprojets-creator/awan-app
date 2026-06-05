@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemeMode } from '../hooks/useTheme';
 import { useAppStore } from '../store/appStore';
 import { useAppState } from '../context/AppStateContext';
-import { Shield, Database, Key, Trash2, Navigation, Brain, BookOpen, Check, X } from 'lucide-react';
+import { Shield, Database, Key, Trash2, Navigation, Brain, BookOpen, Check, X } from 'lucide-react-native';
 import { HexagonLogo } from '../constants/icons';
 import { Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -18,7 +18,7 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 import { getStorage } from '../data/storage/storageService';
 import { DbFillGauge } from '../components/DbFillGauge';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from '@/components/motion';
 import { L } from '../constants/labels';
 import { SYMBOLS } from '../constants/symbols';
 
@@ -508,7 +508,7 @@ export default function SettingsScreen() {
  <motion.div
  initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
  transition={{ duration: 0.2 }}
- onClick={e => e.stopPropagation()}
+ onClick={(e: any) => e.stopPropagation()}
  style={{ background: theme.surface, border: '1px solid rgba(255,75,75,0.3)', width: '100%', maxWidth: 360, padding: 32 }}
  >
  <div className="mb-2">

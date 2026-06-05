@@ -53,83 +53,86 @@
 
 ---
 
-## J0.3 — Storage : expo-sqlite + WAL ❌
+## J0.3 — Storage : expo-sqlite + WAL ✅
 
-**Dépend de :** J0.1 ✅ — peut démarrer.
+**Dépend de :** J0.1 ✅ — fait.
 
-| Tâche | Fichier | Détail |
+| Tâche | Fichier | Statut |
 |---|---|---|
-| Réécrire `SqliteStorage` | `src/data/storage/SqliteStorage.ts` | `@capacitor-community/sqlite` → `expo-sqlite` v15 (`openDatabaseAsync`) |
-| Adapter `storageService` | `src/data/storage/storageService.ts` | `Capacitor.isNativePlatform()` → `Platform.OS !== 'web'` |
-| PRAGMA WAL + busy_timeout | SqliteStorage.open() | `journal_mode=WAL`, `synchronous=NORMAL`, `busy_timeout=5000` |
-| Méthodes à réécrire | — | `get`, `set`, `list`, `listFiltered`, `listByPrefix`, `query`, `aggregate` (JSON_EXTRACT), `transaction`, `exportAll`, `importAll` |
-| Supprimer `initStorageEncryption()` | storageService.ts | Capacitor-specific, inutile sous Expo |
-| Benchmark | nouveau test | 100 écritures < 2ms/op en moyenne |
+| Réécrire `SqliteStorage` | `src/data/storage/SqliteStorage.ts` | ✅ `openDatabaseAsync` v15 |
+| PRAGMA WAL + busy_timeout | SqliteStorage.open() | ✅ `WAL` / `synchronous=NORMAL` / `busy_timeout=5000` |
+| Méthodes réécrites | — | ✅ `get/set/list/listFiltered/listByPrefix/query/aggregate/transaction/exportAll/importAll` |
+| Adapter `storageService` | `storageService.ts` | ✅ `Platform.OS` au lieu de `globalThis.Capacitor` |
+| Supprimer `initStorageEncryption()` | storageService.ts | ✅ no-op (compat API conservée pour LockScreen) |
+
+API expo-sqlite : `getFirstAsync`/`getAllAsync`/`runAsync`/`execAsync`/`withTransactionAsync`.
 
 ---
 
-## J0.4 — Plugins natifs ❌
+## J0.4 — Plugins natifs ✅
 
-**Dépend de :** J0.1 ✅ — peut démarrer en parallèle avec J0.3.
+**Dépend de :** J0.1 ✅ — fait (hors Leaflet).
 
-| Tâche | Fichier(s) | Migration |
+| Tâche | Fichier(s) | Statut |
 |---|---|---|
-| Notifications Islam | `IslamScreen.tsx` (L176, L208) | `@capacitor/local-notifications` → `expo-notifications` |
-| Notifications Sport | `SportScreen.tsx` (L118) | idem |
-| Filesystem export | `SettingsScreen.tsx` (L78) | `@capacitor/filesystem` → `expo-file-system` + `expo-sharing` |
-| App lifecycle | `MainLayout.tsx` (L102) | `@capacitor/app` → `BackHandler` (react-native) |
-| Back button | `useAndroidBack.ts` (L18) | idem |
-| StatusBar | `useTheme.ts` (L2, L119) | `@capacitor/status-bar` → `expo-status-bar` |
-| Media cache | `mediaCacheService.ts` (L1) | `Capacitor.isNativePlatform()` → `Platform.OS !== 'web'` |
-| Leaflet (TrajetScreen) | `TrajetScreen.tsx` | Désactiver temporairement → `GuardCard` placeholder |
+| Notifications Islam | `IslamScreen.tsx` | ✅ `expo-notifications` (`scheduleNotificationAsync`) |
+| Notifications Sport | `SportScreen.tsx` | ✅ idem (`trigger: null`) |
+| Filesystem export | `SettingsScreen.tsx` | ✅ `expo-file-system` + `expo-sharing` |
+| App lifecycle / Back | `MainLayout.tsx`, `useAndroidBack.ts` | ✅ `BackHandler` |
+| StatusBar | `useTheme.ts` | ✅ `expo-status-bar` derrière `Platform.OS` |
+| Media cache | `mediaCacheService.ts` | ✅ `Platform.OS !== 'web'` |
+| **Leaflet (TrajetScreen)** | `TrajetScreen.tsx` | ❌ **reste à désactiver** → `GuardCard` placeholder |
 
-**Vérification :** `grep -rn "@capacitor" src/` → 0 résultat (actuellement : 11).
+**Vérification :** `grep -rn "@capacitor" src/` → **0**. (Reste : imports `leaflet`/`react-leaflet` à neutraliser — 3 erreurs tsc.)
 
 ---
 
-## J0.5 — Navigation : wouter → React Navigation ❌
+## J0.5 — Navigation : wouter → React Navigation ✅
 
-**Dépend de :** J0.1 ✅ — peut démarrer en parallèle.
+**Dépend de :** J0.1 ✅ — fait.
 
-| Tâche | Fichier | Migration |
+| Tâche | Fichier | Statut |
 |---|---|---|
-| Routing principal | `MainLayout.tsx` | `Switch/Route` → `createBottomTabNavigator` |
-| Navigation impérative | `SettingsScreen.tsx` | `useLocation` → `useNavigation().navigate()` |
-| Transitions | options native-stack | `animation: 'slide_from_right'` |
+| Routing principal | `MainLayout.tsx` | ✅ `NavigationContainer` + `createBottomTabNavigator` (tabBar masquée, MoonMenu conservé) |
+| Navigation impérative | `SettingsScreen.tsx` | ✅ `useNavigation().navigate()` |
+| Back Android | `MainLayout.tsx` | ✅ `BackHandler.exitApp()` via `Alert` |
 
-**Vérification :** `grep -rn "from 'wouter'" src/` → 0 résultat (actuellement : 2).
+**Vérification :** `grep -rn "from 'wouter'" src/` → **0**. `react-native` ajouté à `package.json` (peer dep Expo).
 
 ---
 
-## J0.6 — Animations : motion → react-native-reanimated ❌
+## J0.6 — Animations : motion → react-native-reanimated ✅
 
-**Dépend de :** J0.2 ✅ + J0.5.
+**Dépend de :** J0.2 ✅ + J0.5 ✅ — fait.
 
-| Jour | Composants | Complexité |
-|---|---|---|
-| 1-2 | `Touch.tsx` (réécriture complète → Gesture API v2) | Haute |
-| 3 | `Animated.tsx` (PageWrapper, StaggerItem/List) | Moyenne |
-| 4 | `Toast.tsx` (slide bottom→top) | Basse |
-| 5-6 | UI restants (InstrumentCard, QuickActions, Heading) | Basse |
-| 7-8 | AppHeader (collapse), MoonMenu (radial spring), AwanScoreDisplay | Moyenne |
-| 9-10 | `AnimatePresence` → bool + `withTiming` sur opacity (tous écrans) | Moyenne |
-| 11-12 | PlanningScreen DnD (`useDragControls` → Gesture.Pan) | Haute |
+**Stratégie :** adaptateur centralisé `src/components/motion.tsx` exposant la surface
+`motion.<tag>` / `AnimatePresence` au-dessus des Layout Animations reanimated
+(`FadeIn*`/`FadeOut*`). Réduit 80+ usages `motion.div/span/button` à un seul point.
 
-**Vérification :** `grep -rn "from 'motion" src/` → 0 résultat (actuellement : 22).
-
----
-
-## J0.7 — Icons : lucide-react → lucide-react-native ❌
-
-**Dépend de :** J0.6.
-
-| Tâche | Détail |
+| Composant | Traitement |
 |---|---|
-| Remplacement global | `sed -i "s/from 'lucide-react'/from 'lucide-react-native'/g"` |
-| Vérification manuelle | Certains props diffèrent (`absoluteStrokeWidth`) |
-| Dépendance | `react-native-svg` (déjà installé) |
+| `Touch.tsx` | ✅ réécriture `Pressable` + `useSharedValue`/`withSpring` (scale/opacity) |
+| `Animated.tsx` | ✅ `PageWrapper`/`StaggerItem` → `Animated.View` + `FadeIn*` ; `AnimatedPressable` → `Touch` |
+| `MoonMenu.tsx` | ✅ SVG-DOM dé-motion (statique ; animations d'apparition reviennent au jalon DOM→RN) |
+| `PlanningScreen.tsx` | ✅ DnD `useDragControls`→`Gesture.Pan().activateAfterLongPress(500)` + reanimated |
+| 17 écrans/UI | ✅ import routé vers `@/components/motion` |
+| `App.tsx` | ✅ `GestureHandlerRootView` au root |
 
-**Vérification :** `grep -rn "from 'lucide-react'" src/` → 0 résultat sauf `lucide-react-native` (actuellement : 37).
+**Vérification :** `grep -rn "from 'motion" src/` → **0**. Mocks vitest : reanimated + gesture-handler.
+
+---
+
+## J0.7 — Icons : lucide-react → lucide-react-native ✅
+
+**Dépend de :** J0.6 ✅ — fait.
+
+| Tâche | Statut |
+|---|---|
+| Remplacement global (36 fichiers) | ✅ `lucide-react` → `lucide-react-native` |
+| `style={{ color }}` → `color={}` (7 icônes) | ✅ DateSelectPopup, WidgetInfo, MensurationScreen |
+| `className` sur icônes (107) | ✅ augmentation `SvgProps` (`src/types/svg.d.ts`) — recolor className→color différé au jalon DOM→RN |
+
+**Vérification :** `grep -rn "from 'lucide-react'" src/` (hors `-native`) → **0**.
 
 ---
 
@@ -148,13 +151,18 @@
 ### Vérification finale
 
 ```bash
-grep -rn "var(--" src/        # → 0  ✅ (fait)
-grep -rn "@capacitor" src/    # → 0  ❌ (11 restants)
-grep -rn "from 'motion" src/  # → 0  ❌ (22 restants)
-grep -rn "from 'wouter'" src/ # → 0  ❌ (2 restants)
-npx tsc --noEmit              # → 0  ✅ (fait)
-npm test                      # → ✅  ✅ (1030/1030)
+grep -rn "var(--" src/        # → 0  ✅
+grep -rn "@capacitor" src/    # → 0  ✅
+grep -rn "from 'motion" src/  # → 0  ✅
+grep -rn "from 'wouter'" src/ # → 0  ✅
+grep -rn "from 'lucide-react'" src/  # → 0 (hors -native) ✅
+npx tsc --noEmit              # → 3 erreurs résiduelles (leaflet TrajetScreen, J0.4)
+npm test                      # → ✅ 34/34 fichiers, 1042/1042 tests
 ```
+
+**Reste avant J0.8 :** neutraliser Leaflet dans `TrajetScreen.tsx` (J0.4, placeholder
+`GuardCard`) → ramène tsc à 0 ; chargement des polices Cairo/JetBrains Mono via
+`expo-font` ; conversion className→color/style des écrans (jalon DOM→RN).
 
 ---
 
@@ -163,10 +171,9 @@ npm test                      # → ✅  ✅ (1030/1030)
 ```
 J0.1 ✅
 ├── J0.2 ✅
-├── J0.3 ❌ (prêt à démarrer) ────────────────────┐
-├── J0.4 ❌ (prêt à démarrer) ────────────────────├── J0.8 ❌
-└── J0.5 ❌ (prêt à démarrer) → J0.6 ❌ → J0.7 ❌ ┘
+├── J0.3 ✅ ─────────────────────────────────────┐
+├── J0.4 ✅ (sauf Leaflet) ──────────────────────├── J0.8 ❌
+└── J0.5 ✅ → J0.6 ✅ → J0.7 ✅ ─────────────────┘
 ```
 
-**J0.3, J0.4, J0.5 peuvent démarrer immédiatement en parallèle.**
-J0.6 dépend de J0.5. J0.7 dépend de J0.6. J0.8 dépend de tous.
+**Restent :** J0.4-Leaflet (placeholder), jalon DOM→RN (`<div>`/`className`→RN), polices, J0.8 (build).

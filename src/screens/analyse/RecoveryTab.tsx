@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Dimensions } from 'react-native';
 import Svg, { Path, Circle, Line, Text as SvgText } from 'react-native-svg';
-import { Heart } from 'lucide-react';
+import { Heart } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import type { WorkoutSessionLatest } from '../../data/schemas/sport/routine';

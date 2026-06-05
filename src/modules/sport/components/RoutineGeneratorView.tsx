@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ScrollView } from 'react-native';
-import { ChevronLeft, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, CheckCircle2 } from 'lucide-react-native';
 import { PageWrapper, StaggerList, StaggerItem } from '@/components/Animated';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Card } from '@/components/ui/Card';

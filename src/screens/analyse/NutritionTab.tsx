@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, Activity } from 'lucide-react';
+import { Flame, Activity } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';

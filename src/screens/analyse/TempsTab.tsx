@@ -20,7 +20,7 @@ import {
   addYears,
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 
 import { Card } from '@/components/ui/Card';
 import { Touch } from '@/components/ui/Touch';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion } from '@/components/motion';
 import { Touch } from './Touch';
 import { useTheme, type AwanTheme } from '../../hooks/useTheme';
 import { FontSans, FontMono } from '../../constants/typography';

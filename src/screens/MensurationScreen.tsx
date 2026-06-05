@@ -3,7 +3,7 @@ import { View, ScrollView, TextInput as RNTextInput, Alert } from 'react-native'
 import { useTheme } from '../hooks/useTheme';
 
 const TextInput = RNTextInput as React.ComponentType<any>;
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from '@/components/motion';
 import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
 import { ds, uid } from '../utils/storage';
@@ -17,7 +17,7 @@ import { BodySvg } from '../components/BodySvg';
 import type { MuscleId } from '../components/BodySvg';
 import { Planner } from '../modules/planning/api';
 import { getStorage } from '../data/storage/storageService';
-import { ChevronLeft, ChevronRight, Target, Plus, X, Database, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Target, Plus, X, Database, AlertTriangle } from 'lucide-react-native';
 import { PageWrapper } from '../components/Animated';
 import { DailyCanvas } from '../components/DailyCanvas';
 import { Card } from '../components/ui/Card';
@@ -406,7 +406,7 @@ export default function MensurationScreen() {
             className="flex flex-row items-center gap-3 mt-3 px-4 py-3 border"
             style={{ borderColor: theme.statusWarn, backgroundColor: `${theme.statusWarn}14` }}
           >
-            <AlertTriangle size={14} style={{ color: theme.statusWarn }} />
+            <AlertTriangle size={14} color={theme.statusWarn} />
             <span className="text-awan-xs font-black tracking-widest uppercase flex-1" style={{ color: theme.statusWarn }}>
               PROFIL INITIAL À COMPLÉTER →
             </span>
@@ -889,7 +889,7 @@ export default function MensurationScreen() {
                   {hasAsymmetry && (
                     <div className="mb-4 px-4 py-3 border flex flex-row items-center gap-3"
                       style={{ borderColor: theme.statusWarn, backgroundColor: `${theme.statusWarn}14` }}>
-                      <AlertTriangle size={14} style={{ color: theme.statusWarn }} />
+                      <AlertTriangle size={14} color={theme.statusWarn} />
                       <span className="text-awan-xs font-black tracking-widest uppercase" style={{ color: theme.statusWarn }}>
                         ASYMÉTRIE DÉTECTÉE (&gt;5%)
                       </span>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../hooks/useTheme';
 import { FontMono } from '../../constants/typography';
-import { Moon } from 'lucide-react';
+import { Moon } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import { IslamService } from '../../services/islamService';

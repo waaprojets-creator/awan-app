@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme, type AwanTheme } from '../../hooks/useTheme';
-import { Activity } from 'lucide-react';
+import { Activity } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import { InstrumentCard } from '../../components/ui/InstrumentCard';

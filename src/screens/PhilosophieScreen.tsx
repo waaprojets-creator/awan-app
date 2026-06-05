@@ -1,6 +1,6 @@
 import React from 'react';
 import { ScrollView } from 'react-native';
-import { BookOpen, Feather, Archive, Compass } from 'lucide-react';
+import { BookOpen, Feather, Archive, Compass } from 'lucide-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Heading } from '../components/ui/Heading';
 import { useTheme } from '../hooks/useTheme';

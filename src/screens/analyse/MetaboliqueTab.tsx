@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '../../hooks/useTheme';
 import { View, Dimensions } from 'react-native';
 import Svg, { Rect, Line, Path } from 'react-native-svg';
-import { Zap } from 'lucide-react';
+import { Zap } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import { Touch } from '../../components/ui/Touch';

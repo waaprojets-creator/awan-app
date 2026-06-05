@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TouchableOpacity } from 'react-native';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from '@/components/motion';
 import { HexagonLogo, ICON_SIZE } from '../constants/icons';
 import { useAppStore } from '@/data/store/appStore';
 import { initStorageEncryption } from '@/data/storage/storageService';

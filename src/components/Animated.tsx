@@ -1,66 +1,55 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { motion, AnimatePresence } from 'motion/react';
-import { ANIM_VARIANTS } from '../constants/animations';
-
-const MotionView = motion(View);
+import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
+import { Touch } from './ui/Touch';
 
 /**
- * Wrapper pour les transitions de pages
+ * Wrapper de transition de page (fade léger à l'entrée).
  */
 export const PageWrapper = ({ children, style, ...props }: any) => (
-  <MotionView
-    variants={ANIM_VARIANTS.page}
-    initial="initial"
-    animate="animate"
-    exit="exit"
+  <Animated.View
+    entering={FadeIn.duration(300)}
+    exiting={FadeOut.duration(200)}
     style={{ flex: 1, width: '100%', maxWidth: '100%', ...StyleSheet.flatten(style || {}) }}
     {...props}
   >
     {children}
-  </MotionView>
+  </Animated.View>
 );
 
 export const StaggerList = ({ children, style, ...props }: any) => (
-  <MotionView
-    variants={ANIM_VARIANTS.staggerContainer}
-    initial="initial"
-    animate="animate"
-    style={StyleSheet.flatten(style || {})}
-    {...props}
-  >
+  <View style={StyleSheet.flatten(style || {})} {...props}>
     {children}
-  </MotionView>
+  </View>
 );
 
 export const StaggerItem = ({ children, style, ...props }: any) => (
-  <MotionView
-    variants={ANIM_VARIANTS.staggerItem}
+  <Animated.View
+    entering={FadeInDown.duration(300)}
     style={StyleSheet.flatten(style || {})}
     {...props}
   >
     {children}
-  </MotionView>
+  </Animated.View>
 );
 
 /**
- * Bouton animé avec retour tactile unifié
+ * Bouton animé avec retour tactile unifié — délègue à Touch (reanimated).
  */
 export const AnimatedPressable = ({ children, style, onPress, onClick, ...props }: any) => (
-  <motion.div
-    whileTap={ANIM_VARIANTS.tap.whileTap}
-    transition={ANIM_VARIANTS.tap.transition}
-    style={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      cursor: 'pointer', 
-      ...StyleSheet.flatten(style || {}) 
-    }}
-    onClick={onPress || onClick}
+  <Touch
+    onPress={onPress || onClick}
+    style={{ flexDirection: 'column', ...StyleSheet.flatten(style || {}) }}
     {...props}
   >
     {children}
-  </motion.div>
+  </Touch>
 );
 
-export { AnimatePresence };
+/**
+ * AnimatePresence : passthrough — reanimated anime les sorties au démontage
+ * via la prop `exiting` des composants Animated.
+ */
+export const AnimatePresence = ({ children }: { children?: React.ReactNode; mode?: string }) => (
+  <>{children}</>
+);

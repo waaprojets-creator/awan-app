@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import type { WorkoutSessionLatest } from '../../data/schemas/sport/routine';

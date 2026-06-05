@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Dimensions } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
-import { Dumbbell } from 'lucide-react';
+import { Dumbbell } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';

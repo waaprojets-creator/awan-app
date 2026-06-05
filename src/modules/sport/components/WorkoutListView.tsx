@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { ScrollView, Alert } from 'react-native';
-import { ChevronLeft, Play, Trash2, Zap } from 'lucide-react';
+import { ChevronLeft, Play, Trash2, Zap } from 'lucide-react-native';
 import { PageWrapper, StaggerList, StaggerItem } from '@/components/Animated';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Card } from '@/components/ui/Card';

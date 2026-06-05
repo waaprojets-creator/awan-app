@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTheme } from '../../hooks/useTheme';
-import { Ruler } from 'lucide-react';
+import { Ruler } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import type { MeasurementLatest } from '../../data/schemas/anthropo/measurement';

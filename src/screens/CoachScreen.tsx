@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useTheme, type AwanTheme } from '../hooks/useTheme';
 import { ScrollView } from 'react-native';
-import { AlertOctagon, AlertTriangle, CalendarClock, CheckCircle2, Info, Zap } from 'lucide-react';
+import { AlertOctagon, AlertTriangle, CalendarClock, CheckCircle2, Info, Zap } from 'lucide-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 import { useCoach } from '../hooks/useCoach';

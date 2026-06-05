@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ScrollView, TextInput as RNTextInput } from 'react-native';
-import { Upload, X } from 'lucide-react';
+import { Upload, X } from 'lucide-react-native';
 import { getAdviceText } from '../constants/coachAdvice';
 import { DEFAULT_KCAL_TARGET } from '../constants/app';
 import { safeStorage } from '../utils/safeStorage';

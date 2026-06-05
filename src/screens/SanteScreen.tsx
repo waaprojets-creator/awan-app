@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { ScrollView } from 'react-native';
 import { useTheme, type AwanTheme } from '../hooks/useTheme';
-import { ChevronRight, Activity, Utensils, Ruler, Brain, Moon, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { ChevronRight, Activity, Utensils, Ruler, Brain, Moon, TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Card } from '../components/ui/Card';
 import { Touch } from '../components/ui/Touch';

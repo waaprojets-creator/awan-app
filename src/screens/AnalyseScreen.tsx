@@ -25,11 +25,11 @@ import { PageWrapper, AnimatePresence } from '../components/Animated';
 import {
   Activity, Dumbbell, Flame, TrendingUp,
   Trophy, Heart, BarChart2, Zap, Clock, Star, ScanLine,
-} from 'lucide-react';
+} from 'lucide-react-native';
 import { Card } from '../components/ui/Card';
 import { Touch } from '../components/ui/Touch';
 import { BilanZen } from '../components/BilanZen';
-import { motion } from 'motion/react';
+import { motion } from '@/components/motion';
 import type { SleepEntryLatest } from '../data/schemas/sleep/sleepEntry';
 
 // ─── Tab components (lazy — parsed only when first rendered) ─────────────────

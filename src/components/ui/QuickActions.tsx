@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Plus, X, CheckSquare, Utensils, PenLine, Dumbbell } from 'lucide-react';
+import { motion, AnimatePresence } from '@/components/motion';
+import { Plus, X, CheckSquare, Utensils, PenLine, Dumbbell } from 'lucide-react-native';
 import { Touch } from './Touch';
 
 const ACTIONS = [
