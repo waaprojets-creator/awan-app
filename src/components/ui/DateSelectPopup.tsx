@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Touch } from './Touch';
+import { useTheme } from '../../hooks/useTheme';
+import { FontMono } from '../../constants/typography';
 
 interface DateSelectPopupProps {
   value: string;              // YYYY-MM-DD
@@ -41,6 +43,7 @@ function formatLabel(date: string): string {
 }
 
 export function DateSelectPopup({ value, onChange, max, min, label }: DateSelectPopupProps) {
+  const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [calMonth, setCalMonth] = useState(value.slice(0, 7)); // YYYY-MM
 
@@ -94,7 +97,7 @@ export function DateSelectPopup({ value, onChange, max, min, label }: DateSelect
             opacity: canPrev ? 1 : 0.3,
           }}
         >
-          <ChevronLeft size={16} style={{ color: 'var(--color-awan-gold)' }} />
+          <ChevronLeft size={16} style={{ color: theme.selected }} />
         </Touch>
 
         {/* Date label — clickable */}
@@ -107,11 +110,11 @@ export function DateSelectPopup({ value, onChange, max, min, label }: DateSelect
           }}
         >
           {label && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, fontWeight: 700, letterSpacing: '0.2em', color: 'var(--color-awan-tx-mute)', textTransform: 'uppercase' }}>
+            <span style={{ fontFamily: FontMono, fontSize: 8, fontWeight: 700, letterSpacing: '0.2em', color: theme.mute, textTransform: 'uppercase' }}>
               {label}
             </span>
           )}
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--color-awan-gold)', textTransform: 'uppercase' }}>
+          <span style={{ fontFamily: FontMono, fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', color: theme.selected, textTransform: 'uppercase' }}>
             {displayLabel}
           </span>
         </Touch>
@@ -126,7 +129,7 @@ export function DateSelectPopup({ value, onChange, max, min, label }: DateSelect
             opacity: canNext ? 1 : 0.3,
           }}
         >
-          <ChevronRight size={16} style={{ color: canNext ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)' }} />
+          <ChevronRight size={16} style={{ color: canNext ? theme.selected : theme.mute }} />
         </Touch>
       </div>
 
@@ -137,26 +140,26 @@ export function DateSelectPopup({ value, onChange, max, min, label }: DateSelect
           <div style={{
             position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
             marginTop: 4, zIndex: 999, width: 264,
-            background: 'var(--color-awan-surface)', border: '1px solid var(--color-awan-border)',
+            background: theme.surface, border: `1px solid ${theme.border}`,
             padding: 12,
           }}>
             {/* Month header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <Touch onPress={prevMonth} style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ChevronLeft size={13} style={{ color: 'var(--color-awan-tx-dim)' }} />
+                <ChevronLeft size={13} style={{ color: theme.text }} />
               </Touch>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', color: 'var(--color-awan-tx)', textTransform: 'uppercase' }}>
+              <span style={{ fontFamily: FontMono, fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', color: theme.title, textTransform: 'uppercase' }}>
                 {MONTHS_FR[calM]} {calYear}
               </span>
               <Touch onPress={nextMonth} style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ChevronRight size={13} style={{ color: 'var(--color-awan-tx-dim)' }} />
+                <ChevronRight size={13} style={{ color: theme.text }} />
               </Touch>
             </div>
 
             {/* Day headers */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
               {DAYS_FR.map((d, i) => (
-                <div key={i} style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.1em' }}>
+                <div key={i} style={{ textAlign: 'center', fontFamily: FontMono, fontSize: 9, fontWeight: 700, color: theme.mute, letterSpacing: '0.1em' }}>
                   {d}
                 </div>
               ))}
@@ -177,15 +180,15 @@ export function DateSelectPopup({ value, onChange, max, min, label }: DateSelect
                     disabled={disabled}
                     style={{
                       height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: isSel ? 'var(--color-awan-gold)' : isToday ? 'rgba(212,175,55,0.12)' : 'transparent',
+                      background: isSel ? theme.selected : isToday ? 'rgba(212,175,55,0.12)' : 'transparent',
                       border: isToday && !isSel ? '1px solid rgba(212,175,55,0.3)' : '1px solid transparent',
                       opacity: disabled ? 0.22 : 1,
                     }}
                   >
                     <span style={{
-                      fontFamily: 'var(--font-mono)', fontSize: 11,
+                      fontFamily: FontMono, fontSize: 11,
                       fontWeight: isSel ? 800 : 400,
-                      color: isSel ? '#000' : 'var(--color-awan-tx)',
+                      color: isSel ? '#000' : theme.title,
                     }}>
                       {day}
                     </span>

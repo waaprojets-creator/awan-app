@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { ScrollView } from 'react-native';
+import { useTheme, type AwanTheme } from '../hooks/useTheme';
 import { ChevronRight, Activity, Utensils, Ruler, Brain, Moon, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Card } from '../components/ui/Card';
@@ -19,7 +20,8 @@ import type { Severity } from '../data/schemas/coach/rule';
 import type { Advice } from '../data/schemas/coach/assessment';
 
 function BodySilhouette() {
- const s = 'var(--color-awan-tx-mute)';
+ const theme = useTheme();
+ const s = theme.mute;
  return (
  <svg width="48" height="96" viewBox="0 0 48 96" fill="none">
  <ellipse cx="24" cy="9" rx="7" ry="8" stroke={s} strokeWidth="1" opacity="0.45"/>
@@ -33,14 +35,13 @@ function BodySilhouette() {
  );
 }
 
-const COACH_COLOR: Record<Severity, string> = {
- info: 'var(--color-awan-gold)',
- good: 'var(--color-awan-status-ok)',
- warn: 'var(--color-awan-status-warn)',
- alert: 'var(--color-awan-status-error)',
-};
+function getCoachColor(t: Pick<AwanTheme, 'selected' | 'statusOk' | 'statusWarn' | 'danger'>): Record<Severity, string> {
+  return { info: t.selected, good: t.statusOk, warn: t.statusWarn, alert: t.danger };
+}
 
 export default function SanteScreen({ navigate }: any) {
+ const theme = useTheme();
+ const COACH_COLOR = getCoachColor(theme);
  const today = ds(new Date());
  const workoutStore = useWorkoutStore();
  const mealStore = useMealStore(today);
@@ -130,7 +131,7 @@ export default function SanteScreen({ navigate }: any) {
  <div className="flex flex-row items-baseline gap-2">
    <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">{sessCount}</span>
    {sportDelta !== 0 && (
-     <span className="text-awan-sm font-black font-mono" style={{ color: sportDelta > 0 ? 'var(--color-awan-status-ok)' : 'var(--color-awan-status-error)' }}>
+     <span className="text-awan-sm font-black font-mono" style={{ color: sportDelta > 0 ? theme.statusOk : theme.danger }}>
        {sportDelta > 0 ? '▲' : '▼'} {Math.abs(sportDelta)} vs S-1
      </span>
    )}
@@ -169,7 +170,7 @@ export default function SanteScreen({ navigate }: any) {
  <div>
  <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-1">KCAL</span>
  <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">
- {kcal}<span className="text-xs ml-1 opacity-50" style={{ color: 'var(--color-awan-gold)' }}>/{KCAL_TARGET}</span>
+ {kcal}<span className="text-xs ml-1 opacity-50" style={{ color: theme.selected }}>/{KCAL_TARGET}</span>
  </span>
  </div>
  {(['p', 'c', 'f'] as const).map(m => (
@@ -178,7 +179,7 @@ export default function SanteScreen({ navigate }: any) {
  {m === 'p' ? 'PROT' : m === 'c' ? 'GLUC' : 'LIP'}
  </span>
  <span className="text-2xl font-black text-awan-tx font-mono">
- {mealStore.totals[m]}<span className="text-awan-md ml-0.5 opacity-50" style={{ color: 'var(--color-awan-gold)' }}>g</span>
+ {mealStore.totals[m]}<span className="text-awan-md ml-0.5 opacity-50" style={{ color: theme.selected }}>g</span>
  </span>
  </div>
  ))}
@@ -216,7 +217,7 @@ export default function SanteScreen({ navigate }: any) {
      {weightStore.entries.filter(e => e.date <= (latestMeasure?.date ?? '')).sort((a,b)=>b.date.localeCompare(a.date))[0]?.weightKg ?? '—'}<span className="text-xs ml-1 text-awan-gold">kg</span>
    </span>
    {weightDelta !== null && (
-     <span className="text-awan-sm font-black font-mono" style={{ color: weightDelta < 0 ? 'var(--color-awan-status-ok)' : weightDelta > 0 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-tx-mute)' }}>
+     <span className="text-awan-sm font-black font-mono" style={{ color: weightDelta < 0 ? theme.statusOk : weightDelta > 0 ? theme.statusWarn : theme.mute }}>
        {weightDelta > 0 ? '▲' : weightDelta < 0 ? '▼' : '–'} {Math.abs(weightDelta).toFixed(1)} kg/sem
      </span>
    )}
@@ -261,7 +262,7 @@ export default function SanteScreen({ navigate }: any) {
  <div className="flex flex-col">
  <span className="text-awan-sm font-black text-awan-tx-mute tracking-widest uppercase mb-1">MOY. 7J</span>
  <span className="font-mono font-black text-2xl"
- style={{ color: sleepStore.avgDurationH >= 7 ? 'var(--color-awan-status-ok)' : sleepStore.avgDurationH >= 6 ? 'var(--color-awan-status-warn)' : sleepStore.avgDurationH > 0 ? 'var(--color-awan-status-error)' : 'var(--color-awan-tx-mute)' }}>
+ style={{ color: sleepStore.avgDurationH >= 7 ? theme.statusOk : sleepStore.avgDurationH >= 6 ? theme.statusWarn : sleepStore.avgDurationH > 0 ? theme.danger : theme.mute }}>
  {sleepStore.avgDurationH > 0 ? `${sleepStore.avgDurationH.toFixed(1)}h` : '—'}
  </span>
  <span className="text-awan-sm text-awan-tx-mute mt-1">

@@ -172,7 +172,7 @@ export default function SettingsScreen() {
  style={{ flex: 1 }}
  showsVerticalScrollIndicator={false}
  >
- <div className="px-6 pt-4 pb-4 border-b" style={{ borderBottomColor: 'var(--color-awan-border)' }}>
+ <div className="px-6 pt-4 pb-4 border-b" style={{ borderBottomColor: theme.border }}>
  <ScreenHeader tag="SYS" title="SYSTÈME" />
  </div>
 
@@ -288,7 +288,7 @@ export default function SettingsScreen() {
  <Switch
  value={showNetworkBanner}
  onValueChange={toggleNetworkBanner}
- trackColor={{ false: 'rgba(255,255,255,0.08)', true: 'var(--color-awan-status-warn)' }}
+ trackColor={{ false: 'rgba(255,255,255,0.08)', true: theme.statusWarn }}
  thumbColor="#fff"
  />
  </div>
@@ -346,7 +346,7 @@ export default function SettingsScreen() {
  <Heading level={4} mono subtitle="Identité & Vision" className="mb-6">MANIFESTE</Heading>
  <Touch onPress={() => setLocation('/philosophie')} className="bg-white/3 border border-white/5 p-6 flex-row items-center gap-5">
    <div className="w-10 h-10 bg-awan-gold/10 flex items-center justify-center">
-     <BookOpen size={18} color="var(--color-awan-gold)" />
+     <BookOpen size={18} color={theme.selected} />
    </div>
    <div className="flex-1">
      <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">PHILOSOPHIE AWAN</span>
@@ -381,15 +381,15 @@ export default function SettingsScreen() {
    ) : (
      <>
        <div className="w-10 h-10 bg-white/5 flex items-center justify-center flex-shrink-0">
-         {cacheState === 'loading' && <div style={{ animation: 'spin 1s linear infinite' }}><HexagonLogo size={20} color="var(--color-awan-gold)" /></div>}
-         {cacheState === 'ok'      && <Check size={18} color="var(--color-awan-status-ok)" />}
-         {cacheState === 'idle'    && <HexagonLogo size={20} color="var(--color-awan-tx-mute)" />}
+         {cacheState === 'loading' && <div style={{ animation: 'spin 1s linear infinite' }}><HexagonLogo size={20} color={theme.selected} /></div>}
+         {cacheState === 'ok'      && <Check size={18} color={theme.statusOk} />}
+         {cacheState === 'idle'    && <HexagonLogo size={20} color={theme.mute} />}
        </div>
        <div className="flex-1">
          <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">OPTIMISATION CACHE</span>
          {cacheState === 'idle'    && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Nettoyage des archives terminées</span>}
          {cacheState === 'loading' && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">OPTIMISATION EN COURS…</span>}
-         {cacheState === 'ok'      && <span className="text-awan-sm font-bold uppercase tracking-tighter" style={{ color: 'var(--color-awan-status-ok)' }}>Cache optimisé</span>}
+         {cacheState === 'ok'      && <span className="text-awan-sm font-bold uppercase tracking-tighter" style={{ color: theme.statusOk }}>Cache optimisé</span>}
        </div>
      </>
    )}
@@ -428,17 +428,17 @@ export default function SettingsScreen() {
    ) : (
      <>
        <div className="w-10 h-10 bg-white/5 flex items-center justify-center flex-shrink-0">
-         {exportState === 'loading' && <div style={{ animation: 'spin 1s linear infinite' }}><HexagonLogo size={20} color="var(--color-awan-gold)" /></div>}
-         {exportState === 'ok'      && <Check size={18} color="var(--color-awan-status-ok)" />}
-         {exportState === 'error'   && <X size={18} color="var(--color-awan-status-error)" />}
+         {exportState === 'loading' && <div style={{ animation: 'spin 1s linear infinite' }}><HexagonLogo size={20} color={theme.selected} /></div>}
+         {exportState === 'ok'      && <Check size={18} color={theme.statusOk} />}
+         {exportState === 'error'   && <X size={18} color={theme.danger} />}
          {exportState === 'idle'    && <Database size={18} className="text-awan-tx-mute" />}
        </div>
        <div className="flex-1">
          <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">EXPORTATION NOYAU</span>
          {exportState === 'idle'    && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Écrit {buildExportFilename()} dans Téléchargements</span>}
          {exportState === 'loading' && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">EXPORT EN COURS…</span>}
-         {exportState === 'ok'      && <span className="text-awan-sm font-bold uppercase tracking-tighter" style={{ color: 'var(--color-awan-status-ok)' }}>{exportMsg}</span>}
-         {exportState === 'error'   && <span className="text-awan-sm font-bold uppercase tracking-tighter" style={{ color: 'var(--color-awan-status-error)' }}>{exportMsg}</span>}
+         {exportState === 'ok'      && <span className="text-awan-sm font-bold uppercase tracking-tighter" style={{ color: theme.statusOk }}>{exportMsg}</span>}
+         {exportState === 'error'   && <span className="text-awan-sm font-bold uppercase tracking-tighter" style={{ color: theme.danger }}>{exportMsg}</span>}
        </div>
      </>
    )}
@@ -507,14 +507,14 @@ export default function SettingsScreen() {
  {purgeModal && (
  <motion.div
  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
- style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--color-awan-overlay-deep)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+ style={{ position: 'fixed', inset: 0, zIndex: 200, background: theme.overlayDeep, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
  onClick={() => !purging && setPurgeModal(false)}
  >
  <motion.div
  initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
  transition={{ duration: 0.2 }}
  onClick={e => e.stopPropagation()}
- style={{ background: 'var(--color-awan-surface)', border: '1px solid rgba(255,75,75,0.3)', width: '100%', maxWidth: 360, padding: 32 }}
+ style={{ background: theme.surface, border: '1px solid rgba(255,75,75,0.3)', width: '100%', maxWidth: 360, padding: 32 }}
  >
  <div className="mb-2">
  <span className="awan-label text-awan-status-error tracking-[0.3em]">— OPÉRATION CRITIQUE —</span>

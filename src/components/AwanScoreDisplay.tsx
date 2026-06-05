@@ -4,17 +4,15 @@ import { Info } from 'lucide-react';
 import type { AwanScore, ScoreStatus } from '@/hooks/useAwanScore';
 import type { TemporalState } from '@/hooks/useTemporalMode';
 import { Touch } from './ui/Touch';
+import { useTheme, type AwanTheme } from '../hooks/useTheme';
+import { FontSans, FontMono, FwMute, FwLabel, FwDisplay } from '../constants/typography';
 
 // ── Résolution token → var CSS ─────────────────────────────────────────────────
 // Pas de couleur hardcodée — toute couleur passe par un token CSS
 
-const STATUS_VAR: Record<ScoreStatus, string> = {
-  ok:     'var(--color-awan-status-ok)',
-  warn:   'var(--color-awan-status-warn)',
-  error:  'var(--color-awan-status-error)',
-  spirit: 'var(--color-awan-status-spirit)',
-  mute:   'var(--color-awan-tx-mute)',
-};
+function getStatusVar(t: Pick<AwanTheme, 'statusOk' | 'statusWarn' | 'danger' | 'statusSpirit' | 'mute'>): Record<ScoreStatus, string> {
+  return { ok: t.statusOk, warn: t.statusWarn, error: t.danger, spirit: t.statusSpirit, mute: t.mute };
+}
 
 // ── Barre de domaine ───────────────────────────────────────────────────────────
 
@@ -26,6 +24,8 @@ interface DomainBarProps {
 }
 
 function DomainBar({ label, value, status, index }: DomainBarProps) {
+  const theme = useTheme();
+  const STATUS_VAR = getStatusVar(theme);
   const color = STATUS_VAR[status];
   return (
     <div className="flex flex-col gap-1">
@@ -33,10 +33,10 @@ function DomainBar({ label, value, status, index }: DomainBarProps) {
       <div className="flex justify-between items-baseline">
         <span
           style={{
-            fontFamily: 'var(--font-sans)',
+            fontFamily: FontSans,
             fontSize: '7px',
-            fontWeight: 'var(--fw-mute)' as any,
-            color: 'var(--color-awan-tx-mute)',
+            fontWeight: FwMute as any,
+            color: theme.mute,
             letterSpacing: '0.2em',
           }}
           className="uppercase"
@@ -45,7 +45,7 @@ function DomainBar({ label, value, status, index }: DomainBarProps) {
         </span>
         <span
           style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: FontMono,
             fontSize: '8px',
             fontWeight: 700,
             color,
@@ -57,7 +57,7 @@ function DomainBar({ label, value, status, index }: DomainBarProps) {
       {/* Barre */}
       <div
         className="h-[2px] w-full"
-        style={{ backgroundColor: 'var(--color-awan-border)' }}
+        style={{ backgroundColor: theme.border }}
       >
         <motion.div
           className="h-full"
@@ -81,6 +81,8 @@ interface AwanScoreDisplayProps {
 }
 
 export function AwanScoreDisplay({ score, temporal, className = '', onInfo }: AwanScoreDisplayProps) {
+  const theme = useTheme();
+  const STATUS_VAR = getStatusVar(theme);
   const scoreColor  = STATUS_VAR[score.status];
   const modeColor   = STATUS_VAR[temporal.status];
 
@@ -88,17 +90,17 @@ export function AwanScoreDisplay({ score, temporal, className = '', onInfo }: Aw
     <div
       className={`p-5 border ${className}`}
       style={{
-        backgroundColor: 'var(--color-awan-surface)',
-        borderColor: 'var(--color-awan-border)',
+        backgroundColor: theme.surface,
+        borderColor: theme.border,
       }}
     >
       {/* Ligne supérieure : mode temporel + ⓘ */}
       <div className="flex justify-between items-center mb-4">
         <span
           style={{
-            fontFamily: 'var(--font-sans)',
+            fontFamily: FontSans,
             fontSize: '8px',
-            fontWeight: 'var(--fw-label)' as any,
+            fontWeight: FwLabel as any,
             color: modeColor,
             letterSpacing: '0.3em',
           }}
@@ -109,10 +111,10 @@ export function AwanScoreDisplay({ score, temporal, className = '', onInfo }: Aw
         <div className="flex flex-row items-center gap-3">
           <span
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: FontMono,
               fontSize: '7px',
               fontWeight: 400,
-              color: 'var(--color-awan-tx-mute)',
+              color: theme.mute,
               opacity: 0.5,
             }}
           >
@@ -120,7 +122,7 @@ export function AwanScoreDisplay({ score, temporal, className = '', onInfo }: Aw
           </span>
           {onInfo && (
             <Touch onPress={onInfo} className="p-1">
-              <Info size={12} color="var(--color-awan-tx-mute)" />
+              <Info size={12} color={theme.mute} />
             </Touch>
           )}
         </div>
@@ -134,9 +136,9 @@ export function AwanScoreDisplay({ score, temporal, className = '', onInfo }: Aw
           animate={{ opacity: 1,   scale: 1 }}
           transition={{ duration: 0.4 }}
           style={{
-            fontFamily: 'var(--font-sans)',
+            fontFamily: FontSans,
             fontSize: '80px',
-            fontWeight: 'var(--fw-display)' as any,
+            fontWeight: FwDisplay as any,
             color: scoreColor,
             lineHeight: 1,
             letterSpacing: '-0.03em',
@@ -146,10 +148,10 @@ export function AwanScoreDisplay({ score, temporal, className = '', onInfo }: Aw
         </motion.span>
         <span
           style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: FontMono,
             fontSize: '11px',
             fontWeight: 400,
-            color: 'var(--color-awan-tx-mute)',
+            color: theme.mute,
           }}
         >
           / 100
@@ -159,10 +161,10 @@ export function AwanScoreDisplay({ score, temporal, className = '', onInfo }: Aw
       {/* Label AWAN SCORE */}
       <span
         style={{
-          fontFamily: 'var(--font-sans)',
+          fontFamily: FontSans,
           fontSize: '7px',
-          fontWeight: 'var(--fw-mute)' as any,
-          color: 'var(--color-awan-tx-mute)',
+          fontWeight: FwMute as any,
+          color: theme.mute,
           letterSpacing: '0.4em',
         }}
         className="uppercase block mb-6"

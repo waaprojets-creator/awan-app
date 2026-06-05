@@ -5,19 +5,24 @@ import { Heading } from '../../components/ui/Heading';
 import type { WorkoutSessionLatest } from '../../data/schemas/sport/routine';
 import { computeEAT, buildFluxData, computeFluxDensity, type WeekMacros } from '../../services/analyticsService';
 import { StackedBarChart, GuardCard, LoadingState, loadNutritionProfile, deriveTDEE } from './shared';
+import { useTheme, type AwanTheme } from '../../hooks/useTheme';
 
 interface FluxDensiteTabProps {
   sessions: WorkoutSessionLatest[];
   weightKg: number | null;
 }
 
-const PHASE_LABELS: Record<string, { label: string; color: string }> = {
-  surplus: { label: 'Surplus — phase de construction active', color: 'var(--color-awan-status-warn)' },
-  maintenance: { label: 'Maintenance — équilibre thermodynamique', color: 'var(--color-awan-status-ok)' },
-  deficit: { label: 'Déficit — phase de sèche', color: 'var(--color-awan-status-info)' },
-};
+function getPhaseLabels(t: Pick<AwanTheme, 'statusWarn' | 'statusOk' | 'statusInfo'>): Record<string, { label: string; color: string }> {
+  return {
+    surplus: { label: 'Surplus — phase de construction active', color: t.statusWarn },
+    maintenance: { label: 'Maintenance — équilibre thermodynamique', color: t.statusOk },
+    deficit: { label: 'Déficit — phase de sèche', color: t.statusInfo },
+  };
+}
 
 export function FluxDensiteTab({ sessions, weightKg }: FluxDensiteTabProps) {
+  const theme = useTheme();
+  const PHASE_LABELS = getPhaseLabels(theme);
   const [fluxData, setFluxData] = useState<WeekMacros[] | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -108,9 +113,9 @@ export function FluxDensiteTab({ sessions, weightKg }: FluxDensiteTabProps) {
         {/* Légende */}
         <div className="flex flex-row gap-4 mt-4 flex-wrap">
           {[
-            { color: 'var(--color-awan-status-ok)', label: 'Protéines' },
-            { color: 'var(--color-awan-status-info)', label: 'Glucides' },
-            { color: 'var(--color-awan-status-warn)', label: 'Lipides' },
+            { color: theme.statusOk, label: 'Protéines' },
+            { color: theme.statusInfo, label: 'Glucides' },
+            { color: theme.statusWarn, label: 'Lipides' },
           ].map(l => (
             <div key={l.label} className="flex flex-row items-center gap-1.5">
               <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: l.color }} />
@@ -118,11 +123,11 @@ export function FluxDensiteTab({ sessions, weightKg }: FluxDensiteTabProps) {
             </div>
           ))}
           <div className="flex flex-row items-center gap-1.5">
-            <div className="w-6 h-0 border-t border-dashed" style={{ borderColor: 'var(--color-awan-tx-mute)' }} />
+            <div className="w-6 h-0 border-t border-dashed" style={{ borderColor: theme.mute }} />
             <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">BMR+NEAT</span>
           </div>
           <div className="flex flex-row items-center gap-1.5">
-            <div className="w-6 h-0 border-t" style={{ borderColor: 'var(--color-awan-gold)' }} />
+            <div className="w-6 h-0 border-t" style={{ borderColor: theme.selected }} />
             <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">+EAT</span>
           </div>
         </div>

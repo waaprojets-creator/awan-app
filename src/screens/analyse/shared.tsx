@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Dimensions } from 'react-native';
 import Svg, { Line, Rect, G, Text as SvgTextEl } from 'react-native-svg';
+import { useTheme } from '../../hooks/useTheme';
+import { FontMono } from '../../constants/typography';
 
 const SvgLine = Line as any;
 const SvgRect = Rect as any;
@@ -47,7 +49,7 @@ export function BarChart({ data, dataKey, color, height = 180, yUnit, xLabels, y
                 stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
               {yUnit !== undefined && (
                 <SvgText x={padLeft - 4} y={y + 3} textAnchor="end" fontSize="7"
-                  fontFamily="var(--font-mono)" fontWeight="700"
+                  fontFamily={FontMono} fontWeight="700"
                   fill="rgba(255,255,255,0.35)">
                   {i === ticks.length - 1 ? `${label}${yUnit}` : label}
                 </SvgText>
@@ -71,7 +73,7 @@ export function BarChart({ data, dataKey, color, height = 180, yUnit, xLabels, y
               {val > 0 && <SvgRect x={x} y={y} width={barWidth} height={2} fill="#FFF" opacity={0.5} />}
               {xLabel !== undefined && (
                 <SvgText x={xCenter} y={padTop + chartH + padBot - 2} textAnchor="middle"
-                  fontSize="7" fontFamily="var(--font-mono)" fontWeight="700"
+                  fontSize="7" fontFamily={FontMono} fontWeight="700"
                   fill="rgba(255,255,255,0.35)">
                   {xLabel}
                 </SvgText>
@@ -101,6 +103,7 @@ interface StackedBarChartProps {
 }
 
 export function StackedBarChart({ data, lineA, lineB, height = 200 }: StackedBarChartProps) {
+  const theme = useTheme();
   const width = Dimensions.get('window').width - 88;
   const padding = { top: 10, bottom: 20, left: 0, right: 0 };
   const chartH = height - padding.top - padding.bottom;
@@ -127,11 +130,11 @@ export function StackedBarChart({ data, lineA, lineB, height = 200 }: StackedBar
           return (
             <SvgG key={i}>
               {/* Proteins — bottom */}
-              {pH > 0 && <SvgRect x={x} y={baseY - pH} width={barWidth} height={pH} fill="var(--color-awan-status-ok)" rx={2} />}
+              {pH > 0 && <SvgRect x={x} y={baseY - pH} width={barWidth} height={pH} fill={theme.statusOk} rx={2} />}
               {/* Carbs — middle */}
-              {cH > 0 && <SvgRect x={x} y={baseY - pH - cH} width={barWidth} height={cH} fill="var(--color-awan-status-info)" />}
+              {cH > 0 && <SvgRect x={x} y={baseY - pH - cH} width={barWidth} height={cH} fill={theme.statusInfo} />}
               {/* Fat — top */}
-              {fH > 0 && <SvgRect x={x} y={baseY - pH - cH - fH} width={barWidth} height={fH} fill="var(--color-awan-status-warn)" />}
+              {fH > 0 && <SvgRect x={x} y={baseY - pH - cH - fH} width={barWidth} height={fH} fill={theme.statusWarn} />}
               {total > 0 && <SvgRect x={x} y={toY(total)} width={barWidth} height={2} fill="#FFF" opacity={0.5} />}
             </SvgG>
           );
@@ -145,7 +148,7 @@ export function StackedBarChart({ data, lineA, lineB, height = 200 }: StackedBar
           const x2 = (i + 1) * colW + colW / 2;
           return (
             <SvgLine key={`la${i}`} x1={x1} y1={y} x2={x2} y2={y}
-              stroke="var(--color-awan-tx-mute)" strokeWidth="1.5"
+              stroke={theme.mute} strokeWidth="1.5"
               strokeDasharray="4 3" />
           );
         })}
@@ -158,7 +161,7 @@ export function StackedBarChart({ data, lineA, lineB, height = 200 }: StackedBar
           const x2 = (i + 1) * colW + colW / 2;
           return (
             <SvgLine key={`lb${i}`} x1={x1} y1={y} x2={x2} y2={y}
-              stroke="var(--color-awan-gold)" strokeWidth="1.5" />
+              stroke={theme.selected} strokeWidth="1.5" />
           );
         })}
       </Svg>
@@ -187,9 +190,10 @@ export function LoadingState({ label }: { label: string }) {
 }
 
 export function GuardCard({ message }: { message: string }) {
+  const theme = useTheme();
   return (
     <div className="py-10 text-center px-6">
-      <span className="text-awan-md font-black uppercase tracking-widest" style={{ color: 'var(--color-awan-tx-mute)' }}>
+      <span className="text-awan-md font-black uppercase tracking-widest" style={{ color: theme.mute }}>
         {message}
       </span>
     </div>

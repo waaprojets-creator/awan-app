@@ -2,6 +2,8 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { L } from '../constants/labels';
 import { safeStorage } from '../utils/safeStorage';
+import { useTheme } from '../hooks/useTheme';
+import { FontSans } from '../constants/typography';
 
 function useWindowDimensions() {
   const [dims, setDims] = useState({ width: window.innerWidth, height: window.innerHeight });
@@ -102,6 +104,7 @@ const MARGIN = 14;
 interface MoonMenuProps { onNavigate: (route: string) => void; currentRoute: string; }
 
 export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
+  const theme = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [nodePositions, setNodePositions] = useState<NodePositions>(loadLayout);
@@ -228,7 +231,7 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
-            style={{ position: 'fixed', inset: 0, zIndex: 90, background: editMode ? 'var(--color-awan-overlay-deep)' : 'rgba(0,0,0,0.88)' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 90, background: editMode ? theme.overlayDeep : 'rgba(0,0,0,0.88)' }}
             onClick={() => { if (editMode) cancelEdit(); else setIsOpen(false); }}
             onMouseMove={e => onDragMove(e.clientX, e.clientY)}
             onMouseUp={onDragEnd}
@@ -239,13 +242,13 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
               <div style={{ position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 10, display: 'flex', gap: 12 }}>
                 <button
                   onClick={saveLayout}
-                  style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', padding: '8px 20px', background: 'var(--color-awan-gold)', color: '#000', border: 'none', cursor: 'pointer', fontWeight: 700 }}
+                  style={{ fontFamily: FontSans, fontSize: 10, letterSpacing: '0.2em', padding: '8px 20px', background: theme.selected, color: '#000', border: 'none', cursor: 'pointer', fontWeight: 700 }}
                 >
                   SAUVEGARDER
                 </button>
                 <button
                   onClick={cancelEdit}
-                  style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', padding: '8px 20px', background: 'transparent', color: 'var(--color-awan-tx-dim)', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer' }}
+                  style={{ fontFamily: FontSans, fontSize: 10, letterSpacing: '0.2em', padding: '8px 20px', background: 'transparent', color: theme.text, border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer' }}
                 >
                   ANNULER
                 </button>
@@ -253,7 +256,7 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
             )}
             {editMode && (
               <div style={{ position: 'absolute', top: 60, left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, letterSpacing: '0.25em', color: 'var(--color-awan-tx-dim)', textTransform: 'uppercase' }}>
+                <span style={{ fontFamily: FontSans, fontSize: 12, letterSpacing: '0.25em', color: theme.text, textTransform: 'uppercase' }}>
                   GLISSER LES NŒUDS POUR REPOSITIONNER
                 </span>
               </div>
@@ -307,7 +310,7 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
                 const r = isTier0 ? 5 : node.tier === 1 ? 3.5 : 2.5;
                 const delay = editMode ? 0 : 0.12 + i * 0.04;
                 const { textX, textY, anchor } = labelPos(node);
-                const lColor = isActive ? 'var(--color-awan-gold)' : node.tier <= 1 ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.42)';
+                const lColor = isActive ? theme.selected : node.tier <= 1 ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.42)';
                 const fSize = isTier0 ? 15 : node.tier === 1 ? 13 : 11;
                 const fWeight = node.tier <= 1 ? 800 : 600;
                 return (
@@ -326,11 +329,11 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
                         initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay, duration: 0.4 }} />
                     )}
                     <motion.circle cx={cx} cy={cy} r={r}
-                      fill={isDragging ? 'var(--color-awan-gold)' : isActive ? 'var(--color-awan-gold)' : isTier0 ? 'rgba(212,175,55,0.9)' : node.tier===1 ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.3)'}
+                      fill={isDragging ? theme.selected : isActive ? theme.selected : isTier0 ? 'rgba(212,175,55,0.9)' : node.tier===1 ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.3)'}
                       initial={{ scale: 0, opacity: 0 }} animate={{ scale: isDragging ? 1.4 : 1, opacity: 1 }}
                       transition={{ delay, duration: 0.28, type: 'spring', stiffness: 320 }} />
                     <motion.text x={textX} y={textY} textAnchor={anchor as any} fill={lColor} fontSize={fSize}
-                      fontFamily="var(--font-sans)" fontWeight={fWeight} letterSpacing="0.12em"
+                      fontFamily={FontSans} fontWeight={fWeight} letterSpacing="0.12em"
                       initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: delay+0.1, duration: 0.25 }}>
                       {node.label}
                     </motion.text>
@@ -347,8 +350,8 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
         whileTap={{ scale: 0.88 }}>
         <motion.div animate={{ rotate: isOpen ? 360 : 0 }} transition={{ duration: 0.65, ease: [0.4,0,0.2,1] }} style={{ width: 24, height: 24 }}>
           {isOpen
-            ? <CrescentMoon color="var(--color-awan-gold)" />
-            : <FullMoon color="var(--color-awan-tx)" />}
+            ? <CrescentMoon color={theme.selected} />
+            : <FullMoon color={theme.title} />}
         </motion.div>
       </motion.button>
     </>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTheme } from '../../hooks/useTheme';
 import { View, Dimensions } from 'react-native';
 import Svg, { Rect, Line, Path, Circle } from 'react-native-svg';
 import { BarChart2 } from 'lucide-react';
@@ -42,6 +43,7 @@ function computeTonnage(sessions: WorkoutSessionLatest[], dateStr: string): numb
 }
 
 export function SynoptiqueTab({ sessions }: SynoptiqueTabProps) {
+  const theme = useTheme();
   const [dayData, setDayData] = useState<DayData[] | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -97,6 +99,7 @@ export function SynoptiqueTab({ sessions }: SynoptiqueTabProps) {
 }
 
 function SynoptiqueChart({ data }: { data: DayData[] }) {
+  const theme = useTheme();
   const W = Dimensions.get('window').width - 48;
   const H = 220;
   const pad = { t: 12, b: 20, l: 8, r: 8 };
@@ -151,13 +154,13 @@ function SynoptiqueChart({ data }: { data: DayData[] }) {
                     <SvgRect_
                       x={xBar} y={toYLeft(d.tonnage)}
                       width={barW} height={tH}
-                      fill="var(--color-awan-gold)" opacity={0.3} rx={1}
+                      fill={theme.selected} opacity={0.3} rx={1}
                     />
                   )}
                   {/* Macros empilées */}
-                  {pH > 0 && <SvgRect_ x={xMacro} y={baseY - pH} width={macroW} height={pH} fill="var(--color-awan-status-ok)" opacity={0.9} />}
-                  {cH > 0 && <SvgRect_ x={xMacro} y={baseY - pH - cH} width={macroW} height={cH} fill="var(--color-awan-status-info)" opacity={0.9} />}
-                  {fH > 0 && <SvgRect_ x={xMacro} y={baseY - pH - cH - fH} width={macroW} height={fH} fill="var(--color-awan-status-warn)" opacity={0.9} />}
+                  {pH > 0 && <SvgRect_ x={xMacro} y={baseY - pH} width={macroW} height={pH} fill={theme.statusOk} opacity={0.9} />}
+                  {cH > 0 && <SvgRect_ x={xMacro} y={baseY - pH - cH} width={macroW} height={cH} fill={theme.statusInfo} opacity={0.9} />}
+                  {fH > 0 && <SvgRect_ x={xMacro} y={baseY - pH - cH - fH} width={macroW} height={fH} fill={theme.statusWarn} opacity={0.9} />}
                   {/* Separateur jour */}
                   <SvgLine_
                     x1={pad.l + i * colW} y1={pad.t}
@@ -181,10 +184,10 @@ function SynoptiqueChart({ data }: { data: DayData[] }) {
         {/* Légende */}
         <div className="flex flex-row gap-3 mt-3 flex-wrap">
           {[
-            { color: 'var(--color-awan-gold)', label: 'Tonnage', opacity: '0.3' },
-            { color: 'var(--color-awan-status-ok)', label: 'Protéines' },
-            { color: 'var(--color-awan-status-info)', label: 'Glucides' },
-            { color: 'var(--color-awan-status-warn)', label: 'Lipides' },
+            { color: theme.selected, label: 'Tonnage', opacity: '0.3' },
+            { color: theme.statusOk, label: 'Protéines' },
+            { color: theme.statusInfo, label: 'Glucides' },
+            { color: theme.statusWarn, label: 'Lipides' },
             { color: 'rgba(255,255,255,0.5)', label: 'Rendement' },
           ].map(l => (
             <div key={l.label} className="flex flex-row items-center gap-1">

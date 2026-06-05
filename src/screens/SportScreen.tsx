@@ -64,6 +64,8 @@ import { WorkoutListView } from '../modules/sport/components/WorkoutListView';
 import { RoutineGeneratorView } from '../modules/sport/components/RoutineGeneratorView';
 import { cacheForRoutine } from '../services/mediaCacheService';
 import { L } from '../constants/labels';
+import { useTheme } from '../hooks/useTheme';
+import { FontSans, FontMono } from '../constants/typography';
 
 type ViewMode = 'list' | 'create' | 'edit' | 'active' | 'history' | 'finish' | 'recovery' | 'workouts' | 'generate';
 
@@ -178,8 +180,9 @@ function volumeToMuscleValues(vol: Record<string, number>): Partial<Record<Muscl
 function CycleScoreSection({ sessions }: { sessions: WorkoutSessionLatest[] }) {
   const result = useMemo(() => computeCycleScore(sessions), [sessions]);
   if (result.sessionsCount === 0) return null;
+  const theme = useTheme();
   const status = result.score >= 80 ? 'ok' : result.score >= 60 ? 'warn' : 'error';
-  const statusVar = `var(--color-awan-status-${status})`;
+  const statusVar = status === 'ok' ? theme.statusOk : status === 'warn' ? theme.statusWarn : theme.danger;
   return (
     <div className="mb-6">
       <span className="awan-label text-awan-tx-mute mb-3 block">NOTE CYCLE — 4 SEMAINES</span>
@@ -204,10 +207,11 @@ function CycleScoreSection({ sessions }: { sessions: WorkoutSessionLatest[] }) {
 }
 
 function BreakdownChip({ label, value, max }: { label: string; value: number; max: number }) {
+  const theme = useTheme();
   const ratio = max > 0 ? value / max : 0;
-  const color = ratio >= 0.8 ? 'var(--color-awan-status-ok)'
-              : ratio >= 0.5 ? 'var(--color-awan-status-warn)'
-              : 'var(--color-awan-status-error)';
+  const color = ratio >= 0.8 ? theme.statusOk
+              : ratio >= 0.5 ? theme.statusWarn
+              : theme.danger;
   return (
     <div className="bg-white/5 px-2 py-1.5 flex flex-col items-center">
       <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">{label}</span>
@@ -235,6 +239,7 @@ function VolumeHeatmapSection({ sessions }: { sessions: WorkoutSessionLatest[] }
 }
 
 function VolumeWeekSection({ sessions }: { sessions: WorkoutSessionLatest[] }) {
+  const theme = useTheme();
   const weekStart = (() => {
     const d = new Date();
     d.setDate(d.getDate() - d.getDay());
@@ -252,7 +257,7 @@ function VolumeWeekSection({ sessions }: { sessions: WorkoutSessionLatest[] }) {
           const sets = vol[muscle] ?? 0;
           if (sets === 0) return null;
           const pct = Math.min(100, (sets / lm.mrv) * 100);
-          const barColor = sets < lm.mev ? 'var(--color-awan-status-error)' : sets <= lm.mav[1] ? 'var(--color-awan-status-ok)' : sets >= lm.mrv * 0.8 ? 'var(--color-awan-status-warn)' : 'var(--color-awan-status-ok)';
+          const barColor = sets < lm.mev ? theme.danger : sets <= lm.mav[1] ? theme.statusOk : sets >= lm.mrv * 0.8 ? theme.statusWarn : theme.statusOk;
           return (
             <div key={muscle} className="flex flex-row items-center gap-3">
               <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest w-20 shrink-0">{lm.label}</span>
@@ -269,6 +274,7 @@ function VolumeWeekSection({ sessions }: { sessions: WorkoutSessionLatest[] }) {
 }
 
 export default function SportScreen() {
+ const theme = useTheme();
  useAppState() as any;
  const { addEntry, moveEntry, getEntriesByDate } = useDaily();
  const workoutStore = useWorkoutStore();
@@ -550,9 +556,9 @@ export default function SportScreen() {
                onClick={() => setRecoveryScore(n)}
                style={{
                  width: 44, height: 44,
-                 fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700,
-                 background: recoveryScore === n ? 'var(--color-awan-gold)' : 'var(--color-awan-surface)',
-                 color: recoveryScore === n ? '#000' : 'var(--color-awan-tx)',
+                 fontFamily: FontMono, fontSize: 14, fontWeight: 700,
+                 background: recoveryScore === n ? theme.selected : theme.surface,
+                 color: recoveryScore === n ? '#000' : theme.title,
                  border: recoveryScore === n ? 'none' : '1px solid rgba(128,128,128,0.25)',
                  cursor: 'pointer',
                }}
@@ -938,6 +944,7 @@ function RoutineEditor({
  onSave: (r: RoutineLatest) => void;
  onCancel: () => void;
 }) {
+ const theme = useTheme();
  const useDraft = !!initialDraft;
  const [name, setName] = useState(useDraft ? initialDraft!.name : (existing?.name ?? ''));
  const [cycleLetter, setCycleLetter] = useState<CycleLetter | null>(
@@ -1039,7 +1046,7 @@ function RoutineEditor({
  placeholderTextColor="#3a3a3a"
  />
  {saveError ? (
-   <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-awan-status-error)', letterSpacing: '0.15em', marginTop: 6, display: 'block' }}>
+   <span style={{ fontFamily: FontMono, fontSize: '10px', color: theme.danger, letterSpacing: '0.15em', marginTop: 6, display: 'block' }}>
      ⚠ {saveError.toUpperCase()}
    </span>
  ) : null}
@@ -1207,6 +1214,7 @@ interface RoutineCardProps {
 const RoutineCard = React.memo(function RoutineCard({
   routine: r, isConfirmingDelete, onStart, onEdit, onDeleteExecute, onDeleteCancel, onDeleteRequest,
 }: RoutineCardProps) {
+  const theme = useTheme();
   return (
     <Card className="p-6 bg-awan-surface" onPress={() => onStart(r)}>
       <div className="flex flex-row justify-between items-center mb-2">
@@ -1218,7 +1226,7 @@ const RoutineCard = React.memo(function RoutineCard({
           {isConfirmingDelete ? (
             <div className="flex flex-row items-center gap-2">
               <Touch onPress={(e: any) => { e.stopPropagation(); onDeleteExecute(r.id); }}>
-                <span style={{ color: 'var(--color-awan-status-error)', fontSize: 11, fontWeight: 900, letterSpacing: '0.1em' }}>SUPPR</span>
+                <span style={{ color: theme.danger, fontSize: 11, fontWeight: 900, letterSpacing: '0.1em' }}>SUPPR</span>
               </Touch>
               <Touch onPress={(e: any) => { e.stopPropagation(); onDeleteCancel(); }}>
                 <X size={14} className="text-awan-tx-mute" />
@@ -1452,15 +1460,16 @@ function ExerciseDetail({
 // ─── Rest Ring + Chrono Overlay ─────────────────────────────────────────────
 
 function RestRing({ remaining, total }: { remaining: number; total: number }) {
+ const theme = useTheme();
  const r = 14;
  const circ = 2 * Math.PI * r;
  const pct = total > 0 ? remaining / total : 0;
  return (
  <svg width={36} height={36} viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
- <circle cx={18} cy={18} r={r} fill="none" stroke="var(--color-awan-border-soft)" strokeWidth={2.5} />
+ <circle cx={18} cy={18} r={r} fill="none" stroke={theme.borderSoft} strokeWidth={2.5} />
  <circle
  cx={18} cy={18} r={r} fill="none"
- stroke="var(--color-awan-status-warn)"
+ stroke={theme.statusWarn}
  strokeWidth={2.5}
  strokeDasharray={`${circ * pct} ${circ}`}
  strokeLinecap="round"
@@ -1480,6 +1489,7 @@ function ChronoOverlay({
  restTotal: number;
  routineName: string;
 }) {
+ const theme = useTheme();
  const isResting = restRemaining > 0;
  return (
  <div
@@ -1494,7 +1504,7 @@ function ChronoOverlay({
  {isResting && (
  <div className="flex flex-row items-center gap-2">
  <RestRing remaining={restRemaining} total={restTotal} />
- <span className="text-sm font-mono font-bold tracking-widest tabular-nums" style={{ color: 'var(--color-awan-status-warn)' }}>
+ <span className="text-sm font-mono font-bold tracking-widest tabular-nums" style={{ color: theme.statusWarn }}>
  {formatTime(restRemaining)}
  </span>
  </div>
@@ -1520,6 +1530,7 @@ function ActiveWorkout({
  onFinishRequest: () => void;
  onAbort: () => void;
 }) {
+ const theme = useTheme();
  const [restRemaining, setRestRemaining] = useState(0);
  const prevRestRef = useRef<number>(0);
  const [substituteTarget, setSubstituteTarget] = useState<{ exIdx: number; muscle: string } | null>(null);
@@ -1746,12 +1757,12 @@ function ActiveWorkout({
 
  {confirmAbandon ? (
  <div className="mt-6 py-4 flex flex-row items-center justify-center gap-4">
- <span style={{ color: 'var(--color-awan-tx-mute)', fontSize: 11, fontWeight: 700, letterSpacing: '0.15em' }}>QUITTER SANS SAUVEGARDER ?</span>
+ <span style={{ color: theme.mute, fontSize: 11, fontWeight: 700, letterSpacing: '0.15em' }}>QUITTER SANS SAUVEGARDER ?</span>
  <Touch onPress={onAbort}>
- <span style={{ color: 'var(--color-awan-status-error)', fontSize: 11, fontWeight: 900, letterSpacing: '0.1em' }}>OUI</span>
+ <span style={{ color: theme.danger, fontSize: 11, fontWeight: 900, letterSpacing: '0.1em' }}>OUI</span>
  </Touch>
  <Touch onPress={() => setConfirmAbandon(false)}>
- <span style={{ color: 'var(--color-awan-tx-mute)', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em' }}>NON</span>
+ <span style={{ color: theme.mute, fontSize: 11, fontWeight: 700, letterSpacing: '0.1em' }}>NON</span>
  </Touch>
  </div>
  ) : (
@@ -1809,6 +1820,7 @@ function SetRow({
  onChange: (patch: Partial<ActiveSet>) => void;
  onComplete: () => void;
 }) {
+ const theme = useTheme();
  const [kindMenu, setKindMenu] = useState(false);
  const completed = set.completed;
 
@@ -1889,7 +1901,7 @@ function SetRow({
  initial={{ scale: 0, opacity: 0 }}
  animate={{ scale: 1, opacity: 1 }}
  transition={{ type: 'spring', stiffness: 400, damping: 12 }}
- style={{ position: 'absolute', top: -6, right: -6, backgroundColor: 'var(--color-awan-gold)', borderRadius: 6, paddingInline: 4, paddingBlock: 2 }}
+ style={{ position: 'absolute', top: -6, right: -6, backgroundColor: theme.selected, borderRadius: 6, paddingInline: 4, paddingBlock: 2 }}
  >
  <span className="text-black" style={{ fontSize: 7, fontWeight: 900, letterSpacing: '0.1em' }}>PR</span>
  </motion.div>
@@ -1912,6 +1924,7 @@ function PreWorkout({
  onStart: () => void;
  onAbort: () => void;
 }) {
+ const theme = useTheme();
  const [showPreEdit, setShowPreEdit] = useState(false);
 
  if (showPreEdit) {
@@ -2106,6 +2119,7 @@ function FinishWorkout({
  onSave: (summary: SessionSummary) => void;
  onCancel: () => void;
 }) {
+ const theme = useTheme();
  const [feeling, setFeeling] = useState<number | undefined>(undefined);
  const [sessionRPE, setSessionRPE] = useState<number | undefined>(undefined);
  const [note, setNote] = useState('');
@@ -2191,8 +2205,8 @@ function FinishWorkout({
  {prevVolume !== null && (
  <span className="font-mono text-awan-md mt-1 block" style={{
  color: stats.volume >= prevVolume
- ? 'var(--color-awan-status-ok)'
- : 'var(--color-awan-status-error)'
+ ? theme.statusOk
+ : theme.danger
  }}>
  {stats.volume >= prevVolume ? '▲' : '▼'} {Math.abs(Math.round(stats.volume - prevVolume))} kg vs S-1
  </span>

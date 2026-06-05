@@ -33,6 +33,7 @@ interface WeekTonnage { label: string; weight: number }
 // ─── 1RM mini trend sparkline ─────────────────────────────────────────────────
 
 function OneRMSparkline({ points }: { points: Array<{ date: string; oneRm: number }> }) {
+  const theme = useTheme();
   if (points.length < 2) return null;
   const W = Dimensions.get('window').width - 88;
   const H = 56;
@@ -49,9 +50,9 @@ function OneRMSparkline({ points }: { points: Array<{ date: string; oneRm: numbe
 
   return (
     <Svg width={W} height={H}>
-      <SvgPath_ d={d} fill="none" stroke="var(--color-awan-gold)" strokeWidth="1.5" />
+      <SvgPath_ d={d} fill="none" stroke={theme.selected} strokeWidth="1.5" />
       <SvgCircle_ cx={toX(points.length - 1)} cy={toY(last.oneRm)}
-        r={3} fill="var(--color-awan-gold)" />
+        r={3} fill={theme.selected} />
     </Svg>
   );
 }
@@ -274,10 +275,10 @@ export function PerformanceTab({ sessions, assessments = [] }: PerformanceTabPro
               const kg = chainTotals[key];
               const pct = chainTotal > 0 ? (kg / chainTotal) * 100 : 0;
               const label = key.toUpperCase();
-              const color = key === 'push' ? 'var(--color-awan-status-ok)'
-                : key === 'pull' ? 'var(--color-awan-gold)'
-                : key === 'legs' ? 'var(--color-awan-status-info)'
-                : 'var(--color-awan-tx-mute)';
+              const color = key === 'push' ? theme.statusOk
+                : key === 'pull' ? theme.selected
+                : key === 'legs' ? theme.statusInfo
+                : theme.mute;
               return (
                 <div key={key}>
                   <div className="flex flex-row justify-between mb-1">
@@ -288,7 +289,7 @@ export function PerformanceTab({ sessions, assessments = [] }: PerformanceTabPro
                       {kg > 0 ? `${(kg / 1000).toFixed(1)}t` : '—'} · {pct.toFixed(0)}%
                     </span>
                   </div>
-                  <div className="h-1.5 w-full" style={{ backgroundColor: 'var(--color-awan-border-soft)' }}>
+                  <div className="h-1.5 w-full" style={{ backgroundColor: theme.borderSoft }}>
                     <div className="h-full" style={{ width: `${pct}%`, backgroundColor: color, opacity: 0.8 }} />
                   </div>
                 </div>
