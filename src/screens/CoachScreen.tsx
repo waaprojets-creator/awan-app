@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTheme, type AwanTheme } from '../hooks/useTheme';
 import { ScrollView } from 'react-native';
 import { AlertOctagon, AlertTriangle, CalendarClock, CheckCircle2, Info, Zap } from 'lucide-react';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
@@ -32,15 +33,18 @@ interface SeverityStyle {
   color: string;
 }
 
-const SEVERITY_STYLES: Record<Severity, SeverityStyle> = {
-  info:  { className: 'border-awan-gold/20 bg-awan-gold/5',   Icon: Info,          color: 'var(--color-awan-gold)' },
-  good:  { className: 'border-green-500/20 bg-green-500/5',   Icon: CheckCircle2,  color: 'rgb(34,197,94)' },
-  warn:  { className: 'border-amber-400/20 bg-amber-400/5',   Icon: AlertTriangle, color: 'rgb(251,191,36)' },
-  alert: { className: 'border-red-500/20 bg-red-500/5',       Icon: AlertOctagon,  color: 'rgb(239,68,68)' },
-};
+function getSeverityStyles(t: Pick<AwanTheme, 'selected'>): Record<Severity, SeverityStyle> {
+  return {
+    info:  { className: 'border-awan-gold/20 bg-awan-gold/5',   Icon: Info,          color: t.selected },
+    good:  { className: 'border-green-500/20 bg-green-500/5',   Icon: CheckCircle2,  color: 'rgb(34,197,94)' },
+    warn:  { className: 'border-amber-400/20 bg-amber-400/5',   Icon: AlertTriangle, color: 'rgb(251,191,36)' },
+    alert: { className: 'border-red-500/20 bg-red-500/5',       Icon: AlertOctagon,  color: 'rgb(239,68,68)' },
+  };
+}
 
 function AdviceCard({ advice, ruleResult }: { advice: Advice; ruleResult: RuleResult | undefined }) {
-  const style = SEVERITY_STYLES[advice.severity];
+  const theme = useTheme();
+  const style = getSeverityStyles(theme)[advice.severity];
   const { Icon } = style;
   const text = getAdviceText(advice.key);
   return (
@@ -84,7 +88,8 @@ function horizonLabel(days: number): string {
 }
 
 function ForecastCard({ forecast }: { forecast: ForecastLatest }) {
-  const style = SEVERITY_STYLES[forecast.severity];
+  const theme = useTheme();
+  const style = getSeverityStyles(theme)[forecast.severity];
   const text = getAdviceText(forecast.detailKey);
   const titleText = getAdviceText(forecast.titleKey);
   const interpolated = interpolate(text.advice, { ...forecast.params, targetDate: forecast.targetDate });
@@ -116,15 +121,17 @@ function ForecastCard({ forecast }: { forecast: ForecastLatest }) {
 }
 
 function EmptyState({ message }: { message: string }) {
+  const theme = useTheme();
   return (
     <div className="rounded-awan-xl border border-white/5 bg-awan-surface p-6 flex flex-col items-center gap-2">
-      <Info size={24} color="var(--color-awan-tx-mute)" />
+      <Info size={24} color={theme.mute} />
       <span className="awan-label text-awan-tx-mute text-center">{message}</span>
     </div>
   );
 }
 
 export default function CoachScreen(_props: NavProps): React.ReactElement {
+  const theme = useTheme();
   const today = ds(new Date());
   const { assessments, loading, runAll } = useCoach(today);
   const [activeTab, setActiveTab] = useState<TabKey>('sport');
@@ -158,7 +165,7 @@ export default function CoachScreen(_props: NavProps): React.ReactElement {
           className="rounded-awan-xl border border-awan-gold/30 bg-awan-gold/5 p-4 flex flex-row items-center justify-center gap-2"
           style={{ opacity: loading ? 0.5 : 1 }}
         >
-          <Zap size={16} color="var(--color-awan-gold)" />
+          <Zap size={16} color={theme.selected} />
           <span className="awan-label text-awan-gold font-mono font-bold">
             {loading ? 'ANALYSE EN COURS…' : 'ANALYSER'}
           </span>
@@ -184,7 +191,7 @@ export default function CoachScreen(_props: NavProps): React.ReactElement {
               >
                 <span
                   className="awan-label font-mono font-bold"
-                  style={{ color: active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)' }}
+                  style={{ color: active ? theme.selected : theme.mute }}
                 >
                   {tab.label}
                 </span>

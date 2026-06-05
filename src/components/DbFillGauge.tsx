@@ -1,11 +1,13 @@
 import React from 'react';
 import { useDbFill } from '@/hooks/useDbFill';
+import { useTheme } from '@/hooks/useTheme';
 
 function formatMB(bytes: number): string {
   return (bytes / 1024 / 1024).toFixed(bytes < 1024 * 1024 ? 2 : 1);
 }
 
 export function DbFillGauge() {
+  const theme = useTheme();
   const { domains, total, bytes, maxBytes, loading } = useDbFill();
 
   if (loading) return null;
@@ -22,10 +24,10 @@ export function DbFillGauge() {
           className="text-xs font-mono"
           style={{
             color: isAtCap
-              ? 'var(--color-awan-status-error)'
+              ? theme.danger
               : isNearCap
-              ? 'var(--color-awan-status-warn)'
-              : 'var(--color-awan-tx-mute)',
+              ? theme.statusWarn
+              : theme.mute,
           }}
         >
           {formatMB(bytes)} / {formatMB(maxBytes)} MB
@@ -41,7 +43,7 @@ export function DbFillGauge() {
       {/* Stacked bar — segments proportionnels à la taille MB, fond = capacité restante */}
       <div
         className="h-3 w-full flex overflow-hidden"
-        style={{ backgroundColor: 'var(--color-awan-border-soft)' }}
+        style={{ backgroundColor: theme.borderSoft }}
         role="img"
         aria-label={`Base utilisateur : ${formatMB(bytes)} sur ${formatMB(maxBytes)} MB`}
       >

@@ -3,6 +3,7 @@ import { ScrollView } from 'react-native';
 import { BookOpen, Feather, Archive, Compass } from 'lucide-react';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Heading } from '../components/ui/Heading';
+import { useTheme } from '../hooks/useTheme';
 import type { NavProps } from '../types/nav';
 
 // ─── Blocs texte ──────────────────────────────────────────────────────────────
@@ -63,6 +64,7 @@ function Principe({ n, titre, desc }: PrincipeProps) {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function PhilosophieScreen(_props: NavProps): React.ReactElement {
+  const theme = useTheme();
   return (
     <ScrollView
       style={{ flex: 1, width: '100%' }}
@@ -79,19 +81,19 @@ export default function PhilosophieScreen(_props: NavProps): React.ReactElement 
       </Heading>
       <div className="flex flex-col gap-3 mb-10">
         <Pilier
-          icon={<Feather size={18} color="var(--color-awan-gold)" />}
+          icon={<Feather size={18} color={theme.selected} />}
           temps="AUJOURD'HUI — Encrer"
           question="Que se passe-t-il maintenant ?"
           surfaces="Sport · Nutrition · Sommeil · Anthropo · Prière · Journal · Planning"
         />
         <Pilier
-          icon={<Archive size={18} color="var(--color-awan-tx-mute)" />}
+          icon={<Archive size={18} color={theme.mute} />}
           temps="HIER — Les lignes"
           question="Que dit la trajectoire ?"
           surfaces="Analyse · Bilans hebdo & cycle · Heatmap · Jumeau numérique"
         />
         <Pilier
-          icon={<Compass size={18} color="var(--color-awan-tx-mute)" />}
+          icon={<Compass size={18} color={theme.mute} />}
           temps="DEMAIN — L'esquisse"
           question="Que faut-il ajuster ?"
           surfaces="Coach réactif (règles) · Forecasts (deload · refeed · prochaine séance)"
@@ -124,7 +126,7 @@ export default function PhilosophieScreen(_props: NavProps): React.ReactElement 
       {/* Conclusion */}
       <div className="border border-awan-gold/15 bg-awan-gold/[0.03] p-5">
         <div className="flex flex-row gap-3 items-start">
-          <BookOpen size={18} color="var(--color-awan-gold)" className="flex-shrink-0 mt-0.5" />
+          <BookOpen size={18} color={theme.selected} className="flex-shrink-0 mt-0.5" />
           <span className="text-xs text-awan-tx-dim leading-relaxed italic flex-1">
             AWAN n'est pas un tracker. C'est un atelier où l'on écrit chaque jour la version de soi qui régnera demain. Le Coach lit les lignes. Les Forecasts esquissent l'avenir. L'utilisateur encre le présent. La boucle se referme.
           </span>
