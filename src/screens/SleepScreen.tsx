@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { ScrollView, Alert } from 'react-native';
+import { View, Text, ScrollView, Alert, StyleSheet, TextInput as RNTextInput } from 'react-native';
+import Svg, { Line, Text as SvgText, Polyline, Circle } from 'react-native-svg';
 import { Moon, Trash2 } from 'lucide-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
@@ -9,17 +10,18 @@ import { ds, uid } from '../utils/storage';
 import type { NavProps } from '../types/nav';
 import type { SleepEntryLatest } from '../data/schemas/sleep/sleepEntry';
 import { useTheme, type AwanTheme } from '../hooks/useTheme';
-import { FontMono } from '../constants/typography';
+import { FontMono, FontSans } from '../constants/typography';
+import { Fs, Fw, T, Clr } from '../theme/tokens';
 
-// Seuil OMS — 7h recommandées pour adulte
+const SvgLine_ = Line as any;
+const SvgText_ = SvgText as any;
+const SvgPolyline_ = Polyline as any;
+const SvgCircle_ = Circle as any;
+
 const OMS_THRESHOLD_H = 7;
 
 const QUALITY_LABELS: Record<number, string> = {
-  1: 'Très mauvais',
-  2: 'Mauvais',
-  3: 'Moyen',
-  4: 'Bon',
-  5: 'Excellent',
+  1: 'Très mauvais', 2: 'Mauvais', 3: 'Moyen', 4: 'Bon', 5: 'Excellent',
 };
 
 type ThemeColors = Pick<AwanTheme, 'danger' | 'statusWarn' | 'statusOk'>;
@@ -42,7 +44,6 @@ function formatDuration(h: number): string {
   return mins > 0 ? `${hours}h${String(mins).padStart(2, '0')}` : `${hours}h`;
 }
 
-// SVG courbe 7 jours
 function WeekChart({ entries }: { entries: SleepEntryLatest[] }) {
   const theme = useTheme();
   const W = 280; const H = 80; const PAD = 8;
@@ -57,23 +58,14 @@ function WeekChart({ entries }: { entries: SleepEntryLatest[] }) {
   const threshY = toY(OMS_THRESHOLD_H);
 
   return (
-    <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
-      {/* Ligne seuil OMS */}
-      <line x1={PAD} y1={threshY} x2={W - PAD} y2={threshY}
-        stroke={theme.mute} strokeWidth="0.5" strokeDasharray="3,3" />
-      <text x={W - PAD} y={threshY - 3} textAnchor="end"
-        style={{ fontSize: 8, fill: theme.mute, fontFamily: FontMono }}>
-        7h OMS
-      </text>
-      {/* Courbe */}
-      <polyline points={points} fill="none"
-        stroke={theme.selected} strokeWidth="1.5" strokeLinejoin="round" />
-      {/* Points */}
+    <Svg width="100%" viewBox={`0 0 ${W} ${H}`} height={H}>
+      <SvgLine_ x1={PAD} y1={threshY} x2={W - PAD} y2={threshY} stroke={theme.mute} strokeWidth="0.5" strokeDasharray="3,3" />
+      <SvgText_ x={W - PAD} y={threshY - 3} textAnchor="end" fontSize={8} fill={theme.mute} fontFamily={FontMono}>7h OMS</SvgText_>
+      <SvgPolyline_ points={points} fill="none" stroke={theme.selected} strokeWidth="1.5" strokeLinejoin="round" />
       {sorted.map((e, i) => (
-        <circle key={e.id} cx={toX(i)} cy={toY(e.durationH)} r="3"
-          fill={durationColor(e.durationH, theme)} />
+        <SvgCircle_ key={e.id} cx={toX(i)} cy={toY(e.durationH)} r="3" fill={durationColor(e.durationH, theme)} />
       ))}
-    </svg>
+    </Svg>
   );
 }
 
@@ -143,148 +135,152 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
       <ScreenHeader tag="SYSTÈME · SOMMEIL" title="SUIVI SOMMEIL" />
 
       {/* Saisie du jour */}
-      <div className="p-4 border mb-4" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-        <span className="awan-label block mb-4">
+      <View style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, marginBottom: 16 }]}>
+        <Text style={[T.label, { marginBottom: 16 }]}>
           {todayEntry ? 'MODIFIER AUJOURD\'HUI' : 'SAISIR AUJOURD\'HUI'}
-        </span>
+        </Text>
 
         {/* Durée */}
-        <div className="mb-4">
-          <span className="awan-label text-awan-tx-mute block mb-2">DURÉE</span>
-          <div className="flex flex-row items-center gap-2">
-            <div className="flex flex-row items-center gap-0.5">
+        <View style={{ marginBottom: 16 }}>
+          <Text style={[T.label, { color: theme.mute, marginBottom: 8 }]}>DURÉE</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ flexDirection: 'row', gap: 2 }}>
               {[5, 6, 7, 8, 9].map(h => (
                 <Touch key={h} onPress={() => setHours(h)}
-                  className={`w-8 h-9 flex items-center justify-center border ${hours === h ? 'border-awan-gold bg-awan-gold/10' : 'border-white/10 bg-white/5'}`}>
-                  <span className="font-mono text-xs font-bold"
-                    style={{ color: hours === h ? theme.selected : theme.mute }}>
+                  style={[s.picker, { borderColor: hours === h ? theme.selected : Clr.white10, backgroundColor: hours === h ? `${theme.selected}1A` : Clr.white5 }]}>
+                  <Text style={{ fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.value, color: hours === h ? theme.selected : theme.mute }}>
                     {h}h
-                  </span>
+                  </Text>
                 </Touch>
               ))}
-            </div>
-            <div className="w-px h-6 self-center bg-white/10" />
-            <div className="flex flex-row items-center gap-0.5">
+            </View>
+            <View style={{ width: 1, height: 24, backgroundColor: Clr.white10 }} />
+            <View style={{ flexDirection: 'row', gap: 2 }}>
               {[0, 15, 30, 45].map(m => (
                 <Touch key={m} onPress={() => setMins(m)}
-                  className={`w-8 h-9 flex items-center justify-center border ${mins === m ? 'border-awan-gold bg-awan-gold/10' : 'border-white/10 bg-white/5'}`}>
-                  <span className="font-mono text-xs font-bold"
-                    style={{ color: mins === m ? theme.selected : theme.mute }}>
+                  style={[s.picker, { borderColor: mins === m ? theme.selected : Clr.white10, backgroundColor: mins === m ? `${theme.selected}1A` : Clr.white5 }]}>
+                  <Text style={{ fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.value, color: mins === m ? theme.selected : theme.mute }}>
                     {String(m).padStart(2, '0')}
-                  </span>
+                  </Text>
                 </Touch>
               ))}
-            </div>
-          </div>
-          <span className="font-mono text-xs mt-2 block" style={{ color: durationColor(durationH, theme) }}>
+            </View>
+          </View>
+          <Text style={{ fontFamily: FontMono, fontSize: Fs.sm, marginTop: 8, color: durationColor(durationH, theme) }}>
             {formatDuration(durationH)}
             {durationH < OMS_THRESHOLD_H ? ` — en dessous des ${OMS_THRESHOLD_H}h recommandées` : ' — objectif atteint ✓'}
-          </span>
-        </div>
+          </Text>
+        </View>
 
         {/* Qualité */}
-        <div className="mb-4">
-          <span className="awan-label text-awan-tx-mute block mb-2">QUALITÉ</span>
-          <div className="flex flex-row gap-2">
+        <View style={{ marginBottom: 16 }}>
+          <Text style={[T.label, { color: theme.mute, marginBottom: 8 }]}>QUALITÉ</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
             {[1, 2, 3, 4, 5].map(q => (
-              <Touch key={q} onPress={() => setQuality(q)}
-                className={`flex-1 h-12 flex items-center justify-center border ${quality === q ? 'border-awan-gold' : 'border-white/10 bg-white/5'}`}
-                style={{ backgroundColor: quality === q ? `${qualityColor(q, theme)}20` : undefined }}>
-                <span className="font-mono font-black text-base"
-                  style={{ color: quality === q ? qualityColor(q, theme) : theme.mute }}>
-                  {q}
-                </span>
+              <Touch key={q} onPress={() => setQuality(q)} style={{ flex: 1 }}>
+                <View style={[s.qualityBtn, { borderColor: quality === q ? theme.selected : Clr.white10, backgroundColor: quality === q ? `${qualityColor(q, theme)}20` : Clr.white5 }]}>
+                  <Text style={{ fontFamily: FontMono, fontWeight: Fw.display, fontSize: Fs.base, color: quality === q ? qualityColor(q, theme) : theme.mute }}>
+                    {q}
+                  </Text>
+                </View>
               </Touch>
             ))}
-          </div>
-          <span className="font-sans text-xs mt-1 block" style={{ color: qualityColor(quality, theme) }}>
+          </View>
+          <Text style={{ fontFamily: FontSans, fontSize: Fs.sm, marginTop: 4, color: qualityColor(quality, theme) }}>
             {QUALITY_LABELS[quality]}
-          </span>
-        </div>
+          </Text>
+        </View>
 
-        {/* Horaires optionnels */}
-        <div className="flex flex-row gap-3 mb-4">
-          <div className="flex-1">
-            <span className="awan-label text-awan-tx-mute block mb-1">COUCHER</span>
-            <input
-              type="time"
+        {/* Horaires */}
+        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={[T.label, { color: theme.mute, marginBottom: 4 }]}>COUCHER</Text>
+            <RNTextInput
               value={bedtime}
-              onChange={e => setBedtime(e.target.value)}
-              className="w-full font-mono text-sm bg-white/5 border border-white/10 px-3 py-2"
-              style={{ color: theme.title, outline: 'none' }}
+              onChangeText={setBedtime}
+              placeholder="HH:MM"
+              placeholderTextColor={Clr.white15}
+              keyboardType="numbers-and-punctuation"
+              style={[s.timeInput, { color: theme.title, borderColor: Clr.white10, backgroundColor: Clr.white5 }]}
             />
-          </div>
-          <div className="flex-1">
-            <span className="awan-label text-awan-tx-mute block mb-1">RÉVEIL</span>
-            <input
-              type="time"
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[T.label, { color: theme.mute, marginBottom: 4 }]}>RÉVEIL</Text>
+            <RNTextInput
               value={wakeTime}
-              onChange={e => setWakeTime(e.target.value)}
-              className="w-full font-mono text-sm bg-white/5 border border-white/10 px-3 py-2"
-              style={{ color: theme.title, outline: 'none' }}
+              onChangeText={setWakeTime}
+              placeholder="HH:MM"
+              placeholderTextColor={Clr.white15}
+              keyboardType="numbers-and-punctuation"
+              style={[s.timeInput, { color: theme.title, borderColor: Clr.white10, backgroundColor: Clr.white5 }]}
             />
-          </div>
-        </div>
+          </View>
+        </View>
 
         <Touch onPress={() => void handleSave()} disabled={saving || durationH <= 0}
-          className="h-12 flex items-center justify-center"
-          style={{ backgroundColor: theme.selected, opacity: saving ? 0.5 : 1 }}>
-          <span className="font-mono font-black text-sm text-black tracking-widest">
+          style={[s.saveBtn, { backgroundColor: theme.selected, opacity: saving ? 0.5 : 1 }]}>
+          <Text style={{ fontFamily: FontMono, fontWeight: Fw.display, fontSize: Fs.sm, color: '#000', letterSpacing: 3.6 }}>
             {saving ? 'ENREGISTREMENT…' : todayEntry ? 'METTRE À JOUR' : 'ENREGISTRER'}
-          </span>
+          </Text>
         </Touch>
-      </div>
+      </View>
 
       {/* Tendance 7 jours */}
       {last7.length >= 2 && (
-        <div className="p-4 border mb-4" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-          <div className="flex flex-row justify-between items-baseline mb-3">
-            <span className="awan-label">TENDANCE 7 JOURS</span>
-            <span className="font-mono font-bold text-sm" style={{ color: durationColor(store.avgDurationH, theme) }}>
-              moy. {formatDuration(store.avgDurationH)}
-            </span>
-          </div>
+        <View style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, marginBottom: 16 }]}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 }}>
+            <Text style={T.label}>TENDANCE 7 JOURS</Text>
+            <Text style={{ fontFamily: FontMono, fontWeight: Fw.value, fontSize: Fs.body, color: durationColor(store.avgDurationH, theme) }}>
+              {'moy. '}{formatDuration(store.avgDurationH)}
+            </Text>
+          </View>
           <WeekChart entries={last7} />
-        </div>
+        </View>
       )}
 
       {/* Historique */}
       {store.entries.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <span className="awan-label mb-1">HISTORIQUE</span>
+        <View style={{ gap: 8 }}>
+          <Text style={[T.label, { marginBottom: 4 }]}>HISTORIQUE</Text>
           {store.entries.slice(0, 14).map(entry => (
-            <Card key={entry.id} className="p-3 flex flex-row items-center gap-3">
+            <Card key={entry.id} style={{ padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Moon size={16} color={durationColor(entry.durationH, theme)} />
-              <div className="flex-1 flex flex-col">
-                <span className="font-mono text-xs" style={{ color: theme.mute }}>
-                  {entry.date}
-                </span>
-                <span className="font-mono font-bold text-sm" style={{ color: durationColor(entry.durationH, theme) }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: FontMono, fontSize: Fs.sm, color: theme.mute }}>{entry.date}</Text>
+                <Text style={{ fontFamily: FontMono, fontWeight: Fw.value, fontSize: Fs.body, color: durationColor(entry.durationH, theme) }}>
                   {formatDuration(entry.durationH)}
-                </span>
-              </div>
-              <div className="flex flex-row items-center gap-2">
-                <span className="font-mono font-bold text-sm" style={{ color: qualityColor(entry.quality, theme) }}>
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={{ fontFamily: FontMono, fontWeight: Fw.value, fontSize: Fs.body, color: qualityColor(entry.quality, theme) }}>
                   {'★'.repeat(entry.quality)}{'☆'.repeat(5 - entry.quality)}
-                </span>
-                <Touch onPress={() => handleDelete(entry)} className="p-1">
+                </Text>
+                <Touch onPress={() => handleDelete(entry)} style={{ padding: 4 }}>
                   <Trash2 size={14} color={theme.mute} />
                 </Touch>
-              </div>
+              </View>
             </Card>
           ))}
-        </div>
+        </View>
       )}
 
       {store.entries.length === 0 && !store.loading && (
-        <div className="p-6 flex flex-col items-center gap-2 border border-white/5"
-          style={{ backgroundColor: theme.surface }}>
+        <View style={[s.empty, { borderColor: Clr.white5, backgroundColor: theme.surface }]}>
           <Moon size={24} color={theme.mute} />
-          <span className="awan-label text-awan-tx-mute text-center">
+          <Text style={[T.label, { color: theme.mute, textAlign: 'center' }]}>
             Aucune donnée — saisis ta première nuit
-          </span>
-        </div>
+          </Text>
+        </View>
       )}
     </ScrollView>
   );
 }
+
+const s = StyleSheet.create({
+  section: { padding: 16, borderWidth: 1 },
+  picker: { width: 32, height: 36, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  qualityBtn: { height: 48, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  timeInput: { fontFamily: FontMono, fontSize: Fs.body, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8 },
+  saveBtn: { height: 48, alignItems: 'center', justifyContent: 'center' },
+  empty: { padding: 24, alignItems: 'center', gap: 8, borderWidth: 1 },
+});
