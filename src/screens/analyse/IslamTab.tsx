@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { FontMono } from '../../constants/typography';
+import { Fs, Fw, Ls } from '../../theme/tokens';
 import { Moon } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
@@ -38,7 +40,6 @@ export function IslamTab() {
       IslamService.getPrayerLogsByDateRange(from30, today),
       IslamService.getQuranSessionsByDateRange(from56, today),
     ]).then(([logs, sessions]) => {
-      // Build 30-day fardScore array (0 if no log)
       const dayMap: Record<string, number> = {};
       for (const l of logs) dayMap[l.date] = l.fardScore ?? 0;
       const days30: Array<{ date: string; fardScore: number }> = [];
@@ -48,7 +49,6 @@ export function IslamTab() {
       }
       setPrayerData(days30);
 
-      // Build 8-week ayahs totals
       const weekMap: Record<string, number> = {};
       for (const s of sessions) {
         const wk = isoWeek(s.date);
@@ -56,7 +56,6 @@ export function IslamTab() {
       }
       const sortedWeeks = Object.keys(weekMap).sort().slice(-8);
       setWeeklyAyahs(sortedWeeks.map(w => ({ week: w, ayahs: weekMap[w] ?? 0 })));
-
       setLoading(false);
     });
   }, []);
@@ -76,70 +75,71 @@ export function IslamTab() {
     : 0;
 
   return (
-    <div className="space-y-6">
-      {/* Section 1 — Adhérence 30j */}
-      <Card className="p-5 bg-white/5 border-white/5">
-        <div className="flex flex-row items-center justify-between mb-4">
-          <Heading level={4} mono>ADHÉRENCE PRIÈRES 30J</Heading>
-          <div className="px-3 py-1" style={{ backgroundColor: avgAdherence >= 80 ? 'rgba(78,205,196,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${avgAdherence >= 80 ? theme.statusOk : 'rgba(255,255,255,0.1)'}` }}>
-            <span style={{ fontFamily: FontMono, fontSize: '14px', fontWeight: 700, color: avgAdherence >= 80 ? theme.statusOk : theme.mute, letterSpacing: '0.1em' }}>
+    <View style={{ gap: 24 }}>
+      <Card>
+        <View style={s.rowBetween}>
+          <Heading level={4} mono style={{ marginBottom: 0 }}>ADHÉRENCE PRIÈRES 30J</Heading>
+          <View style={[s.badge, {
+            backgroundColor: avgAdherence >= 80 ? 'rgba(78,205,196,0.15)' : 'rgba(255,255,255,0.05)',
+            borderColor: avgAdherence >= 80 ? theme.statusOk : 'rgba(255,255,255,0.1)',
+          }]}>
+            <Text style={[s.badgeText, { color: avgAdherence >= 80 ? theme.statusOk : theme.mute }]}>
               {avgAdherence}%
-            </span>
-          </div>
-        </div>
+            </Text>
+          </View>
+        </View>
         {prayerData.every(d => d.fardScore === 0) ? (
           <GuardCard message="Aucune prière enregistrée — saisie dans Islam → Chrono Prières" />
         ) : (
-          <BarChart
-            data={prayerData}
-            dataKey="fardScore"
-            color={theme.selected}
-          />
+          <BarChart data={prayerData} dataKey="fardScore" color={theme.selected} />
         )}
       </Card>
 
-      {/* Section 2 — Streak */}
-      <Card className="p-5 bg-white/5 border-white/5">
-        <Heading level={4} mono className="mb-4">SÉQUENCE FARD</Heading>
+      <Card>
+        <Heading level={4} mono style={{ marginBottom: 16 }}>SÉQUENCE FARD</Heading>
         {streak === 0 ? (
           <GuardCard message="Aucune séquence — compte à partir de ta prochaine prière complète" />
         ) : (
-          <div className="flex flex-row items-center gap-6 py-4">
-            <Moon size={32} className="text-awan-gold" />
-            <div>
-              <span style={{ fontFamily: FontMono, fontSize: '48px', fontWeight: 700, color: theme.selected, lineHeight: 1 }}>
-                {streak}
-              </span>
-              <span style={{ fontFamily: FontMono, fontSize: '11px', color: theme.mute, letterSpacing: '0.2em', display: 'block', marginTop: 4 }}>
+          <View style={s.streakRow}>
+            <Moon size={32} color={theme.selected} />
+            <View>
+              <Text style={[s.streakNum, { color: theme.selected }]}>{streak}</Text>
+              <Text style={[s.streakLabel, { color: theme.mute }]}>
                 JOUR{streak > 1 ? 'S' : ''} CONSÉCUTIF{streak > 1 ? 'S' : ''}
-              </span>
-            </div>
-          </div>
+              </Text>
+            </View>
+          </View>
         )}
       </Card>
 
-      {/* Section 3 — Versets par semaine */}
-      <Card className="p-5 bg-white/5 border-white/5">
-        <Heading level={4} mono className="mb-4">VERSETS / SEMAINE</Heading>
+      <Card>
+        <Heading level={4} mono style={{ marginBottom: 16 }}>VERSETS / SEMAINE</Heading>
         {weeklyAyahs.length === 0 ? (
           <GuardCard message="Aucune session Coran — saisie dans Islam → Wird" />
         ) : (
           <>
-            <BarChart
-              data={weeklyAyahs}
-              dataKey="ayahs"
-              color={theme.statusOk}
-            />
-            <div className="mt-3 flex flex-row justify-between">
+            <BarChart data={weeklyAyahs} dataKey="ayahs" color={theme.statusOk} />
+            <View style={s.weekLabels}>
               {weeklyAyahs.slice(-4).map(w => (
-                <span key={w.week} style={{ fontFamily: FontMono, fontSize: '8px', color: theme.mute, letterSpacing: '0.1em' }}>
+                <Text key={w.week} style={[s.weekLabel, { color: theme.mute }]}>
                   {w.week.split('-')[1]}
-                </span>
+                </Text>
               ))}
-            </div>
+            </View>
           </>
         )}
       </Card>
-    </div>
+    </View>
   );
 }
+
+const s = StyleSheet.create({
+  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+  badge: { paddingHorizontal: 12, paddingVertical: 4, borderWidth: 1 },
+  badgeText: { fontFamily: FontMono, fontSize: Fs.body, fontWeight: Fw.value, letterSpacing: Ls.body_005 },
+  streakRow: { flexDirection: 'row', alignItems: 'center', gap: 24, paddingVertical: 16 },
+  streakNum: { fontFamily: FontMono, fontSize: 48, fontWeight: Fw.value, lineHeight: 52 },
+  streakLabel: { fontFamily: FontMono, fontSize: Fs.lg, letterSpacing: Ls.md_02, marginTop: 4 },
+  weekLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
+  weekLabel: { fontFamily: FontMono, fontSize: 8, letterSpacing: Ls.body_005 },
+});

@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { TrendingUp } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
@@ -6,6 +8,10 @@ import type { WorkoutSessionLatest } from '../../data/schemas/sport/routine';
 import { computeEAT, buildFluxData, computeFluxDensity, type WeekMacros } from '../../services/analyticsService';
 import { StackedBarChart, GuardCard, LoadingState, loadNutritionProfile, deriveTDEE } from './shared';
 import { useTheme, type AwanTheme } from '../../hooks/useTheme';
+import { FontMono } from '../../constants/typography';
+import { Fs, Fw, Ls } from '../../theme/tokens';
+
+const SvgPath_ = Path as any;
 
 interface FluxDensiteTabProps {
   sessions: WorkoutSessionLatest[];
@@ -42,7 +48,6 @@ export function FluxDensiteTab({ sessions, weightKg }: FluxDensiteTabProps) {
     return deriveTDEE(profile) * 7;
   }, [profile]);
 
-  // EAT hebdo par semaine
   const eatByWeek = useMemo((): Map<string, number> => {
     const map = new Map<string, number>();
     if (!weightKg || !fluxData) return map;
@@ -57,11 +62,10 @@ export function FluxDensiteTab({ sessions, weightKg }: FluxDensiteTabProps) {
     return map;
   }, [sessions, weightKg, fluxData]);
 
-  // Expenditure lines (constant across weeks = same profile, variable EAT)
   const currentWeek = fluxData?.[fluxData.length - 1];
   const currentEAT = currentWeek ? (eatByWeek.get(currentWeek.weekStart) ?? 0) : 0;
-  const lineA = tdeeWeekly ?? null;                          // BMR+NEAT × 7
-  const lineB = tdeeWeekly != null ? tdeeWeekly + currentEAT : null; // + EAT semaine courante
+  const lineA = tdeeWeekly ?? null;
+  const lineB = tdeeWeekly != null ? tdeeWeekly + currentEAT : null;
 
   const phase = useMemo(() => {
     if (!currentWeek || lineB == null) return null;
@@ -72,7 +76,7 @@ export function FluxDensiteTab({ sessions, weightKg }: FluxDensiteTabProps) {
 
   if (!profile) {
     return (
-      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+      <Card variant="flat">
         <Heading level={4} mono subtitle="Bilan thermodynamique hebdomadaire">FLUX DE DENSITÉ</Heading>
         <GuardCard message="Profil nutritionnel manquant → Nutrition → Objectifs" />
       </Card>
@@ -82,87 +86,98 @@ export function FluxDensiteTab({ sessions, weightKg }: FluxDensiteTabProps) {
   const noData = !fluxData || fluxData.every(w => w.totalKcal === 0);
   if (noData) {
     return (
-      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+      <Card variant="flat">
         <Heading level={4} mono subtitle="Bilan thermodynamique hebdomadaire">FLUX DE DENSITÉ</Heading>
         <GuardCard message="Aucune donnée nutritionnelle — commencez à saisir vos repas" />
       </Card>
     );
   }
 
+  const phaseInfo = phase ? PHASE_LABELS[phase] : null;
+
   return (
-    <div className="space-y-8">
-      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+    <View style={{ gap: 32 }}>
+      <Card variant="flat">
         <Heading level={4} mono subtitle="P×4 + G×4 + L×9 kcal · 8 semaines">FLUX DE DENSITÉ</Heading>
 
-        <div className="mt-6">
-          <StackedBarChart
-            data={fluxData ?? []}
-            lineA={lineA}
-            lineB={lineB}
-            height={220}
-          />
-        </div>
+        <View style={{ marginTop: 24 }}>
+          <StackedBarChart data={fluxData ?? []} lineA={lineA} lineB={lineB} height={220} />
+        </View>
 
-        {/* Axe X labels */}
-        <div className="flex flex-row justify-between px-2 mt-1">
+        <View style={s.xLabels}>
           {(fluxData ?? []).map(w => (
-            <span key={w.weekStart} className="text-awan-xs font-mono text-awan-tx-mute">{w.label}</span>
+            <Text key={w.weekStart} style={[s.xLabel, { color: theme.mute }]}>{w.label}</Text>
           ))}
-        </div>
+        </View>
 
-        {/* Légende */}
-        <div className="flex flex-row gap-4 mt-4 flex-wrap">
+        <View style={s.legend}>
           {[
             { color: theme.statusOk, label: 'Protéines' },
             { color: theme.statusInfo, label: 'Glucides' },
             { color: theme.statusWarn, label: 'Lipides' },
           ].map(l => (
-            <div key={l.label} className="flex flex-row items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: l.color }} />
-              <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">{l.label}</span>
-            </div>
+            <View key={l.label} style={s.legendItem}>
+              <View style={[s.legendSwatch, { backgroundColor: l.color, borderRadius: 2 }]} />
+              <Text style={[s.labelXs, { color: theme.mute }]}>{l.label}</Text>
+            </View>
           ))}
-          <div className="flex flex-row items-center gap-1.5">
-            <div className="w-6 h-0 border-t border-dashed" style={{ borderColor: theme.mute }} />
-            <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">BMR+NEAT</span>
-          </div>
-          <div className="flex flex-row items-center gap-1.5">
-            <div className="w-6 h-0 border-t" style={{ borderColor: theme.selected }} />
-            <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">+EAT</span>
-          </div>
-        </div>
+          <View style={s.legendItem}>
+            <View style={[s.legendLine, { backgroundColor: theme.mute }]} />
+            <Text style={[s.labelXs, { color: theme.mute }]}>BMR+NEAT</Text>
+          </View>
+          <View style={s.legendItem}>
+            <View style={[s.legendLine, { backgroundColor: theme.selected }]} />
+            <Text style={[s.labelXs, { color: theme.mute }]}>+EAT</Text>
+          </View>
+        </View>
       </Card>
 
-      {/* Phase courante */}
-      {phase && (
-        <Card className="p-5" variant="flat" style={{ borderColor: PHASE_LABELS[phase]!.color + '40' }}>
-          <span className="awan-label mb-2 block" style={{ color: PHASE_LABELS[phase]!.color }}>
-            PHASE COURANTE
-          </span>
-          <span className="text-awan-md font-black text-awan-tx">{PHASE_LABELS[phase]!.label}</span>
+      {phase && phaseInfo && (
+        <Card variant="flat" style={{ borderColor: `${phaseInfo.color}40` }}>
+          <Text style={[s.phaseLabel, { color: phaseInfo.color, marginBottom: 8 }]}>PHASE COURANTE</Text>
+          <Text style={[s.bodyText, { color: theme.title }]}>{phaseInfo.label}</Text>
           {lineB != null && currentWeek && (
-            <div className="flex flex-row gap-6 mt-4">
-              <div>
-                <span className="text-awan-xs text-awan-tx-mute uppercase tracking-widest block">Ingestion</span>
-                <span className="text-xl font-black font-mono text-awan-tx">{currentWeek.totalKcal.toLocaleString()}<span className="text-sm ml-1 opacity-50">kcal</span></span>
-              </div>
-              <div>
-                <span className="text-awan-xs text-awan-tx-mute uppercase tracking-widest block">Dépense totale</span>
-                <span className="text-xl font-black font-mono text-awan-tx">{Math.round(lineB).toLocaleString()}<span className="text-sm ml-1 opacity-50">kcal</span></span>
-              </div>
-              <div>
-                <span className="text-awan-xs text-awan-tx-mute uppercase tracking-widest block">Bilan</span>
-                <span className="text-xl font-black font-mono" style={{ color: PHASE_LABELS[phase]!.color }}>
+            <View style={[s.row, { gap: 24, marginTop: 16 }]}>
+              <View>
+                <Text style={[s.labelXs, { color: theme.mute }]}>Ingestion</Text>
+                <Text style={[s.numText, { color: theme.title }]}>
+                  {currentWeek.totalKcal.toLocaleString()}<Text style={s.unitSm}> kcal</Text>
+                </Text>
+              </View>
+              <View>
+                <Text style={[s.labelXs, { color: theme.mute }]}>Dépense totale</Text>
+                <Text style={[s.numText, { color: theme.title }]}>
+                  {Math.round(lineB).toLocaleString()}<Text style={s.unitSm}> kcal</Text>
+                </Text>
+              </View>
+              <View>
+                <Text style={[s.labelXs, { color: theme.mute }]}>Bilan</Text>
+                <Text style={[s.numText, { color: phaseInfo.color }]}>
                   {currentWeek.totalKcal - Math.round(lineB) > 0 ? '+' : ''}{(currentWeek.totalKcal - Math.round(lineB)).toLocaleString()}
-                </span>
-              </div>
-            </div>
+                </Text>
+              </View>
+            </View>
           )}
           {weightKg === null && (
-            <span className="text-awan-xs text-awan-tx-mute mt-2 block">· EAT non calculé — poids manquant</span>
+            <Text style={[s.labelXs, { color: theme.mute, marginTop: 8 }]}>· EAT non calculé — poids manquant</Text>
           )}
         </Card>
       )}
-    </div>
+    </View>
   );
 }
+
+const s = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'baseline' },
+  xLabels: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 8, marginTop: 4 },
+  xLabel: { fontFamily: FontMono, fontSize: Fs.xs },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: 16 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendSwatch: { width: 12, height: 12 },
+  legendLine: { width: 24, height: 1 },
+  phaseLabel: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
+  bodyText: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display },
+  numText: { fontFamily: FontMono, fontSize: 20, fontWeight: Fw.display, letterSpacing: Ls.tight },
+  unitSm: { fontFamily: FontMono, fontSize: Fs.sm, opacity: 0.5 },
+  labelXs: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
+});

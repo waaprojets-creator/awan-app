@@ -1,23 +1,18 @@
 import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useTheme } from '../../hooks/useTheme';
 import { Card } from '../../components/ui/Card';
+import { FontMono } from '../../constants/typography';
+import { Fs, Fw, Ls } from '../../theme/tokens';
 
 const SvgCircle = Circle as any;
 const SvgPath = Path as any;
 
 const FREE_KEY = '_free';
 
-interface ActivityEntry {
-  key: string;
-  value: number;
-  color: string;
-  label: string;
-}
-
-interface ActivityTabProps {
-  data: ActivityEntry[];
-}
+interface ActivityEntry { key: string; value: number; color: string; label: string }
+interface ActivityTabProps { data: ActivityEntry[] }
 
 export function ActivityTab({ data }: ActivityTabProps) {
   const theme = useTheme();
@@ -25,36 +20,37 @@ export function ActivityTab({ data }: ActivityTabProps) {
   const freeMinutes = data.find(d => d.key === FREE_KEY)?.value ?? 0;
 
   return (
-    <div className="space-y-8">
-      <Card className="items-center py-10 relative overflow-hidden bg-white/5 border-white/5">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-awan-gold/5 rounded-full blur-3xl -mr-16 -mt-16" />
+    <View style={{ gap: 32 }}>
+      <Card style={{ alignItems: 'center', paddingVertical: 40 }}>
         <PieChart data={data} size={220} />
-        <div className="mt-10 w-full">
+        <View style={{ marginTop: 40, width: '100%' }}>
           <Legend data={data} />
-        </div>
+        </View>
       </Card>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Card className="border-awan-gold/30 bg-awan-gold/5 p-6" variant="flat">
-          <span className="text-awan-md font-black text-awan-gold tracking-widest mb-2 block uppercase">Flux Actif</span>
-          <span className="text-3xl font-black text-awan-tx font-mono">
-            {Math.round(activeMinutes / 60)}<span className="text-sm ml-1 opacity-50">H</span>
-          </span>
+      <View style={s.grid2}>
+        <Card variant="flat" style={[{ flex: 1 }, { borderColor: 'rgba(212,175,55,0.30)', backgroundColor: 'rgba(212,175,55,0.05)' }]}>
+          <Text style={[s.label, { color: theme.selected, marginBottom: 8 }]}>Flux Actif</Text>
+          <View style={s.row}>
+            <Text style={[s.bigNum, { color: theme.title }]}>{Math.round(activeMinutes / 60)}</Text>
+            <Text style={[s.unit, { color: theme.mute }]}>H</Text>
+          </View>
         </Card>
-        <Card className="border-white/5 bg-white/5 p-6" variant="flat">
-          <span className="text-awan-md font-black text-awan-tx-mute tracking-widest mb-2 block uppercase">Veille System</span>
-          <span className="text-3xl font-black text-awan-tx font-mono">
-            {Math.round(freeMinutes / 60)}<span className="text-sm ml-1 opacity-50">H</span>
-          </span>
+        <Card variant="flat" style={{ flex: 1 }}>
+          <Text style={[s.label, { color: theme.mute, marginBottom: 8 }]}>Veille System</Text>
+          <View style={s.row}>
+            <Text style={[s.bigNum, { color: theme.title }]}>{Math.round(freeMinutes / 60)}</Text>
+            <Text style={[s.unit, { color: theme.mute }]}>H</Text>
+          </View>
         </Card>
-      </div>
-    </div>
+      </View>
+    </View>
   );
 }
 
 function PieChart({ data, size = 180 }: { data: ActivityEntry[]; size?: number }) {
   const theme = useTheme();
-  const total = data.reduce((s, d) => s + d.value, 0);
+  const total = data.reduce((sum, d) => sum + d.value, 0);
   const cx = size / 2; const cy = size / 2; const r = size / 2 - 15;
 
   if (total === 0) {
@@ -82,24 +78,40 @@ function PieChart({ data, size = 180 }: { data: ActivityEntry[]; size?: number }
 }
 
 function Legend({ data }: { data: ActivityEntry[] }) {
-  const total = data.reduce((s, d) => s + d.value, 0);
+  const theme = useTheme();
+  const total = data.reduce((sum, d) => sum + d.value, 0);
   return (
-    <div className="grid grid-cols-1 gap-4 px-4">
+    <View style={{ gap: 16, paddingHorizontal: 16 }}>
       {data.filter(d => d.value > 0).slice(0, 6).map(d => (
-        <div key={d.key} className="flex flex-row items-center justify-between border-b border-white/5 pb-2">
-          <div className="flex flex-row items-center gap-3">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }} />
-            <span className="text-awan-md font-black text-awan-tx uppercase tracking-widest">{d.label}</span>
-          </div>
-          <div className="flex flex-row items-center gap-3">
-            <span className="text-awan-md font-mono text-awan-gold">{Math.round(d.value / 60)}H</span>
-            <div className="w-12 h-1 bg-white/5 rounded-full overflow-hidden">
-              <div className="h-full bg-awan-gold opacity-50" style={{ width: `${(d.value / total) * 100}%` }} />
-            </div>
-            <span className="text-awan-sm font-mono text-awan-tx-mute w-8 text-right">{Math.round((d.value / total) * 100)}%</span>
-          </div>
-        </div>
+        <View key={d.key} style={[s.legendRow, { borderBottomColor: 'rgba(255,255,255,0.05)' }]}>
+          <View style={s.legendLeft}>
+            <View style={[s.dot, { backgroundColor: d.color }]} />
+            <Text style={[s.label, { color: theme.title }]}>{d.label}</Text>
+          </View>
+          <View style={s.legendRight}>
+            <Text style={[s.labelMono, { color: theme.selected }]}>{Math.round(d.value / 60)}H</Text>
+            <View style={[s.bar, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
+              <View style={{ height: '100%', width: `${(d.value / total) * 100}%`, backgroundColor: theme.selected, opacity: 0.5 }} />
+            </View>
+            <Text style={[s.pct, { color: theme.mute }]}>{Math.round((d.value / total) * 100)}%</Text>
+          </View>
+        </View>
       ))}
-    </div>
+    </View>
   );
 }
+
+const s = StyleSheet.create({
+  grid2: { flexDirection: 'row', gap: 16 },
+  row: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
+  bigNum: { fontFamily: FontMono, fontSize: 30, fontWeight: Fw.display },
+  unit: { fontFamily: FontMono, fontSize: Fs.sm },
+  label: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.body_033 },
+  labelMono: { fontFamily: FontMono, fontSize: Fs.md },
+  pct: { fontFamily: FontMono, fontSize: Fs.sm, width: 32, textAlign: 'right' },
+  legendRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, paddingBottom: 8 },
+  legendLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  legendRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  bar: { width: 48, height: 4, borderRadius: 2, overflow: 'hidden' },
+});

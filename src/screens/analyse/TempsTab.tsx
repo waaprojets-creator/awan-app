@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Dimensions } from 'react-native';
+import { View, Text, Dimensions } from 'react-native';
 import Svg, { Rect, G, Line, Path, Circle, Text as SvgText } from 'react-native-svg';
 import {
   format,
@@ -352,29 +352,29 @@ function ClockPie({ slots, date }: ClockPieProps) {
           }}
           pointerEvents="none"
         >
-          <span
+          <Text
             style={{
               fontFamily: FontMono,
               fontSize: 11,
               color: theme.mute,
-              letterSpacing: '0.15em',
+              letterSpacing: 1.65,
               textTransform: 'uppercase',
             }}
           >
             {format(parseISO(date), 'd MMM', { locale: fr }).toUpperCase()}
-          </span>
-          <span
+          </Text>
+          <Text
             style={{
               fontFamily: FontMono,
               fontSize: 16,
               fontWeight: 'bold',
               color: theme.title,
-              letterSpacing: '0.1em',
+              letterSpacing: 1.6,
               marginTop: 2,
             }}
           >
             {currentTimeStr}
-          </span>
+          </Text>
         </View>
       </View>
     </View>
@@ -746,29 +746,29 @@ function Legend({ dayLayersList, activeBar, view }: LegendProps) {
                   backgroundColor: layer.color,
                 }}
               />
-              <span
+              <Text
                 style={{
                   fontFamily: FontMono,
                   fontSize: 10,
                   color: theme.text,
-                  letterSpacing: '0.15em',
+                  letterSpacing: 1.5,
                   textTransform: 'uppercase',
                 }}
               >
                 {label}
-              </span>
+              </Text>
             </View>
-            <span
+            <Text
               style={{
                 fontFamily: FontMono,
                 fontSize: 12,
                 fontWeight: 'bold',
                 color: theme.title,
-                letterSpacing: '0.05em',
+                letterSpacing: 0.6,
               }}
             >
               {val.toFixed(1)}H
-            </span>
+            </Text>
           </View>
         );
       })}
@@ -913,24 +913,21 @@ export default function TempsTab() {
                 paddingBottom: 8,
                 alignItems: 'center',
                 justifyContent: 'center',
-                border: isActive
-                  ? `1px solid ${theme.selected}`
-                  : `1px solid ${theme.border}`,
+                borderWidth: 1,
+              borderColor: isActive ? theme.selected : theme.border,
               }}
             >
-              <span
+              <Text
                 style={{
                   fontFamily: FontMono,
                   fontSize: 9,
                   fontWeight: 'bold',
-                  letterSpacing: '0.1em',
-                  color: isActive
-                    ? theme.selected
-                    : theme.mute,
+                  letterSpacing: 0.9,
+                  color: isActive ? theme.selected : theme.mute,
                 }}
               >
                 {VIEW_LABELS[v]}
-              </span>
+              </Text>
             </Touch>
           );
         })}
@@ -950,20 +947,20 @@ export default function TempsTab() {
         <Touch onPress={handlePrev} style={{ padding: 8 }}>
           <ChevronLeft size={18} color={theme.text} />
         </Touch>
-        <span
+        <Text
           style={{
             fontFamily: FontMono,
             fontSize: 12,
             fontWeight: 'bold',
             color: theme.title,
-            letterSpacing: '0.1em',
+            letterSpacing: 1.2,
             textTransform: 'uppercase',
             flex: 1,
             textAlign: 'center',
           }}
         >
           {period.label}
-        </span>
+        </Text>
         <Touch
           onPress={handleNext}
           disabled={!canGoForward}
@@ -990,17 +987,17 @@ export default function TempsTab() {
                 justifyContent: 'center',
               }}
             >
-              <span
+              <Text
                 style={{
                   fontFamily: FontMono,
                   fontSize: 11,
                   color: theme.mute,
-                  letterSpacing: '0.2em',
+                  letterSpacing: 2.2,
                   textTransform: 'uppercase',
                 }}
               >
                 CHARGEMENT...
-              </span>
+              </Text>
             </View>
           ) : (
             <>

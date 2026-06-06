@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '../../hooks/useTheme';
-import { View, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Rect, Line, Path } from 'react-native-svg';
 import { Zap } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
@@ -8,6 +8,8 @@ import { Heading } from '../../components/ui/Heading';
 import { Touch } from '../../components/ui/Touch';
 import { getStorage } from '../../data/storage/storageService';
 import { GuardCard, LoadingState, loadNutritionProfile } from './shared';
+import { FontMono } from '../../constants/typography';
+import { Fs, Fw, Ls } from '../../theme/tokens';
 
 const SvgRect_ = Rect as any;
 const SvgLine_ = Line as any;
@@ -15,19 +17,8 @@ const SvgPath_ = Path as any;
 
 type ViewMode = '31j' | '12s';
 
-interface DayMetabo {
-  label: string;
-  kcal: number;
-  anabPct: number; // fraction 0-1 of target
-  catabPct: number; // deficit fraction 0-1
-}
-
-interface WeekMetabo {
-  label: string;
-  avgKcal: number;
-  anabPct: number;
-  catabPct: number;
-}
+interface DayMetabo { label: string; kcal: number; anabPct: number; catabPct: number }
+interface WeekMetabo { label: string; avgKcal: number; anabPct: number; catabPct: number }
 
 async function load31Days(targetKcal: number): Promise<DayMetabo[]> {
   const storage = await getStorage();
@@ -85,7 +76,7 @@ export function MetaboliqueTab() {
 
   if (!profile) {
     return (
-      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+      <Card variant="flat">
         <Heading level={4} mono subtitle="Balance anabolisme / catabolisme">MÉTABOLISME</Heading>
         <GuardCard message="Profil nutritionnel manquant → Nutrition → Objectifs" />
       </Card>
@@ -99,46 +90,46 @@ export function MetaboliqueTab() {
   const barData = mode === '31j' ? barData31 : barData12;
 
   return (
-    <div className="space-y-8">
-      {/* Toggle 31j / 12s */}
-      <div className="flex flex-row gap-3">
+    <View style={{ gap: 32 }}>
+      <View style={s.toggleRow}>
         {(['31j', '12s'] as ViewMode[]).map(m => (
           <Touch
             key={m}
-            className={`px-5 py-1.5 border transition-all ${mode === m ? 'bg-awan-gold/20 border-awan-gold' : 'border-white/10'}`}
             onPress={() => setMode(m)}
+            style={[s.toggleBtn, {
+              borderColor: mode === m ? theme.selected : 'rgba(255,255,255,0.1)',
+              backgroundColor: mode === m ? 'rgba(212,175,55,0.2)' : 'transparent',
+            }]}
           >
-            <span className={`text-awan-md font-black tracking-[0.2em] ${mode === m ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
+            <Text style={[s.toggleLabel, { color: mode === m ? theme.selected : theme.mute }]}>
               {m.toUpperCase()}
-            </span>
+            </Text>
           </Touch>
         ))}
-      </div>
+      </View>
 
-      {/* Barres anabolisme/catabolisme */}
-      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+      <Card variant="flat">
         <Heading level={4} mono subtitle={`Balance métabolique · ${mode === '31j' ? '31 derniers jours' : '12 semaines'}`}>
           ANABOLISME / CATABOLISME
         </Heading>
         <MetaboliqueChart data={barData} targetKcal={profile.targetKcal} />
-        <div className="flex flex-row gap-4 mt-3">
-          <div className="flex flex-row items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: theme.statusOk }} />
-            <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">Anabolisme</span>
-          </div>
-          <div className="flex flex-row items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: theme.danger }} />
-            <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">Déficit</span>
-          </div>
-        </div>
+        <View style={s.legendRow}>
+          <View style={s.legendItem}>
+            <View style={[s.legendSwatch, { backgroundColor: theme.statusOk }]} />
+            <Text style={[s.labelXs, { color: theme.mute }]}>Anabolisme</Text>
+          </View>
+          <View style={s.legendItem}>
+            <View style={[s.legendSwatch, { backgroundColor: theme.danger }]} />
+            <Text style={[s.labelXs, { color: theme.mute }]}>Déficit</Text>
+          </View>
+        </View>
       </Card>
 
-      {/* Balance protéique circadienne — guard propre */}
-      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+      <Card variant="flat">
         <Heading level={4} mono subtitle="Modèle cinétique mTOR">BALANCE PROTÉIQUE CIRCADIENNE</Heading>
         <GuardCard message="Disponible avec la saisie des horaires de repas (AWAN v5)" />
       </Card>
-    </div>
+    </View>
   );
 }
 
@@ -153,13 +144,12 @@ function MetaboliqueChart({ data, targetKcal }: { data: BarDatum[]; targetKcal: 
   const colW = W / Math.max(data.length, 1);
   const barW = Math.max(3, colW * 0.7);
 
-  // Bilan net cumulé (anabolisme - catabolisme, normalisé)
   let cumul = 0;
   const cumulPoints = data.map((d, i) => {
     const net = d.anabPct - d.catabPct;
     cumul += net;
     const x = i * colW + colW / 2;
-    const maxCumul = data.length; // max si 100% chaque jour
+    const maxCumul = data.length;
     const y = pad.t + chartH / 2 - (cumul / maxCumul) * (chartH / 2);
     return `${x},${Math.max(pad.t, Math.min(H - pad.b, y))}`;
   });
@@ -167,21 +157,17 @@ function MetaboliqueChart({ data, targetKcal }: { data: BarDatum[]; targetKcal: 
   return (
     <View style={{ marginTop: 16 }}>
       <Svg width={W} height={H}>
-        {/* Ligne de référence (cible = 100%) */}
         <SvgLine_
-          x1={0} y1={pad.t + chartH * (1 - 1)} // y=0 quand anabPct=1
+          x1={0} y1={pad.t}
           x2={W} y2={pad.t}
           stroke="rgba(255,255,255,0.08)" strokeWidth="1"
         />
-
         {data.map((d, i) => {
           const x = i * colW + (colW - barW) / 2;
           const anabH = d.anabPct * chartH;
           const catabH = d.catabPct * chartH;
-
           return (
             <React.Fragment key={i}>
-              {/* Anabolisme (vert, haut) */}
               {anabH > 0 && (
                 <SvgRect_
                   x={x} y={pad.t + chartH - anabH}
@@ -189,7 +175,6 @@ function MetaboliqueChart({ data, targetKcal }: { data: BarDatum[]; targetKcal: 
                   fill={theme.statusOk} opacity={0.7}
                 />
               )}
-              {/* Déficit (rouge, overlay) */}
               {catabH > 0 && (
                 <SvgRect_
                   x={x} y={pad.t + chartH - catabH}
@@ -200,8 +185,6 @@ function MetaboliqueChart({ data, targetKcal }: { data: BarDatum[]; targetKcal: 
             </React.Fragment>
           );
         })}
-
-        {/* Courbe bilan net */}
         {cumulPoints.length > 1 && (
           <SvgPath_
             d={`M ${cumulPoints.join(' L ')}`}
@@ -212,3 +195,13 @@ function MetaboliqueChart({ data, targetKcal }: { data: BarDatum[]; targetKcal: 
     </View>
   );
 }
+
+const s = StyleSheet.create({
+  toggleRow: { flexDirection: 'row', gap: 12 },
+  toggleBtn: { paddingHorizontal: 20, paddingVertical: 6, borderWidth: 1 },
+  toggleLabel: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display, letterSpacing: Ls.sm_02 },
+  legendRow: { flexDirection: 'row', gap: 16, marginTop: 12 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendSwatch: { width: 12, height: 12, borderRadius: 2 },
+  labelXs: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
+});

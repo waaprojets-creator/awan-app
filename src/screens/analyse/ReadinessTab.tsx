@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTheme, type AwanTheme } from '../../hooks/useTheme';
 import { Activity } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
@@ -8,17 +9,15 @@ import type { StatusVariant } from '../../components/ui/InstrumentCard';
 import { SleepService } from '../../services/sleepService';
 import { MeasurementService } from '../../services/measurementService';
 import { JournalService } from '../../services/journalService';
-import { EmptyState } from './shared';
-
-// ─── Readiness state signals (W3 partial — RMSSD pending hardware) ────────────
-// Source: Blatter & Cajochen 2007, Monk 2005 — circadian autonomic readiness
-// RMSSD hardware integration planned in future sprint
+import { EmptyState, LoadingState } from './shared';
+import { FontMono } from '../../constants/typography';
+import { Fs, Fw, Ls } from '../../theme/tokens';
 
 interface ReadinessData {
-  bpmRest: number | null;         // latest measurement.bpm_rest
-  sleepH: number | null;          // last sleep durationH
-  sleepQuality: number | null;    // last sleep quality 1-5
-  mood: number | null;            // last journal mood 1-5
+  bpmRest: number | null;
+  sleepH: number | null;
+  sleepQuality: number | null;
+  mood: number | null;
 }
 
 function readinessBadge(data: ReadinessData, t: Pick<AwanTheme, 'danger' | 'statusWarn' | 'statusOk'>): { label: string; color: string } {
@@ -27,7 +26,6 @@ function readinessBadge(data: ReadinessData, t: Pick<AwanTheme, 'danger' | 'stat
   if (data.sleepH !== null && data.sleepH < 6) alerts++;
   if (data.sleepQuality !== null && data.sleepQuality <= 2) alerts++;
   if (data.mood !== null && data.mood <= 2) alerts++;
-
   if (alerts >= 2) return { label: 'REPOS RECOMMANDÉ', color: t.danger };
   if (alerts === 1) return { label: 'VIGILANCE', color: t.statusWarn };
   return { label: 'OPTIMAL', color: t.statusOk };
@@ -54,8 +52,6 @@ function moodStatus(m: number | null): StatusVariant {
   return 'error';
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
-
 export function ReadinessTab() {
   const theme = useTheme();
   const [data, setData] = useState<ReadinessData | null>(null);
@@ -69,11 +65,9 @@ export function ReadinessTab() {
       JournalService.getAll(),
     ]).then(([sleepEntries, measurements, journals]) => {
       if (!active) return;
-
       const lastSleep = sleepEntries[0] ?? null;
       const lastMeasure = measurements[0] ?? null;
       const lastJournal = journals[0] ?? null;
-
       setData({
         bpmRest: lastMeasure?.bpm_rest ?? null,
         sleepH: lastSleep?.durationH ?? null,
@@ -87,77 +81,56 @@ export function ReadinessTab() {
     return () => { active = false; };
   }, []);
 
-  if (loading) return (
-    <div className="flex items-center justify-center py-16">
-      <span className="text-awan-md text-awan-tx-mute font-black uppercase tracking-widest">Chargement…</span>
-    </div>
-  );
-
+  if (loading) return <LoadingState label="Chargement..." />;
   if (!data) return <EmptyState Icon={Activity} label="Données insuffisantes" />;
 
   const badge = readinessBadge(data, theme);
 
   return (
-    <div className="space-y-8">
-      {/* Readiness badge */}
-      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+    <View style={{ gap: 32 }}>
+      <Card variant="flat">
         <Heading level={4} mono subtitle="État du système nerveux autonome · Signaux composite">
           ÉTAT DE FORME
         </Heading>
-        <div className="mt-4 flex flex-row items-center gap-3">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: badge.color }} />
-          <span className="font-mono text-xl font-black" style={{ color: badge.color }}>
-            {badge.label}
-          </span>
-        </div>
+        <View style={s.badgeRow}>
+          <View style={[s.dot, { backgroundColor: badge.color }]} />
+          <Text style={[s.badgeLabel, { color: badge.color }]}>{badge.label}</Text>
+        </View>
       </Card>
 
-      {/* Signal cards */}
-      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+      <Card variant="flat">
         <Heading level={4} mono subtitle="Dernières valeurs disponibles">SIGNAUX</Heading>
-        <div className="grid grid-cols-2 gap-3 mt-4">
-          <InstrumentCard
-            label="BPM REPOS"
-            value={data.bpmRest !== null ? data.bpmRest : '—'}
-            unit="bpm"
-            status={bpmStatus(data.bpmRest)}
-            {...(data.bpmRest !== null ? { delta: data.bpmRest <= 60 ? '≤ 60 ✓' : '> 60' } : {})}
-            index={1}
-          />
-          <InstrumentCard
-            label="SOMMEIL"
-            value={data.sleepH !== null ? data.sleepH.toFixed(1) : '—'}
-            unit="h"
-            status={sleepStatus(data.sleepH)}
-            {...(data.sleepQuality !== null ? { delta: `qualité ${data.sleepQuality}/5` } : {})}
-            index={2}
-          />
-          <InstrumentCard
-            label="HUMEUR"
-            value={data.mood !== null ? data.mood : '—'}
-            unit="/5"
-            status={moodStatus(data.mood)}
-            {...(data.mood !== null ? { progress: (data.mood / 5) * 100 } : {})}
-            index={3}
-          />
-          <InstrumentCard
-            label="RMSSD"
-            value="—"
-            unit="ms"
-            status="mute"
-            delta="capteur à venir"
-            index={4}
-          />
-        </div>
+        <View style={s.grid2}>
+          <View style={s.gridCell}>
+            <InstrumentCard label="BPM REPOS" value={data.bpmRest !== null ? data.bpmRest : '—'} unit="bpm" status={bpmStatus(data.bpmRest)} {...(data.bpmRest !== null ? { delta: data.bpmRest <= 60 ? '≤ 60 ✓' : '> 60' } : {})} index={1} />
+          </View>
+          <View style={s.gridCell}>
+            <InstrumentCard label="SOMMEIL" value={data.sleepH !== null ? data.sleepH.toFixed(1) : '—'} unit="h" status={sleepStatus(data.sleepH)} {...(data.sleepQuality !== null ? { delta: `qualité ${data.sleepQuality}/5` } : {})} index={2} />
+          </View>
+          <View style={s.gridCell}>
+            <InstrumentCard label="HUMEUR" value={data.mood !== null ? data.mood : '—'} unit="/5" status={moodStatus(data.mood)} {...(data.mood !== null ? { progress: (data.mood / 5) * 100 } : {})} index={3} />
+          </View>
+          <View style={s.gridCell}>
+            <InstrumentCard label="RMSSD" value="—" unit="ms" status="mute" delta="capteur à venir" index={4} />
+          </View>
+        </View>
       </Card>
 
-      {/* Info note */}
-      <Card className="p-4 bg-white/5 border-white/5" variant="flat">
-        <span className="text-awan-xs text-awan-tx-mute">
+      <Card variant="flat">
+        <Text style={[s.infoText, { color: theme.mute }]}>
           RMSSD (variabilité cardiaque) disponible dès intégration Polar/Garmin/Apple Health.
           Source : Blatter & Cajochen 2007 — chronobiologie du système nerveux autonome.
-        </span>
+        </Text>
       </Card>
-    </div>
+    </View>
   );
 }
+
+const s = StyleSheet.create({
+  badgeRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 16 },
+  dot: { width: 12, height: 12, borderRadius: 6 },
+  badgeLabel: { fontFamily: FontMono, fontSize: 20, fontWeight: Fw.display },
+  grid2: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 16 },
+  gridCell: { width: '47%' },
+  infoText: { fontFamily: FontMono, fontSize: Fs.xs, lineHeight: 18 },
+});

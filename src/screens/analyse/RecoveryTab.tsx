@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Path, Circle, Line, Text as SvgText } from 'react-native-svg';
 import { Heart } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
@@ -10,6 +10,7 @@ import { useCoach } from '../../hooks/useCoach';
 import { EmptyState } from './shared';
 import { useTheme } from '../../hooks/useTheme';
 import { FontMono } from '../../constants/typography';
+import { Fs, Fw, Ls } from '../../theme/tokens';
 
 const SvgPath_ = Path as any;
 const SvgCircle_ = Circle as any;
@@ -20,11 +21,7 @@ function localDate(d = new Date()): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-interface RecoveryTabProps {
-  sessions: WorkoutSessionLatest[];
-}
-
-// ─── ACWR semi-circular gauge ─────────────────────────────────────────────────
+interface RecoveryTabProps { sessions: WorkoutSessionLatest[] }
 
 function ACWRGauge({ value }: { value: number }) {
   const theme = useTheme();
@@ -50,7 +47,6 @@ function ACWRGauge({ value }: { value: number }) {
     const a2 = Math.PI * (to / 2 - 1);
     const x1 = cx + R * Math.cos(a1); const y1 = cy + R * Math.sin(a1);
     const x2 = cx + R * Math.cos(a2); const y2 = cy + R * Math.sin(a2);
-    // Semi-circle gauge: total span = π → no zone can be a large arc
     return `M ${x1} ${y1} A ${R} ${R} 0 0 1 ${x2} ${y2}`;
   };
 
@@ -60,8 +56,7 @@ function ACWRGauge({ value }: { value: number }) {
     <View style={{ alignItems: 'center' }}>
       <Svg width={W} height={H}>
         {(() => {
-          const a1 = Math.PI * (-1);
-          const a2 = Math.PI * 0;
+          const a1 = Math.PI * (-1); const a2 = Math.PI * 0;
           const x1 = cx + R * Math.cos(a1); const y1 = cy + R * Math.sin(a1);
           const x2 = cx + R * Math.cos(a2); const y2 = cy + R * Math.sin(a2);
           return <SvgPath_ d={`M ${x1} ${y1} A ${R} ${R} 0 1 1 ${x2} ${y2}`} fill="none" stroke={theme.borderSoft} strokeWidth="12" />;
@@ -81,8 +76,6 @@ function ACWRGauge({ value }: { value: number }) {
   );
 }
 
-// ─── ACWR 28-day line chart with axes ─────────────────────────────────────────
-
 function ACWRCurve({ series }: { series: Array<{ date: string; acwr: number | null }> }) {
   const theme = useTheme();
   const W = Dimensions.get('window').width - 88;
@@ -101,7 +94,6 @@ function ACWRCurve({ series }: { series: Array<{ date: string; acwr: number | nu
     .filter(Boolean) as string[];
 
   const yTicks = [0, 1.0, 1.3, 1.5, 2.0];
-  // X labels at J-28, J-21, J-14, J-7, J0 (indices 0,7,14,21,27 if n=28)
   const xLabels = [
     { label: 'J-28', i: 0 },
     { label: 'J-21', i: Math.round(n * 7 / 28) },
@@ -112,7 +104,6 @@ function ACWRCurve({ series }: { series: Array<{ date: string; acwr: number | nu
 
   return (
     <Svg width={W} height={H}>
-      {/* Y axis ticks */}
       {yTicks.map(v => {
         const y = toY(v);
         const isDanger = v === 1.5;
@@ -123,27 +114,21 @@ function ACWRCurve({ series }: { series: Array<{ date: string; acwr: number | nu
             stroke={col} strokeWidth="1" strokeDasharray={isDanger ? '0' : isWarn ? '4 3' : '2 3'} opacity={0.6} />
         );
       })}
-      {/* Y labels */}
       {yTicks.map(v => (
         <SvgText_ key={v} x={pad.l - 4} y={toY(v) + 3} textAnchor="end" fontSize="7"
           fontFamily={FontMono} fontWeight="700" fill="rgba(255,255,255,0.4)">
           {v.toFixed(1)}
         </SvgText_>
       ))}
-      {/* Y unit */}
       <SvgText_ x={6} y={pad.t + chartH / 2} textAnchor="middle" fontSize="6"
         fontFamily={FontMono} fontWeight="700" fill="rgba(255,255,255,0.3)"
         rotation="-90" originX={6} originY={pad.t + chartH / 2}>ACWR</SvgText_>
-
-      {/* ACWR polyline */}
       {points.length > 1 && (
         <SvgPath_ d={`M ${points.join(' L ')}`} fill="none" stroke={theme.selected} strokeWidth="1.5" />
       )}
       {series.map((p, i) => p.acwr !== null ? (
         <SvgCircle_ key={i} cx={toX(i)} cy={toY(p.acwr)} r={2} fill={theme.selected} />
       ) : null)}
-
-      {/* X axis labels */}
       {xLabels.map(({ label, i }) => (
         <SvgText_ key={label} x={toX(i)} y={H - 2} textAnchor="middle" fontSize="7"
           fontFamily={FontMono} fontWeight="700" fill="rgba(255,255,255,0.4)">
@@ -153,8 +138,6 @@ function ACWRCurve({ series }: { series: Array<{ date: string; acwr: number | nu
     </Svg>
   );
 }
-
-// ─── Main component ───────────────────────────────────────────────────────────
 
 export function RecoveryTab({ sessions }: RecoveryTabProps) {
   const theme = useTheme();
@@ -170,8 +153,7 @@ export function RecoveryTab({ sessions }: RecoveryTabProps) {
   const acwrSeries = useMemo(() => computeACWRSeries(sessions), [sessions]);
 
   const recoveryAvg7 = useMemo(() => {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 7);
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
     const cutStr = localDate(cutoff);
     const recent = sessions.filter(s => s.date >= cutStr && s.recoveryScore != null);
     if (recent.length === 0) return null;
@@ -180,8 +162,7 @@ export function RecoveryTab({ sessions }: RecoveryTabProps) {
 
   const last7RecoveryByDay = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
+      const d = new Date(); d.setDate(d.getDate() - (6 - i));
       const str = localDate(d);
       const s = sessions.find(x => x.date === str);
       return { date: str, score: s?.recoveryScore ?? null };
@@ -191,103 +172,109 @@ export function RecoveryTab({ sessions }: RecoveryTabProps) {
   if (sessions.length === 0) return <EmptyState Icon={Heart} label="Aucune séance enregistrée" />;
 
   return (
-    <div className="space-y-8">
+    <View style={{ gap: 32 }}>
       {hasDeloadForecast && (
-        <Card className="p-4 border border-awan-status-warn bg-awan-status-warn/10" variant="flat">
-          <span className="text-awan-sm font-black uppercase tracking-widest text-awan-status-warn">
+        <Card variant="flat" style={{ borderColor: theme.statusWarn, backgroundColor: `${theme.statusWarn}1A` }}>
+          <Text style={[s.warnText, { color: theme.statusWarn }]}>
             ⚠ DÉCHARGE PRÉVUE — Coach recommande une semaine de récupération dans les 7 prochains jours
-          </span>
+          </Text>
         </Card>
       )}
 
-      {/* ACWR Gauge */}
-      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+      <Card variant="flat">
         <Heading level={4} mono subtitle="Charge Aiguë / Charge Chronique · Gabbett 2016">JAUGE ACWR</Heading>
         {acwr === null ? (
-          <div className="py-6 text-center">
-            <span className="text-awan-md font-black text-awan-tx-mute">
+          <View style={s.center}>
+            <Text style={[s.mutedText, { color: theme.mute }]}>
               Données insuffisantes — {sessions.length}/7 séances minimum requises
-            </span>
-          </div>
+            </Text>
+          </View>
         ) : (
-          <div className="mt-4">
+          <View style={{ marginTop: 16 }}>
             <ACWRGauge value={acwr} />
-            <div className="flex flex-row justify-center gap-6 mt-4">
+            <View style={s.legendRow}>
               {[
                 { label: 'SOUS-CHARGE', color: theme.mute },
                 { label: 'OPTIMAL', color: theme.statusOk },
                 { label: 'ATTENTION', color: theme.statusWarn },
                 { label: 'DANGER', color: theme.danger },
               ].map(z => (
-                <div key={z.label} className="flex flex-row items-center gap-1">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: z.color }} />
-                  <span className="text-awan-xs font-black uppercase tracking-widest" style={{ color: z.color }}>{z.label}</span>
-                </div>
+                <View key={z.label} style={s.legendItem}>
+                  <View style={[s.dot, { backgroundColor: z.color }]} />
+                  <Text style={[s.labelXs, { color: z.color }]}>{z.label}</Text>
+                </View>
               ))}
-            </div>
-          </div>
+            </View>
+          </View>
         )}
       </Card>
 
-      {/* ACWR 28j courbe avec axes */}
-      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+      <Card variant="flat">
         <Heading level={4} mono subtitle="28 jours glissants">ÉVOLUTION ACWR</Heading>
-        <div className="mt-4">
+        <View style={{ marginTop: 16 }}>
           <ACWRCurve series={acwrSeries} />
-        </div>
+        </View>
       </Card>
 
-      {/* Récupération 7j — barres + labels */}
-      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+      <Card variant="flat">
         <Heading level={4} mono subtitle="Score post-séance · 7 jours">RÉCUPÉRATION</Heading>
         {recoveryAvg7 === null ? (
-          <span className="text-awan-md text-awan-tx-mute mt-3 block">Aucun score de récupération renseigné</span>
+          <Text style={[s.mutedText, { color: theme.mute, marginTop: 12 }]}>Aucun score de récupération renseigné</Text>
         ) : (
-          <div className="mt-4">
-            {/* Bars */}
-            <div className="flex flex-row items-end gap-2 mb-1" style={{ height: 48 }}>
+          <View style={{ marginTop: 16 }}>
+            <View style={[s.barsRow, { height: 48 }]}>
               {last7RecoveryByDay.map((d, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center justify-end">
-                  <div
-                    style={{
-                      width: '100%',
-                      height: d.score != null ? `${(d.score / 10) * 48}px` : '2px',
-                      backgroundColor: d.score != null
-                        ? d.score >= 7 ? theme.statusOk
-                          : d.score >= 4 ? theme.statusWarn
-                          : theme.danger
-                        : theme.borderSoft,
-                    }}
-                  />
-                </div>
+                <View key={i} style={s.barColumn}>
+                  <View style={{
+                    width: '100%',
+                    height: d.score != null ? (d.score / 10) * 48 : 2,
+                    backgroundColor: d.score != null
+                      ? d.score >= 7 ? theme.statusOk
+                        : d.score >= 4 ? theme.statusWarn
+                        : theme.danger
+                      : theme.borderSoft,
+                  }} />
+                </View>
               ))}
-            </div>
-            {/* X labels — day abbreviations */}
-            <div className="flex flex-row gap-2 mb-3">
+            </View>
+            <View style={[s.barsRow, { marginBottom: 12 }]}>
               {last7RecoveryByDay.map((d, i) => {
                 const dt = new Date(`${d.date}T00:00:00`);
                 const day = ['D', 'L', 'M', 'M', 'J', 'V', 'S'][dt.getDay()] ?? '';
                 return (
-                  <div key={i} className="flex-1 text-center">
-                    <span style={{ fontFamily: FontMono, fontSize: 7, fontWeight: 700, color: 'rgba(255,255,255,0.35)' }}>
-                      {day}
-                    </span>
-                  </div>
+                  <View key={i} style={s.dayLabel}>
+                    <Text style={s.dayLabelText}>{day}</Text>
+                  </View>
                 );
               })}
-            </div>
-            {/* Y label + value */}
-            <div className="flex flex-row items-center gap-2">
-              <span className="text-3xl font-black font-mono" style={{
+            </View>
+            <View style={s.avgRow}>
+              <Text style={[s.avgNum, {
                 color: recoveryAvg7 >= 7 ? theme.statusOk
                   : recoveryAvg7 >= 4 ? theme.statusWarn
-                  : theme.danger
-              }}>{recoveryAvg7}</span>
-              <span className="text-awan-md text-awan-tx-mute font-black uppercase tracking-widest">/10 · moy. 7j</span>
-            </div>
-          </div>
+                  : theme.danger,
+              }]}>{recoveryAvg7}</Text>
+              <Text style={[s.mutedText, { color: theme.mute }]}>/10 · moy. 7j</Text>
+            </View>
+          </View>
         )}
       </Card>
-    </div>
+    </View>
   );
 }
+
+const s = StyleSheet.create({
+  center: { paddingVertical: 24, alignItems: 'center' },
+  legendRow: { flexDirection: 'row', justifyContent: 'center', gap: 24, marginTop: 16, flexWrap: 'wrap' },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  barsRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-end', marginBottom: 4 },
+  barColumn: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
+  dayLabel: { flex: 1, alignItems: 'center' },
+  dayLabelText: { fontFamily: FontMono, fontSize: 7, fontWeight: '700', color: 'rgba(255,255,255,0.35)' },
+  avgRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  avgNum: { fontFamily: FontMono, fontSize: 30, fontWeight: Fw.display },
+  warnText: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
+  mutedText: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
+  labelXs: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
+});

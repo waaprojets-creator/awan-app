@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { Dumbbell } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import { InstrumentCard } from '../../components/ui/InstrumentCard';
+import { Touch } from '../../components/ui/Touch';
 import type { WorkoutSessionLatest } from '../../data/schemas/sport/routine';
 import {
   bestOneRmFromSession,
@@ -18,6 +19,8 @@ import type { ChainKey } from '../../constants/exerciseChains';
 import { computeWeeklyTonnage } from '../../services/analyticsService';
 import { PeriodizationService } from '../../services/periodizationService';
 import { BarChart, EmptyState } from './shared';
+import { FontMono } from '../../constants/typography';
+import { Fs, Fw, Ls } from '../../theme/tokens';
 
 const SvgPath_ = Path as any;
 const SvgCircle_ = Circle as any;
@@ -29,8 +32,6 @@ interface PerformanceTabProps {
 
 interface OneRMEntry { exerciseId: string; name: string; rm: number; date: string }
 interface WeekTonnage { label: string; weight: number }
-
-// ─── 1RM mini trend sparkline ─────────────────────────────────────────────────
 
 function OneRMSparkline({ points }: { points: Array<{ date: string; oneRm: number }> }) {
   const theme = useTheme();
@@ -47,37 +48,29 @@ function OneRMSparkline({ points }: { points: Array<{ date: string; oneRm: numbe
   const toY = (v: number) => pad.t + ch - ((v - minRm) / range) * ch;
   const d = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${toX(i)} ${toY(p.oneRm)}`).join(' ');
   const last = points[points.length - 1]!;
-
   return (
     <Svg width={W} height={H}>
       <SvgPath_ d={d} fill="none" stroke={theme.selected} strokeWidth="1.5" />
-      <SvgCircle_ cx={toX(points.length - 1)} cy={toY(last.oneRm)}
-        r={3} fill={theme.selected} />
+      <SvgCircle_ cx={toX(points.length - 1)} cy={toY(last.oneRm)} r={3} fill={theme.selected} />
     </Svg>
   );
 }
-
-// ─── Main component ───────────────────────────────────────────────────────────
 
 export function PerformanceTab({ sessions, assessments = [] }: PerformanceTabProps) {
   const theme = useTheme();
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
 
-  // Periodization state (synchronous)
   const perio = useMemo(() => PeriodizationService.getCurrent(), []);
 
-  // Deload forecast from Coach assessments
   const hasDeloadForecast = useMemo(() =>
     assessments.some(a =>
       a.forecasts?.some(f => f.kind === 'deload' && (f.horizonDays ?? 99) <= 7)
     ), [assessments]);
 
-  // Top 5 exercises by 1RM — 90 days, reps ≤ 12 guard applied in oneRmEstimate
   const top5 = useMemo((): OneRMEntry[] => {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 90);
     const cutStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
-
     const best: Record<string, OneRMEntry> = {};
     for (const session of sessions) {
       if (session.date < cutStr) continue;
@@ -94,24 +87,20 @@ export function PerformanceTab({ sessions, assessments = [] }: PerformanceTabPro
     return Object.values(best).sort((a, b) => b.rm - a.rm).slice(0, 5);
   }, [sessions]);
 
-  // 1RM trend per exercise (90d)
   const oneRmTrend = useMemo(() => oneRmTrendPerExercise(sessions, 90), [sessions]);
 
-  // Tonnage 8 semaines glissantes
   const weeklyTonnage = useMemo((): WeekTonnage[] =>
     Array.from({ length: 8 }, (_, i) => {
       const offset = -(7 - i);
       return { label: offset === 0 ? 'S0' : `S${offset}`, weight: computeWeeklyTonnage(sessions, offset) };
     }), [sessions]);
 
-  // PR cette semaine
   const hasPRthisWeek = useMemo(() => {
     const day = new Date().getDay() || 7;
     const monday = new Date();
     monday.setDate(monday.getDate() - (day - 1));
     monday.setHours(0, 0, 0, 0);
     const weekStr = `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,'0')}-${String(monday.getDate()).padStart(2,'0')}`;
-
     for (const session of sessions) {
       if (session.date < weekStr) continue;
       const rms = bestOneRmFromSession(session);
@@ -125,7 +114,6 @@ export function PerformanceTab({ sessions, assessments = [] }: PerformanceTabPro
     return false;
   }, [sessions]);
 
-  // Tonnage Push/Pull/Legs/Core — 28 days
   const chainTonnage = useMemo(() => tonnageByChain(sessions, 28), [sessions]);
   const chainTotals = useMemo((): Record<ChainKey, number> => ({
     push: chainTonnage.push.reduce((s: number, v: number) => s + v, 0),
@@ -135,7 +123,6 @@ export function PerformanceTab({ sessions, assessments = [] }: PerformanceTabPro
   }), [chainTonnage]);
   const chainTotal = (Object.values(chainTotals) as number[]).reduce((s, v) => s + v, 0);
 
-  // Density + adherence — last 7 sessions
   const sessionMetrics = useMemo(() =>
     sessions.slice(-7).map(s => ({
       date: s.date,
@@ -150,168 +137,151 @@ export function PerformanceTab({ sessions, assessments = [] }: PerformanceTabPro
   if (sessions.length === 0) return <EmptyState Icon={Dumbbell} label="Aucune séance enregistrée" />;
 
   return (
-    <div className="space-y-8">
-      {/* PR badge */}
+    <View style={{ gap: 32 }}>
       {hasPRthisWeek && (
-        <Card className="p-4 border-awan-gold bg-awan-gold/10" variant="flat">
-          <div className="flex flex-row items-center gap-3">
-            <span className="text-xl">🏆</span>
-            <span className="text-awan-md font-black text-awan-gold uppercase tracking-widest">
+        <Card variant="flat" style={{ borderColor: theme.selected, backgroundColor: 'rgba(212,175,55,0.1)' }}>
+          <View style={s.row}>
+            <Text style={{ fontSize: 20 }}>🏆</Text>
+            <Text style={[s.prLabel, { color: theme.selected }]}>
               Nouveau Record Personnel cette semaine
-            </span>
-          </div>
+            </Text>
+          </View>
         </Card>
       )}
 
-      {/* Periodization state */}
       {perio && (
-        <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+        <Card variant="flat">
           <Heading level={4} mono subtitle="État du mésocycle courant">PÉRIODISATION</Heading>
-          <div className="grid grid-cols-3 gap-3 mt-4">
-            <InstrumentCard
-              label="PHASE"
-              value={`P${perio.phase}`}
-              status="mute"
-              delta={PeriodizationService.getPhaseLabel(perio.phase)}
-              index={1}
-            />
-            <InstrumentCard
-              label="SEMAINE MÉSO"
-              value={perio.mesoWeek}
-              status={perio.mesoWeek >= 6 ? 'warn' : 'ok'}
-              index={2}
-            />
-            <InstrumentCard
-              label="DÉCHARGE"
-              value={perio.deloadTriggered || hasDeloadForecast ? 'OUI' : 'N/A'}
-              status={perio.deloadTriggered || hasDeloadForecast ? 'warn' : 'mute'}
-              index={3}
-            />
-          </div>
+          <View style={s.grid3}>
+            <View style={{ flex: 1 }}>
+              <InstrumentCard label="PHASE" value={`P${perio.phase}`} status="mute" delta={PeriodizationService.getPhaseLabel(perio.phase)} index={1} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <InstrumentCard label="SEMAINE MÉSO" value={perio.mesoWeek} status={perio.mesoWeek >= 6 ? 'warn' : 'ok'} index={2} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <InstrumentCard label="DÉCHARGE" value={perio.deloadTriggered || hasDeloadForecast ? 'OUI' : 'N/A'} status={perio.deloadTriggered || hasDeloadForecast ? 'warn' : 'mute'} index={3} />
+            </View>
+          </View>
         </Card>
       )}
 
-      {/* Densité & adhérence dernière séance */}
-      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+      <Card variant="flat">
         <Heading level={4} mono subtitle="Dernière séance enregistrée">INTENSITÉ & ADHÉRENCE</Heading>
-        <div className="grid grid-cols-2 gap-3 mt-4">
-          <InstrumentCard
-            label="DENSITÉ"
-            value={lastDensity !== null ? lastDensity.toFixed(0) : '—'}
-            unit="kg/min"
-            status={lastDensity !== null ? (lastDensity >= 300 ? 'ok' : lastDensity >= 150 ? 'warn' : 'error') : 'mute'}
-            index={1}
-          />
-          <InstrumentCard
-            label="ADHÉRENCE PLAN"
-            value={lastAdherence !== null ? `${(lastAdherence * 100).toFixed(0)}` : '—'}
-            unit="%"
-            status={lastAdherence !== null ? (lastAdherence >= 0.9 ? 'ok' : lastAdherence >= 0.7 ? 'warn' : 'error') : 'mute'}
-            {...(lastAdherence !== null ? { progress: lastAdherence * 100 } : {})}
-            index={2}
-          />
-        </div>
+        <View style={s.grid2}>
+          <View style={s.gridCell}>
+            <InstrumentCard label="DENSITÉ" value={lastDensity !== null ? lastDensity.toFixed(0) : '—'} unit="kg/min" status={lastDensity !== null ? (lastDensity >= 300 ? 'ok' : lastDensity >= 150 ? 'warn' : 'error') : 'mute'} index={1} />
+          </View>
+          <View style={s.gridCell}>
+            <InstrumentCard label="ADHÉRENCE PLAN" value={lastAdherence !== null ? `${(lastAdherence * 100).toFixed(0)}` : '—'} unit="%" status={lastAdherence !== null ? (lastAdherence >= 0.9 ? 'ok' : lastAdherence >= 0.7 ? 'warn' : 'error') : 'mute'} {...(lastAdherence !== null ? { progress: lastAdherence * 100 } : {})} index={2} />
+          </View>
+        </View>
       </Card>
 
-      {/* Top 5 1RM — sélectionnable pour voir la courbe */}
-      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+      <Card variant="flat">
         <Heading level={4} mono subtitle="Estimations · reps ≤ 12 · Brzycki·Epley·O'Conner">
           1RM ESTIMÉ · TOP 5
         </Heading>
-        <div className="space-y-3 mt-5">
+        <View style={{ gap: 12, marginTop: 20 }}>
           {top5.length === 0 ? (
-            <span className="text-awan-md text-awan-tx-mute">Pas de données sur 90 jours</span>
+            <Text style={[s.mutedText, { color: theme.mute }]}>Pas de données sur 90 jours</Text>
           ) : top5.map((entry, i) => (
-            <div
+            <Touch
               key={entry.exerciseId}
-              className={`flex flex-row items-center justify-between border-b pb-3 cursor-pointer ${
-                selectedExercise === entry.exerciseId ? 'border-awan-gold' : 'border-white/5'
-              }`}
-              onClick={() => setSelectedExercise(
-                selectedExercise === entry.exerciseId ? null : entry.exerciseId
-              )}
+              onPress={() => setSelectedExercise(selectedExercise === entry.exerciseId ? null : entry.exerciseId)}
+              style={[s.exerciseRow, {
+                borderBottomColor: selectedExercise === entry.exerciseId ? theme.selected : 'rgba(255,255,255,0.05)',
+              }]}
             >
-              <div className="flex flex-row items-center gap-3">
-                <span className="text-awan-xs font-black font-mono text-awan-tx-mute w-4">{i + 1}</span>
-                <span className="text-awan-md font-black text-awan-tx uppercase tracking-wide">{entry.name}</span>
-              </div>
-              <div className="flex flex-row items-center gap-3">
-                <span className="text-awan-xs font-mono text-awan-tx-mute">{entry.date}</span>
-                <span className="text-xl font-black text-awan-gold font-mono">
-                  {entry.rm}<span className="text-sm ml-0.5 opacity-50">kg</span>
-                </span>
-              </div>
-            </div>
+              <View style={s.row}>
+                <Text style={[s.indexNum, { color: theme.mute }]}>{i + 1}</Text>
+                <Text style={[s.exerciseName, { color: theme.title }]}>{entry.name}</Text>
+              </View>
+              <View style={s.row}>
+                <Text style={[s.dateText, { color: theme.mute }]}>{entry.date}</Text>
+                <Text style={[s.rmNum, { color: theme.selected }]}>
+                  {entry.rm}<Text style={s.unitSm}>kg</Text>
+                </Text>
+              </View>
+            </Touch>
           ))}
-        </div>
+        </View>
 
-        {/* 1RM trend sparkline for selected exercise */}
         {selectedExercise && oneRmTrend[selectedExercise] && (
-          <div className="mt-4 border-t border-white/5 pt-4">
-            <span className="text-awan-xs font-black uppercase tracking-widest text-awan-tx-mute">
+          <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingTop: 16 }}>
+            <Text style={[s.sparklineLabel, { color: theme.mute }]}>
               ÉVOLUTION 90J · {top5.find(e => e.exerciseId === selectedExercise)?.name ?? ''}
-            </span>
-            <div className="mt-2">
+            </Text>
+            <View style={{ marginTop: 8 }}>
               <OneRMSparkline points={oneRmTrend[selectedExercise]!} />
-            </div>
-            <div className="flex flex-row justify-between mt-1">
-              <span className="text-awan-xs font-mono text-awan-tx-mute">
+            </View>
+            <View style={s.sparklineDates}>
+              <Text style={[s.dateText, { color: theme.mute }]}>
                 {oneRmTrend[selectedExercise]?.[0]?.date ?? ''}
-              </span>
-              <span className="text-awan-xs font-mono text-awan-gold font-black">
+              </Text>
+              <Text style={[s.dateText, { color: theme.selected, fontWeight: Fw.display }]}>
                 {oneRmTrend[selectedExercise]?.[oneRmTrend[selectedExercise]!.length - 1]?.oneRm.toFixed(1)}kg
-              </span>
-            </div>
-          </div>
+              </Text>
+            </View>
+          </View>
         )}
       </Card>
 
-      {/* Répartition Push/Pull/Legs/Core — 28j */}
       {chainTotal > 0 && (
-        <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+        <Card variant="flat">
           <Heading level={4} mono subtitle="Équilibre cinétique · 28 jours">CHAÎNES MUSCULAIRES</Heading>
-          <div className="space-y-3 mt-4">
+          <View style={{ gap: 12, marginTop: 16 }}>
             {(['push', 'pull', 'legs', 'core'] as ChainKey[]).map(key => {
               const kg = chainTotals[key];
               const pct = chainTotal > 0 ? (kg / chainTotal) * 100 : 0;
-              const label = key.toUpperCase();
               const color = key === 'push' ? theme.statusOk
                 : key === 'pull' ? theme.selected
                 : key === 'legs' ? theme.statusInfo
                 : theme.mute;
               return (
-                <div key={key}>
-                  <div className="flex flex-row justify-between mb-1">
-                    <span className="text-awan-xs font-black font-mono uppercase" style={{ color }}>
-                      {label}
-                    </span>
-                    <span className="text-awan-xs font-mono text-awan-tx-mute">
+                <View key={key}>
+                  <View style={s.chainHeader}>
+                    <Text style={[s.chainLabel, { color }]}>{key.toUpperCase()}</Text>
+                    <Text style={[s.dateText, { color: theme.mute }]}>
                       {kg > 0 ? `${(kg / 1000).toFixed(1)}t` : '—'} · {pct.toFixed(0)}%
-                    </span>
-                  </div>
-                  <div className="h-1.5 w-full" style={{ backgroundColor: theme.borderSoft }}>
-                    <div className="h-full" style={{ width: `${pct}%`, backgroundColor: color, opacity: 0.8 }} />
-                  </div>
-                </div>
+                    </Text>
+                  </View>
+                  <View style={[s.barTrack, { backgroundColor: theme.borderSoft }]}>
+                    <View style={{ width: `${pct}%`, height: 6, backgroundColor: color, opacity: 0.8 }} />
+                  </View>
+                </View>
               );
             })}
-          </div>
+          </View>
         </Card>
       )}
 
-      {/* Tonnage hebdo 8 semaines */}
-      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+      <Card variant="flat">
         <Heading level={4} mono subtitle="Charge totale · 8 semaines glissantes">TONNAGE HEBDOMADAIRE</Heading>
-        <div className="h-[200px] mt-6">
-          <BarChart
-            data={weeklyTonnage}
-            dataKey="weight"
-            color={theme.title}
-            yUnit="kg"
-            xLabels={weeklyTonnage.map(w => w.label)}
-          />
-        </div>
+        <View style={{ height: 200, marginTop: 24 }}>
+          <BarChart data={weeklyTonnage} dataKey="weight" color={theme.title} yUnit="kg" xLabels={weeklyTonnage.map(w => w.label)} />
+        </View>
       </Card>
-    </div>
+    </View>
   );
 }
+
+const s = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  grid2: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 16 },
+  grid3: { flexDirection: 'row', gap: 12, marginTop: 16 },
+  gridCell: { width: '47%' },
+  prLabel: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02, flex: 1 },
+  exerciseRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, paddingBottom: 12 },
+  indexNum: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.display, width: 16 },
+  exerciseName: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: 1.8 },
+  dateText: { fontFamily: FontMono, fontSize: Fs.xs },
+  rmNum: { fontFamily: FontMono, fontSize: 20, fontWeight: Fw.display },
+  unitSm: { fontFamily: FontMono, fontSize: Fs.sm, opacity: 0.5 },
+  sparklineLabel: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
+  sparklineDates: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
+  chainHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+  chainLabel: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.display, textTransform: 'uppercase' },
+  barTrack: { height: 6, width: '100%' },
+  mutedText: { fontFamily: FontMono, fontSize: Fs.md },
+});
