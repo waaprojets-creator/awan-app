@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { View, ScrollView, TextInput as RNTextInput, Alert } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, ScrollView, TextInput as RNTextInput, Alert, StyleSheet } from 'react-native';
+import Svg, { Polyline, Circle } from 'react-native-svg';
 import { useTheme } from '../hooks/useTheme';
-
-const TextInput = RNTextInput as React.ComponentType<any>;
-import { motion, AnimatePresence } from '@/components/motion';
 import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
 import { ds, uid } from '../utils/storage';
@@ -17,13 +15,17 @@ import { BodySvg } from '../components/BodySvg';
 import type { MuscleId } from '../components/BodySvg';
 import { Planner } from '../modules/planning/api';
 import { getStorage } from '../data/storage/storageService';
-import { ChevronLeft, ChevronRight, Target, Plus, X, Database, AlertTriangle } from 'lucide-react-native';
-import { PageWrapper } from '../components/Animated';
-import { DailyCanvas } from '../components/DailyCanvas';
+import { ChevronLeft, ChevronRight, Plus, X, Database, AlertTriangle } from 'lucide-react-native';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
+import { FontMono } from '../constants/typography';
+import { Fs, Fw, Ls, Clr } from '../theme/tokens';
+
+const TextInput = RNTextInput as React.ComponentType<any>;
+const SvgPolyline = Polyline as any;
+const SvgCircle = Circle as any;
 
 // 13-site personal protocol (Haute Densité — prise systématiquement à droite)
 const SKINFOLD_SITES = [
@@ -60,7 +62,7 @@ const BILATERAL_MEASURES = [
 export default function MensurationScreen() {
   const theme = useTheme();
   const { navigate } = useAppState() as any;
-  const { getEntriesByDate, addEntry, removeEntry, moveEntry } = useDaily();
+  const { addEntry } = useDaily();
 
   const measureStore = useMeasurementStore();
   const weightStore = useWeightStore();
@@ -68,8 +70,8 @@ export default function MensurationScreen() {
 
   const [selectedPart, setSelectedPart] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');
-  const [gender, setGender] = useState('man');
-  const [age, setAge] = useState('30');
+  const [gender] = useState('man');
+  const [age] = useState('30');
 
   // A7: profile completeness check
   const profileIncomplete = useMemo(() => {
@@ -115,7 +117,6 @@ export default function MensurationScreen() {
     if (next <= todayStr) setSelectedDate(next);
   };
 
-  const allEntries = getEntriesByDate(selectedDate);
   const [inputText, setInputText] = useState('');
 
   const blankEntry = {
@@ -128,14 +129,14 @@ export default function MensurationScreen() {
   // S2.1 — Filtre fenêtre temporelle pour le graphique
   const [weightFilter, setWeightFilter] = useState<30 | 90 | 365>(30);
 
-  // S2.3 — Objectifs configurables (persistés en localStorage)
+  // S2.3 — Objectifs configurables (persistés en safeStorage)
   const GOALS_KEY = 'awan.mensuration.goals';
   const [targetWeightKg, setTargetWeightKg] = useState<string>('');
   const [targetBodyFatPct, setTargetBodyFatPct] = useState<string>('');
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(GOALS_KEY);
+      const raw = safeStorage.get(GOALS_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as { targetWeightKg?: number; targetBodyFatPct?: number };
         if (typeof parsed.targetWeightKg === 'number') setTargetWeightKg(String(parsed.targetWeightKg));
@@ -153,7 +154,7 @@ export default function MensurationScreen() {
       const bf = parseFloat(targetBodyFatPct.replace(',', '.'));
       if (!isNaN(w) && w > 0) payload.targetWeightKg = w;
       if (!isNaN(bf) && bf > 0) payload.targetBodyFatPct = bf;
-      try { localStorage.setItem(GOALS_KEY, JSON.stringify(payload)); } catch { /* quota */ }
+      try { safeStorage.set(GOALS_KEY, JSON.stringify(payload)); } catch { /* quota */ }
     }, 800);
     return () => clearTimeout(handle);
   }, [targetWeightKg, targetBodyFatPct]);
@@ -357,36 +358,22 @@ export default function MensurationScreen() {
     persistEntry(newEntry);
   };
 
-  const updateMeasurement = (part: string, val: string) => {
-    const v = parseFloat(val.replace(',', '.'));
-    const newEntry = { ...currentEntry };
-    if (isNaN(v) || v <= 0) {
-      const next = { ...newEntry.measurements };
-      delete next[part];
-      newEntry.measurements = next;
-    } else {
-      newEntry.measurements = { ...newEntry.measurements, [part]: v };
-    }
-    setCurrentEntry(newEntry);
-    persistEntry(newEntry);
-  };
-
   const updateSkinfold = (site: string, val: string) => {
     const v = parseFloat(val);
     const newEntry = { ...currentEntry };
     newEntry.skinfolds = { ...newEntry.skinfolds, [site]: isNaN(v) ? 0 : v };
-    const s = newEntry.skinfolds;
+    const sk = newEntry.skinfolds;
     const a = parseInt(age);
     const sex = gender === 'man' ? 'male' as const : 'female' as const;
 
     // Each formula computed independently from its own sites only — no cascade, no coefficient correction
-    const s13Total = ALL13_SITES.every(k => (s[k] ?? 0) > 0)
-      ? ALL13_SITES.reduce((sum, k) => sum + (s[k] ?? 0), 0) : 0;
+    const s13Total = ALL13_SITES.every(k => (sk[k] ?? 0) > 0)
+      ? ALL13_SITES.reduce((sum, k) => sum + (sk[k] ?? 0), 0) : 0;
     const bf13 = s13Total > 0 ? BiometricsService.skinfolds13(s13Total, a, sex) : null;
-    const bfJP7 = JP7_SITES.every(k => (s[k] ?? 0) > 0)
-      ? BiometricsService.jacksonPollock7(s['pectoral'] ?? 0, s['axillaire'] ?? 0, s['triceps'] ?? 0, s['subscapular'] ?? 0, s['abdominal'] ?? 0, s['suprailiac'] ?? 0, s['thigh_anterior'] ?? 0, a, sex) : null;
-    const bfDW4 = DW4_SITES.every(k => (s[k] ?? 0) > 0)
-      ? BiometricsService.durninWomersley4(s['biceps'] ?? 0, s['triceps'] ?? 0, s['subscapular'] ?? 0, s['suprailiac'] ?? 0, a, sex) : null;
+    const bfJP7 = JP7_SITES.every(k => (sk[k] ?? 0) > 0)
+      ? BiometricsService.jacksonPollock7(sk['pectoral'] ?? 0, sk['axillaire'] ?? 0, sk['triceps'] ?? 0, sk['subscapular'] ?? 0, sk['abdominal'] ?? 0, sk['suprailiac'] ?? 0, sk['thigh_anterior'] ?? 0, a, sex) : null;
+    const bfDW4 = DW4_SITES.every(k => (sk[k] ?? 0) > 0)
+      ? BiometricsService.durninWomersley4(sk['biceps'] ?? 0, sk['triceps'] ?? 0, sk['subscapular'] ?? 0, sk['suprailiac'] ?? 0, a, sex) : null;
     // body_fat_pct stores best available: 13-plis > JP7 > DW4 (no fallback beyond)
     const bf = bf13 ?? bfJP7 ?? bfDW4;
     newEntry.body_fat_pct = bf !== null ? parseFloat(bf.toFixed(2)) : 0;
@@ -394,94 +381,84 @@ export default function MensurationScreen() {
     persistEntry(newEntry);
   };
 
+  const currentWeightEntry = weightStore.entries.find(e => e.date === selectedDate);
 
   return (
-    <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
-      <div className="px-6 pt-4 pb-2">
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+      <View style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 8 }}>
         <ScreenHeader tag="BODY · MENSURATION" title="DÉTAILS PHYSIQUES" />
         {/* A7: Non-blocking profile alert */}
         {profileIncomplete && (
           <Touch
             onPress={() => navigate?.('settings')}
-            className="flex flex-row items-center gap-3 mt-3 px-4 py-3 border"
-            style={{ borderColor: theme.statusWarn, backgroundColor: `${theme.statusWarn}14` }}
+            style={[s.profileAlert, { borderColor: theme.statusWarn, backgroundColor: `${theme.statusWarn}14` }]}
           >
             <AlertTriangle size={14} color={theme.statusWarn} />
-            <span className="text-awan-xs font-black tracking-widest uppercase flex-1" style={{ color: theme.statusWarn }}>
-              PROFIL INITIAL À COMPLÉTER →
-            </span>
+            <Text style={[s.xsLabel, { color: theme.statusWarn, flex: 1 }]}>PROFIL INITIAL À COMPLÉTER →</Text>
           </Touch>
         )}
-      </div>
-      
-      <div className="flex flex-row justify-between bg-awan-surface p-5  border border-white/5 shadow-inner mx-6 mb-6">
-         <div className="flex-1 items-center border-r border-white/5">
-            <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase mb-2">Poids</span>
-            <div className="flex flex-row items-baseline gap-1">
-              <TextInput
-                className="text-3xl font-black text-awan-tx font-mono w-20 text-center outline-none"
-                keyboardType="numeric"
-                value={weightStore.entries.find(e => e.date === selectedDate)?.weightKg?.toString() ?? ''}
-                onChangeText={updateWeight}
-                placeholder={lastKnownWeight ? lastKnownWeight.weight.toString() : '00.0'}
-                placeholderTextColor={lastKnownWeight ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.1)'}
-              />
-              <span className="text-awan-md font-bold text-awan-tx-mute font-mono">KG</span>
-            </div>
-            {lastKnownWeight && (
-              <span className="text-awan-xs font-black text-awan-tx-mute tracking-widest uppercase mt-1">
-                DERNIÈRE PESÉE — J-{lastKnownWeight.daysAgo}
-              </span>
-            )}
-         </div>
-         <div className="flex-1 items-center border-r border-white/5">
-            <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase mb-2">BPM Repos</span>
-            <div className="flex flex-row items-baseline gap-1">
-              <TextInput 
-                className="text-3xl font-black text-awan-tx font-mono w-16 text-center outline-none"
-                keyboardType="numeric" 
-                value={currentEntry.bpm_rest?.toString()} 
-                onChangeText={updateBpm}
-                placeholder="00"
-                placeholderTextColor="rgba(128,128,128,0.5)"
-              />
-               <span className="text-awan-md font-bold text-awan-tx-mute font-mono">BPM</span>
-            </div>
-         </div>
-         <div className="flex-1 items-center">
-            <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase mb-2">Grasse</span>
-            <div className="flex flex-row items-baseline gap-1">
-              <span className="text-3xl font-black text-awan-tx font-mono">{currentEntry.body_fat_pct || '--.-'}</span>
-              <span className="text-awan-md font-bold text-awan-tx-mute font-mono">%</span>
-            </div>
-         </div>
-      </div>
+      </View>
+
+      <View style={[s.statsRow, { backgroundColor: theme.surface }]}>
+        <View style={[s.statCol, { borderRightWidth: 1, borderRightColor: Clr.white5 }]}>
+          <Text style={[s.statLabel, { color: theme.selected }]}>Poids</Text>
+          <View style={s.baselineRow}>
+            <TextInput
+              style={[s.bigInput, { color: theme.title, width: 80, textAlign: 'center' }]}
+              keyboardType="numeric"
+              value={currentWeightEntry?.weightKg?.toString() ?? ''}
+              onChangeText={updateWeight}
+              placeholder={lastKnownWeight ? lastKnownWeight.weight.toString() : '00.0'}
+              placeholderTextColor={lastKnownWeight ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.1)'}
+            />
+            <Text style={[s.unit, { color: theme.mute }]}>KG</Text>
+          </View>
+          {lastKnownWeight && (
+            <Text style={[s.xsLabel, { color: theme.mute, marginTop: 4 }]}>DERNIÈRE PESÉE — J-{lastKnownWeight.daysAgo}</Text>
+          )}
+        </View>
+        <View style={[s.statCol, { borderRightWidth: 1, borderRightColor: Clr.white5 }]}>
+          <Text style={[s.statLabel, { color: theme.selected }]}>BPM Repos</Text>
+          <View style={s.baselineRow}>
+            <TextInput
+              style={[s.bigInput, { color: theme.title, width: 64, textAlign: 'center' }]}
+              keyboardType="numeric"
+              value={currentEntry.bpm_rest?.toString()}
+              onChangeText={updateBpm}
+              placeholder="00"
+              placeholderTextColor="rgba(128,128,128,0.5)"
+            />
+            <Text style={[s.unit, { color: theme.mute }]}>BPM</Text>
+          </View>
+        </View>
+        <View style={s.statCol}>
+          <Text style={[s.statLabel, { color: theme.selected }]}>Grasse</Text>
+          <View style={s.baselineRow}>
+            <Text style={[s.bigValue, { color: theme.title }]}>{currentEntry.body_fat_pct || '--.-'}</Text>
+            <Text style={[s.unit, { color: theme.mute }]}>%</Text>
+          </View>
+        </View>
+      </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }}>
-        <div className="p-6">
+        <View style={{ padding: 24 }}>
           {/* S2.1 — Évolution du poids (SVG inline) */}
-          <div className="mb-10">
-            <div className="flex flex-row justify-between items-end mb-4 px-1">
-              <Heading level={4} mono subtitle="Courbe temporelle" className="mb-0">ÉVOLUTION DU POIDS</Heading>
-              <div className="bg-awan-surface p-1  border border-white/5 flex flex-row gap-1">
+          <View style={{ marginBottom: 40 }}>
+            <View style={[s.rowBetween, { alignItems: 'flex-end', marginBottom: 16, paddingHorizontal: 4 }]}>
+              <Heading level={4} mono subtitle="Courbe temporelle" style={{ marginBottom: 0 }}>ÉVOLUTION DU POIDS</Heading>
+              <View style={[s.filterBox, { backgroundColor: theme.surface, borderColor: Clr.white5 }]}>
                 {([30, 90, 365] as const).map(d => (
-                  <Touch
-                    key={d}
-                    onPress={() => setWeightFilter(d)}
-                    className={`px-3 py-1.5  transition-all ${weightFilter === d ? 'bg-awan-gold' : ''}`}
-                  >
-                    <span className={`text-awan-sm font-black uppercase tracking-widest ${weightFilter === d ? 'text-black' : 'text-awan-tx-mute'}`}>
-                      {d === 365 ? '1AN' : `${d}J`}
-                    </span>
+                  <Touch key={d} onPress={() => setWeightFilter(d)} style={[s.filterBtn, weightFilter === d && { backgroundColor: theme.selected }]}>
+                    <Text style={[s.smLabel, { color: weightFilter === d ? '#000' : theme.mute }]}>{d === 365 ? '1AN' : `${d}J`}</Text>
                   </Touch>
                 ))}
-              </div>
-            </div>
-            <Card className="p-5 bg-white/3 border-white/5" variant="flat">
+              </View>
+            </View>
+            <Card variant="flat" style={[s.cardFlat, { padding: 20 }]}>
               {weightSeries.length < 2 ? (
-                <div className="h-[100px] flex items-center justify-center">
-                  <span className="text-awan-md font-black text-awan-tx-mute tracking-widest uppercase">Pas assez de données</span>
-                </div>
+                <View style={{ height: 100, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={[s.mdLabel, { color: theme.mute }]}>Pas assez de données</Text>
+                </View>
               ) : (() => {
                 const ws = weightSeries;
                 const xs = ws.map(e => new Date(e.date).getTime());
@@ -499,136 +476,82 @@ export default function MensurationScreen() {
                 });
                 const polyline = points.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
                 return (
-                  <div>
-                    <div className="flex flex-row justify-between items-baseline mb-2">
-                      <span className="text-awan-sm font-bold text-awan-tx-mute font-mono">MIN {minY.toFixed(1)} KG</span>
-                      <span className="text-awan-sm font-bold text-awan-tx-mute font-mono">MAX {maxY.toFixed(1)} KG</span>
-                    </div>
-                    <svg viewBox="0 0 300 100" width="100%" height="100" preserveAspectRatio="none">
-                      <polyline
-                        fill="none"
-                        stroke={theme.selected}
-                        strokeOpacity={0.7}
-                        strokeWidth={1.5}
-                        points={polyline}
-                      />
-                      {points.map((p, i) => (
-                        <circle key={i} cx={p.x} cy={p.y} r={3} fill={theme.selected} />
-                      ))}
-                    </svg>
+                  <View>
+                    <View style={[s.rowBetween, { alignItems: 'baseline', marginBottom: 8 }]}>
+                      <Text style={[s.monoSm, { color: theme.mute }]}>MIN {minY.toFixed(1)} KG</Text>
+                      <Text style={[s.monoSm, { color: theme.mute }]}>MAX {maxY.toFixed(1)} KG</Text>
+                    </View>
+                    <View style={{ width: '100%', height: 100 }}>
+                      <Svg width="100%" height={100} viewBox="0 0 300 100" preserveAspectRatio="none">
+                        <SvgPolyline fill="none" stroke={theme.selected} strokeOpacity={0.7} strokeWidth={1.5} points={polyline} />
+                        {points.map((p, i) => (
+                          <SvgCircle key={i} cx={p.x} cy={p.y} r={3} fill={theme.selected} />
+                        ))}
+                      </Svg>
+                    </View>
                     {/* S2.2 — Tendance hebdomadaire */}
                     {weeklyTrend && (
-                      <div className="mt-4 pt-4 border-t border-white/5 flex flex-row items-center justify-between">
-                        <span className="text-awan-sm font-black text-awan-tx-mute tracking-widest uppercase">Tendance 7J</span>
+                      <View style={[s.rowBetween, { marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: Clr.white5 }]}>
+                        <Text style={[s.smLabel, { color: theme.mute }]}>Tendance 7J</Text>
                         {(() => {
                           const d = weeklyTrend.delta;
                           if (d === 0) {
-                            return (
-                              <span className="text-sm font-mono font-bold" style={{ color: theme.mute }}>
-                                → Stable
-                              </span>
-                            );
+                            return <Text style={[s.monoBold, { color: theme.mute }]}>→ Stable</Text>;
                           }
                           const isUp = d > 0;
                           const arrow = isUp ? '▲' : '▼';
                           const sign = isUp ? '+' : '−';
                           const color = isUp ? theme.danger : theme.statusOk;
-                          return (
-                            <span className="text-sm font-mono font-bold" style={{ color }}>
-                              {arrow} {sign}{Math.abs(d).toFixed(1)} kg
-                            </span>
-                          );
+                          return <Text style={[s.monoBold, { color }]}>{arrow} {sign}{Math.abs(d).toFixed(1)} kg</Text>;
                         })()}
-                      </div>
+                      </View>
                     )}
-                  </div>
+                  </View>
                 );
               })()}
             </Card>
-          </div>
+          </View>
 
           {/* S2.3 — Objectifs configurables */}
-          <div className="mb-10">
-            <Heading level={4} mono subtitle="Cibles opératives" className="mb-6">OBJECTIFS</Heading>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <Card className="p-4 bg-white/5 border-white/5" variant="flat">
-                <span className="text-awan-sm font-black text-awan-gold tracking-widest mb-2 block uppercase">Poids cible</span>
-                <div className="flex flex-row items-baseline gap-2">
-                  <TextInput
-                    className="text-2xl font-black text-awan-tx font-mono flex-1 outline-none"
-                    keyboardType="numeric"
-                    value={targetWeightKg}
-                    onChangeText={setTargetWeightKg}
-                    placeholder="00.0"
-                    placeholderTextColor="rgba(128,128,128,0.5)"
-                  />
-                  <span className="text-awan-md font-bold text-awan-tx-mute font-mono">KG</span>
-                </div>
+          <View style={{ marginBottom: 40 }}>
+            <Heading level={4} mono subtitle="Cibles opératives" style={{ marginBottom: 24 }}>OBJECTIFS</Heading>
+            <View style={[s.grid2, { marginBottom: 16 }]}>
+              <Card variant="flat" style={[s.cardWhite5, s.grid2Item, { padding: 16 }]}>
+                <Text style={[s.smLabel, { color: theme.selected, marginBottom: 8 }]}>Poids cible</Text>
+                <View style={s.baselineRow}>
+                  <TextInput style={[s.mediumInput, { color: theme.title, flex: 1 }]} keyboardType="numeric" value={targetWeightKg} onChangeText={setTargetWeightKg} placeholder="00.0" placeholderTextColor="rgba(128,128,128,0.5)" />
+                  <Text style={[s.unit, { color: theme.mute }]}>KG</Text>
+                </View>
               </Card>
-              <Card className="p-4 bg-white/5 border-white/5" variant="flat">
-                <span className="text-awan-sm font-black text-awan-gold tracking-widest mb-2 block uppercase">% Graisse cible</span>
-                <div className="flex flex-row items-baseline gap-2">
-                  <TextInput
-                    className="text-2xl font-black text-awan-tx font-mono flex-1 outline-none"
-                    keyboardType="numeric"
-                    value={targetBodyFatPct}
-                    onChangeText={setTargetBodyFatPct}
-                    placeholder="00.0"
-                    placeholderTextColor="rgba(128,128,128,0.5)"
-                  />
-                  <span className="text-awan-md font-bold text-awan-tx-mute font-mono">%</span>
-                </div>
+              <Card variant="flat" style={[s.cardWhite5, s.grid2Item, { padding: 16 }]}>
+                <Text style={[s.smLabel, { color: theme.selected, marginBottom: 8 }]}>% Graisse cible</Text>
+                <View style={s.baselineRow}>
+                  <TextInput style={[s.mediumInput, { color: theme.title, flex: 1 }]} keyboardType="numeric" value={targetBodyFatPct} onChangeText={setTargetBodyFatPct} placeholder="00.0" placeholderTextColor="rgba(128,128,128,0.5)" />
+                  <Text style={[s.unit, { color: theme.mute }]}>%</Text>
+                </View>
               </Card>
-            </div>
+            </View>
             {goalProgress && (
-              <Card className="p-4 bg-white/3 border-white/5" variant="flat">
-                <div className="flex flex-row justify-between items-baseline mb-2">
-                  <span className="text-awan-sm font-black text-awan-tx-mute tracking-widest uppercase">Progression poids</span>
-                  <span className="text-awan-md font-mono font-bold text-awan-tx">
-                    {goalProgress.current.toFixed(1)} / {goalProgress.target.toFixed(1)} KG
-                  </span>
-                </div>
-                <div className="h-[4px] bg-white/5 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${goalProgress.pct}%`,
-                      backgroundColor:
-                        goalProgress.status === 'ok' ? theme.statusOk
-                        : goalProgress.status === 'warn' ? theme.statusWarn
-                        : theme.danger,
-                    }}
-                  />
-                </div>
-                <span
-                  className="text-awan-xs font-mono font-bold mt-2 block uppercase tracking-widest"
-                  style={{
-                    color:
-                      goalProgress.status === 'ok' ? theme.statusOk
-                      : goalProgress.status === 'warn' ? theme.statusWarn
-                      : theme.danger,
-                  }}
-                >
-                  Δ {goalProgress.diff.toFixed(1)} KG
-                </span>
+              <Card variant="flat" style={[s.cardFlat, { padding: 16 }]}>
+                <View style={[s.rowBetween, { alignItems: 'baseline', marginBottom: 8 }]}>
+                  <Text style={[s.smLabel, { color: theme.mute }]}>Progression poids</Text>
+                  <Text style={[s.monoBold, { color: theme.title }]}>{goalProgress.current.toFixed(1)} / {goalProgress.target.toFixed(1)} KG</Text>
+                </View>
+                <View style={{ height: 4, backgroundColor: Clr.white5, overflow: 'hidden' }}>
+                  <View style={{ height: 4, width: `${goalProgress.pct}%`, backgroundColor: goalProgress.status === 'ok' ? theme.statusOk : goalProgress.status === 'warn' ? theme.statusWarn : theme.danger }} />
+                </View>
+                <Text style={[s.monoBold, { fontSize: Fs.xs, marginTop: 8, textTransform: 'uppercase', letterSpacing: Ls.xs_02, color: goalProgress.status === 'ok' ? theme.statusOk : goalProgress.status === 'warn' ? theme.statusWarn : theme.danger }]}>Δ {goalProgress.diff.toFixed(1)} KG</Text>
               </Card>
             )}
-          </div>
+          </View>
 
           {/* Log poids quotidien */}
-          <div className="mb-10">
-            <Heading level={4} mono subtitle="Suivi quotidien" className="mb-6">POIDS DU JOUR</Heading>
-            <Card className="p-5 bg-white/3 border-white/5" variant="flat">
-              <div className="flex flex-row items-center gap-4 mb-4">
-                <TextInput
-                  className="text-3xl font-black text-awan-tx font-mono w-24 outline-none"
-                  keyboardType="numeric"
-                  value={weightInput}
-                  onChangeText={setWeightInput}
-                  placeholder={weightStore.todayEntry ? String(weightStore.todayEntry.weightKg) : '00.0'}
-                  placeholderTextColor="rgba(255,255,255,0.2)"
-                />
-                <span className="text-awan-md font-bold text-awan-tx-mute font-mono">KG</span>
+          <View style={{ marginBottom: 40 }}>
+            <Heading level={4} mono subtitle="Suivi quotidien" style={{ marginBottom: 24 }}>POIDS DU JOUR</Heading>
+            <Card variant="flat" style={[s.cardFlat, { padding: 20 }]}>
+              <View style={[s.row, { gap: 16, marginBottom: 16 }]}>
+                <TextInput style={[s.bigInput, { color: theme.title, width: 96 }]} keyboardType="numeric" value={weightInput} onChangeText={setWeightInput} placeholder={weightStore.todayEntry ? String(weightStore.todayEntry.weightKg) : '00.0'} placeholderTextColor="rgba(255,255,255,0.2)" />
+                <Text style={[s.unit, { color: theme.mute }]}>KG</Text>
                 <Touch
                   onPress={async () => {
                     const w = parseFloat(weightInput.replace(',', '.'));
@@ -641,112 +564,102 @@ export default function MensurationScreen() {
                     await weightStore.add(entry);
                     setWeightInput('');
                   }}
-                  className="bg-awan-gold px-4 py-2"
+                  style={{ backgroundColor: theme.selected, paddingHorizontal: 16, paddingVertical: 8 }}
                 >
-                  <span className="text-awan-md font-black text-black uppercase tracking-widest">ENREGISTRER</span>
+                  <Text style={[s.mdLabel, { color: '#000' }]}>ENREGISTRER</Text>
                 </Touch>
-              </div>
+              </View>
               {weightStore.avg7d > 0 && (
-                <div className="pt-3 border-t border-white/5">
-                  <div className="flex flex-row justify-between items-center">
-                    <span className="text-awan-sm font-black text-awan-tx-mute tracking-widest uppercase">Moyenne 7j</span>
-                    <span className="text-sm font-mono font-bold text-awan-tx">{weightStore.avg7d.toFixed(1)} kg</span>
-                  </div>
-                </div>
+                <View style={{ paddingTop: 12, borderTopWidth: 1, borderTopColor: Clr.white5 }}>
+                  <View style={s.rowBetween}>
+                    <Text style={[s.smLabel, { color: theme.mute }]}>Moyenne 7j</Text>
+                    <Text style={[s.monoBold, { color: theme.title }]}>{weightStore.avg7d.toFixed(1)} kg</Text>
+                  </View>
+                </View>
               )}
             </Card>
-          </div>
+          </View>
 
           {/* Indices corporels */}
           {indices && (
-            <div className="mb-10">
-              <Heading level={4} mono subtitle="Métriques dérivées" className="mb-6">INDICES</Heading>
-              <div className="grid grid-cols-2 gap-3">
+            <View style={{ marginBottom: 40 }}>
+              <Heading level={4} mono subtitle="Métriques dérivées" style={{ marginBottom: 24 }}>INDICES</Heading>
+              <View style={s.grid2}>
                 {indices.imcVal !== null && (
-                  <Card className="p-4 bg-white/3 border-white/5" variant="flat">
-                    <span className="text-awan-sm font-black text-awan-gold tracking-widest mb-1 block uppercase">IMC</span>
-                    <span className="text-2xl font-black text-awan-tx font-mono">{indices.imcVal}</span>
-                    <span className="text-awan-xs font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">
-                      {indices.imcVal < 18.5 ? 'Insuffisance pondérale' : indices.imcVal < 25 ? 'Poids normal' : indices.imcVal < 30 ? 'Surpoids' : 'Obésité'}
-                    </span>
+                  <Card variant="flat" style={[s.cardFlat, s.grid2Item, { padding: 16 }]}>
+                    <Text style={[s.smLabel, { color: theme.selected, marginBottom: 4 }]}>IMC</Text>
+                    <Text style={[s.mediumValue, { color: theme.title }]}>{indices.imcVal}</Text>
+                    <Text style={[s.xsLabel, { color: theme.mute, marginTop: 4 }]}>{indices.imcVal < 18.5 ? 'Insuffisance pondérale' : indices.imcVal < 25 ? 'Poids normal' : indices.imcVal < 30 ? 'Surpoids' : 'Obésité'}</Text>
                   </Card>
                 )}
                 {indices.ffmiNorm !== null ? (
-                  <Card className="p-4 bg-white/3 border-white/5" variant="flat">
-                    <span className="text-awan-sm font-black text-awan-gold tracking-widest mb-1 block uppercase">FFMI NORM.</span>
-                    <span className="text-2xl font-black text-awan-tx font-mono">{indices.ffmiNorm}</span>
-                    <span className="text-awan-xs font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">
-                      {indices.ffmiNorm >= 25 ? 'Plafond naturel atteint' : indices.ffmiNorm >= 22 ? 'Très musclé' : indices.ffmiNorm >= 18 ? 'Athlétique' : 'Standard'}
-                    </span>
+                  <Card variant="flat" style={[s.cardFlat, s.grid2Item, { padding: 16 }]}>
+                    <Text style={[s.smLabel, { color: theme.selected, marginBottom: 4 }]}>FFMI NORM.</Text>
+                    <Text style={[s.mediumValue, { color: theme.title }]}>{indices.ffmiNorm}</Text>
+                    <Text style={[s.xsLabel, { color: theme.mute, marginTop: 4 }]}>{indices.ffmiNorm >= 25 ? 'Plafond naturel atteint' : indices.ffmiNorm >= 22 ? 'Très musclé' : indices.ffmiNorm >= 18 ? 'Athlétique' : 'Standard'}</Text>
                   </Card>
                 ) : indices.ffmi !== null ? (
-                  <Card className="p-4 bg-white/3 border-white/5" variant="flat">
-                    <span className="text-awan-sm font-black text-awan-gold tracking-widest mb-1 block uppercase">FFMI</span>
-                    <span className="text-2xl font-black text-awan-tx font-mono">{indices.ffmi}</span>
-                    <span className="text-awan-xs font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">plafond naturel 25,0</span>
+                  <Card variant="flat" style={[s.cardFlat, s.grid2Item, { padding: 16 }]}>
+                    <Text style={[s.smLabel, { color: theme.selected, marginBottom: 4 }]}>FFMI</Text>
+                    <Text style={[s.mediumValue, { color: theme.title }]}>{indices.ffmi}</Text>
+                    <Text style={[s.xsLabel, { color: theme.mute, marginTop: 4 }]}>plafond naturel 25,0</Text>
                   </Card>
                 ) : null}
                 {indices.bfRange !== null ? (
-                  <Card className="p-4 bg-white/3 border-white/5" variant="flat">
-                    <span className="text-awan-sm font-black text-awan-gold tracking-widest mb-1 block uppercase">BF% FOURCHETTE</span>
-                    <span className="text-2xl font-black text-awan-tx font-mono">{indices.bfRange.low}–{indices.bfRange.high}<span className="text-sm ml-1 text-awan-tx-mute">%</span></span>
-                    <span className="text-awan-xs font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">{indices.bfRange.methods.join(' + ')}</span>
+                  <Card variant="flat" style={[s.cardFlat, s.grid2Item, { padding: 16 }]}>
+                    <Text style={[s.smLabel, { color: theme.selected, marginBottom: 4 }]}>BF% FOURCHETTE</Text>
+                    <Text style={[s.mediumValue, { color: theme.title }]}>{indices.bfRange.low}–{indices.bfRange.high}<Text style={{ fontSize: 14, color: theme.mute }}> %</Text></Text>
+                    <Text style={[s.xsLabel, { color: theme.mute, marginTop: 4 }]}>{indices.bfRange.methods.join(' + ')}</Text>
                   </Card>
                 ) : indices.navyBF !== null ? (
-                  <Card className="p-4 bg-white/3 border-white/5" variant="flat">
-                    <span className="text-awan-sm font-black text-awan-gold tracking-widest mb-1 block uppercase">BF% Navy</span>
-                    <span className="text-2xl font-black text-awan-tx font-mono">{indices.navyBF}<span className="text-sm ml-1 text-awan-tx-mute">%</span></span>
-                    <span className="text-awan-xs font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">Formule US Navy</span>
+                  <Card variant="flat" style={[s.cardFlat, s.grid2Item, { padding: 16 }]}>
+                    <Text style={[s.smLabel, { color: theme.selected, marginBottom: 4 }]}>BF% Navy</Text>
+                    <Text style={[s.mediumValue, { color: theme.title }]}>{indices.navyBF}<Text style={{ fontSize: 14, color: theme.mute }}> %</Text></Text>
+                    <Text style={[s.xsLabel, { color: theme.mute, marginTop: 4 }]}>Formule US Navy</Text>
                   </Card>
                 ) : null}
                 {indices.whtr !== null && (
-                  <Card className="p-4 bg-white/3 border-white/5" variant="flat">
-                    <span className="text-awan-sm font-black text-awan-gold tracking-widest mb-1 block uppercase">WHtR</span>
-                    <span className="text-2xl font-black font-mono"
-                      style={{ color: indices.whtr < 0.50 ? theme.statusOk : indices.whtr < 0.55 ? theme.statusWarn : theme.danger }}>
-                      {indices.whtr}
-                    </span>
-                    <span className="text-awan-xs font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">cible &lt; 0,50</span>
+                  <Card variant="flat" style={[s.cardFlat, s.grid2Item, { padding: 16 }]}>
+                    <Text style={[s.smLabel, { color: theme.selected, marginBottom: 4 }]}>WHtR</Text>
+                    <Text style={[s.mediumValue, { color: indices.whtr < 0.50 ? theme.statusOk : indices.whtr < 0.55 ? theme.statusWarn : theme.danger }]}>{indices.whtr}</Text>
+                    <Text style={[s.xsLabel, { color: theme.mute, marginTop: 4 }]}>cible &lt; 0,50</Text>
                   </Card>
                 )}
                 {indices.whr !== null && (
-                  <Card className="p-4 bg-white/3 border-white/5" variant="flat">
-                    <span className="text-awan-sm font-black text-awan-gold tracking-widest mb-1 block uppercase">WHR</span>
-                    <span className="text-2xl font-black font-mono"
-                      style={{ color: indices.whr < 0.90 ? theme.statusOk : indices.whr < 0.95 ? theme.statusWarn : theme.danger }}>
-                      {indices.whr}
-                    </span>
-                    <span className="text-awan-xs font-bold text-awan-tx-mute block mt-1 uppercase tracking-widest">cible &lt; 0,90</span>
+                  <Card variant="flat" style={[s.cardFlat, s.grid2Item, { padding: 16 }]}>
+                    <Text style={[s.smLabel, { color: theme.selected, marginBottom: 4 }]}>WHR</Text>
+                    <Text style={[s.mediumValue, { color: indices.whr < 0.90 ? theme.statusOk : indices.whr < 0.95 ? theme.statusWarn : theme.danger }]}>{indices.whr}</Text>
+                    <Text style={[s.xsLabel, { color: theme.mute, marginTop: 4 }]}>cible &lt; 0,90</Text>
                   </Card>
                 )}
-              </div>
-            </div>
+              </View>
+            </View>
           )}
 
           {/* Quick Log Input */}
-          <div className="mb-10">
-            <Card className="flex-row items-center gap-4 bg-white/5 border-white/10 p-5" variant="flat">
-               <div className="bg-awan-surface border border-white/5  flex-1 px-4 py-2 flex flex-row items-center">
-                  <Database size={14} className="text-awan-gold mr-3 opacity-50" />
-                  <TextInput
-                    className="flex-1 h-10 text-sm font-bold text-awan-tx outline-none"
-                    placeholder="BIO-LOG: CAPTURE..."
-                    placeholderTextColor="rgba(255,255,255,0.15)"
-                    value={inputText}
-                    onChangeText={setInputText}
-                    onSubmitEditing={handleAddEntry}
-                  />
-               </div>
-               <Touch onPress={handleAddEntry} className="w-12 h-12 bg-white/5  items-center justify-center border border-white/10">
-                  <Plus size={20} className="text-awan-gold" />
-               </Touch>
+          <View style={{ marginBottom: 40 }}>
+            <Card variant="flat" style={[s.row, s.cardWhite5, { gap: 16, padding: 20 }]}>
+              <View style={[s.row, { flex: 1, backgroundColor: theme.surface, borderWidth: 1, borderColor: Clr.white5, paddingHorizontal: 16, paddingVertical: 8 }]}>
+                <Database size={14} color={theme.selected} style={{ marginRight: 12, opacity: 0.5 }} />
+                <TextInput
+                  style={{ flex: 1, height: 40, fontSize: 14, fontWeight: Fw.value, color: theme.title }}
+                  placeholder="BIO-LOG: CAPTURE..."
+                  placeholderTextColor="rgba(255,255,255,0.15)"
+                  value={inputText}
+                  onChangeText={setInputText}
+                  onSubmitEditing={handleAddEntry}
+                />
+              </View>
+              <Touch onPress={handleAddEntry} style={{ width: 48, height: 48, backgroundColor: Clr.white5, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Clr.white10 }}>
+                <Plus size={20} color={theme.selected} />
+              </Touch>
             </Card>
-          </div>
+          </View>
 
           {/* A5 — Jumeau numérique + asymétrie heatmap */}
           {indices && (
-            <div className="mb-10">
-              <Heading level={4} mono subtitle="Musculature 12 semaines" className="mb-4">JUMEAU NUMÉRIQUE</Heading>
+            <View style={{ marginBottom: 40 }}>
+              <Heading level={4} mono subtitle="Musculature 12 semaines" style={{ marginBottom: 16 }}>JUMEAU NUMÉRIQUE</Heading>
               <BodySvg
                 mode="heatmap"
                 muscleValues={(() => {
@@ -754,104 +667,81 @@ export default function MensurationScreen() {
                   if (!last?.skinfolds) return {};
                   const sym = analyzeSymmetry(last.measurements ?? {});
                   const result: Partial<Record<MuscleId, number>> = {};
-                  for (const s of sym) {
-                    const val = asymmetryToHeatmapValue(s.diffPct);
-                    if (s.muscleKey === 'arm') { result['biceps_left'] = val; result['biceps_right'] = val; }
-                    else if (s.muscleKey === 'forearm') { result['forearms_left'] = val; result['forearms_right'] = val; }
-                    else if (s.muscleKey === 'thigh') { result['quads_left'] = val; result['quads_right'] = val; result['hamstrings_left'] = val; result['hamstrings_right'] = val; }
-                    else if (s.muscleKey === 'calf') { result['calves_left'] = val; result['calves_right'] = val; }
+                  for (const sm of sym) {
+                    const val = asymmetryToHeatmapValue(sm.diffPct);
+                    if (sm.muscleKey === 'arm') { result['biceps_left'] = val; result['biceps_right'] = val; }
+                    else if (sm.muscleKey === 'forearm') { result['forearms_left'] = val; result['forearms_right'] = val; }
+                    else if (sm.muscleKey === 'thigh') { result['quads_left'] = val; result['quads_right'] = val; result['hamstrings_left'] = val; result['hamstrings_right'] = val; }
+                    else if (sm.muscleKey === 'calf') { result['calves_left'] = val; result['calves_right'] = val; }
                   }
                   return result;
                 })() as Record<MuscleId, number>}
               />
-            </div>
+            </View>
           )}
 
           {/* ─── CARTOGRAPHIE CORPORELLE ─── */}
-          <div className="mb-10">
+          <View style={{ marginBottom: 40 }}>
             {/* Date selector */}
-            <div className="flex flex-row items-center justify-between mb-5 px-1">
-              <Heading level={4} mono subtitle="Cliquer une ligne pour saisir" className="mb-0">MENSURATIONS</Heading>
-              <div className="flex flex-row items-center gap-2 bg-awan-surface border border-white/5 px-2 py-1">
-                <Touch onPress={() => shiftDate(-1)} className="w-6 h-6 items-center justify-center">
-                  <ChevronLeft size={14} className="text-awan-tx-mute" />
+            <View style={[s.rowBetween, { marginBottom: 20, paddingHorizontal: 4 }]}>
+              <Heading level={4} mono subtitle="Cliquer une ligne pour saisir" style={{ marginBottom: 0 }}>MENSURATIONS</Heading>
+              <View style={[s.row, { gap: 8, backgroundColor: theme.surface, borderWidth: 1, borderColor: Clr.white5, paddingHorizontal: 8, paddingVertical: 4 }]}>
+                <Touch onPress={() => shiftDate(-1)} style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
+                  <ChevronLeft size={14} color={theme.mute} />
                 </Touch>
-                <span className="text-awan-sm font-black font-mono text-awan-gold tracking-widest">
-                  {selectedDate === todayStr ? 'AUJOURD\'HUI' : selectedDate.split('-').slice(1).join('/')}
-                </span>
-                <Touch
-                  onPress={() => shiftDate(1)}
-                  className="w-6 h-6 items-center justify-center"
-                  style={{ opacity: selectedDate === todayStr ? 0.2 : 1 }}
-                >
-                  <ChevronRight size={14} className="text-awan-tx-mute" />
+                <Text style={[s.monoSm, { color: theme.selected }]}>{selectedDate === todayStr ? 'AUJOURD\'HUI' : selectedDate.split('-').slice(1).join('/')}</Text>
+                <Touch onPress={() => shiftDate(1)} style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center', opacity: selectedDate === todayStr ? 0.2 : 1 }}>
+                  <ChevronRight size={14} color={theme.mute} />
                 </Touch>
-              </div>
-            </div>
+              </View>
+            </View>
 
             {/* SVG body + inline input panel */}
-            <div className="bg-awan-surface border border-white/8 p-4 mb-4">
+            <View style={{ backgroundColor: theme.surface, borderWidth: 1, borderColor: Clr.white8, padding: 16, marginBottom: 16 }}>
               <BodyMeasureSvg
                 measurements={currentEntry.measurements}
                 selectedKey={selectedPart}
                 onSelect={handlePartPress}
               />
-            </div>
+            </View>
 
-            {/* Inline input panel — slides in when a line is selected */}
-            <AnimatePresence>
-              {selectedPart && (() => {
-                const measure = BODY_MEASURES.find(m => m.key === selectedPart);
-                return (
-                  <motion.div
-                    key={selectedPart}
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.15 }}
-                    className="border border-awan-gold/30 bg-awan-gold/5 p-5 mb-4"
-                  >
-                    <div className="flex flex-row items-center gap-4">
-                      <div className="flex-1">
-                        <span className="text-awan-xs font-black text-awan-gold tracking-[0.3em] uppercase block mb-1">
-                          {measure?.label ?? selectedPart}
-                        </span>
-                        <div className="flex flex-row items-baseline gap-2">
-                          <TextInput
-                            className="text-4xl font-black text-awan-gold font-mono outline-none flex-1"
-                            autoFocus
-                            keyboardType="decimal-pad"
-                            value={inputValue}
-                            onChangeText={setInputValue}
-                            placeholder="00.0"
-                            placeholderTextColor="rgba(212,175,55,0.2)"
-                            onSubmitEditing={saveMeasurement}
-                          />
-                          <span className="text-sm font-black text-awan-gold font-mono opacity-60">CM</span>
-                        </div>
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <Touch
-                          onPress={saveMeasurement}
-                          className="w-12 h-12 bg-awan-gold items-center justify-center"
-                        >
-                          <span className="text-awan-sm font-black text-black font-mono">OK</span>
-                        </Touch>
-                        <Touch
-                          onPress={() => setSelectedPart(null)}
-                          className="w-12 h-12 bg-white/5 border border-white/10 items-center justify-center"
-                        >
-                          <X size={14} className="text-awan-tx-mute" />
-                        </Touch>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })()}
-            </AnimatePresence>
+            {/* Inline input panel — shows when a line is selected */}
+            {selectedPart && (() => {
+              const measure = BODY_MEASURES.find(m => m.key === selectedPart);
+              return (
+                <View style={{ borderWidth: 1, borderColor: Clr.gold30, backgroundColor: 'rgba(212,175,55,0.05)', padding: 20, marginBottom: 16 }}>
+                  <View style={[s.row, { gap: 16 }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[s.xsLabel, { color: theme.selected, letterSpacing: Ls.md_03, marginBottom: 4 }]}>{measure?.label ?? selectedPart}</Text>
+                      <View style={s.baselineRow}>
+                        <TextInput
+                          style={{ fontSize: 36, fontWeight: Fw.display, color: theme.selected, fontFamily: FontMono, flex: 1 }}
+                          autoFocus
+                          keyboardType="decimal-pad"
+                          value={inputValue}
+                          onChangeText={setInputValue}
+                          placeholder="00.0"
+                          placeholderTextColor="rgba(212,175,55,0.2)"
+                          onSubmitEditing={saveMeasurement}
+                        />
+                        <Text style={{ fontSize: 14, fontWeight: Fw.display, color: theme.selected, fontFamily: FontMono, opacity: 0.6 }}>CM</Text>
+                      </View>
+                    </View>
+                    <View style={{ gap: 8 }}>
+                      <Touch onPress={saveMeasurement} style={{ width: 48, height: 48, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={{ fontSize: Fs.sm, fontWeight: Fw.display, color: '#000', fontFamily: FontMono }}>OK</Text>
+                      </Touch>
+                      <Touch onPress={() => setSelectedPart(null)} style={{ width: 48, height: 48, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white10, alignItems: 'center', justifyContent: 'center' }}>
+                        <X size={14} color={theme.mute} />
+                      </Touch>
+                    </View>
+                  </View>
+                </View>
+              );
+            })()}
 
             {/* Measurement chips — quick overview */}
-            <div className="grid grid-cols-3 gap-2">
+            <View style={s.grid3}>
               {BODY_MEASURES.map(({ key, label }) => {
                 const val = currentEntry.measurements[key];
                 const active = selectedPart === key;
@@ -860,22 +750,21 @@ export default function MensurationScreen() {
                   <Touch
                     key={key}
                     onPress={() => handlePartPress(key)}
-                    className={`p-3 border transition-all ${active ? 'border-awan-gold bg-awan-gold/10' : hasVal ? 'border-white/10 bg-white/3' : 'border-white/5 bg-transparent'}`}
+                    style={[s.grid3Item, { padding: 12, borderWidth: 1, borderColor: active ? theme.selected : hasVal ? Clr.white10 : Clr.white5, backgroundColor: active ? Clr.gold10 : hasVal ? 'rgba(255,255,255,0.03)' : 'transparent' }]}
                   >
-                    <span className={`text-awan-xxs font-black tracking-widest uppercase block mb-1 ${active ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>{label}</span>
-                    <span className={`text-base font-black font-mono ${active ? 'text-awan-gold' : hasVal ? 'text-awan-tx' : 'text-white/15'}`}>
-                      {hasVal ? `${val}` : '--'}
-                      <span className="text-awan-xs ml-0.5 opacity-60">cm</span>
-                    </span>
+                    <Text style={[s.xxsLabel, { color: active ? theme.selected : theme.mute, marginBottom: 4 }]}>{label}</Text>
+                    <Text style={{ fontSize: 16, fontWeight: Fw.display, fontFamily: FontMono, color: active ? theme.selected : hasVal ? theme.title : 'rgba(255,255,255,0.15)' }}>
+                      {hasVal ? `${val}` : '--'}<Text style={{ fontSize: Fs.xs, opacity: 0.6 }}> cm</Text>
+                    </Text>
                   </Touch>
                 );
               })}
-            </div>
-          </div>
+            </View>
+          </View>
 
           {/* A1 — Mesures bilatérales L/R */}
-          <div className="mb-10">
-            <Heading level={4} mono subtitle="Symétrie musculaire G/D" className="mb-6">MESURES BILATÉRALES</Heading>
+          <View style={{ marginBottom: 40 }}>
+            <Heading level={4} mono subtitle="Symétrie musculaire G/D" style={{ marginBottom: 24 }}>MESURES BILATÉRALES</Heading>
             {(() => {
               const symmetryResults = analyzeSymmetry(currentEntry.measurements);
               const heatmapValues: Partial<Record<MuscleId, number>> = {};
@@ -887,32 +776,25 @@ export default function MensurationScreen() {
               return (
                 <>
                   {hasAsymmetry && (
-                    <div className="mb-4 px-4 py-3 border flex flex-row items-center gap-3"
-                      style={{ borderColor: theme.statusWarn, backgroundColor: `${theme.statusWarn}14` }}>
+                    <View style={[s.row, { marginBottom: 16, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, gap: 12, borderColor: theme.statusWarn, backgroundColor: `${theme.statusWarn}14` }]}>
                       <AlertTriangle size={14} color={theme.statusWarn} />
-                      <span className="text-awan-xs font-black tracking-widest uppercase" style={{ color: theme.statusWarn }}>
-                        ASYMÉTRIE DÉTECTÉE (&gt;5%)
-                      </span>
-                    </div>
+                      <Text style={[s.xsLabel, { color: theme.statusWarn }]}>ASYMÉTRIE DÉTECTÉE (&gt;5%)</Text>
+                    </View>
                   )}
-                  <div className="grid grid-cols-2 gap-3 mb-4">
+                  <View style={[s.grid2, { marginBottom: 16 }]}>
                     {BILATERAL_MEASURES.map(({ base, label, leftKey, rightKey }) => {
                       const lVal = currentEntry.measurements[leftKey] ?? 0;
                       const rVal = currentEntry.measurements[rightKey] ?? 0;
                       const result = symmetryResults.find(r => r.muscleKey === base);
                       const warn = result?.asymmetric;
                       return (
-                        <Card key={base} className="p-4 bg-white/3 border-white/5" variant="flat"
-                          style={warn ? { borderColor: theme.statusWarn } : {}}>
-                          <span className="text-awan-xs font-black tracking-widest uppercase mb-3 block"
-                            style={{ color: warn ? theme.statusWarn : theme.selected }}>
-                            {label} {warn && '⚠'}
-                          </span>
-                          <div className="flex flex-row gap-3">
-                            <div className="flex-1">
-                              <span className="text-awan-xxs font-black text-awan-tx-mute tracking-widest block mb-1">GAUCHE</span>
+                        <Card key={base} variant="flat" style={[s.cardFlat, s.grid2Item, { padding: 16 }, warn ? { borderColor: theme.statusWarn } : {}]}>
+                          <Text style={[s.xsLabel, { color: warn ? theme.statusWarn : theme.selected, marginBottom: 12 }]}>{label} {warn && '⚠'}</Text>
+                          <View style={[s.row, { gap: 12 }]}>
+                            <View style={{ flex: 1 }}>
+                              <Text style={[s.xxsLabel, { color: theme.mute, marginBottom: 4 }]}>GAUCHE</Text>
                               <TextInput
-                                className="text-xl font-black font-mono text-awan-tx outline-none w-full"
+                                style={{ fontSize: 20, fontWeight: Fw.display, fontFamily: FontMono, color: theme.title, width: '100%' }}
                                 keyboardType="decimal-pad"
                                 placeholder="--"
                                 placeholderTextColor="rgba(255,255,255,0.15)"
@@ -925,12 +807,12 @@ export default function MensurationScreen() {
                                   persistEntry(newEntry);
                                 }}
                               />
-                            </div>
-                            <div className="w-px bg-white/5" />
-                            <div className="flex-1">
-                              <span className="text-awan-xxs font-black text-awan-tx-mute tracking-widest block mb-1">DROITE</span>
+                            </View>
+                            <View style={{ width: 1, backgroundColor: Clr.white5 }} />
+                            <View style={{ flex: 1 }}>
+                              <Text style={[s.xxsLabel, { color: theme.mute, marginBottom: 4 }]}>DROITE</Text>
                               <TextInput
-                                className="text-xl font-black font-mono text-awan-tx outline-none w-full"
+                                style={{ fontSize: 20, fontWeight: Fw.display, fontFamily: FontMono, color: theme.title, width: '100%' }}
                                 keyboardType="decimal-pad"
                                 placeholder="--"
                                 placeholderTextColor="rgba(255,255,255,0.15)"
@@ -943,68 +825,65 @@ export default function MensurationScreen() {
                                   persistEntry(newEntry);
                                 }}
                               />
-                            </div>
-                          </div>
+                            </View>
+                          </View>
                           {result && lVal > 0 && rVal > 0 && (
-                            <div className="mt-2 pt-2 border-t border-white/5">
-                              <span className="text-awan-xxs font-black tracking-widest"
-                                style={{ color: warn ? theme.statusWarn : theme.statusOk }}>
-                                Δ {result.diffPct.toFixed(1)}%
-                              </span>
-                            </div>
+                            <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: Clr.white5 }}>
+                              <Text style={[s.xxsLabel, { color: warn ? theme.statusWarn : theme.statusOk }]}>Δ {result.diffPct.toFixed(1)}%</Text>
+                            </View>
                           )}
                         </Card>
                       );
                     })}
-                  </div>
+                  </View>
                   {hasAsymmetry && (
-                    <div className="mt-4" style={{ maxWidth: 280, margin: '0 auto' }}>
+                    <View style={{ marginTop: 16, maxWidth: 280, alignSelf: 'center', width: '100%' }}>
                       <BodySvg mode="heatmap" muscleValues={heatmapValues} />
-                    </div>
+                    </View>
                   )}
                 </>
               );
             })()}
-          </div>
+          </View>
 
           {/* A2 — Protocole 13 plis (caliper requis) */}
-          <div className="mb-10">
-            <Heading level={4} mono subtitle="Protocole Haute Densité — Caliper requis (~25–50€)" className="mb-4">PLIS CUTANÉS 13 SITES</Heading>
-            <div className="mb-4 px-4 py-3 border border-white/10 bg-white/3">
-              <span className="text-awan-xs text-awan-tx-mute leading-relaxed">
+          <View style={{ marginBottom: 40 }}>
+            <Heading level={4} mono subtitle="Protocole Haute Densité — Caliper requis (~25–50€)" style={{ marginBottom: 16 }}>PLIS CUTANÉS 13 SITES</Heading>
+            <View style={{ marginBottom: 16, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: Clr.white10, backgroundColor: 'rgba(255,255,255,0.03)' }}>
+              <Text style={{ fontSize: Fs.xs, color: theme.mute, lineHeight: Math.round(Fs.xs * 1.6) }}>
                 Saisir les plis en mm, côté droit, à jeun. Pince appliquée à 1 cm du point marqué. Trois formules calculées en parallèle : 13 plis (modèle haute densité), JP7 (profils athlétiques) et DW4 (population générale).
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-3 mb-6">
+              </Text>
+            </View>
+            <View style={[s.grid2, { marginBottom: 24 }]}>
               {SKINFOLD_SITES.map(({ key, label, note }) => {
                 const val = currentEntry.skinfolds[key] ?? 0;
                 const isInJP7 = (JP7_SITES as readonly string[]).includes(key);
                 const isInDW4 = (DW4_SITES as readonly string[]).includes(key);
                 return (
-                  <Card key={key} className="p-4 bg-white/3 border-white/5" variant="flat">
-                    <div className="flex flex-row items-start justify-between mb-2">
-                      <span className="text-awan-xxs font-black text-awan-gold tracking-widest uppercase">{label}</span>
-                      <div className="flex flex-row gap-1">
-                        {isInJP7 && <span className="text-awan-sm font-black tracking-wide px-1 py-0.5" style={{ background: 'rgba(212,175,55,0.15)', color: theme.selected }}>JP7</span>}
-                        {isInDW4 && <span className="text-awan-sm font-black tracking-wide px-1 py-0.5" style={{ background: 'rgba(255,255,255,0.08)', color: theme.mute }}>DW4</span>}
-                      </div>
-                    </div>
-                    <span className="text-awan-sm text-awan-tx-mute block mb-2 leading-tight">{note}</span>
-                    <div className="flex flex-row items-baseline gap-2">
+                  <Card key={key} variant="flat" style={[s.cardFlat, s.grid2Item, { padding: 16 }]}>
+                    <View style={[s.rowBetween, { alignItems: 'flex-start', marginBottom: 8 }]}>
+                      <Text style={[s.xxsLabel, { color: theme.selected }]}>{label}</Text>
+                      <View style={[s.row, { gap: 4 }]}>
+                        {isInJP7 && <Text style={[s.badge, { backgroundColor: Clr.gold12, color: theme.selected }]}>JP7</Text>}
+                        {isInDW4 && <Text style={[s.badge, { backgroundColor: Clr.white8, color: theme.mute }]}>DW4</Text>}
+                      </View>
+                    </View>
+                    <Text style={{ fontSize: Fs.sm, color: theme.mute, marginBottom: 8, lineHeight: Math.round(Fs.sm * 1.3) }}>{note}</Text>
+                    <View style={s.baselineRow}>
                       <TextInput
-                        className="text-2xl font-black font-mono text-awan-tx outline-none flex-1"
+                        style={[s.mediumValue, { color: theme.title, flex: 1 }]}
                         keyboardType="decimal-pad"
                         placeholder="0.0"
                         placeholderTextColor="rgba(255,255,255,0.12)"
                         value={val > 0 ? String(val) : ''}
                         onChangeText={(v: string) => updateSkinfold(key, v)}
                       />
-                      <span className="text-awan-xs font-black text-awan-tx-mute font-mono">mm</span>
-                    </div>
+                      <Text style={[s.unit, { fontSize: Fs.xs, color: theme.mute }]}>mm</Text>
+                    </View>
                   </Card>
                 );
               })}
-            </div>
+            </View>
 
             {/* Matrice de suivi 3 formules */}
             {(() => {
@@ -1023,72 +902,91 @@ export default function MensurationScreen() {
               const hasAny = vals.length > 0;
               if (!hasAny) return null;
               return (
-                <Card className="p-4 border-awan-gold/20 bg-awan-gold/3" variant="flat">
-                  <span className="text-awan-xs font-black text-awan-gold tracking-widest uppercase block mb-4">MATRICE DE SUIVI</span>
-                  <div className="grid grid-cols-4 gap-2 mb-2">
+                <Card variant="flat" style={{ padding: 16, borderWidth: 1, borderColor: Clr.gold20, backgroundColor: 'rgba(212,175,55,0.03)' }}>
+                  <Text style={[s.xsLabel, { color: theme.selected, marginBottom: 16 }]}>MATRICE DE SUIVI</Text>
+                  <View style={[s.row, { marginBottom: 8 }]}>
                     {(['S13', '%G 13P', '%G JP7', '%G DW4'] as const).map(h => (
-                      <span key={h} className="text-awan-sm font-black text-awan-tx-mute tracking-widest uppercase text-center">{h}</span>
+                      <Text key={h} style={[s.smLabel, { color: theme.mute, flex: 1, textAlign: 'center' }]}>{h}</Text>
                     ))}
-                  </div>
-                  <div className="grid grid-cols-4 gap-2 border-t border-white/5 pt-2">
-                    <span className="text-base font-black font-mono text-awan-tx text-center">{s13Total > 0 ? s13Total : '–'}</span>
-                    <span className="text-base font-black font-mono text-center" style={{ color: bf13 !== null ? theme.selected : theme.mute }}>
-                      {bf13 !== null ? `${bf13}%` : '–'}
-                    </span>
-                    <span className="text-base font-black font-mono text-center" style={{ color: bfJP7 !== null ? theme.title : theme.mute }}>
-                      {bfJP7 !== null ? `${bfJP7}%` : '–'}
-                    </span>
-                    <span className="text-base font-black font-mono text-center" style={{ color: bfDW4 !== null ? theme.title : theme.mute }}>
-                      {bfDW4 !== null ? `${bfDW4}%` : '–'}
-                    </span>
-                  </div>
+                  </View>
+                  <View style={[s.row, { borderTopWidth: 1, borderTopColor: Clr.white5, paddingTop: 8 }]}>
+                    <Text style={[s.matrixVal, { color: theme.title }]}>{s13Total > 0 ? s13Total : '–'}</Text>
+                    <Text style={[s.matrixVal, { color: bf13 !== null ? theme.selected : theme.mute }]}>{bf13 !== null ? `${bf13}%` : '–'}</Text>
+                    <Text style={[s.matrixVal, { color: bfJP7 !== null ? theme.title : theme.mute }]}>{bfJP7 !== null ? `${bfJP7}%` : '–'}</Text>
+                    <Text style={[s.matrixVal, { color: bfDW4 !== null ? theme.title : theme.mute }]}>{bfDW4 !== null ? `${bfDW4}%` : '–'}</Text>
+                  </View>
                   {ecartMax !== null && (
-                    <div className="mt-3 pt-3 border-t border-white/5 flex flex-row justify-between items-center">
-                      <span className="text-awan-xs font-black text-awan-tx-mute tracking-widest uppercase">ÉCART MAX</span>
-                      <span className="text-sm font-black font-mono" style={{ color: ecartMax > 3 ? theme.statusWarn : theme.statusOk }}>
-                        {ecartMax}%
-                      </span>
-                    </div>
+                    <View style={[s.rowBetween, { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: Clr.white5 }]}>
+                      <Text style={[s.xsLabel, { color: theme.mute }]}>ÉCART MAX</Text>
+                      <Text style={[s.monoBold, { color: ecartMax > 3 ? theme.statusWarn : theme.statusOk }]}>{ecartMax}%</Text>
+                    </View>
                   )}
                 </Card>
               );
             })()}
-          </div>
+          </View>
 
-          <div className="mb-10">
-            <Heading level={4} mono subtitle="Récupération Chrono" className="mb-6">HISTORIQUE DES CAPTURES</Heading>
-            <div className="space-y-3">
+          <View style={{ marginBottom: 40 }}>
+            <Heading level={4} mono subtitle="Récupération Chrono" style={{ marginBottom: 24 }}>HISTORIQUE DES CAPTURES</Heading>
+            <View style={{ gap: 12 }}>
               {measureStore.history.slice(-5).reverse().map((h) => (
-                <Card key={h.date} className="flex-row items-center gap-3 p-4 bg-white/3 border-white/5" variant="flat">
-                   <div className="w-10 h-10 rounded-full border border-white/10 items-center justify-center">
-                      <span className="text-awan-xs font-mono text-awan-tx-mute">{h.date.split('-').slice(1).join('/')}</span>
-                   </div>
-                   <div className="flex-1">
-                      <div className="flex flex-row items-baseline gap-1">
-                         <span className="text-xl font-black text-awan-tx font-mono">{getWeightKg(h.date) || '—'}</span>
-                         <span className="text-awan-sm font-bold text-awan-tx-mute uppercase">KG</span>
-                      </div>
-                   </div>
-                   <div className="w-px h-8 bg-white/5" />
-                   <div className="flex-1 items-end">
-                      <div className="flex flex-row items-baseline gap-1">
-                         <span className="text-xl font-black text-awan-gold font-mono">{h.body_fat_pct}</span>
-                         <span className="text-awan-sm font-bold text-awan-tx-mute uppercase">%</span>
-                      </div>
-                   </div>
-                   <Touch
-                     onPress={() => handleDeleteMeasurement(h.date)}
-                     className="w-8 h-8  items-center justify-center bg-white/5 border border-white/5"
-                   >
-                     <X size={14} className="text-awan-tx-mute" />
-                   </Touch>
+                <Card key={h.date} variant="flat" style={[s.row, s.cardFlat, { gap: 12, padding: 16 }]}>
+                  <View style={{ width: 40, height: 40, borderRadius: 9999, borderWidth: 1, borderColor: Clr.white10, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={[s.monoSm, { color: theme.mute }]}>{h.date.split('-').slice(1).join('/')}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <View style={s.baselineRow}>
+                      <Text style={{ fontSize: 20, fontWeight: Fw.display, color: theme.title, fontFamily: FontMono }}>{getWeightKg(h.date) || '—'}</Text>
+                      <Text style={[s.unit, { fontSize: Fs.sm, color: theme.mute }]}>KG</Text>
+                    </View>
+                  </View>
+                  <View style={{ width: 1, height: 32, backgroundColor: Clr.white5 }} />
+                  <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                    <View style={s.baselineRow}>
+                      <Text style={{ fontSize: 20, fontWeight: Fw.display, color: theme.selected, fontFamily: FontMono }}>{h.body_fat_pct}</Text>
+                      <Text style={[s.unit, { fontSize: Fs.sm, color: theme.mute }]}>%</Text>
+                    </View>
+                  </View>
+                  <Touch onPress={() => handleDeleteMeasurement(h.date)} style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white5 }}>
+                    <X size={14} color={theme.mute} />
+                  </Touch>
                 </Card>
               ))}
-            </div>
-          </div>
-        </div>
+            </View>
+          </View>
+        </View>
       </ScrollView>
-
-    </PageWrapper>
+    </View>
   );
 }
+
+const s = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center' },
+  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  baselineRow: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
+  profileAlert: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1 },
+  statsRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 20, borderWidth: 1, borderColor: Clr.white5, marginHorizontal: 24, marginBottom: 24 },
+  statCol: { flex: 1, alignItems: 'center' },
+  statLabel: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display, letterSpacing: Ls.sm_02, textTransform: 'uppercase', marginBottom: 8 },
+  bigInput: { fontSize: 30, fontWeight: Fw.display, fontFamily: FontMono },
+  bigValue: { fontSize: 30, fontWeight: Fw.display, fontFamily: FontMono },
+  mediumInput: { fontSize: 24, fontWeight: Fw.display, fontFamily: FontMono },
+  mediumValue: { fontSize: 24, fontWeight: Fw.display, fontFamily: FontMono },
+  unit: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.value },
+  xxsLabel: { fontFamily: FontMono, fontSize: Fs.xxs, fontWeight: Fw.display, letterSpacing: Ls.xxs_02, textTransform: 'uppercase' },
+  xsLabel: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.display, letterSpacing: Ls.xs_02, textTransform: 'uppercase' },
+  smLabel: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display, letterSpacing: Ls.sm_02, textTransform: 'uppercase' },
+  mdLabel: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display, letterSpacing: Ls.md_02, textTransform: 'uppercase' },
+  monoSm: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.value },
+  monoBold: { fontFamily: FontMono, fontSize: 14, fontWeight: Fw.display },
+  matrixVal: { fontFamily: FontMono, fontSize: 16, fontWeight: Fw.display, flex: 1, textAlign: 'center' },
+  badge: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display, paddingHorizontal: 4, paddingVertical: 2 },
+  cardFlat: { backgroundColor: 'rgba(255,255,255,0.03)', borderWidth: 1, borderColor: Clr.white5 },
+  cardWhite5: { backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white5 },
+  filterBox: { flexDirection: 'row', gap: 4, padding: 4, borderWidth: 1 },
+  filterBtn: { paddingHorizontal: 12, paddingVertical: 6 },
+  grid2: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  grid2Item: { width: '47%' },
+  grid3: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  grid3Item: { width: '31%' },
+});
