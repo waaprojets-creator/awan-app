@@ -1,4 +1,5 @@
 import { getStorage } from '@/data/storage/storageService';
+import { safeStorage } from '@/utils/safeStorage';
 
 export interface FoodEntry {
   id: string;
@@ -75,13 +76,13 @@ const FAVORITES_KEY = 'awan.nutrition.recentFoods';
 const FAVORITES_MAX = 10;
 
 export function getRecentFoodIds(): string[] {
-  try { return JSON.parse(localStorage.getItem(FAVORITES_KEY) ?? '[]') as string[]; }
+  try { return JSON.parse(safeStorage.get(FAVORITES_KEY) ?? '[]') as string[]; }
   catch { return []; }
 }
 
 export function recordRecentFood(id: string): void {
   const ids = [id, ...getRecentFoodIds().filter(x => x !== id)].slice(0, FAVORITES_MAX);
-  try { localStorage.setItem(FAVORITES_KEY, JSON.stringify(ids)); } catch { /* quota */ }
+  try { safeStorage.set(FAVORITES_KEY, JSON.stringify(ids)); } catch { /* quota */ }
 }
 
 export function getRecentFoods(): FoodEntry[] {

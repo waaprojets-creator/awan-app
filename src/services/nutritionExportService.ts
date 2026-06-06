@@ -1,4 +1,5 @@
 import { getStorage } from '@/data/storage/storageService';
+import { safeStorage } from '@/utils/safeStorage';
 import { migrateMealEntry } from '@/data/schemas/nutrition/mealEntry';
 import type { MealEntryLatest } from '@/data/schemas/nutrition/mealEntry';
 import { migrateWaterIntake } from '@/data/schemas/nutrition/waterIntake';
@@ -27,7 +28,7 @@ export async function buildNutritionExport(): Promise<string> {
 
   let profile: Record<string, unknown> | null = null;
   try {
-    const raw = localStorage.getItem('awan.nutrition.profile');
+    const raw = safeStorage.get('awan.nutrition.profile');
     profile = raw ? (JSON.parse(raw) as Record<string, unknown>) : null;
   } catch { /* ignore */ }
 

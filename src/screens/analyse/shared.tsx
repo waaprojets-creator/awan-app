@@ -4,6 +4,7 @@ import { FontMono } from '../../constants/typography';
 import { Fs, Fw, Ls } from '../../theme/tokens';
 import Svg, { Line, Rect, G, Text as SvgTextEl } from 'react-native-svg';
 import { useTheme } from '../../hooks/useTheme';
+import { safeStorage } from '../../utils/safeStorage';
 
 const SvgLine = Line as any;
 const SvgRect = Rect as any;
@@ -239,7 +240,7 @@ export function deriveTDEE(profile: NutritionProfile): number {
 
 export function loadNutritionProfile(): NutritionProfile | null {
   try {
-    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('awan.nutrition.profile') : null;
+    const raw = safeStorage.get('awan.nutrition.profile');
     if (!raw) return null;
     return JSON.parse(raw) as NutritionProfile;
   } catch {

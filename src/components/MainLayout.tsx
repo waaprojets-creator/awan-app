@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../hooks/useTheme';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useAppStore } from '../data/store/appStore';
+import { dbFullBus } from '../utils/dbFullBus';
 import { ToastProvider, useToast } from './ui/Toast';
 import AppHeader from './AppHeader';
 import BottomNav from './BottomNav';
@@ -66,10 +67,8 @@ function SuspenseFallback() {
 function DbFullBridge() {
   const { toast } = useToast();
   useEffect(() => {
-    if (typeof window === 'undefined') return;
     const handler = () => toast("Stockage plein — libère de l'espace dans Réglages → DB", 'error');
-    window.addEventListener('awan:db-full', handler);
-    return () => window.removeEventListener('awan:db-full', handler);
+    return dbFullBus.subscribe(handler);
   }, [toast]);
   return null;
 }
