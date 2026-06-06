@@ -1,7 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { View, ScrollView, TextInput as RNTextInput, Alert, Switch } from 'react-native';
-
-const TextInput = RNTextInput as React.ComponentType<any>;
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TextInput as RNTextInput, Alert, Switch, Modal, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemeMode } from '../hooks/useTheme';
 import { useAppStore } from '../store/appStore';
@@ -11,6 +9,7 @@ import { HexagonLogo } from '../constants/icons';
 import { Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { safeStorage } from '../utils/safeStorage';
+import { moonMenuEvents } from '../utils/moonMenuEvents';
 import { PageWrapper } from '../components/Animated';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
@@ -18,26 +17,22 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 import { getStorage } from '../data/storage/storageService';
 import { DbFillGauge } from '../components/DbFillGauge';
-import { motion, AnimatePresence } from '@/components/motion';
 import { L } from '../constants/labels';
 import { SYMBOLS } from '../constants/symbols';
+import { FontMono } from '../constants/typography';
+import { Fs, Fw, Ls, Clr } from '../theme/tokens';
+
+const TextInput = RNTextInput as React.ComponentType<any>;
 
 const AWAN_LS_KEYS = [
-  'awan.seed.loaded',
-  'awan.theme',
-  'awan.sport.activeSession',
-  'awan.sport.bestOneRM',
-  'awan.sport.routineDraft',
-  'awan.mensuration.goals',
-  'awan.nutrition.profile',
-  'awan.user.location',
-  'awan.coach.profiles',
+  'awan.seed.loaded', 'awan.theme', 'awan.sport.activeSession',
+  'awan.sport.bestOneRM', 'awan.sport.routineDraft', 'awan.mensuration.goals',
+  'awan.nutrition.profile', 'awan.user.location', 'awan.coach.profiles',
 ];
 
 type CoachProfile = 'bodybuilding' | 'sports_medicine' | 'nutrition' | 'streetworkout';
 const COACH_PROFILES_KEY = 'awan.coach.profiles';
 const DEFAULT_PROFILES: CoachProfile[] = ['bodybuilding', 'sports_medicine', 'nutrition'];
-
 const PROFILE_IDS: CoachProfile[] = ['bodybuilding', 'sports_medicine', 'nutrition', 'streetworkout'];
 
 function loadCoachProfiles(): CoachProfile[] {
@@ -46,10 +41,9 @@ function loadCoachProfiles(): CoachProfile[] {
   try {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return DEFAULT_PROFILES;
-    const valid: CoachProfile[] = parsed.filter((p): p is CoachProfile =>
+    return parsed.filter((p): p is CoachProfile =>
       ['bodybuilding', 'sports_medicine', 'nutrition', 'streetworkout'].includes(p)
     );
-    return valid;
   } catch { return DEFAULT_PROFILES; }
 }
 
@@ -61,16 +55,12 @@ function buildExportFilename(): string {
   return `awan${yy}${mm}${dd}v4.0.json`;
 }
 
-function isNativePlatform(): boolean {
-  return Platform.OS === 'android' || Platform.OS === 'ios';
-}
-
 async function exportBackup(): Promise<{ ok: boolean; path?: string; error?: string }> {
   const storage = await getStorage();
   const json = await storage.exportAll();
   const filename = buildExportFilename();
 
-  if (isNativePlatform()) {
+  if (Platform.OS !== 'web') {
     try {
       const FileSystem = await import('expo-file-system');
       const Sharing = await import('expo-sharing');
@@ -83,14 +73,11 @@ async function exportBackup(): Promise<{ ok: boolean; path?: string; error?: str
     }
   }
 
-  // Web fallback
   try {
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
+    a.href = url; a.download = filename; a.click();
     URL.revokeObjectURL(url);
     return { ok: true };
   } catch (e) {
@@ -103,444 +90,481 @@ async function purgeAllData() {
     const storage = await getStorage();
     await storage.clear();
   } catch { /* ignore */ }
-  AWAN_LS_KEYS.forEach(k => { try { localStorage.removeItem(k); } catch { /* ignore */ } });
+  AWAN_LS_KEYS.forEach(k => safeStorage.remove(k));
 }
 
 export default function SettingsScreen() {
- const insets = useSafeAreaInsets();
- const navigation = useNavigation();
- const { db, updateDb } = useAppState() as any;
- const theme = useTheme();
- const themeMode = useThemeMode();
- const setTheme = useAppStore((s: any) => s.setTheme);
- const showNetworkBanner = useAppStore((s: any) => s.showNetworkBanner);
- const toggleNetworkBanner = useAppStore((s: any) => s.toggleNetworkBanner);
- const jitFactor = useAppStore((s: any) => s.jitFactor);
- const setJitFactor = useAppStore((s: any) => s.setJitFactor);
- const [purgeModal, setPurgeModal] = useState(false);
- const [purging, setPurging] = useState(false);
- const [pendingAction, setPendingAction] = useState<'cache' | 'export' | 'lock' | null>(null);
- const [cacheState, setCacheState] = useState<'idle' | 'loading' | 'ok'>('idle');
- const [exportState, setExportState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
- const [exportMsg, setExportMsg] = useState('');
- const [coachProfiles, setCoachProfiles] = useState<CoachProfile[]>(loadCoachProfiles);
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+  const { db, updateDb } = useAppState() as any;
+  const theme = useTheme();
+  const themeMode = useThemeMode();
+  const setTheme = useAppStore((s: any) => s.setTheme);
+  const showNetworkBanner = useAppStore((s: any) => s.showNetworkBanner);
+  const toggleNetworkBanner = useAppStore((s: any) => s.toggleNetworkBanner);
+  const jitFactor = useAppStore((s: any) => s.jitFactor);
+  const setJitFactor = useAppStore((s: any) => s.setJitFactor);
+  const [purgeModal, setPurgeModal] = useState(false);
+  const [purging, setPurging] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'cache' | 'export' | 'lock' | null>(null);
+  const [cacheState, setCacheState] = useState<'idle' | 'loading' | 'ok'>('idle');
+  const [exportState, setExportState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
+  const [exportMsg, setExportMsg] = useState('');
+  const [coachProfiles, setCoachProfiles] = useState<CoachProfile[]>(loadCoachProfiles);
 
- useEffect(() => {
-   safeStorage.set(COACH_PROFILES_KEY, JSON.stringify(coachProfiles));
- }, [coachProfiles]);
+  useEffect(() => {
+    safeStorage.set(COACH_PROFILES_KEY, JSON.stringify(coachProfiles));
+  }, [coachProfiles]);
 
- const toggleCoachProfile = (id: CoachProfile) => {
-   setCoachProfiles(prev =>
-     prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
-   );
- };
+  const toggleCoachProfile = (id: CoachProfile) => {
+    setCoachProfiles(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
+  };
 
- if (!db) return null;
- const config = db.config || { corsApiKey: '', jitFactor: 1.2 };
+  if (!db) return null;
+  const config = db.config || { corsApiKey: '', jitFactor: 1.2 };
 
- const updateCfg = (key: string, val: any) => {
- updateDb({ ...db, config: { ...config, [key]: val } });
- };
+  const updateCfg = (key: string, val: any) => {
+    updateDb({ ...db, config: { ...config, [key]: val } });
+  };
 
- const purgeCache = () => {
-   if (cacheState === 'loading') return;
-   setCacheState('loading');
-   setTimeout(() => {
-     updateDb({ ...db, tasks: (db.tasks || []).filter((t: any) => !t.done) });
-     setCacheState('ok');
-     setTimeout(() => setCacheState('idle'), 3000);
-   }, 600);
- };
+  const purgeCache = () => {
+    if (cacheState === 'loading') return;
+    setCacheState('loading');
+    setTimeout(() => {
+      updateDb({ ...db, tasks: (db.tasks || []).filter((t: any) => !t.done) });
+      setCacheState('ok');
+      setTimeout(() => setCacheState('idle'), 3000);
+    }, 600);
+  };
 
- const handlePurgeConfirm = async () => {
- setPurging(true);
- await purgeAllData();
- setPurging(false);
- setPurgeModal(false);
- window.location.reload();
- };
+  const handlePurgeConfirm = async () => {
+    setPurging(true);
+    await purgeAllData();
+    setPurging(false);
+    setPurgeModal(false);
+    navigation.navigate('Dashboard' as never);
+  };
 
- return (
- <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
- <ScrollView
- contentContainerStyle={{ paddingBottom: 150 }}
- style={{ flex: 1 }}
- showsVerticalScrollIndicator={false}
- >
- <div className="px-6 pt-4 pb-4 border-b" style={{ borderBottomColor: theme.border }}>
- <ScreenHeader tag="SYS" title="SYSTÈME" />
- </div>
+  const THEME_LABELS: Record<string, string> = { light: 'LIGHT', dark: 'DARK', black: 'BLACK' };
 
- <div className="p-6">
+  return (
+    <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 150 }}
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[s.sectionBorder, { borderBottomColor: theme.border }]}>
+          <ScreenHeader tag="SYS" title="SYSTÈME" />
+        </View>
 
- {/* PERSONNALISATION */}
- <div className="mb-10">
- <Heading level={4} mono subtitle="Interface" className="mb-6">PERSONNALISATION</Heading>
- <Touch
-   onPress={() => {
-     safeStorage.set('awan.moonmenu.pending-edit', '1');
-     window.dispatchEvent(new Event('moonmenu:open-edit'));
-     navigation.navigate('Dashboard' as never);
-   }}
-   className="bg-white/3 border border-white/5 p-6 flex-row items-center gap-5 mb-3"
- >
-   <div className="w-10 h-10 bg-white/5 flex items-center justify-center">
-     <Navigation size={18} className="text-awan-tx-mute" />
-   </div>
-   <div className="flex-1">
-     <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">MODIFIER MOONMENU</span>
-     <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Repositionner les nœuds de navigation · Ouvrir le menu lune</span>
-   </div>
- </Touch>
- </div>
+        <View style={s.content}>
 
- {/* PROFIL COACH */}
- <div className="mb-10">
- <Heading level={4} mono subtitle={L.coach.profile.sub} className="mb-6">{L.coach.profile.section}</Heading>
- <Card className="p-0 bg-white/3 border-white/5 overflow-hidden" variant="flat">
- {PROFILE_IDS.map((id, idx) => {
-   const active = coachProfiles.includes(id);
-   const meta = L.coach.profile[id];
-   return (
-     <Touch
-       key={id}
-       onPress={() => toggleCoachProfile(id)}
-       className={`flex flex-row items-center gap-5 px-5 h-20 ${idx > 0 ? 'border-t border-white/[0.04]' : ''}`}
-     >
-       <div className="w-10 h-10 bg-white/5 flex items-center justify-center">
-         <Brain size={18} className={active ? 'text-awan-gold' : 'text-awan-tx-mute'} />
-       </div>
-       <div className="flex-1">
-         <span className={`text-xs font-black uppercase tracking-widest block mb-1 ${active ? 'text-awan-gold' : 'text-awan-tx'}`}>
-           {meta.label}
-         </span>
-         <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">{meta.desc}</span>
-       </div>
-       <span className={`text-base font-black font-mono ${active ? 'text-awan-gold' : 'text-white/40'}`}>
-         {active ? SYMBOLS.diamondFilled : SYMBOLS.diamondOutline}
-       </span>
-     </Touch>
-   );
- })}
- </Card>
- <span className="awan-label-sm text-awan-tx-mute leading-relaxed px-1 mt-3 block">
-   {L.coach.profile.help}
- </span>
- </div>
+          {/* PERSONNALISATION */}
+          <View style={s.section}>
+            <Heading level={4} mono subtitle="Interface" style={s.sectionHeading}>PERSONNALISATION</Heading>
+            <Touch
+              onPress={() => {
+                safeStorage.set('awan.moonmenu.pending-edit', '1');
+                moonMenuEvents.emitOpenEdit();
+                navigation.navigate('Dashboard' as never);
+              }}
+              style={[s.row88, { backgroundColor: 'rgba(255,255,255,0.03)', borderColor: Clr.white5 }]}
+            >
+              <View style={[s.iconBox, { backgroundColor: Clr.white5 }]}>
+                <Navigation size={18} color={theme.mute} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.labelTitle, { color: theme.title }]}>MODIFIER MOONMENU</Text>
+                <Text style={[s.labelDesc, { color: theme.mute }]}>Repositionner les nœuds de navigation · Ouvrir le menu lune</Text>
+              </View>
+            </Touch>
+          </View>
 
- {/* THÈME */}
- <div className="mb-10">
- <Heading level={4} mono subtitle="Apparence Visuelle" className="mb-6">THÈME D'AFFICHAGE</Heading>
- <Card className="p-6 bg-white/3 border-white/5" variant="flat">
- <div className="flex flex-row justify-between items-center mb-6">
- <div>
- <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">MODE ACTIF</span>
- <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Bascule clair / sombre</span>
- </div>
- <span className="text-2xl font-black text-awan-gold font-mono">{{ light: 'LIGHT', dark: 'DARK', black: 'BLACK' }[themeMode] ?? 'LIGHT'}</span>
- </div>
- <div className="flex flex-row bg-awan-surface p-1 gap-1">
- <Touch onPress={() => setTheme('light')}
- className={`flex-1 py-3 items-center justify-center ${themeMode === 'light' ? 'bg-awan-gold' : 'transparent'}`}>
- <span className={`text-awan-md font-black font-mono ${themeMode === 'light' ? 'text-black' : 'text-awan-tx-mute'}`}>LIGHT</span>
- </Touch>
- <Touch onPress={() => setTheme('dark')}
- className={`flex-1 py-3 items-center justify-center ${themeMode === 'dark' ? 'bg-awan-gold' : 'transparent'}`}>
- <span className={`text-awan-md font-black font-mono ${themeMode === 'dark' ? 'text-black' : 'text-awan-tx-mute'}`}>DARK</span>
- </Touch>
- <Touch onPress={() => setTheme('black')}
- className={`flex-1 py-3 items-center justify-center ${themeMode === 'black' ? 'bg-awan-gold' : 'transparent'}`}>
- <span className={`text-awan-md font-black font-mono ${themeMode === 'black' ? 'text-black' : 'text-awan-tx-mute'}`}>BLACK</span>
- </Touch>
- </div>
- </Card>
- </div>
+          {/* PROFIL COACH */}
+          <View style={s.section}>
+            <Heading level={4} mono subtitle={L.coach.profile.sub} style={s.sectionHeading}>{L.coach.profile.section}</Heading>
+            <View style={[s.card, { backgroundColor: 'rgba(255,255,255,0.03)', borderColor: Clr.white5 }]}>
+              {PROFILE_IDS.map((id, idx) => {
+                const active = coachProfiles.includes(id);
+                const meta = L.coach.profile[id];
+                return (
+                  <Touch
+                    key={id}
+                    onPress={() => toggleCoachProfile(id)}
+                    style={[s.profileRow, idx > 0 && { borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.04)' }]}
+                  >
+                    <View style={[s.iconBox, { backgroundColor: Clr.white5 }]}>
+                      <Brain size={18} color={active ? theme.selected : theme.mute} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[s.labelTitle, { color: active ? theme.selected : theme.title }]}>{meta.label}</Text>
+                      <Text style={[s.labelDesc, { color: theme.mute }]}>{meta.desc}</Text>
+                    </View>
+                    <Text style={[s.diamond, { color: active ? theme.selected : 'rgba(255,255,255,0.40)' }]}>
+                      {active ? SYMBOLS.diamondFilled : SYMBOLS.diamondOutline}
+                    </Text>
+                  </Touch>
+                );
+              })}
+            </View>
+            <Text style={[s.helpText, { color: theme.mute }]}>{L.coach.profile.help}</Text>
+          </View>
 
- {/* PALETTE */}
- <div className="mb-10">
- <Heading level={4} mono subtitle="Couleurs Utilisateur" className="mb-6">PALETTE DISPONIBLE</Heading>
- <Card className="p-6 bg-white/3 border-white/5" variant="flat">
- <div className="grid grid-cols-5 gap-3 mb-4">
- {theme.palette.map((color, idx) => (
- <div key={idx} className="flex flex-col items-center gap-2">
- <div className="w-12 h-12 border border-white/10" style={{ backgroundColor: color }} />
- <span className="text-awan-xs font-black text-awan-tx-mute font-mono tracking-widest">P{idx}</span>
- </div>
- ))}
- </div>
- </Card>
- </div>
+          {/* THÈME */}
+          <View style={s.section}>
+            <Heading level={4} mono subtitle="Apparence Visuelle" style={s.sectionHeading}>THÈME D'AFFICHAGE</Heading>
+            <Card variant="flat" style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: Clr.white5 }}>
+              <View style={s.themeModeRow}>
+                <View>
+                  <Text style={[s.labelTitle, { color: theme.title }]}>MODE ACTIF</Text>
+                  <Text style={[s.labelDesc, { color: theme.mute }]}>Bascule clair / sombre</Text>
+                </View>
+                <Text style={[s.themeActive, { color: theme.selected }]}>{THEME_LABELS[themeMode] ?? 'LIGHT'}</Text>
+              </View>
+              <View style={[s.themePicker, { backgroundColor: theme.surface }]}>
+                {(['light', 'dark', 'black'] as const).map(m => (
+                  <Touch
+                    key={m}
+                    onPress={() => setTheme(m)}
+                    style={[s.themeBtn, { backgroundColor: themeMode === m ? theme.selected : 'transparent' }]}
+                  >
+                    <Text style={[s.labelMd, { color: themeMode === m ? '#000' : theme.mute }]}>{m.toUpperCase()}</Text>
+                  </Touch>
+                ))}
+              </View>
+            </Card>
+          </View>
 
- {/* CONNECTIVITÉ */}
- <div className="mb-10">
- <Heading level={4} mono subtitle="Indicateurs Réseau" className="mb-6">CONNECTIVITÉ</Heading>
- <Card className="p-0 border-white/5 bg-awan-surface overflow-hidden">
- <div className="flex flex-row justify-between items-center p-5">
- <div>
- <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">BANDEAU HORS-LIGNE</span>
- <span className="text-awan-sm font-bold text-awan-tx-mute">Afficher un indicateur si réseau absent</span>
- </div>
- <Switch
- value={showNetworkBanner}
- onValueChange={toggleNetworkBanner}
- trackColor={{ false: 'rgba(255,255,255,0.08)', true: theme.statusWarn }}
- thumbColor="#fff"
- />
- </div>
- </Card>
- </div>
+          {/* PALETTE */}
+          <View style={s.section}>
+            <Heading level={4} mono subtitle="Couleurs Utilisateur" style={s.sectionHeading}>PALETTE DISPONIBLE</Heading>
+            <Card variant="flat" style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: Clr.white5 }}>
+              <View style={s.palette}>
+                {theme.palette.map((color, idx) => (
+                  <View key={idx} style={s.paletteItem}>
+                    <View style={[s.paletteColor, { backgroundColor: color, borderColor: Clr.white10 }]} />
+                    <Text style={[s.labelXs, { color: theme.mute }]}>P{idx}</Text>
+                  </View>
+                ))}
+              </View>
+            </Card>
+          </View>
 
- {/* ORS */}
- <div className="mb-10">
- <Heading level={4} mono subtitle="Intégrations Externes" className="mb-6">PROTOCOLES ORS</Heading>
- <Card className="p-0 border-white/5 bg-awan-surface overflow-hidden shadow-inner mb-4">
- <div className="flex flex-row items-center px-5 h-16">
- <Key size={16} className="text-awan-gold mr-4" />
- <TextInput
- className="flex-1 text-sm font-black text-awan-tx outline-none bg-transparent font-mono"
- placeholder="API_KEY_ORS..."
- placeholderTextColor="rgba(255,255,255,0.1)"
- value={config.corsApiKey}
- onChangeText={(t: string) => updateCfg('corsApiKey', t)}
- secureTextEntry
- />
- </div>
- </Card>
- <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest leading-relaxed px-1">
- Requis pour les calculs de vecteurs géographiques et routiers.
- </span>
- </div>
+          {/* CONNECTIVITÉ */}
+          <View style={s.section}>
+            <Heading level={4} mono subtitle="Indicateurs Réseau" style={s.sectionHeading}>CONNECTIVITÉ</Heading>
+            <View style={[s.card, { backgroundColor: theme.surface, borderColor: Clr.white5 }]}>
+              <View style={s.switchRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.labelTitle, { color: theme.title }]}>BANDEAU HORS-LIGNE</Text>
+                  <Text style={[s.labelDesc, { color: theme.mute }]}>Afficher un indicateur si réseau absent</Text>
+                </View>
+                <Switch
+                  value={showNetworkBanner}
+                  onValueChange={toggleNetworkBanner}
+                  trackColor={{ false: 'rgba(255,255,255,0.08)', true: theme.statusWarn }}
+                  thumbColor="#fff"
+                />
+              </View>
+            </View>
+          </View>
 
- {/* JIT */}
- <div className="mb-10">
- <Heading level={4} mono subtitle="Optimisation Temporelle" className="mb-6">PARAMÈTRES JIT</Heading>
- <Card className="p-6 bg-white/3 border-white/5" variant="flat">
- <div className="flex flex-row justify-between items-center mb-6">
- <div>
- <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">FACTEUR JIT</span>
- <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Marge de sécurité temporelle</span>
- </div>
- <span className="text-2xl font-black text-awan-gold font-mono">{jitFactor.toFixed(1)}x</span>
- </div>
- <div className="flex flex-row bg-awan-surface p-1 gap-1">
- {[1.0, 1.1, 1.2, 1.3, 1.4, 1.5].map(v => {
- const active = Math.abs(jitFactor - v) < 0.01;
- return (
- <Touch key={v} onPress={() => setJitFactor(v)}
- className={`flex-1 py-3 items-center justify-center ${active ? 'bg-awan-gold' : 'bg-transparent'}`}>
- <span className={`text-awan-md font-black font-mono ${active ? 'text-black' : 'text-white/20'}`}>{v.toFixed(1)}</span>
- </Touch>
- );
- })}
- </div>
- </Card>
- </div>
+          {/* ORS */}
+          <View style={s.section}>
+            <Heading level={4} mono subtitle="Intégrations Externes" style={s.sectionHeading}>PROTOCOLES ORS</Heading>
+            <View style={[s.card, { backgroundColor: theme.surface, borderColor: Clr.white5, marginBottom: 8 }]}>
+              <View style={s.inputRow}>
+                <Key size={16} color={theme.selected} style={{ marginRight: 16 }} />
+                <TextInput
+                  style={[s.textInput, { color: theme.title }]}
+                  placeholder="API_KEY_ORS..."
+                  placeholderTextColor="rgba(255,255,255,0.1)"
+                  value={config.corsApiKey}
+                  onChangeText={(t: string) => updateCfg('corsApiKey', t)}
+                  secureTextEntry
+                />
+              </View>
+            </View>
+            <Text style={[s.labelSmall, { color: theme.mute }]}>
+              Requis pour les calculs de vecteurs géographiques et routiers.
+            </Text>
+          </View>
 
- {/* MANIFESTE */}
- <div className="mb-10">
- <Heading level={4} mono subtitle="Identité & Vision" className="mb-6">MANIFESTE</Heading>
- <Touch onPress={() => navigation.navigate('Philosophie' as never)} className="bg-white/3 border border-white/5 p-6 flex-row items-center gap-5">
-   <div className="w-10 h-10 bg-awan-gold/10 flex items-center justify-center">
-     <BookOpen size={18} color={theme.selected} />
-   </div>
-   <div className="flex-1">
-     <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">PHILOSOPHIE AWAN</span>
-     <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">La devise · Les trois temps · Les 8 principes</span>
-   </div>
- </Touch>
- </div>
+          {/* JIT */}
+          <View style={s.section}>
+            <Heading level={4} mono subtitle="Optimisation Temporelle" style={s.sectionHeading}>PARAMÈTRES JIT</Heading>
+            <Card variant="flat" style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: Clr.white5 }}>
+              <View style={s.themeModeRow}>
+                <View>
+                  <Text style={[s.labelTitle, { color: theme.title }]}>FACTEUR JIT</Text>
+                  <Text style={[s.labelDesc, { color: theme.mute }]}>Marge de sécurité temporelle</Text>
+                </View>
+                <Text style={[s.themeActive, { color: theme.selected }]}>{jitFactor.toFixed(1)}x</Text>
+              </View>
+              <View style={[s.themePicker, { backgroundColor: theme.surface }]}>
+                {[1.0, 1.1, 1.2, 1.3, 1.4, 1.5].map(v => {
+                  const active = Math.abs(jitFactor - v) < 0.01;
+                  return (
+                    <Touch key={v} onPress={() => setJitFactor(v)}
+                      style={[s.themeBtn, { backgroundColor: active ? theme.selected : 'transparent' }]}>
+                      <Text style={[s.labelMd, { color: active ? '#000' : 'rgba(255,255,255,0.20)' }]}>{v.toFixed(1)}</Text>
+                    </Touch>
+                  );
+                })}
+              </View>
+            </Card>
+          </View>
 
- {/* PROTOCOLES CRITIQUES */}
- <div className="mb-12">
- <Heading level={4} mono subtitle="Maintenance & Sécurité" className="mb-6">PROTOCOLES CRITIQUES</Heading>
- <div className="flex flex-col gap-4">
- <DbFillGauge />
+          {/* MANIFESTE */}
+          <View style={s.section}>
+            <Heading level={4} mono subtitle="Identité & Vision" style={s.sectionHeading}>MANIFESTE</Heading>
+            <Touch
+              onPress={() => navigation.navigate('Philosophie' as never)}
+              style={[s.row88, { backgroundColor: 'rgba(255,255,255,0.03)', borderColor: Clr.white5 }]}
+            >
+              <View style={[s.iconBox, { backgroundColor: 'rgba(212,175,55,0.10)' }]}>
+                <BookOpen size={18} color={theme.selected} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.labelTitle, { color: theme.title }]}>PHILOSOPHIE AWAN</Text>
+                <Text style={[s.labelDesc, { color: theme.mute }]}>La devise · Les trois temps · Les 8 principes</Text>
+              </View>
+            </Touch>
+          </View>
 
- {/* OPTIMISATION CACHE */}
- <Touch
-   onPress={() => pendingAction === null && cacheState === 'idle' ? setPendingAction('cache') : undefined}
-   className={`min-h-[88px] border p-5 flex-row items-center gap-5 ${pendingAction === 'cache' ? 'bg-awan-gold/8 border-awan-gold/40' : 'bg-white/3 border-white/5'}`}
- >
-   {pendingAction === 'cache' ? (
-     <div className="flex-1 flex flex-row items-center justify-between gap-3">
-       <span className="text-xs font-black text-awan-gold uppercase tracking-widest">CONFIRMER L'OPTIMISATION ?</span>
-       <div className="flex flex-row gap-2">
-         <Touch onPress={() => { setPendingAction(null); purgeCache(); }} className="px-5 py-2 bg-awan-gold items-center justify-center">
-           <span className="text-xs font-black text-black uppercase tracking-widest font-mono">OUI</span>
-         </Touch>
-         <Touch onPress={() => setPendingAction(null)} className="px-5 py-2 bg-white/5 border border-white/10 items-center justify-center">
-           <span className="text-xs font-black text-awan-tx-mute uppercase tracking-widest font-mono">NON</span>
-         </Touch>
-       </div>
-     </div>
-   ) : (
-     <>
-       <div className="w-10 h-10 bg-white/5 flex items-center justify-center flex-shrink-0">
-         {cacheState === 'loading' && <div style={{ animation: 'spin 1s linear infinite' }}><HexagonLogo size={20} color={theme.selected} /></div>}
-         {cacheState === 'ok'      && <Check size={18} color={theme.statusOk} />}
-         {cacheState === 'idle'    && <HexagonLogo size={20} color={theme.mute} />}
-       </div>
-       <div className="flex-1">
-         <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">OPTIMISATION CACHE</span>
-         {cacheState === 'idle'    && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Nettoyage des archives terminées</span>}
-         {cacheState === 'loading' && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">OPTIMISATION EN COURS…</span>}
-         {cacheState === 'ok'      && <span className="text-awan-sm font-bold uppercase tracking-tighter" style={{ color: theme.statusOk }}>Cache optimisé</span>}
-       </div>
-     </>
-   )}
- </Touch>
+          {/* PROTOCOLES CRITIQUES */}
+          <View style={{ marginBottom: 48 }}>
+            <Heading level={4} mono subtitle="Maintenance & Sécurité" style={s.sectionHeading}>PROTOCOLES CRITIQUES</Heading>
+            <View style={{ gap: 16 }}>
+              <DbFillGauge />
 
- {/* EXPORTATION NOYAU */}
- <Touch
-   onPress={() => pendingAction === null && exportState === 'idle' ? setPendingAction('export') : undefined}
-   className={`min-h-[88px] border p-5 flex-row items-center gap-5 ${pendingAction === 'export' ? 'bg-awan-gold/8 border-awan-gold/40' : 'bg-white/3 border-white/5'}`}
- >
-   {pendingAction === 'export' ? (
-     <div className="flex-1 flex flex-row items-center justify-between gap-3">
-       <span className="text-xs font-black text-awan-gold uppercase tracking-widest">CONFIRMER L'EXPORT ?</span>
-       <div className="flex flex-row gap-2">
-         <Touch onPress={async () => {
-           setPendingAction(null);
-           setExportState('loading');
-           setExportMsg('');
-           const result = await exportBackup();
-           if (result.ok) {
-             setExportState('ok');
-             setExportMsg(result.path ? `Enregistré dans ${result.path}` : 'Fichier téléchargé');
-           } else {
-             setExportState('error');
-             setExportMsg(result.error ?? 'Erreur inconnue');
-           }
-           setTimeout(() => setExportState('idle'), 4000);
-         }} className="px-5 py-2 bg-awan-gold items-center justify-center">
-           <span className="text-xs font-black text-black uppercase tracking-widest font-mono">OUI</span>
-         </Touch>
-         <Touch onPress={() => setPendingAction(null)} className="px-5 py-2 bg-white/5 border border-white/10 items-center justify-center">
-           <span className="text-xs font-black text-awan-tx-mute uppercase tracking-widest font-mono">NON</span>
-         </Touch>
-       </div>
-     </div>
-   ) : (
-     <>
-       <div className="w-10 h-10 bg-white/5 flex items-center justify-center flex-shrink-0">
-         {exportState === 'loading' && <div style={{ animation: 'spin 1s linear infinite' }}><HexagonLogo size={20} color={theme.selected} /></div>}
-         {exportState === 'ok'      && <Check size={18} color={theme.statusOk} />}
-         {exportState === 'error'   && <X size={18} color={theme.danger} />}
-         {exportState === 'idle'    && <Database size={18} className="text-awan-tx-mute" />}
-       </div>
-       <div className="flex-1">
-         <span className="text-xs font-black text-awan-tx uppercase tracking-widest block mb-1">EXPORTATION NOYAU</span>
-         {exportState === 'idle'    && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Écrit {buildExportFilename()} dans Téléchargements</span>}
-         {exportState === 'loading' && <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">EXPORT EN COURS…</span>}
-         {exportState === 'ok'      && <span className="text-awan-sm font-bold uppercase tracking-tighter" style={{ color: theme.statusOk }}>{exportMsg}</span>}
-         {exportState === 'error'   && <span className="text-awan-sm font-bold uppercase tracking-tighter" style={{ color: theme.danger }}>{exportMsg}</span>}
-       </div>
-     </>
-   )}
- </Touch>
+              {/* OPTIMISATION CACHE */}
+              <Touch
+                onPress={() => pendingAction === null && cacheState === 'idle' ? setPendingAction('cache') : undefined}
+                style={[s.criticalRow, {
+                  borderColor: pendingAction === 'cache' ? 'rgba(212,175,55,0.40)' : Clr.white5,
+                  backgroundColor: pendingAction === 'cache' ? 'rgba(212,175,55,0.08)' : 'rgba(255,255,255,0.03)',
+                }]}
+              >
+                {pendingAction === 'cache' ? (
+                  <View style={s.confirmRow}>
+                    <Text style={[s.labelTitle, { color: theme.selected }]}>CONFIRMER L'OPTIMISATION ?</Text>
+                    <View style={s.confirmBtns}>
+                      <Touch onPress={() => { setPendingAction(null); purgeCache(); }} style={s.confirmYes}>
+                        <Text style={[s.labelBtn, { color: '#000' }]}>OUI</Text>
+                      </Touch>
+                      <Touch onPress={() => setPendingAction(null)} style={[s.confirmNo, { borderColor: Clr.white10 }]}>
+                        <Text style={[s.labelBtn, { color: theme.mute }]}>NON</Text>
+                      </Touch>
+                    </View>
+                  </View>
+                ) : (
+                  <>
+                    <View style={[s.iconBox, { backgroundColor: Clr.white5 }]}>
+                      {cacheState === 'loading' && <ActivityIndicator size="small" color={theme.selected} />}
+                      {cacheState === 'ok'      && <Check size={18} color={theme.statusOk} />}
+                      {cacheState === 'idle'    && <HexagonLogo size={20} color={theme.mute} />}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[s.labelTitle, { color: theme.title }]}>OPTIMISATION CACHE</Text>
+                      {cacheState === 'idle'    && <Text style={[s.labelDesc, { color: theme.mute }]}>Nettoyage des archives terminées</Text>}
+                      {cacheState === 'loading' && <Text style={[s.labelDesc, { color: theme.mute }]}>OPTIMISATION EN COURS…</Text>}
+                      {cacheState === 'ok'      && <Text style={[s.labelDesc, { color: theme.statusOk }]}>Cache optimisé</Text>}
+                    </View>
+                  </>
+                )}
+              </Touch>
 
- {/* VERROUILLAGE BIOMÉTRIQUE */}
- <Touch
-   onPress={() => pendingAction === null ? setPendingAction('lock') : undefined}
-   className={`min-h-[88px] border p-5 flex-row items-center gap-5 ${pendingAction === 'lock' ? 'bg-awan-gold/8 border-awan-gold/40' : config.isLocked ? 'bg-awan-status-error/10 border-awan-status-error/30' : 'bg-white/3 border-white/5'}`}
- >
-   {pendingAction === 'lock' ? (
-     <div className="flex-1 flex flex-row items-center justify-between gap-3">
-       <span className="text-xs font-black text-awan-gold uppercase tracking-widest">
-         {config.isLocked ? 'DÉVERROUILLER ?' : 'VERROUILLER ?'}
-       </span>
-       <div className="flex flex-row gap-2">
-         <Touch onPress={() => { setPendingAction(null); updateCfg('isLocked', !config.isLocked); }} className="px-5 py-2 bg-awan-gold items-center justify-center">
-           <span className="text-xs font-black text-black uppercase tracking-widest font-mono">OUI</span>
-         </Touch>
-         <Touch onPress={() => setPendingAction(null)} className="px-5 py-2 bg-white/5 border border-white/10 items-center justify-center">
-           <span className="text-xs font-black text-awan-tx-mute uppercase tracking-widest font-mono">NON</span>
-         </Touch>
-       </div>
-     </div>
-   ) : (
-     <>
-       <div className={`w-10 h-10 flex items-center justify-center flex-shrink-0 ${config.isLocked ? 'bg-awan-status-error/20' : 'bg-white/5'}`}>
-         <Shield size={18} className={config.isLocked ? 'text-awan-status-error' : 'text-awan-tx-mute'} />
-       </div>
-       <div className="flex-1">
-         <span className={`text-xs font-black uppercase tracking-widest block mb-1 ${config.isLocked ? 'text-awan-status-error' : 'text-awan-tx'}`}>VERROUILLAGE BIOMÉTRIQUE</span>
-         <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">
-           {config.isLocked ? 'Terminal verrouillé — toucher pour déverrouiller' : 'Isolation du terminal actif'}
-         </span>
-       </div>
-       <Switch
-         value={!!config.isLocked}
-         onValueChange={() => setPendingAction('lock')}
-         trackColor={{ false: '#1A1A1A', true: '#FF4B4B' }}
-         thumbColor={config.isLocked ? '#fff' : '#444'}
-       />
-     </>
-   )}
- </Touch>
+              {/* EXPORTATION NOYAU */}
+              <Touch
+                onPress={() => pendingAction === null && exportState === 'idle' ? setPendingAction('export') : undefined}
+                style={[s.criticalRow, {
+                  borderColor: pendingAction === 'export' ? 'rgba(212,175,55,0.40)' : Clr.white5,
+                  backgroundColor: pendingAction === 'export' ? 'rgba(212,175,55,0.08)' : 'rgba(255,255,255,0.03)',
+                }]}
+              >
+                {pendingAction === 'export' ? (
+                  <View style={s.confirmRow}>
+                    <Text style={[s.labelTitle, { color: theme.selected }]}>CONFIRMER L'EXPORT ?</Text>
+                    <View style={s.confirmBtns}>
+                      <Touch onPress={async () => {
+                        setPendingAction(null);
+                        setExportState('loading');
+                        setExportMsg('');
+                        const result = await exportBackup();
+                        if (result.ok) {
+                          setExportState('ok');
+                          setExportMsg(result.path ? `Enregistré dans ${result.path}` : 'Fichier téléchargé');
+                        } else {
+                          setExportState('error');
+                          setExportMsg(result.error ?? 'Erreur inconnue');
+                        }
+                        setTimeout(() => setExportState('idle'), 4000);
+                      }} style={s.confirmYes}>
+                        <Text style={[s.labelBtn, { color: '#000' }]}>OUI</Text>
+                      </Touch>
+                      <Touch onPress={() => setPendingAction(null)} style={[s.confirmNo, { borderColor: Clr.white10 }]}>
+                        <Text style={[s.labelBtn, { color: theme.mute }]}>NON</Text>
+                      </Touch>
+                    </View>
+                  </View>
+                ) : (
+                  <>
+                    <View style={[s.iconBox, { backgroundColor: Clr.white5 }]}>
+                      {exportState === 'loading' && <ActivityIndicator size="small" color={theme.selected} />}
+                      {exportState === 'ok'      && <Check size={18} color={theme.statusOk} />}
+                      {exportState === 'error'   && <X size={18} color={theme.danger} />}
+                      {exportState === 'idle'    && <Database size={18} color={theme.mute} />}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[s.labelTitle, { color: theme.title }]}>EXPORTATION NOYAU</Text>
+                      {exportState === 'idle'    && <Text style={[s.labelDesc, { color: theme.mute }]}>Écrit {buildExportFilename()} dans Téléchargements</Text>}
+                      {exportState === 'loading' && <Text style={[s.labelDesc, { color: theme.mute }]}>EXPORT EN COURS…</Text>}
+                      {exportState === 'ok'      && <Text style={[s.labelDesc, { color: theme.statusOk }]}>{exportMsg}</Text>}
+                      {exportState === 'error'   && <Text style={[s.labelDesc, { color: theme.danger }]}>{exportMsg}</Text>}
+                    </View>
+                  </>
+                )}
+              </Touch>
 
- {/* PURGE DONNÉES — modal existant */}
- <Touch
-   onPress={() => setPurgeModal(true)}
-   className="min-h-[88px] bg-awan-status-error/10 border border-awan-status-error/30 p-5 flex-row items-center gap-5"
- >
-   <div className="w-10 h-10 bg-awan-status-error/20 flex items-center justify-center flex-shrink-0">
-     <Trash2 size={18} className="text-awan-status-error" />
-   </div>
-   <div className="flex-1">
-     <span className="text-xs font-black text-awan-status-error uppercase tracking-widest block mb-1">PURGE DONNÉES PERSONNELLES</span>
-     <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-tighter">Suppression totale et irréversible</span>
-   </div>
- </Touch>
- </div>
- </div>
- </div>
- </ScrollView>
+              {/* VERROUILLAGE BIOMÉTRIQUE */}
+              <Touch
+                onPress={() => pendingAction === null ? setPendingAction('lock') : undefined}
+                style={[s.criticalRow, {
+                  borderColor: pendingAction === 'lock'
+                    ? 'rgba(212,175,55,0.40)'
+                    : config.isLocked ? `${theme.danger}4D` : Clr.white5,
+                  backgroundColor: pendingAction === 'lock'
+                    ? 'rgba(212,175,55,0.08)'
+                    : config.isLocked ? `${theme.danger}1A` : 'rgba(255,255,255,0.03)',
+                }]}
+              >
+                {pendingAction === 'lock' ? (
+                  <View style={s.confirmRow}>
+                    <Text style={[s.labelTitle, { color: theme.selected }]}>
+                      {config.isLocked ? 'DÉVERROUILLER ?' : 'VERROUILLER ?'}
+                    </Text>
+                    <View style={s.confirmBtns}>
+                      <Touch onPress={() => { setPendingAction(null); updateCfg('isLocked', !config.isLocked); }} style={s.confirmYes}>
+                        <Text style={[s.labelBtn, { color: '#000' }]}>OUI</Text>
+                      </Touch>
+                      <Touch onPress={() => setPendingAction(null)} style={[s.confirmNo, { borderColor: Clr.white10 }]}>
+                        <Text style={[s.labelBtn, { color: theme.mute }]}>NON</Text>
+                      </Touch>
+                    </View>
+                  </View>
+                ) : (
+                  <>
+                    <View style={[s.iconBox, { backgroundColor: config.isLocked ? `${theme.danger}33` : Clr.white5 }]}>
+                      <Shield size={18} color={config.isLocked ? theme.danger : theme.mute} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[s.labelTitle, { color: config.isLocked ? theme.danger : theme.title }]}>
+                        VERROUILLAGE BIOMÉTRIQUE
+                      </Text>
+                      <Text style={[s.labelDesc, { color: theme.mute }]}>
+                        {config.isLocked ? 'Terminal verrouillé — toucher pour déverrouiller' : 'Isolation du terminal actif'}
+                      </Text>
+                    </View>
+                    <Switch
+                      value={!!config.isLocked}
+                      onValueChange={() => setPendingAction('lock')}
+                      trackColor={{ false: '#1A1A1A', true: '#FF4B4B' }}
+                      thumbColor={config.isLocked ? '#fff' : '#444'}
+                    />
+                  </>
+                )}
+              </Touch>
 
- {/* Modal confirmation purge */}
- <AnimatePresence>
- {purgeModal && (
- <motion.div
- initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
- style={{ position: 'fixed', inset: 0, zIndex: 200, background: theme.overlayDeep, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
- onClick={() => !purging && setPurgeModal(false)}
- >
- <motion.div
- initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
- transition={{ duration: 0.2 }}
- onClick={(e: any) => e.stopPropagation()}
- style={{ background: theme.surface, border: '1px solid rgba(255,75,75,0.3)', width: '100%', maxWidth: 360, padding: 32 }}
- >
- <div className="mb-2">
- <span className="awan-label text-awan-status-error tracking-[0.3em]">— OPÉRATION CRITIQUE —</span>
- </div>
- <div className="mb-6">
- <span className="text-lg font-black text-awan-tx uppercase tracking-wider block mb-3">Purge totale</span>
- <span className="text-awan-lg text-awan-tx-mute leading-relaxed block">
- Cette opération supprime définitivement toutes les données personnelles : séances, mesures, repas, prières, journal. Aucune récupération possible.
- </span>
- </div>
- <div className="flex flex-col gap-3">
- <Touch
- onPress={handlePurgeConfirm}
- className="bg-awan-status-error h-14 items-center justify-center"
- style={{ opacity: purging ? 0.5 : 1 }}
- >
- <div className="flex-row items-center justify-center gap-3">
-   {purging && <div style={{ animation: 'spin 1s linear infinite' }}><HexagonLogo size={18} color="#fff" /></div>}
-   <span className="text-awan-lg font-black text-white uppercase tracking-[0.2em] font-mono">
-     {purging ? 'SUPPRESSION…' : 'Purger données personnelles'}
-   </span>
- </div>
- </Touch>
- <Touch onPress={() => setPurgeModal(false)} className="h-12 items-center justify-center border border-white/10">
- <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-[0.2em] font-mono">Annuler</span>
- </Touch>
- </div>
- </motion.div>
- </motion.div>
- )}
- </AnimatePresence>
- </PageWrapper>
- );
+              {/* PURGE */}
+              <Touch
+                onPress={() => setPurgeModal(true)}
+                style={[s.criticalRow, { backgroundColor: `${theme.danger}1A`, borderColor: `${theme.danger}4D` }]}
+              >
+                <View style={[s.iconBox, { backgroundColor: `${theme.danger}33` }]}>
+                  <Trash2 size={18} color={theme.danger} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.labelTitle, { color: theme.danger }]}>PURGE DONNÉES PERSONNELLES</Text>
+                  <Text style={[s.labelDesc, { color: theme.mute }]}>Suppression totale et irréversible</Text>
+                </View>
+              </Touch>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Modal purge */}
+      <Modal visible={purgeModal} transparent statusBarTranslucent animationType="fade" onRequestClose={() => !purging && setPurgeModal(false)}>
+        <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: theme.overlayDeep }]} onPress={() => !purging && setPurgeModal(false)} />
+        <View style={s.modalOuter}>
+          <View style={[s.modalInner, { backgroundColor: theme.surface, borderColor: `${theme.danger}4D` }]}>
+            <Text style={[s.labelXs, { color: theme.danger, marginBottom: 8 }]}>— OPÉRATION CRITIQUE —</Text>
+            <Text style={[s.purgeTitle, { color: theme.title }]}>Purge totale</Text>
+            <Text style={[s.purgeBody, { color: theme.mute }]}>
+              Cette opération supprime définitivement toutes les données personnelles : séances, mesures, repas, prières, journal. Aucune récupération possible.
+            </Text>
+            <View style={{ gap: 12 }}>
+              <Touch
+                onPress={handlePurgeConfirm}
+                style={[s.purgeConfirmBtn, { backgroundColor: theme.danger, opacity: purging ? 0.5 : 1 }]}
+              >
+                {purging && <ActivityIndicator size="small" color="#fff" style={{ marginRight: 12 }} />}
+                <Text style={[s.labelBtn, { color: '#fff' }]}>
+                  {purging ? 'SUPPRESSION…' : 'Purger données personnelles'}
+                </Text>
+              </Touch>
+              <Touch
+                onPress={() => setPurgeModal(false)}
+                style={[s.purgeCancelBtn, { borderColor: Clr.white10 }]}
+              >
+                <Text style={[s.labelMd, { color: theme.mute }]}>Annuler</Text>
+              </Touch>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </PageWrapper>
+  );
 }
+
+const s = StyleSheet.create({
+  sectionBorder: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 16, borderBottomWidth: 1 },
+  content: { padding: 24 },
+  section: { marginBottom: 40 },
+  sectionHeading: { marginBottom: 24 },
+  card: { borderWidth: 1, overflow: 'hidden' },
+  row88: { minHeight: 88, borderWidth: 1, padding: 24, flexDirection: 'row', alignItems: 'center', gap: 20, marginBottom: 12 },
+  iconBox: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  labelTitle: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.body_033, marginBottom: 4 },
+  labelDesc: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.value, textTransform: 'uppercase', letterSpacing: Ls.tight },
+  diamond: { fontFamily: FontMono, fontSize: Fs.body, fontWeight: Fw.display },
+  helpText: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.value, textTransform: 'uppercase', letterSpacing: Ls.tight, paddingHorizontal: 4, marginTop: 12 },
+  profileRow: { flexDirection: 'row', alignItems: 'center', gap: 20, paddingHorizontal: 20, height: 80 },
+  themeModeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+  themeActive: { fontFamily: FontMono, fontSize: 24, fontWeight: Fw.display },
+  themePicker: { flexDirection: 'row', padding: 4, gap: 4 },
+  themeBtn: { flex: 1, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
+  palette: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 8 },
+  paletteItem: { alignItems: 'center', gap: 8 },
+  paletteColor: { width: 48, height: 48, borderWidth: 1 },
+  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20 },
+  inputRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, height: 64 },
+  textInput: { flex: 1, fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display, textTransform: 'uppercase' },
+  criticalRow: { minHeight: 88, borderWidth: 1, padding: 20, flexDirection: 'row', alignItems: 'center', gap: 20 },
+  confirmRow: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  confirmBtns: { flexDirection: 'row', gap: 8 },
+  confirmYes: { paddingHorizontal: 20, paddingVertical: 8, backgroundColor: 'rgba(212,175,55,1)', alignItems: 'center', justifyContent: 'center' },
+  confirmNo: { paddingHorizontal: 20, paddingVertical: 8, backgroundColor: Clr.white5, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  modalOuter: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  modalInner: { width: '100%', maxWidth: 360, padding: 32, borderWidth: 1 },
+  purgeTitle: { fontFamily: FontMono, fontSize: 18, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.body_005, marginBottom: 12 },
+  purgeBody: { fontFamily: FontMono, fontSize: Fs.body, fontWeight: Fw.value, lineHeight: 22, marginBottom: 24 },
+  purgeConfirmBtn: { height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  purgeCancelBtn: { height: 48, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  labelXs: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.value, textTransform: 'uppercase', letterSpacing: Ls.xs_02 },
+  labelSmall: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.body_033, lineHeight: 20 },
+  labelMd: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.md_02 },
+  labelBtn: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.body_033 },
+});

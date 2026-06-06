@@ -1,11 +1,14 @@
 import React, { useMemo } from 'react';
-import { ScrollView, Alert } from 'react-native';
+import { View, Text, ScrollView, Alert, StyleSheet } from 'react-native';
 import { ChevronLeft, Play, Trash2, Zap } from 'lucide-react-native';
 import { PageWrapper, StaggerList, StaggerItem } from '@/components/Animated';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Card } from '@/components/ui/Card';
 import { Heading } from '@/components/ui/Heading';
 import { Touch } from '@/components/ui/Touch';
+import { useTheme } from '@/hooks/useTheme';
+import { FontMono } from '@/constants/typography';
+import { Fs, Fw, Ls, Clr } from '@/theme/tokens';
 import { L } from '@/constants/labels';
 import { SYMBOLS } from '@/constants/symbols';
 import type { RoutineLatest, WorkoutSessionLatest } from '@/data/schemas/sport/routine';
@@ -21,14 +24,10 @@ interface WorkoutListViewProps {
 }
 
 export function WorkoutListView({
-  routines,
-  sessions,
-  onBack,
-  onGenerate,
-  onStart,
-  onDelete,
-  onAdopt,
+  routines, sessions, onBack, onGenerate, onStart, onDelete, onAdopt,
 }: WorkoutListViewProps) {
+  const theme = useTheme();
+
   const lastSessionByRoutine = useMemo(() => {
     const map: Record<string, string | undefined> = {};
     for (const s of sessions) {
@@ -49,22 +48,22 @@ export function WorkoutListView({
   return (
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 160 }} style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-        <div className="px-6 pt-4 pb-2">
-          <div className="flex flex-row items-center gap-4 mb-4">
+        <View style={s.headerPad}>
+          <View style={s.headerRow}>
             <Touch
               onPress={onBack}
-              className="w-10 h-10 bg-white/5 flex items-center justify-center"
+              style={[s.iconBtn, { backgroundColor: Clr.white5, borderColor: Clr.white10 }]}
             >
-              <ChevronLeft size={20} className="text-awan-tx-mute" />
+              <ChevronLeft size={20} color={theme.mute} />
             </Touch>
-            <ScreenHeader tag={L.sport.routinesTag} title={L.sport.myRoutines} />
-          </div>
-        </div>
+            <ScreenHeader tag={L.sport.routinesTag} title={L.sport.myRoutines} style={{ flex: 1, marginBottom: 0 }} />
+          </View>
+        </View>
 
-        <div className="px-6 pb-6">
+        <View style={s.listPad}>
           {routines.length === 0 ? (
-            <Card className="py-20 items-center bg-white/5 border-dashed border-white/10">
-              <span className="awan-label text-awan-tx-mute text-center">{L.sport.noRoutines}</span>
+            <Card style={s.emptyCard}>
+              <Text style={[s.label, { color: theme.mute, textAlign: 'center' }]}>{L.sport.noRoutines}</Text>
             </Card>
           ) : (
             <StaggerList>
@@ -74,73 +73,61 @@ export function WorkoutListView({
                 const uniqueMuscles = [...new Set(r.exercises.map(e => e.primaryMuscle).filter(Boolean))];
 
                 return (
-                  <StaggerItem key={r.id} className="mb-4">
-                    <Card className="p-5 bg-awan-surface" onPress={() => onStart(r)}>
-                      {/* Header row */}
-                      <div className="flex flex-row items-start justify-between mb-3">
-                        <div className="flex-1 pr-3">
+                  <StaggerItem key={r.id} style={{ marginBottom: 16 }}>
+                    <Card onPress={() => onStart(r)}>
+                      <View style={s.cardHeader}>
+                        <View style={{ flex: 1, paddingRight: 12 }}>
                           {isCoach && (
-                            <div className="inline-flex items-center px-2 py-0.5 mb-1 bg-awan-status-spirit/15 border border-awan-status-spirit/30">
-                              <span className="awan-label-xs text-awan-status-spirit">
-                                {L.sport.coachBadge}
-                              </span>
-                            </div>
+                            <View style={[s.badge, { backgroundColor: 'rgba(212,175,55,0.15)', borderColor: 'rgba(212,175,55,0.30)' }]}>
+                              <Text style={[s.labelXs, { color: theme.selected }]}>{L.sport.coachBadge}</Text>
+                            </View>
                           )}
-                          <Heading level={3} className="mb-0 mt-0">{r.name}</Heading>
-                        </div>
-                        <div className="flex flex-row gap-2 items-center">
+                          <Heading level={3} style={{ marginBottom: 0, marginTop: 0 }}>{r.name}</Heading>
+                        </View>
+                        <View style={s.cardActions}>
                           {!isCoach && (
-                            <Touch
-                              onPress={(e: any) => { e.stopPropagation?.(); handleDelete(r); }}
-                              className="w-8 h-8 flex items-center justify-center"
-                            >
-                              <Trash2 size={15} className="text-white/20" />
+                            <Touch onPress={() => handleDelete(r)} style={s.deleteBtn}>
+                              <Trash2 size={15} color="rgba(255,255,255,0.20)" />
                             </Touch>
                           )}
-                          <div className="w-10 h-10 bg-awan-gold/20 flex items-center justify-center border border-awan-gold/30">
-                            <Play size={18} className="text-awan-gold" strokeWidth={3} />
-                          </div>
-                        </div>
-                      </div>
+                          <View style={[s.playBtn, { backgroundColor: 'rgba(212,175,55,0.20)', borderColor: 'rgba(212,175,55,0.30)' }]}>
+                            <Play size={18} color={theme.selected} strokeWidth={3} />
+                          </View>
+                        </View>
+                      </View>
 
-                      {/* Badges */}
-                      <div className="flex flex-row flex-wrap gap-2 mb-2">
+                      <View style={s.badges}>
                         {r.cycleLetter && (
-                          <div className="bg-awan-gold/10 px-2 py-0.5 border border-awan-gold/20">
-                            <span className="awan-label-sm text-awan-gold">{L.sport.cycle} {r.cycleLetter}</span>
-                          </div>
+                          <View style={[s.tag, { backgroundColor: 'rgba(212,175,55,0.10)', borderColor: 'rgba(212,175,55,0.20)' }]}>
+                            <Text style={[s.labelSm, { color: theme.selected }]}>{L.sport.cycle} {r.cycleLetter}</Text>
+                          </View>
                         )}
-                        <div className="bg-white/5 px-2 py-0.5">
-                          <span className="awan-label-sm text-awan-tx-mute">{r.exercises.length} {L.sport.exShort}</span>
-                        </div>
+                        <View style={[s.tag, { backgroundColor: Clr.white5, borderColor: Clr.white10 }]}>
+                          <Text style={[s.labelSm, { color: theme.mute }]}>{r.exercises.length} {L.sport.exShort}</Text>
+                        </View>
                         {lastDate && (
-                          <div className="bg-white/5 px-2 py-0.5">
-                            <span className="awan-label-sm text-awan-tx-mute">{L.sport.lastSession} : {lastDate}</span>
-                          </div>
+                          <View style={[s.tag, { backgroundColor: Clr.white5, borderColor: Clr.white10 }]}>
+                            <Text style={[s.labelSm, { color: theme.mute }]}>{L.sport.lastSession} : {lastDate}</Text>
+                          </View>
                         )}
-                      </div>
+                      </View>
 
-                      {/* Muscle tags */}
                       {uniqueMuscles.length > 0 && (
-                        <div className="flex flex-row flex-wrap gap-1 mt-2">
-                          {uniqueMuscles.slice(0, 5).map(m => (
-                            <span key={m} className="awan-label-xs text-awan-tx-mute" style={{ fontWeight: 700 }}>
-                              {m}{uniqueMuscles.indexOf(m) < uniqueMuscles.slice(0, 5).length - 1 ? ` ${SYMBOLS.bullet}` : ''}
-                            </span>
+                        <View style={s.muscleRow}>
+                          {uniqueMuscles.slice(0, 5).map((m, idx) => (
+                            <Text key={m} style={[s.labelXs, { color: theme.mute, fontWeight: Fw.value }]}>
+                              {m}{idx < Math.min(uniqueMuscles.length, 5) - 1 ? ` ${SYMBOLS.bullet}` : ''}
+                            </Text>
                           ))}
-                        </div>
+                        </View>
                       )}
 
-                      {/* Adopt button for coach routines */}
                       {isCoach && (
                         <Touch
-                          onPress={(e: any) => {
-                            e.stopPropagation?.();
-                            onAdopt(r);
-                          }}
-                          className="mt-4 h-10 flex items-center justify-center border border-awan-gold/40 bg-awan-gold/[0.08]"
+                          onPress={() => onAdopt(r)}
+                          style={[s.adoptBtn, { borderColor: 'rgba(212,175,55,0.40)', backgroundColor: 'rgba(212,175,55,0.08)' }]}
                         >
-                          <span className="awan-label-md text-awan-gold">{L.sport.adoptRoutine}</span>
+                          <Text style={[s.labelMd, { color: theme.selected }]}>{L.sport.adoptRoutine}</Text>
                         </Touch>
                       )}
                     </Card>
@@ -149,17 +136,44 @@ export function WorkoutListView({
               })}
             </StaggerList>
           )}
-        </div>
+        </View>
       </ScrollView>
 
-      {/* Floating generate button */}
       <Touch
         onPress={onGenerate}
-        className="fixed bottom-[90px] right-6 px-5 h-12 flex flex-row items-center gap-2 bg-awan-gold shadow-2xl"
+        style={s.fab}
       >
-        <Zap size={16} color="black" strokeWidth={3} />
-        <span className="awan-label-lg text-black">{L.sport.generate}</span>
+        <Zap size={16} color="#000" strokeWidth={3} />
+        <Text style={[s.labelLg, { color: '#000' }]}>{L.sport.generate}</Text>
       </Touch>
     </PageWrapper>
   );
 }
+
+const s = StyleSheet.create({
+  headerPad: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 8 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 16 },
+  iconBtn: { width: 40, height: 40, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  listPad: { paddingHorizontal: 24, paddingBottom: 24 },
+  emptyCard: { paddingVertical: 80, alignItems: 'center' },
+  cardHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 },
+  cardActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  deleteBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  playBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  badge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 2, marginBottom: 4, borderWidth: 1 },
+  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  tag: { paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1 },
+  muscleRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 8 },
+  adoptBtn: { marginTop: 16, height: 40, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  fab: {
+    position: 'absolute', bottom: 90, right: 24,
+    paddingHorizontal: 20, height: 48,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: 'rgba(212,175,55,1)',
+  },
+  label: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.value, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
+  labelXs: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.value, textTransform: 'uppercase', letterSpacing: Ls.xs_02 },
+  labelSm: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.value, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
+  labelMd: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.value, textTransform: 'uppercase', letterSpacing: Ls.md_02 },
+  labelLg: { fontFamily: FontMono, fontSize: Fs.lg, fontWeight: Fw.value, textTransform: 'uppercase', letterSpacing: Ls.lg_02 },
+});
