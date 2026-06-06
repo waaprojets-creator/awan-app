@@ -1,15 +1,15 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import {
  View,
+ Text,
  ScrollView,
  TextInput as RNTextInput,
  FlatList as RNFlatList,
  Modal,
  Alert,
+ Platform,
+ StyleSheet,
 } from 'react-native';
-
-const TextInput = RNTextInput as React.ComponentType<any>;
-const FlatList = RNFlatList as React.ComponentType<any>;
 import {
  X,
  CheckCircle,
@@ -21,8 +21,6 @@ import {
  Download,
  BarChart2,
 } from 'lucide-react-native';
-import { motion, AnimatePresence } from '@/components/motion';
-import { PageWrapper } from '../components/Animated';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
@@ -58,7 +56,11 @@ import { buildNutritionExport } from '../services/nutritionExportService';
 import { estimateAdaptiveTDEE } from '../services/tdeeAdaptiveService';
 import { scoreMeal } from '../services/nutritionScoreService';
 import { useTheme, type AwanTheme } from '../hooks/useTheme';
-import { FontSans, FontMono } from '../constants/typography';
+import { FontMono } from '../constants/typography';
+import { Fs, Fw, Ls, Clr } from '../theme/tokens';
+
+const TextInput = RNTextInput as React.ComponentType<any>;
+const FlatList = RNFlatList as React.ComponentType<any>;
 
 // ─── Nutrition Profile (TDEE) ─────────────────────────────────────────────────
 
@@ -101,17 +103,7 @@ function computeProfile(
  const targetP = Math.round(weightKg * 1.8);
  const targetC = Math.round((targetKcal * 0.45) / 4);
  const targetF = Math.round((targetKcal * 0.25) / 9);
- return {
- weightKg,
- heightCm,
- age,
- activity,
- goal,
- targetKcal,
- targetP,
- targetC,
- targetF,
- };
+ return { weightKg, heightCm, age, activity, goal, targetKcal, targetP, targetC, targetF };
 }
 
 function loadProfile(): NutritionProfile | null {
@@ -157,6 +149,7 @@ function formatDayLabel(date: string): string {
  const month = MONTHS_FR[d.getMonth()] ?? '';
  return `${d.getDate()} ${month}`;
 }
+void formatDayLabel;
 
 function calcMacros(
  food: { kcal: number; p: number; c: number; f: number; fiberG?: number },
@@ -196,31 +189,17 @@ function ProgressBar({ label, actual, target, unit, accent }: ProgressBarProps) 
  const color = statusColor(actual, target, theme);
  const pct = target > 0 ? Math.min((actual / target) * 100, 120) : 0;
  return (
- <div className="bg-awan-surface p-3 border border-white/5">
- <div className="flex flex-col gap-0.5 mb-2">
- <span
- className="text-awan-xs font-black uppercase tracking-widest"
- style={{ color: accent ?? color }}
- >
- {label}
- </span>
- <span className="text-awan-md font-mono font-bold text-awan-tx-mute">
- <span style={{ color }} className="font-bold">
- {Math.round(actual)}
- </span>
- {` / ${target}${unit}`}
- </span>
- </div>
- <div className="h-1.5 bg-white/5 overflow-hidden">
- <div
- className="h-full transition-all duration-500"
- style={{
- width: `${Math.min(pct, 100)}%`,
- backgroundColor: color,
- }}
- />
- </div>
- </div>
+ <View style={{ backgroundColor: theme.surface, padding: 12, borderWidth: 1, borderColor: Clr.white5 }}>
+ <View style={{ marginBottom: 8 }}>
+ <Text style={[sn.xs, { color: accent ?? color }]}>{label}</Text>
+ <Text style={{ fontSize: Fs.md, fontFamily: FontMono, fontWeight: Fw.value, color: theme.mute }}>
+ <Text style={{ color, fontWeight: Fw.value }}>{Math.round(actual)}</Text>{` / ${target}${unit}`}
+ </Text>
+ </View>
+ <View style={{ height: 6, backgroundColor: Clr.white5, overflow: 'hidden' }}>
+ <View style={{ height: '100%', width: `${Math.min(pct, 100)}%`, backgroundColor: color }} />
+ </View>
+ </View>
  );
 }
 
@@ -256,193 +235,104 @@ function OnboardingModal({ onComplete }: OnboardingProps) {
 
  return (
  <Modal visible={true} transparent animationType="fade">
- <div
- className="flex-1 flex justify-center items-end"
- style={{ backgroundColor: theme.overlay }}
- >
- <motion.div
- initial={{ opacity: 0, y: 40 }}
- animate={{ opacity: 1, y: 0 }}
- transition={{ duration: 0.25, ease: 'easeOut' }}
- className="w-full bg-awan-surface rounded-t-3xl border-t border-white/10 overflow-hidden"
- style={{ maxHeight: '85vh' }}
- >
- <div className="flex justify-center pt-3 pb-1">
- <div className="w-10 h-1 bg-white/20 " />
- </div>
+ <View style={[sn.sheetOverlay, { backgroundColor: theme.overlay }]}>
+ <View style={[sn.sheet, { backgroundColor: theme.surface }]}>
+ <View style={sn.grabberWrap}><View style={sn.grabber} /></View>
 
- <div className="px-6 pb-4 border-b border-white/5">
- <span className="awan-label text-awan-gold mb-1 block">
- CALIBRATION MÉTABOLIQUE · ÉTAPE {step}/3
- </span>
- <span className="text-xl font-bold text-awan-tx uppercase tracking-tight">
+ <View style={{ paddingHorizontal: 24, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: Clr.white5 }}>
+ <Text style={[sn.label, { color: theme.selected, marginBottom: 4 }]}>CALIBRATION MÉTABOLIQUE · ÉTAPE {step}/3</Text>
+ <Text style={{ fontSize: 20, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', letterSpacing: -0.4 }}>
  {step === 1 && 'PROFIL BIOMÉTRIQUE'}
  {step === 2 && "NIVEAU D'ACTIVITÉ"}
  {step === 3 && 'OBJECTIF ÉNERGÉTIQUE'}
- </span>
- </div>
+ </Text>
+ </View>
 
- <ScrollView
- style={{ maxHeight: 480 }}
- contentContainerStyle={{ padding: 24, paddingBottom: 32 }}
- >
+ <ScrollView style={{ maxHeight: 480 }} contentContainerStyle={{ padding: 24, paddingBottom: 32 }}>
  {step === 1 && (
- <div className="flex flex-col gap-4">
- <div>
- <span className="awan-label mb-2 block">POIDS (KG)</span>
- <TextInput
- className="bg-awan-bg border border-white/5 px-5 py-4 text-sm font-bold text-awan-tx"
- placeholder="75"
- placeholderTextColor="#6C665E"
- value={weight}
- onChangeText={setWeight}
- keyboardType="numeric"
- />
- </div>
- <div>
- <span className="awan-label mb-2 block">TAILLE (CM)</span>
- <TextInput
- className="bg-awan-bg border border-white/5 px-5 py-4 text-sm font-bold text-awan-tx"
- placeholder="175"
- placeholderTextColor="#6C665E"
- value={height}
- onChangeText={setHeight}
- keyboardType="numeric"
- />
- </div>
- <div>
- <span className="awan-label mb-2 block">ÂGE (ANS)</span>
- <TextInput
- className="bg-awan-bg border border-white/5 px-5 py-4 text-sm font-bold text-awan-tx"
- placeholder="25"
- placeholderTextColor="#6C665E"
- value={age}
- onChangeText={setAge}
- keyboardType="numeric"
- />
- </div>
- </div>
+ <View style={{ gap: 16 }}>
+ <View>
+ <Text style={[sn.label, { color: theme.mute, marginBottom: 8 }]}>POIDS (KG)</Text>
+ <TextInput style={[sn.field, { backgroundColor: theme.bg, color: theme.title }]} placeholder="75" placeholderTextColor="#6C665E" value={weight} onChangeText={setWeight} keyboardType="numeric" />
+ </View>
+ <View>
+ <Text style={[sn.label, { color: theme.mute, marginBottom: 8 }]}>TAILLE (CM)</Text>
+ <TextInput style={[sn.field, { backgroundColor: theme.bg, color: theme.title }]} placeholder="175" placeholderTextColor="#6C665E" value={height} onChangeText={setHeight} keyboardType="numeric" />
+ </View>
+ <View>
+ <Text style={[sn.label, { color: theme.mute, marginBottom: 8 }]}>ÂGE (ANS)</Text>
+ <TextInput style={[sn.field, { backgroundColor: theme.bg, color: theme.title }]} placeholder="25" placeholderTextColor="#6C665E" value={age} onChangeText={setAge} keyboardType="numeric" />
+ </View>
+ </View>
  )}
 
  {step === 2 && (
- <div className="flex flex-col gap-3">
- {(
- [
+ <View style={{ gap: 12 }}>
+ {([
  { k: 'sedentary', l: 'SÉDENTAIRE', d: "Peu ou pas d'exercice" },
  { k: 'light', l: 'LÉGER', d: '1-3 sessions / semaine' },
  { k: 'moderate', l: 'MODÉRÉ', d: '3-5 sessions / semaine' },
  { k: 'active', l: 'ACTIF', d: '6-7 sessions / semaine' },
  { k: 'veryActive', l: 'TRÈS ACTIF', d: 'Quotidien + physique' },
- ] as Array<{ k: Activity; l: string; d: string }>
- ).map((opt) => (
- <Touch
- key={opt.k}
- onPress={() => setActivity(opt.k)}
- className={`p-4 border ${
- activity === opt.k
- ? 'bg-awan-gold/15 border-awan-gold/40'
- : 'bg-white/5 border-white/5'
- }`}
- >
- <div className="flex flex-row justify-between items-center">
- <div className="flex flex-col">
- <span
- className={`text-awan-md font-black uppercase tracking-widest mb-1 ${
- activity === opt.k ? 'text-awan-gold' : 'text-awan-tx-mute'
- }`}
- >
- {opt.l}
- </span>
- <span className="text-xs font-bold text-awan-tx opacity-80">
- {opt.d}
- </span>
- </div>
- {activity === opt.k && (
- <CheckCircle size={18} className="text-awan-gold" />
- )}
- </div>
+ ] as Array<{ k: Activity; l: string; d: string }>).map((opt) => {
+ const active = activity === opt.k;
+ return (
+ <Touch key={opt.k} onPress={() => setActivity(opt.k)} style={{ padding: 16, borderWidth: 1, backgroundColor: active ? Clr.gold12 : Clr.white5, borderColor: active ? `${theme.selected}66` : Clr.white5 }}>
+ <View style={sn.rowBetween}>
+ <View>
+ <Text style={[sn.md, { color: active ? theme.selected : theme.mute, marginBottom: 4 }]}>{opt.l}</Text>
+ <Text style={{ fontSize: 12, fontWeight: Fw.value, color: theme.title, opacity: 0.8 }}>{opt.d}</Text>
+ </View>
+ {active && <CheckCircle size={18} color={theme.selected} />}
+ </View>
  </Touch>
- ))}
- </div>
+ );
+ })}
+ </View>
  )}
 
  {step === 3 && (
- <div className="flex flex-col gap-3">
- {(
- [
+ <View style={{ gap: 12 }}>
+ {([
  { k: 'lose', l: 'PERTE', d: '−300 kcal / jour' },
  { k: 'maintain', l: 'MAINTIEN', d: 'TDEE équilibré' },
  { k: 'gain', l: 'PRISE', d: '+300 kcal / jour' },
- ] as Array<{ k: Goal; l: string; d: string }>
- ).map((opt) => (
- <Touch
- key={opt.k}
- onPress={() => setGoal(opt.k)}
- className={`p-4 border ${
- goal === opt.k
- ? 'bg-awan-gold/15 border-awan-gold/40'
- : 'bg-white/5 border-white/5'
- }`}
- >
- <div className="flex flex-row justify-between items-center">
- <div className="flex flex-col">
- <span
- className={`text-awan-md font-black uppercase tracking-widest mb-1 ${
- goal === opt.k ? 'text-awan-gold' : 'text-awan-tx-mute'
- }`}
- >
- {opt.l}
- </span>
- <span className="text-xs font-bold text-awan-tx opacity-80">
- {opt.d}
- </span>
- </div>
- {goal === opt.k && (
- <CheckCircle size={18} className="text-awan-gold" />
- )}
- </div>
+ ] as Array<{ k: Goal; l: string; d: string }>).map((opt) => {
+ const active = goal === opt.k;
+ return (
+ <Touch key={opt.k} onPress={() => setGoal(opt.k)} style={{ padding: 16, borderWidth: 1, backgroundColor: active ? Clr.gold12 : Clr.white5, borderColor: active ? `${theme.selected}66` : Clr.white5 }}>
+ <View style={sn.rowBetween}>
+ <View>
+ <Text style={[sn.md, { color: active ? theme.selected : theme.mute, marginBottom: 4 }]}>{opt.l}</Text>
+ <Text style={{ fontSize: 12, fontWeight: Fw.value, color: theme.title, opacity: 0.8 }}>{opt.d}</Text>
+ </View>
+ {active && <CheckCircle size={18} color={theme.selected} />}
+ </View>
  </Touch>
- ))}
- </div>
+ );
+ })}
+ </View>
  )}
  </ScrollView>
 
- <div className="px-6 py-4 border-t border-white/5 flex flex-row gap-3">
+ <View style={{ paddingHorizontal: 24, paddingVertical: 16, borderTopWidth: 1, borderTopColor: Clr.white5, flexDirection: 'row', gap: 12 }}>
  {step > 1 && (
- <Touch
- onPress={() => setStep((step - 1) as 1 | 2 | 3)}
- className="flex-1 h-12 bg-white/5 border border-white/10 flex items-center justify-center"
- >
- <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest">
- RETOUR
- </span>
+ <Touch onPress={() => setStep((step - 1) as 1 | 2 | 3)} style={{ flex: 1, height: 48, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white10, alignItems: 'center', justifyContent: 'center' }}>
+ <Text style={[sn.md, { color: theme.mute }]}>RETOUR</Text>
  </Touch>
  )}
  {step < 3 ? (
- <Touch
- onPress={() => {
- if (step === 1 && !canNext1) return;
- setStep((step + 1) as 1 | 2 | 3);
- }}
- className="flex-1 h-12 bg-awan-gold flex items-center justify-center"
- >
- <span className="text-awan-md font-black text-black uppercase tracking-widest">
- CONTINUER
- </span>
+ <Touch onPress={() => { if (step === 1 && !canNext1) return; setStep((step + 1) as 1 | 2 | 3); }} style={{ flex: 1, height: 48, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }}>
+ <Text style={[sn.md, { color: '#000' }]}>CONTINUER</Text>
  </Touch>
  ) : (
- <Touch
- onPress={handleSubmit}
- className="flex-1 h-12 bg-awan-gold flex items-center justify-center"
- >
- <span className="text-awan-md font-black text-black uppercase tracking-widest">
- CALCULER & CONTINUER
- </span>
+ <Touch onPress={handleSubmit} style={{ flex: 1, height: 48, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }}>
+ <Text style={[sn.md, { color: '#000' }]}>CALCULER & CONTINUER</Text>
  </Touch>
  )}
- </div>
- </motion.div>
- </div>
+ </View>
+ </View>
+ </View>
  </Modal>
  );
 }
@@ -457,13 +347,30 @@ interface AddModalProps {
  onAdd: (food: FoodEntry, grams: number, timeHHMM: string | undefined) => void;
 }
 
-function AddMealModal({
- visible,
- mealLabel: _mealLabel,
- foodsReady,
- onClose,
- onAdd,
-}: AddModalProps) {
+function MacroPreview({ preview }: { preview: { kcal: number; p: number; c: number; f: number } }) {
+ const theme = useTheme();
+ const cells: Array<[string, number, boolean]> = [
+ ['KCAL', preview.kcal, true],
+ ['P', preview.p, false],
+ ['G', preview.c, false],
+ ['L', preview.f, false],
+ ];
+ return (
+ <Card style={{ backgroundColor: Clr.white5, borderColor: Clr.gold20, padding: 20 }}>
+ <Text style={[sn.label, { color: theme.selected, marginBottom: 12 }]}>APERÇU MACROS</Text>
+ <View style={{ flexDirection: 'row', gap: 8 }}>
+ {cells.map(([k, v, gold]) => (
+ <View key={k} style={[sn.macroBox, { backgroundColor: theme.surface }]}>
+ <Text style={[sn.xs, { color: gold ? theme.selected : theme.mute, marginBottom: 4 }]}>{k}</Text>
+ <Text style={{ fontSize: 14, fontFamily: FontMono, fontWeight: Fw.value, color: theme.title }}>{v}</Text>
+ </View>
+ ))}
+ </View>
+ </Card>
+ );
+}
+
+function AddMealModal({ visible, mealLabel: _mealLabel, foodsReady, onClose, onAdd }: AddModalProps) {
  const theme = useTheme();
  const [query, setQuery] = useState('');
  const [selected, setSelected] = useState<FoodEntry | null>(null);
@@ -494,30 +401,20 @@ function AddMealModal({
  }, [query, foodsReady]);
 
  const gramsNum = parseFloat(grams);
- const preview =
- selected && gramsNum > 0 ? calcMacros(selected, gramsNum) : null;
+ const preview = selected && gramsNum > 0 ? calcMacros(selected, gramsNum) : null;
  const timeValid = !time.trim() || /^\d{2}:\d{2}$/.test(time.trim());
 
  const handleSubmit = () => {
  if (!selected) return;
- if (!gramsNum || gramsNum <= 0) {
- Alert.alert('Erreur', 'Grammes invalides');
- return;
- }
- if (!timeValid) {
- Alert.alert('Erreur', 'Heure invalide (format HH:MM)');
- return;
- }
+ if (!gramsNum || gramsNum <= 0) { Alert.alert('Erreur', 'Grammes invalides'); return; }
+ if (!timeValid) { Alert.alert('Erreur', 'Heure invalide (format HH:MM)'); return; }
  const t = time.trim() ? time.trim() : undefined;
  onAdd(selected, gramsNum, t);
  };
 
  const handleCustomSubmit = () => {
  const kcalNum = parseFloat(customKcal);
- if (!customName.trim() || isNaN(kcalNum) || kcalNum <= 0) {
- Alert.alert('Erreur', 'Nom et kcal requis');
- return;
- }
+ if (!customName.trim() || isNaN(kcalNum) || kcalNum <= 0) { Alert.alert('Erreur', 'Nom et kcal requis'); return; }
  const pNum = parseFloat(customP) || 0;
  const cNum = parseFloat(customC) || 0;
  const fNum = parseFloat(customF) || 0;
@@ -539,103 +436,72 @@ function AddMealModal({
 
  return (
  <Modal visible={visible} transparent animationType="fade">
- <div
- className="flex-1 flex justify-center items-end"
- style={{ backgroundColor: theme.overlay }}
- >
- <motion.div
- initial={{ opacity: 0, y: 40 }}
- animate={{ opacity: 1, y: 0 }}
- transition={{ duration: 0.25, ease: 'easeOut' }}
- className="w-full bg-awan-surface rounded-t-3xl border-t border-white/10 overflow-hidden"
- style={{ maxHeight: '90vh' }}
- >
- <div className="flex justify-center pt-3 pb-1">
- <div className="w-10 h-1 bg-white/20 " />
- </div>
+ <View style={[sn.sheetOverlay, { backgroundColor: theme.overlay }]}>
+ <View style={[sn.sheet, { backgroundColor: theme.surface }]}>
+ <View style={sn.grabberWrap}><View style={sn.grabber} /></View>
 
- <div className="px-6 pb-4 border-b border-white/5 flex flex-row justify-between items-center">
- <div className="flex flex-col">
- <span className="awan-label text-awan-gold mb-1 block">
- AJOUTER · {mealLabel}
- </span>
- <span className="text-xl font-bold text-awan-tx uppercase tracking-tight">
- {selected ? selected.n : 'CHOISIR ALIMENT'}
- </span>
- </div>
- <Touch
- onPress={onClose}
- className="w-10 h-10 bg-white/5 flex items-center justify-center border border-white/10"
- >
- <X size={18} className="text-awan-tx-mute" />
+ <View style={[sn.rowBetween, { paddingHorizontal: 24, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: Clr.white5 }]}>
+ <View>
+ <Text style={[sn.label, { color: theme.selected, marginBottom: 4 }]}>AJOUTER · {mealLabel}</Text>
+ <Text style={{ fontSize: 20, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', letterSpacing: -0.4 }}>{selected ? selected.n : 'CHOISIR ALIMENT'}</Text>
+ </View>
+ <Touch onPress={onClose} style={{ width: 40, height: 40, backgroundColor: Clr.white5, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Clr.white10 }}>
+ <X size={18} color={theme.mute} />
  </Touch>
- </div>
+ </View>
 
  {!selected ? (
- <div className="p-6">
+ <View style={{ padding: 24 }}>
  {/* N2: Custom aliment toggle */}
- <div className="flex flex-row gap-2 mb-4">
- <Touch onPress={() => setCustomMode(false)} className={`flex-1 py-2 border text-center ${!customMode ? 'bg-awan-gold/15 border-awan-gold' : 'bg-white/5 border-white/5'}`}>
- <span className={`text-awan-xs font-black uppercase tracking-widest ${!customMode ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>CATALOGUE</span>
+ <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+ <Touch onPress={() => setCustomMode(false)} style={{ flex: 1, paddingVertical: 8, borderWidth: 1, alignItems: 'center', backgroundColor: !customMode ? Clr.gold12 : Clr.white5, borderColor: !customMode ? theme.selected : Clr.white5 }}>
+ <Text style={[sn.xs, { color: !customMode ? theme.selected : theme.mute }]}>CATALOGUE</Text>
  </Touch>
- <Touch onPress={() => setCustomMode(true)} className={`flex-1 py-2 border text-center ${customMode ? 'bg-awan-gold/15 border-awan-gold' : 'bg-white/5 border-white/5'}`}>
- <span className={`text-awan-xs font-black uppercase tracking-widest ${customMode ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>ALIMENT CUSTOM</span>
+ <Touch onPress={() => setCustomMode(true)} style={{ flex: 1, paddingVertical: 8, borderWidth: 1, alignItems: 'center', backgroundColor: customMode ? Clr.gold12 : Clr.white5, borderColor: customMode ? theme.selected : Clr.white5 }}>
+ <Text style={[sn.xs, { color: customMode ? theme.selected : theme.mute }]}>ALIMENT CUSTOM</Text>
  </Touch>
- </div>
+ </View>
  {customMode ? (
- <div className="flex flex-col gap-3">
- <TextInput className="bg-awan-bg border border-white/5 px-4 py-3 text-sm font-bold text-awan-tx" placeholder="NOM DE L'ALIMENT" placeholderTextColor="rgba(255,255,255,0.2)" value={customName} onChangeText={setCustomName} />
- <div className="grid grid-cols-2 gap-2">
- <TextInput className="bg-awan-bg border border-white/5 px-4 py-3 text-sm font-mono font-bold text-awan-tx" placeholder="KCAL /100G" placeholderTextColor="rgba(255,255,255,0.2)" value={customKcal} onChangeText={setCustomKcal} keyboardType="decimal-pad" />
- <TextInput className="bg-awan-bg border border-white/5 px-4 py-3 text-sm font-mono font-bold text-awan-tx" placeholder="PROTÉINES G" placeholderTextColor="rgba(255,255,255,0.2)" value={customP} onChangeText={setCustomP} keyboardType="decimal-pad" />
- <TextInput className="bg-awan-bg border border-white/5 px-4 py-3 text-sm font-mono font-bold text-awan-tx" placeholder="GLUCIDES G" placeholderTextColor="rgba(255,255,255,0.2)" value={customC} onChangeText={setCustomC} keyboardType="decimal-pad" />
- <TextInput className="bg-awan-bg border border-white/5 px-4 py-3 text-sm font-mono font-bold text-awan-tx" placeholder="LIPIDES G" placeholderTextColor="rgba(255,255,255,0.2)" value={customF} onChangeText={setCustomF} keyboardType="decimal-pad" />
- </div>
- <TextInput className="bg-awan-bg border border-white/5 px-4 py-3 text-sm font-mono font-bold text-awan-tx" placeholder="HEURE (OPTIONNEL, ex: 13:30)" placeholderTextColor="rgba(255,255,255,0.2)" value={time} onChangeText={setTime} />
- <Touch onPress={handleCustomSubmit} className="h-14 bg-awan-gold flex items-center justify-center">
- <span className="awan-label text-black font-black">AJOUTER ALIMENT CUSTOM</span>
+ <View style={{ gap: 12 }}>
+ <TextInput style={[sn.fieldSm, { backgroundColor: theme.bg, color: theme.title }]} placeholder="NOM DE L'ALIMENT" placeholderTextColor="rgba(255,255,255,0.2)" value={customName} onChangeText={setCustomName} />
+ <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+ <TextInput style={[sn.fieldSm, sn.half, { backgroundColor: theme.bg, color: theme.title, fontFamily: FontMono }]} placeholder="KCAL /100G" placeholderTextColor="rgba(255,255,255,0.2)" value={customKcal} onChangeText={setCustomKcal} keyboardType="decimal-pad" />
+ <TextInput style={[sn.fieldSm, sn.half, { backgroundColor: theme.bg, color: theme.title, fontFamily: FontMono }]} placeholder="PROTÉINES G" placeholderTextColor="rgba(255,255,255,0.2)" value={customP} onChangeText={setCustomP} keyboardType="decimal-pad" />
+ <TextInput style={[sn.fieldSm, sn.half, { backgroundColor: theme.bg, color: theme.title, fontFamily: FontMono }]} placeholder="GLUCIDES G" placeholderTextColor="rgba(255,255,255,0.2)" value={customC} onChangeText={setCustomC} keyboardType="decimal-pad" />
+ <TextInput style={[sn.fieldSm, sn.half, { backgroundColor: theme.bg, color: theme.title, fontFamily: FontMono }]} placeholder="LIPIDES G" placeholderTextColor="rgba(255,255,255,0.2)" value={customF} onChangeText={setCustomF} keyboardType="decimal-pad" />
+ </View>
+ <TextInput style={[sn.fieldSm, { backgroundColor: theme.bg, color: theme.title, fontFamily: FontMono }]} placeholder="HEURE (OPTIONNEL, ex: 13:30)" placeholderTextColor="rgba(255,255,255,0.2)" value={time} onChangeText={setTime} keyboardType="numbers-and-punctuation" />
+ <Touch onPress={handleCustomSubmit} style={{ height: 56, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }}>
+ <Text style={[sn.label, { color: '#000' }]}>AJOUTER ALIMENT CUSTOM</Text>
  </Touch>
- </div>
+ </View>
  ) : (
  <>
- <div className="flex flex-row items-center gap-3 bg-awan-bg border border-white/5 px-4 py-3 mb-4">
- <Search size={16} className="text-awan-tx-mute" />
- <TextInput
- className="flex-1 text-sm font-bold text-awan-tx outline-none bg-transparent"
- placeholder="RECHERCHER ALIMENT..."
- placeholderTextColor="rgba(255,255,255,0.2)"
- value={query}
- onChangeText={setQuery}
- autoFocus
- />
- </div>
+ <View style={[sn.row, { gap: 12, backgroundColor: theme.bg, borderWidth: 1, borderColor: Clr.white5, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 16 }]}>
+ <Search size={16} color={theme.mute} />
+ <TextInput style={{ flex: 1, fontSize: 14, fontWeight: Fw.value, color: theme.title, backgroundColor: 'transparent' }} placeholder="RECHERCHER ALIMENT..." placeholderTextColor="rgba(255,255,255,0.2)" value={query} onChangeText={setQuery} autoFocus />
+ </View>
 
  {!foodsReady && (
- <div className="text-center py-8">
- <span className="text-awan-md font-black uppercase tracking-widest text-awan-tx-mute">
- CHARGEMENT BASE...
- </span>
- </div>
+ <View style={{ alignItems: 'center', paddingVertical: 32 }}>
+ <Text style={[sn.md, { color: theme.mute }]}>CHARGEMENT BASE...</Text>
+ </View>
  )}
 
  {foodsReady && !query.trim() && results.length > 0 && (
- <div className="mb-2">
- <span className="text-awan-xs font-black uppercase tracking-widest text-awan-gold block mb-1">RÉCENTS</span>
- </div>
+ <View style={{ marginBottom: 8 }}>
+ <Text style={[sn.xs, { color: theme.selected, marginBottom: 4 }]}>RÉCENTS</Text>
+ </View>
  )}
  {foodsReady && !query.trim() && results.length === 0 && (
- <div className="text-center py-8">
- <span className="text-awan-md font-black uppercase tracking-widest text-awan-tx-mute">
- TAPEZ POUR RECHERCHER
- </span>
- </div>
+ <View style={{ alignItems: 'center', paddingVertical: 32 }}>
+ <Text style={[sn.md, { color: theme.mute }]}>TAPEZ POUR RECHERCHER</Text>
+ </View>
  )}
  {foodsReady && query.trim() && results.length === 0 && (
- <div className="text-center py-8">
- <span className="text-awan-md font-black uppercase tracking-widest text-awan-tx-mute">
- AUCUN RÉSULTAT
- </span>
- </div>
+ <View style={{ alignItems: 'center', paddingVertical: 32 }}>
+ <Text style={[sn.md, { color: theme.mute }]}>AUCUN RÉSULTAT</Text>
+ </View>
  )}
 
  <FlatList
@@ -643,129 +509,50 @@ function AddMealModal({
  keyExtractor={(item: FoodEntry) => item.id}
  style={{ maxHeight: 360 }}
  renderItem={({ item }: { item: FoodEntry }) => (
- <Touch
- onPress={() => setSelected(item)}
- className="w-full mb-2 text-left"
- >
- <div className="bg-white/5 border border-white/5 px-4 py-3 flex flex-row items-center justify-between">
- <div className="flex-1">
- <span className="text-sm font-bold text-awan-tx uppercase tracking-tight block">
- {item.n}
- </span>
- <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest mt-1 block font-mono">
- {item.kcal} KCAL · P{item.p} · G{item.c} · L{item.f}
- {' '}/ 100G
- </span>
- </div>
- <div className="w-8 h-8 bg-awan-gold/15 border border-awan-gold/20 flex items-center justify-center">
- <Plus size={16} className="text-awan-gold" />
- </div>
- </div>
+ <Touch onPress={() => setSelected(item)} style={{ width: '100%', marginBottom: 8 }}>
+ <View style={[sn.rowBetween, { backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white5, paddingHorizontal: 16, paddingVertical: 12 }]}>
+ <View style={{ flex: 1 }}>
+ <Text style={{ fontSize: 14, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', letterSpacing: -0.35 }}>{item.n}</Text>
+ <Text style={[sn.sm, { color: theme.mute, marginTop: 4, fontFamily: FontMono, fontWeight: Fw.display }]}>{item.kcal} KCAL · P{item.p} · G{item.c} · L{item.f} / 100G</Text>
+ </View>
+ <View style={{ width: 32, height: 32, backgroundColor: Clr.gold12, borderWidth: 1, borderColor: Clr.gold20, alignItems: 'center', justifyContent: 'center' }}>
+ <Plus size={16} color={theme.selected} />
+ </View>
+ </View>
  </Touch>
  )}
  />
  </>
  )}
- </div>
+ </View>
  ) : (
- <ScrollView
- style={{ maxHeight: 520 }}
- contentContainerStyle={{ padding: 24, paddingBottom: 32 }}
- >
- <div className="flex flex-col gap-4">
- <div>
- <span className="awan-label mb-2 block">QUANTITÉ (G)</span>
- <TextInput
- className="bg-awan-bg border border-white/5 px-5 py-4 text-sm font-bold text-awan-tx font-mono"
- placeholder="100"
- placeholderTextColor="#6C665E"
- value={grams}
- onChangeText={setGrams}
- keyboardType="decimal-pad"
- />
- </div>
-
- <div>
- <span className="awan-label mb-2 block">
- HEURE (OPTIONNEL)
- </span>
- <TextInput
- className="bg-awan-bg border border-white/5 px-5 py-4 text-sm font-bold text-awan-tx font-mono"
- placeholder="13:30"
- placeholderTextColor="#6C665E"
- value={time}
- onChangeText={setTime}
- />
- </div>
-
- {preview && (
- <Card className="bg-white/5 border-awan-gold/20 p-5">
- <span className="awan-label text-awan-gold mb-3 block">
- APERÇU MACROS
- </span>
- <div className="grid grid-cols-4 gap-2">
- <div className="bg-awan-surface p-2 border border-white/5 text-center">
- <span className="text-awan-xs font-black text-awan-gold uppercase tracking-widest block mb-1">
- KCAL
- </span>
- <span className="text-sm font-mono font-bold text-awan-tx">
- {preview.kcal}
- </span>
- </div>
- <div className="bg-awan-surface p-2 border border-white/5 text-center">
- <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
- P
- </span>
- <span className="text-sm font-mono font-bold text-awan-tx">
- {preview.p}
- </span>
- </div>
- <div className="bg-awan-surface p-2 border border-white/5 text-center">
- <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
- G
- </span>
- <span className="text-sm font-mono font-bold text-awan-tx">
- {preview.c}
- </span>
- </div>
- <div className="bg-awan-surface p-2 border border-white/5 text-center">
- <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
- L
- </span>
- <span className="text-sm font-mono font-bold text-awan-tx">
- {preview.f}
- </span>
- </div>
- </div>
- </Card>
- )}
-
- <Touch
- onPress={() => setSelected(null)}
- className="h-10 bg-white/5 border border-white/10 flex items-center justify-center"
- >
- <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest">
- ← CHANGER D'ALIMENT
- </span>
+ <ScrollView style={{ maxHeight: 520 }} contentContainerStyle={{ padding: 24, paddingBottom: 32 }}>
+ <View style={{ gap: 16 }}>
+ <View>
+ <Text style={[sn.label, { color: theme.mute, marginBottom: 8 }]}>QUANTITÉ (G)</Text>
+ <TextInput style={[sn.field, { backgroundColor: theme.bg, color: theme.title, fontFamily: FontMono }]} placeholder="100" placeholderTextColor="#6C665E" value={grams} onChangeText={setGrams} keyboardType="decimal-pad" />
+ </View>
+ <View>
+ <Text style={[sn.label, { color: theme.mute, marginBottom: 8 }]}>HEURE (OPTIONNEL)</Text>
+ <TextInput style={[sn.field, { backgroundColor: theme.bg, color: theme.title, fontFamily: FontMono }]} placeholder="13:30" placeholderTextColor="#6C665E" value={time} onChangeText={setTime} keyboardType="numbers-and-punctuation" />
+ </View>
+ {preview && <MacroPreview preview={preview} />}
+ <Touch onPress={() => setSelected(null)} style={{ height: 40, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white10, alignItems: 'center', justifyContent: 'center' }}>
+ <Text style={[sn.sm, { color: theme.mute }]}>← CHANGER D'ALIMENT</Text>
  </Touch>
- </div>
+ </View>
  </ScrollView>
  )}
 
  {selected && (
- <div className="px-6 py-4 border-t border-white/5">
- <Touch
- onPress={handleSubmit}
- className="h-12 bg-awan-gold flex items-center justify-center"
- >
- <span className="text-awan-md font-black text-black uppercase tracking-widest">
- AJOUTER
- </span>
+ <View style={{ paddingHorizontal: 24, paddingVertical: 16, borderTopWidth: 1, borderTopColor: Clr.white5 }}>
+ <Touch onPress={handleSubmit} style={{ height: 48, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }}>
+ <Text style={[sn.md, { color: '#000' }]}>AJOUTER</Text>
  </Touch>
- </div>
+ </View>
  )}
- </motion.div>
- </div>
+ </View>
+ </View>
  </Modal>
  );
 }
@@ -776,11 +563,7 @@ interface EditModalProps {
  visible: boolean;
  entry: MealEntryLatest | null;
  onClose: () => void;
- onUpdate: (
- entry: MealEntryLatest,
- grams: number,
- timeHHMM: string | undefined,
- ) => void;
+ onUpdate: (entry: MealEntryLatest, grams: number, timeHHMM: string | undefined) => void;
 }
 
 function EditMealModal({ visible, entry, onClose, onUpdate }: EditModalProps) {
@@ -804,151 +587,56 @@ function EditMealModal({ visible, entry, onClose, onUpdate }: EditModalProps) {
  }
 
  const gramsNum = parseFloat(grams);
- // Reverse-engineer per-100g values from existing entry if grams known
  const base100 = entry.grams && entry.grams > 0
- ? {
- kcal: (entry.kcal / entry.grams) * 100,
- p: (entry.p / entry.grams) * 100,
- c: (entry.c / entry.grams) * 100,
- f: (entry.f / entry.grams) * 100,
- }
+ ? { kcal: (entry.kcal / entry.grams) * 100, p: (entry.p / entry.grams) * 100, c: (entry.c / entry.grams) * 100, f: (entry.f / entry.grams) * 100 }
  : { kcal: entry.kcal, p: entry.p, c: entry.c, f: entry.f };
  const preview = gramsNum > 0 ? calcMacros(base100, gramsNum) : null;
  const timeValid = !time.trim() || /^\d{2}:\d{2}$/.test(time.trim());
 
  const handleSubmit = () => {
- if (!gramsNum || gramsNum <= 0) {
- Alert.alert('Erreur', 'Grammes invalides');
- return;
- }
- if (!timeValid) {
- Alert.alert('Erreur', 'Heure invalide (format HH:MM)');
- return;
- }
+ if (!gramsNum || gramsNum <= 0) { Alert.alert('Erreur', 'Grammes invalides'); return; }
+ if (!timeValid) { Alert.alert('Erreur', 'Heure invalide (format HH:MM)'); return; }
  const t = time.trim() ? time.trim() : undefined;
  onUpdate(entry, gramsNum, t);
  };
 
  return (
  <Modal visible={visible} transparent animationType="fade">
- <div
- className="flex-1 flex justify-center items-end"
- style={{ backgroundColor: theme.overlay }}
- >
- <motion.div
- initial={{ opacity: 0, y: 40 }}
- animate={{ opacity: 1, y: 0 }}
- transition={{ duration: 0.25, ease: 'easeOut' }}
- className="w-full bg-awan-surface rounded-t-3xl border-t border-white/10 overflow-hidden"
- style={{ maxHeight: '90vh' }}
- >
- <div className="flex justify-center pt-3 pb-1">
- <div className="w-10 h-1 bg-white/20 " />
- </div>
+ <View style={[sn.sheetOverlay, { backgroundColor: theme.overlay }]}>
+ <View style={[sn.sheet, { backgroundColor: theme.surface }]}>
+ <View style={sn.grabberWrap}><View style={sn.grabber} /></View>
 
- <div className="px-6 pb-4 border-b border-white/5 flex flex-row justify-between items-center">
- <div className="flex flex-col">
- <span className="awan-label text-awan-gold mb-1 block">
- MODIFIER ENTRÉE
- </span>
- <span className="text-xl font-bold text-awan-tx uppercase tracking-tight">
- {entry.name}
- </span>
- </div>
- <Touch
- onPress={onClose}
- className="w-10 h-10 bg-white/5 flex items-center justify-center border border-white/10"
- >
- <X size={18} className="text-awan-tx-mute" />
+ <View style={[sn.rowBetween, { paddingHorizontal: 24, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: Clr.white5 }]}>
+ <View>
+ <Text style={[sn.label, { color: theme.selected, marginBottom: 4 }]}>MODIFIER ENTRÉE</Text>
+ <Text style={{ fontSize: 20, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', letterSpacing: -0.4 }}>{entry.name}</Text>
+ </View>
+ <Touch onPress={onClose} style={{ width: 40, height: 40, backgroundColor: Clr.white5, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Clr.white10 }}>
+ <X size={18} color={theme.mute} />
  </Touch>
- </div>
+ </View>
 
- <ScrollView
- style={{ maxHeight: 520 }}
- contentContainerStyle={{ padding: 24, paddingBottom: 32 }}
- >
- <div className="flex flex-col gap-4">
- <div>
- <span className="awan-label mb-2 block">QUANTITÉ (G)</span>
- <TextInput
- className="bg-awan-bg border border-white/5 px-5 py-4 text-sm font-bold text-awan-tx font-mono"
- placeholder="100"
- placeholderTextColor="#6C665E"
- value={grams}
- onChangeText={setGrams}
- keyboardType="decimal-pad"
- />
- </div>
-
- <div>
- <span className="awan-label mb-2 block">
- HEURE (OPTIONNEL)
- </span>
- <TextInput
- className="bg-awan-bg border border-white/5 px-5 py-4 text-sm font-bold text-awan-tx font-mono"
- placeholder="13:30"
- placeholderTextColor="#6C665E"
- value={time}
- onChangeText={setTime}
- />
- </div>
-
- {preview && (
- <Card className="bg-white/5 border-awan-gold/20 p-5">
- <span className="awan-label text-awan-gold mb-3 block">
- APERÇU MACROS
- </span>
- <div className="grid grid-cols-4 gap-2">
- <div className="bg-awan-surface p-2 border border-white/5 text-center">
- <span className="text-awan-xs font-black text-awan-gold uppercase tracking-widest block mb-1">
- KCAL
- </span>
- <span className="text-sm font-mono font-bold text-awan-tx">
- {preview.kcal}
- </span>
- </div>
- <div className="bg-awan-surface p-2 border border-white/5 text-center">
- <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
- P
- </span>
- <span className="text-sm font-mono font-bold text-awan-tx">
- {preview.p}
- </span>
- </div>
- <div className="bg-awan-surface p-2 border border-white/5 text-center">
- <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
- G
- </span>
- <span className="text-sm font-mono font-bold text-awan-tx">
- {preview.c}
- </span>
- </div>
- <div className="bg-awan-surface p-2 border border-white/5 text-center">
- <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest block mb-1">
- L
- </span>
- <span className="text-sm font-mono font-bold text-awan-tx">
- {preview.f}
- </span>
- </div>
- </div>
- </Card>
- )}
- </div>
+ <ScrollView style={{ maxHeight: 520 }} contentContainerStyle={{ padding: 24, paddingBottom: 32 }}>
+ <View style={{ gap: 16 }}>
+ <View>
+ <Text style={[sn.label, { color: theme.mute, marginBottom: 8 }]}>QUANTITÉ (G)</Text>
+ <TextInput style={[sn.field, { backgroundColor: theme.bg, color: theme.title, fontFamily: FontMono }]} placeholder="100" placeholderTextColor="#6C665E" value={grams} onChangeText={setGrams} keyboardType="decimal-pad" />
+ </View>
+ <View>
+ <Text style={[sn.label, { color: theme.mute, marginBottom: 8 }]}>HEURE (OPTIONNEL)</Text>
+ <TextInput style={[sn.field, { backgroundColor: theme.bg, color: theme.title, fontFamily: FontMono }]} placeholder="13:30" placeholderTextColor="#6C665E" value={time} onChangeText={setTime} keyboardType="numbers-and-punctuation" />
+ </View>
+ {preview && <MacroPreview preview={preview} />}
+ </View>
  </ScrollView>
 
- <div className="px-6 py-4 border-t border-white/5">
- <Touch
- onPress={handleSubmit}
- className="h-12 bg-awan-gold flex items-center justify-center"
- >
- <span className="text-awan-md font-black text-black uppercase tracking-widest">
- METTRE À JOUR
- </span>
+ <View style={{ paddingHorizontal: 24, paddingVertical: 16, borderTopWidth: 1, borderTopColor: Clr.white5 }}>
+ <Touch onPress={handleSubmit} style={{ height: 48, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }}>
+ <Text style={[sn.md, { color: '#000' }]}>METTRE À JOUR</Text>
  </Touch>
- </div>
- </motion.div>
- </div>
+ </View>
+ </View>
+ </View>
  </Modal>
  );
 }
@@ -962,18 +650,18 @@ export default function NutritionScreen() {
 
  const today = ds(new Date());
  const [selectedDate, setSelectedDate] = useState<string>(today);
- const [selectedMeal, setSelectedMeal] = useState<MealType>('dejeuner');
+ const [selectedMeal] = useState<MealType>('dejeuner');
  const [selectedSlot, setSelectedSlot] = useState<1|2|3|4|5>(2);
 
  // Water tracking (N5)
  const [waterMl, setWaterMl] = useState(0);
  const [waterTarget, setWaterTarget] = useState(2450);
 
- // Slot labels: derive from most recent entry per slot, persist in localStorage
+ // Slot labels: derive from most recent entry per slot, persist in safeStorage
  const SLOT_LABELS_KEY = 'awan.nutrition.slotLabels';
  const [slotLabels, setSlotLabels] = useState<Record<number, string>>(() => {
    try {
-     const raw = localStorage.getItem(SLOT_LABELS_KEY);
+     const raw = safeStorage.get(SLOT_LABELS_KEY);
      return raw ? (JSON.parse(raw) as Record<number, string>) : { 1: 'SUHOOR', 2: 'DÉJEUNER', 3: 'DÎNER', 4: 'COLLATION', 5: 'EN-CAS' };
    } catch { return { 1: 'SUHOOR', 2: 'DÉJEUNER', 3: 'DÎNER', 4: 'COLLATION', 5: 'EN-CAS' }; }
  });
@@ -984,9 +672,7 @@ export default function NutritionScreen() {
 
  const [foodsReady, setFoodsReady] = useState(false);
  const foodsLoadedRef = useRef(false);
- const [profile, setProfile] = useState<NutritionProfile | null>(() =>
- loadProfile(),
- );
+ const [profile, setProfile] = useState<NutritionProfile | null>(() => loadProfile());
  const [showOnboarding, setShowOnboarding] = useState(() => !loadProfile());
  const [proteinAdherence7d, setProteinAdherence7d] = useState<number | null>(null);
 
@@ -1030,7 +716,6 @@ export default function NutritionScreen() {
    buildWeeklyNutritionReport(targets).then(report => {
      setWeeklyReport(report);
      if (!profile) return;
-     // N3: compute adaptive TDEE from weight history + caloric intake
      import('@/services/weightService').then(({ WeightService }) =>
        WeightService.getAll().then(allWeights => {
          const weightHistory = allWeights
@@ -1055,7 +740,7 @@ export default function NutritionScreen() {
  setShowAdd(true);
  }, []);
 
- // Skip onboarding if seed data exists — initialize default profile (179cm, 22/09/1996, 82kg)
+ // Skip onboarding if seed data exists — initialize default profile
  useEffect(() => {
  if (!showOnboarding) return;
  import('@/data/storage/storageService').then(({ getStorage }) =>
@@ -1071,15 +756,7 @@ export default function NutritionScreen() {
  );
  }, [showOnboarding]);
 
- const canGoNext = selectedDate < today;
-
- const handlePrevDay = () => setSelectedDate(shiftDate(selectedDate, -1));
- const handleNextDay = () => {
- if (canGoNext) setSelectedDate(shiftDate(selectedDate, 1));
- };
-
  const dayEntries = mealStore.meals;
- // Filter by slot (V2) with fallback to meal-type-based mapping for legacy V1 entries
  const mealEntries = useMemo(
  () => dayEntries.filter((e) => {
    const slot = e.mealSlot ?? (e.meal ? (MEAL_TYPE_TO_SLOT[e.meal] ?? 5) : 5);
@@ -1089,7 +766,6 @@ export default function NutritionScreen() {
  );
  const totals = mealStore.totals;
 
- // Per-slot daily summary (for synthesis card)
  const slotSummaries = useMemo(() => {
    const bySlot: Record<number, { kcal: number; p: number; c: number; f: number; count: number }> = {};
    for (const e of dayEntries) {
@@ -1104,14 +780,10 @@ export default function NutritionScreen() {
    return bySlot;
  }, [dayEntries]);
 
- // Load water data when date changes
  useEffect(() => {
-   WaterService.getByDate(selectedDate).then(w => {
-     setWaterMl(w?.totalMl ?? 0);
-   });
+   WaterService.getByDate(selectedDate).then(w => { setWaterMl(w?.totalMl ?? 0); });
  }, [selectedDate]);
 
- // Water target from profile weight
  useEffect(() => {
    if (!profile?.weightKg) return;
    setWaterTarget(WaterService.targetMl(profile.weightKg));
@@ -1122,11 +794,7 @@ export default function NutritionScreen() {
    setWaterMl(updated.totalMl);
  };
 
- const handleAdd = (
- food: FoodEntry,
- grams: number,
- timeHHMM: string | undefined,
- ) => {
+ const handleAdd = (food: FoodEntry, grams: number, timeHHMM: string | undefined) => {
  const macros = calcMacros(food, grams);
  const now = Date.now();
  const entryId = uid();
@@ -1167,18 +835,9 @@ export default function NutritionScreen() {
  setShowAdd(false);
  };
 
- const handleUpdate = (
- entry: MealEntryLatest,
- grams: number,
- timeHHMM: string | undefined,
- ) => {
+ const handleUpdate = (entry: MealEntryLatest, grams: number, timeHHMM: string | undefined) => {
  const base100 = entry.grams && entry.grams > 0
- ? {
- kcal: (entry.kcal / entry.grams) * 100,
- p: (entry.p / entry.grams) * 100,
- c: (entry.c / entry.grams) * 100,
- f: (entry.f / entry.grams) * 100,
- }
+ ? { kcal: (entry.kcal / entry.grams) * 100, p: (entry.p / entry.grams) * 100, c: (entry.c / entry.grams) * 100, f: (entry.f / entry.grams) * 100 }
  : { kcal: entry.kcal, p: entry.p, c: entry.c, f: entry.f };
  const macros = calcMacros(base100, grams);
  const updated: MealEntryLatest = {
@@ -1206,315 +865,237 @@ export default function NutritionScreen() {
  };
 
  const handleDelete = (id: string) => {
- if (typeof window !== 'undefined') {
- const ok = window.confirm('Supprimer cette entrée ?');
- if (!ok) return;
+ Alert.alert('Suppression', 'Supprimer cette entrée ?', [
+ { text: 'Annuler', style: 'cancel' },
+ { text: 'Supprimer', style: 'destructive', onPress: () => { void mealStore.remove(id); } },
+ ]);
+ };
+
+ const handleExport = async () => {
+ const json = await buildNutritionExport();
+ const filename = `awan-nutrition-${new Date().toISOString().slice(0, 10)}.json`;
+ if (Platform.OS !== 'web') {
+ try {
+ const FileSystem = await import('expo-file-system');
+ const Sharing = await import('expo-sharing');
+ const uri = (FileSystem.documentDirectory ?? '') + filename;
+ await FileSystem.writeAsStringAsync(uri, json, { encoding: FileSystem.EncodingType.UTF8 });
+ await Sharing.shareAsync(uri);
+ } catch { Alert.alert('Erreur', 'Export impossible'); }
+ } else {
+ try {
+ const blob = new Blob([json], { type: 'application/json' });
+ const url = URL.createObjectURL(blob);
+ const a = document.createElement('a');
+ a.href = url; a.download = filename; a.click();
+ URL.revokeObjectURL(url);
+ } catch { /* ignore */ }
  }
- void mealStore.remove(id);
  };
 
  if (showOnboarding) {
  return (
- <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
+ <View style={{ flex: 1, backgroundColor: 'transparent' }}>
  <View style={{ flex: 1 }} />
- <OnboardingModal
- onComplete={(p) => {
- setProfile(p);
- setShowOnboarding(false);
- }}
- />
- </PageWrapper>
+ <OnboardingModal onComplete={(p) => { setProfile(p); setShowOnboarding(false); }} />
+ </View>
  );
  }
 
  return (
- <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
- <ScrollView
- contentContainerStyle={{ paddingBottom: 120 }}
- style={{ flex: 1 }}
- showsVerticalScrollIndicator={false}
- >
- <div className="px-6 pt-4 pb-4">
+ <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+ <ScrollView contentContainerStyle={{ paddingBottom: 120 }} style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+ <View style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 16 }}>
  <ScreenHeader tag="BODY · NUTRITION" title="NUTRITION" />
- <div className="flex flex-row gap-2 mt-4">
-   {(['journal', 'bilan'] as const).map(tab => (
-     <Touch
-       key={tab}
-       onPress={() => setActiveTab(tab)}
-       className={`flex-1 h-10 border flex items-center justify-center gap-2 ${activeTab === tab ? 'bg-awan-gold/15 border-awan-gold' : 'bg-white/5 border-white/5'}`}
-     >
-       {tab === 'bilan' && <BarChart2 size={12} className={activeTab === tab ? 'text-awan-gold' : 'text-awan-tx-mute'} />}
-       <span className={`text-awan-xs font-black uppercase tracking-widest ${activeTab === tab ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
-         {tab === 'journal' ? 'JOURNAL' : 'BILAN 7J'}
-       </span>
-     </Touch>
-   ))}
-   <Touch
-     onPress={async () => {
-       const json = await buildNutritionExport();
-       try { await navigator.clipboard.writeText(json); } catch { /* ignore */ }
-       const blob = new Blob([json], { type: 'application/json' });
-       const url = URL.createObjectURL(blob);
-       const a = document.createElement('a');
-       const today = new Date().toISOString().slice(0, 10);
-       a.href = url; a.download = `awan-nutrition-${today}.json`; a.click();
-       URL.revokeObjectURL(url);
-     }}
-     className="w-10 h-10 border border-white/5 bg-white/5 flex items-center justify-center"
-   >
-     <Download size={14} className="text-awan-tx-mute" />
+ <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+   {(['journal', 'bilan'] as const).map(tab => {
+     const active = activeTab === tab;
+     return (
+       <Touch key={tab} onPress={() => setActiveTab(tab)} style={[sn.row, { flex: 1, height: 40, borderWidth: 1, alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: active ? Clr.gold12 : Clr.white5, borderColor: active ? theme.selected : Clr.white5 }]}>
+         {tab === 'bilan' && <BarChart2 size={12} color={active ? theme.selected : theme.mute} />}
+         <Text style={[sn.xs, { color: active ? theme.selected : theme.mute }]}>{tab === 'journal' ? 'JOURNAL' : 'BILAN 7J'}</Text>
+       </Touch>
+     );
+   })}
+   <Touch onPress={handleExport} style={{ width: 40, height: 40, borderWidth: 1, borderColor: Clr.white5, backgroundColor: Clr.white5, alignItems: 'center', justifyContent: 'center' }}>
+     <Download size={14} color={theme.mute} />
    </Touch>
- </div>
- </div>
+ </View>
+ </View>
 
  {activeTab === 'bilan' && weeklyReport && (
- <div className="px-6 mb-6">
-   <Card className="p-5 bg-white/5 border-white/5 mb-4">
-     <span className="awan-label text-awan-gold mb-1 block">DIAGNOSTIC</span>
-     <span className="text-awan-sm font-bold text-awan-tx">{reportDiagnostic(weeklyReport)}</span>
+ <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+   <Card style={{ padding: 20, backgroundColor: Clr.white5, borderColor: Clr.white5, marginBottom: 16 }}>
+     <Text style={[sn.label, { color: theme.selected, marginBottom: 4 }]}>DIAGNOSTIC</Text>
+     <Text style={{ fontSize: Fs.sm, fontWeight: Fw.value, color: theme.title }}>{reportDiagnostic(weeklyReport)}</Text>
    </Card>
-   <div className="grid grid-cols-2 gap-3 mb-4">
-     <Card className="p-4 bg-white/5">
-       <span className="awan-label mb-1 block">KCAL MOY/J</span>
-       <span className="text-2xl font-mono font-bold text-awan-gold">{weeklyReport.avgKcal}</span>
+   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+     <Card style={[sn.half, { padding: 16, backgroundColor: Clr.white5 }]}>
+       <Text style={[sn.label, { color: theme.mute, marginBottom: 4 }]}>KCAL MOY/J</Text>
+       <Text style={{ fontSize: 24, fontFamily: FontMono, fontWeight: Fw.value, color: theme.selected }}>{weeklyReport.avgKcal}</Text>
        {weeklyReport.kcalAdherence !== null && (
-         <span className="text-awan-xs font-mono font-bold" style={{ color: weeklyReport.kcalAdherence >= 0.85 && weeklyReport.kcalAdherence <= 1.15 ? theme.statusOk : theme.statusWarn }}>
-           {Math.round(weeklyReport.kcalAdherence * 100)}% cible
-         </span>
+         <Text style={{ fontSize: Fs.xs, fontFamily: FontMono, fontWeight: Fw.value, color: weeklyReport.kcalAdherence >= 0.85 && weeklyReport.kcalAdherence <= 1.15 ? theme.statusOk : theme.statusWarn }}>{Math.round(weeklyReport.kcalAdherence * 100)}% cible</Text>
        )}
      </Card>
-     <Card className="p-4 bg-white/5">
-       <span className="awan-label mb-1 block">PROTÉINES MOY</span>
-       <span className="text-2xl font-mono font-bold text-awan-gold">{weeklyReport.avgP}g</span>
+     <Card style={[sn.half, { padding: 16, backgroundColor: Clr.white5 }]}>
+       <Text style={[sn.label, { color: theme.mute, marginBottom: 4 }]}>PROTÉINES MOY</Text>
+       <Text style={{ fontSize: 24, fontFamily: FontMono, fontWeight: Fw.value, color: theme.selected }}>{weeklyReport.avgP}g</Text>
        {weeklyReport.proteinAdherence !== null && (
-         <span className="text-awan-xs font-mono font-bold" style={{ color: weeklyReport.proteinAdherence >= 0.8 ? theme.statusOk : theme.danger }}>
-           {Math.round(weeklyReport.proteinAdherence * 100)}% cible
-         </span>
+         <Text style={{ fontSize: Fs.xs, fontFamily: FontMono, fontWeight: Fw.value, color: weeklyReport.proteinAdherence >= 0.8 ? theme.statusOk : theme.danger }}>{Math.round(weeklyReport.proteinAdherence * 100)}% cible</Text>
        )}
      </Card>
-     <Card className="p-4 bg-white/5">
-       <span className="awan-label mb-1 block">GLUCIDES MOY</span>
-       <span className="text-2xl font-mono font-bold text-awan-tx">{weeklyReport.avgC}g</span>
+     <Card style={[sn.half, { padding: 16, backgroundColor: Clr.white5 }]}>
+       <Text style={[sn.label, { color: theme.mute, marginBottom: 4 }]}>GLUCIDES MOY</Text>
+       <Text style={{ fontSize: 24, fontFamily: FontMono, fontWeight: Fw.value, color: theme.title }}>{weeklyReport.avgC}g</Text>
      </Card>
-     <Card className="p-4 bg-white/5">
-       <span className="awan-label mb-1 block">FIBRES MOY</span>
-       <span className="text-2xl font-mono font-bold" style={{ color: weeklyReport.avgFiberG >= 20 ? theme.statusOk : theme.statusWarn }}>{weeklyReport.avgFiberG}g</span>
+     <Card style={[sn.half, { padding: 16, backgroundColor: Clr.white5 }]}>
+       <Text style={[sn.label, { color: theme.mute, marginBottom: 4 }]}>FIBRES MOY</Text>
+       <Text style={{ fontSize: 24, fontFamily: FontMono, fontWeight: Fw.value, color: weeklyReport.avgFiberG >= 20 ? theme.statusOk : theme.statusWarn }}>{weeklyReport.avgFiberG}g</Text>
      </Card>
-   </div>
+   </View>
    {adaptiveTDEE && (
-     <Card className="p-4 bg-awan-gold/5 border-awan-gold/20 mb-4">
-       <span className="awan-label text-awan-gold mb-1 block">TDEE ADAPTATIF ({adaptiveTDEE.observationDays}j)</span>
-       <div className="flex flex-row items-baseline gap-2">
-         <span className="text-3xl font-mono font-bold text-awan-tx">{adaptiveTDEE.estimatedTDEE}</span>
-         <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest">kcal/j · confiance {adaptiveTDEE.confidence}</span>
-       </div>
+     <Card style={{ padding: 16, backgroundColor: 'rgba(212,175,55,0.05)', borderColor: Clr.gold20, marginBottom: 16 }}>
+       <Text style={[sn.label, { color: theme.selected, marginBottom: 4 }]}>TDEE ADAPTATIF ({adaptiveTDEE.observationDays}j)</Text>
+       <View style={[sn.row, { alignItems: 'baseline', gap: 8 }]}>
+         <Text style={{ fontSize: 30, fontFamily: FontMono, fontWeight: Fw.value, color: theme.title }}>{adaptiveTDEE.estimatedTDEE}</Text>
+         <Text style={[sn.sm, { color: theme.mute }]}>kcal/j · confiance {adaptiveTDEE.confidence}</Text>
+       </View>
        {profile && Math.abs(adaptiveTDEE.estimatedTDEE - profile.targetKcal) > 100 && (
-         <Touch
-           onPress={() => {
-             const diff = adaptiveTDEE.estimatedTDEE - profile.targetKcal;
-             const newProfile = { ...profile, targetKcal: adaptiveTDEE.estimatedTDEE };
-             saveProfile(newProfile);
-             setProfile(newProfile);
-           }}
-           className="mt-3 h-10 bg-awan-gold flex items-center justify-center"
-         >
-           <span className="text-awan-xs font-black text-black uppercase tracking-widest">
-             APPLIQUER {adaptiveTDEE.estimatedTDEE > profile.targetKcal ? '+' : ''}{adaptiveTDEE.estimatedTDEE - profile.targetKcal} KCAL
-           </span>
+         <Touch onPress={() => { const newProfile = { ...profile, targetKcal: adaptiveTDEE.estimatedTDEE }; saveProfile(newProfile); setProfile(newProfile); }} style={{ marginTop: 12, height: 40, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }}>
+           <Text style={[sn.xs, { color: '#000' }]}>APPLIQUER {adaptiveTDEE.estimatedTDEE > profile.targetKcal ? '+' : ''}{adaptiveTDEE.estimatedTDEE - profile.targetKcal} KCAL</Text>
          </Touch>
        )}
      </Card>
    )}
-   <Heading level={4} mono subtitle={`${weeklyReport.periodStart} → ${weeklyReport.periodEnd}`} className="mb-3">7 DERNIERS JOURS</Heading>
+   <Heading level={4} mono subtitle={`${weeklyReport.periodStart} → ${weeklyReport.periodEnd}`} style={{ marginBottom: 12 }}>7 DERNIERS JOURS</Heading>
    {weeklyReport.days.map(day => (
-     <div key={day.date} className="flex flex-row items-center justify-between py-2 border-b border-white/5">
-       <span className="text-awan-xs font-mono text-awan-tx-mute w-24">{day.date}</span>
-       <span className="text-awan-xs font-mono text-awan-gold">{day.kcal > 0 ? `${day.kcal} kcal` : '—'}</span>
-       <span className="text-awan-xs font-mono text-awan-tx-mute">{day.p > 0 ? `P ${day.p}g` : ''}</span>
-     </div>
+     <View key={day.date} style={[sn.rowBetween, { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: Clr.white5 }]}>
+       <Text style={{ fontSize: Fs.xs, fontFamily: FontMono, color: theme.mute, width: 96 }}>{day.date}</Text>
+       <Text style={{ fontSize: Fs.xs, fontFamily: FontMono, color: theme.selected }}>{day.kcal > 0 ? `${day.kcal} kcal` : '—'}</Text>
+       <Text style={{ fontSize: Fs.xs, fontFamily: FontMono, color: theme.mute }}>{day.p > 0 ? `P ${day.p}g` : ''}</Text>
+     </View>
    ))}
- </div>
+ </View>
  )}
  {activeTab === 'bilan' && !weeklyReport && (
- <div className="px-6 py-20 flex items-center justify-center">
-   <span className="awan-label text-awan-tx-mute">CHARGEMENT...</span>
- </div>
+ <View style={{ paddingHorizontal: 24, paddingVertical: 80, alignItems: 'center', justifyContent: 'center' }}>
+   <Text style={[sn.label, { color: theme.mute }]}>CHARGEMENT...</Text>
+ </View>
  )}
 
  {activeTab === 'journal' && <>
  {/* Day Selector */}
- <div className="px-6 mb-6">
+ <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
    <DateSelectPopup value={selectedDate} onChange={setSelectedDate} label="CYCLE" />
- </div>
+ </View>
 
  {/* Meal Slot Selector — 5 modifiable slots (N1) */}
- <div className="px-6 mb-6">
- <div className="grid grid-cols-5 gap-1">
+ <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+ <View style={{ flexDirection: 'row', gap: 4 }}>
  {([1, 2, 3, 4, 5] as const).map((slot) => {
  const active = slot === selectedSlot;
  const label = slotLabels[slot] ?? `REPAS ${slot}`;
  const editing = editingSlotLabel === slot;
  return (
- <div key={slot} className="flex flex-col">
+ <View key={slot} style={{ flex: 1 }}>
  <Touch
  onPress={() => setSelectedSlot(slot)}
- className={`py-2 px-1 border flex flex-col items-center gap-0.5 ${
- active ? 'bg-awan-gold/15 border-awan-gold' : 'bg-white/5 border-white/5'
- }`}
+ onLongPress={() => { setSlotLabelInput(label); setEditingSlotLabel(slot); setSelectedSlot(slot); }}
+ style={{ paddingVertical: 8, paddingHorizontal: 4, borderWidth: 1, alignItems: 'center', gap: 2, backgroundColor: active ? Clr.gold12 : Clr.white5, borderColor: active ? theme.selected : Clr.white5 }}
  >
- <span className={`text-awan-xxs font-black font-mono ${active ? 'text-awan-gold' : 'text-white/30'}`}>{slot}</span>
+ <Text style={{ fontSize: Fs.xxs, fontWeight: Fw.display, fontFamily: FontMono, color: active ? theme.selected : 'rgba(255,255,255,0.3)' }}>{slot}</Text>
  {editing ? (
- <input
- className="w-full text-center text-awan-xxs font-black uppercase tracking-wider bg-transparent border-b border-awan-gold/50 outline-none text-awan-gold"
- style={{ color: theme.selected, fontSize: 9 }}
+ <TextInput
+ style={{ width: '100%', textAlign: 'center', fontSize: 9, fontWeight: Fw.display, color: theme.selected, borderBottomWidth: 1, borderBottomColor: `${theme.selected}80`, padding: 0 }}
  value={slotLabelInput}
- onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlotLabelInput(e.target.value.toUpperCase())}
+ onChangeText={(v: string) => setSlotLabelInput(v.toUpperCase())}
  onBlur={() => {
  if (slotLabelInput.trim()) {
  const updated = { ...slotLabels, [slot]: slotLabelInput.trim() };
  setSlotLabels(updated);
- try { localStorage.setItem(SLOT_LABELS_KEY, JSON.stringify(updated)); } catch { /* quota */ }
+ try { safeStorage.set(SLOT_LABELS_KEY, JSON.stringify(updated)); } catch { /* quota */ }
  }
  setEditingSlotLabel(null);
  }}
- onKeyDown={(e: React.KeyboardEvent) => {
- if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
- if (e.key === 'Escape') setEditingSlotLabel(null);
- }}
  autoFocus
  maxLength={10}
- onClick={(e: React.MouseEvent) => e.stopPropagation()}
  />
  ) : (
- <span
- className={`text-center leading-tight font-black uppercase tracking-widest ${active ? 'text-awan-gold' : 'text-awan-tx-mute'}`}
- style={{ fontSize: 8 }}
- onDoubleClick={(e) => { e.preventDefault(); setSlotLabelInput(label); setEditingSlotLabel(slot); setSelectedSlot(slot); }}
- title="Double-clic pour renommer"
- >
- {label.slice(0, 8)}
- </span>
+ <Text numberOfLines={1} style={{ textAlign: 'center', fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: 1, fontSize: 8, color: active ? theme.selected : theme.mute }}>{label.slice(0, 8)}</Text>
  )}
  </Touch>
- </div>
+ </View>
  );
  })}
- </div>
- <span className="text-awan-xxs text-white/20 mt-1 block text-right tracking-widest">DOUBLE-CLIC POUR RENOMMER</span>
- </div>
+ </View>
+ <Text style={{ fontSize: Fs.xxs, color: 'rgba(255,255,255,0.2)', marginTop: 4, textAlign: 'right', letterSpacing: 1.4, textTransform: 'uppercase' }}>APPUI LONG POUR RENOMMER</Text>
+ </View>
 
  {/* Day Totals */}
- <div className="px-6 mb-8">
- <Card className="p-6 bg-awan-surface border-awan-gold/20">
- <div className="flex justify-between items-center mb-6">
- <div className="flex flex-col">
- <span className="awan-label text-awan-gold">INDEX CALORIQUE</span>
- <div className="flex flex-row items-baseline gap-2">
- <span className="text-4xl font-bold font-mono tracking-tighter text-awan-tx">
- {totals.kcal}
- </span>
- {profile && (
- <span className="text-sm font-mono font-bold text-awan-tx-mute">
- / {profile.targetKcal}
- </span>
- )}
- </div>
- </div>
- <div className="w-12 h-12 bg-awan-gold/10 flex items-center justify-center border border-awan-gold/20">
- <UtensilsCrossed size={20} className="text-awan-gold" />
- </div>
- </div>
+ <View style={{ paddingHorizontal: 24, marginBottom: 32 }}>
+ <Card style={{ padding: 24, backgroundColor: theme.surface, borderColor: Clr.gold20 }}>
+ <View style={[sn.rowBetween, { marginBottom: 24 }]}>
+ <View>
+ <Text style={[sn.label, { color: theme.selected }]}>INDEX CALORIQUE</Text>
+ <View style={[sn.row, { alignItems: 'baseline', gap: 8 }]}>
+ <Text style={{ fontSize: 36, fontWeight: Fw.value, fontFamily: FontMono, letterSpacing: -0.72, color: theme.title }}>{totals.kcal}</Text>
+ {profile && <Text style={{ fontSize: 14, fontFamily: FontMono, fontWeight: Fw.value, color: theme.mute }}>/ {profile.targetKcal}</Text>}
+ </View>
+ </View>
+ <View style={{ width: 48, height: 48, backgroundColor: Clr.gold10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Clr.gold20 }}>
+ <UtensilsCrossed size={20} color={theme.selected} />
+ </View>
+ </View>
 
  {profile && (
- <div className="mb-4">
- <ProgressBar
- label="ÉNERGIE"
- actual={totals.kcal}
- target={profile.targetKcal}
- unit="kcal"
- accent={theme.selected}
- />
- </div>
+ <View style={{ marginBottom: 16 }}>
+ <ProgressBar label="ÉNERGIE" actual={totals.kcal} target={profile.targetKcal} unit="kcal" accent={theme.selected} />
+ </View>
  )}
 
- <div className="grid grid-cols-3 gap-3">
  {profile ? (
  <>
- <ProgressBar
- label="PROTÉINES"
- actual={totals.p}
- target={profile.targetP}
- unit="g"
- />
- <ProgressBar
- label="GLUCIDES"
- actual={totals.c}
- target={profile.targetC}
- unit="g"
- />
- <ProgressBar
- label="LIPIDES"
- actual={totals.f}
- target={profile.targetF}
- unit="g"
- />
+ <View style={{ flexDirection: 'row', gap: 12 }}>
+ <View style={{ flex: 1 }}><ProgressBar label="PROTÉINES" actual={totals.p} target={profile.targetP} unit="g" /></View>
+ <View style={{ flex: 1 }}><ProgressBar label="GLUCIDES" actual={totals.c} target={profile.targetC} unit="g" /></View>
+ <View style={{ flex: 1 }}><ProgressBar label="LIPIDES" actual={totals.f} target={profile.targetF} unit="g" /></View>
+ </View>
  {totals.fiberG > 0 && (
- <div className="col-span-3 mt-1">
- <ProgressBar
- label={L.nutrition.fiber}
- actual={totals.fiberG}
- target={FIBER_TARGET_G_PER_DAY}
- unit="g"
- accent={theme.statusSpirit}
- />
- </div>
+ <View style={{ marginTop: 12 }}>
+ <ProgressBar label={L.nutrition.fiber} actual={totals.fiberG} target={FIBER_TARGET_G_PER_DAY} unit="g" accent={theme.statusSpirit} />
+ </View>
  )}
  </>
  ) : (
- <>
- <div className="bg-awan-surface p-3 border border-white/5">
- <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">
- PROTÉINES
- </span>
- <span className="text-lg font-bold font-mono text-awan-tx">
- {totals.p}g
- </span>
- </div>
- <div className="bg-awan-surface p-3 border border-white/5">
- <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">
- GLUCIDES
- </span>
- <span className="text-lg font-bold font-mono text-awan-tx">
- {totals.c}g
- </span>
- </div>
- <div className="bg-awan-surface p-3 border border-white/5">
- <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">
- LIPIDES
- </span>
- <span className="text-lg font-bold font-mono text-awan-tx">
- {totals.f}g
- </span>
- </div>
+ <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+ <View style={[sn.macroStat, { backgroundColor: theme.surface }]}>
+ <Text style={[sn.xs, { color: theme.mute, marginBottom: 4 }]}>PROTÉINES</Text>
+ <Text style={{ fontSize: 18, fontWeight: Fw.value, fontFamily: FontMono, color: theme.title }}>{totals.p}g</Text>
+ </View>
+ <View style={[sn.macroStat, { backgroundColor: theme.surface }]}>
+ <Text style={[sn.xs, { color: theme.mute, marginBottom: 4 }]}>GLUCIDES</Text>
+ <Text style={{ fontSize: 18, fontWeight: Fw.value, fontFamily: FontMono, color: theme.title }}>{totals.c}g</Text>
+ </View>
+ <View style={[sn.macroStat, { backgroundColor: theme.surface }]}>
+ <Text style={[sn.xs, { color: theme.mute, marginBottom: 4 }]}>LIPIDES</Text>
+ <Text style={{ fontSize: 18, fontWeight: Fw.value, fontFamily: FontMono, color: theme.title }}>{totals.f}g</Text>
+ </View>
  {totals.fiberG > 0 && (
- <div className="bg-awan-surface p-3 border border-white/5">
-   <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">
-     FIBRES
-   </span>
-   <div className="flex flex-row items-baseline gap-1">
-     <span className="text-lg font-bold font-mono text-awan-tx">{Math.round(totals.fiberG)}g</span>
-     <span className="text-awan-xs font-bold text-awan-tx-mute">/ 35g</span>
-   </div>
- </div>
+ <View style={[sn.macroStat, { backgroundColor: theme.surface }]}>
+ <Text style={[sn.xs, { color: theme.mute, marginBottom: 4 }]}>FIBRES</Text>
+ <View style={[sn.row, { alignItems: 'baseline', gap: 4 }]}>
+ <Text style={{ fontSize: 18, fontWeight: Fw.value, fontFamily: FontMono, color: theme.title }}>{Math.round(totals.fiberG)}g</Text>
+ <Text style={{ fontSize: Fs.xs, fontWeight: Fw.value, color: theme.mute }}>/ 35g</Text>
+ </View>
+ </View>
  )}
- </>
+ </View>
  )}
- </div>
  </Card>
 
  {/* Adhérence protéines 7j */}
  {profile && proteinAdherence7d !== null && (
- <div className="mt-3">
+ <View style={{ marginTop: 12 }}>
  <InstrumentCard
  label={L.nutrition.adherence7d}
  value={proteinAdherence7d}
@@ -1523,201 +1104,134 @@ export default function NutritionScreen() {
  progress={Math.min(100, proteinAdherence7d)}
  delta={proteinAdherence7d >= ADHERENCE_OK_THRESHOLD ? L.nutrition.adherenceOk : proteinAdherence7d >= ADHERENCE_WARN_THRESHOLD ? L.nutrition.adherenceWarn : L.nutrition.adherenceError}
  />
- </div>
+ </View>
  )}
- </div>
+ </View>
 
  {/* Synthèse repas du jour — 5 slots */}
  {dayEntries.length > 0 && (
- <div className="px-6 mb-6">
-   <Card className="p-4 bg-white/5 border-white/5" variant="flat">
-     <span className="text-awan-xs font-black font-mono uppercase tracking-widest text-awan-tx-mute mb-3 block">SYNTHÈSE JOURNALIÈRE</span>
-     <div className="space-y-2">
+ <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+   <Card variant="flat" style={{ padding: 16, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white5 }}>
+     <Text style={[sn.xs, { color: theme.mute, marginBottom: 12, fontFamily: FontMono }]}>SYNTHÈSE JOURNALIÈRE</Text>
+     <View style={{ gap: 8 }}>
        {([1, 2, 3, 4, 5] as const).map(slot => {
-         const s = slotSummaries[slot];
-         if (!s || s.count === 0) return null;
+         const sm = slotSummaries[slot];
+         if (!sm || sm.count === 0) return null;
          const label = slotLabels[slot] ?? `REPAS ${slot}`;
          return (
-           <div key={slot} className="flex flex-row items-center justify-between py-1 border-b border-white/5">
-             <span className="text-awan-xs font-black font-mono uppercase text-awan-gold">{label}</span>
-             <div className="flex flex-row items-center gap-3">
-               <span className="text-awan-xs font-mono text-awan-tx font-black">{s.kcal} kcal</span>
-               <span className="text-awan-xs font-mono text-awan-tx-mute">P{s.p} G{s.c} L{s.f}</span>
-             </div>
-           </div>
+           <View key={slot} style={[sn.rowBetween, { paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: Clr.white5 }]}>
+             <Text style={{ fontSize: Fs.xs, fontWeight: Fw.display, fontFamily: FontMono, textTransform: 'uppercase', color: theme.selected }}>{label}</Text>
+             <View style={[sn.row, { gap: 12 }]}>
+               <Text style={{ fontSize: Fs.xs, fontFamily: FontMono, color: theme.title, fontWeight: Fw.display }}>{sm.kcal} kcal</Text>
+               <Text style={{ fontSize: Fs.xs, fontFamily: FontMono, color: theme.mute }}>P{sm.p} G{sm.c} L{sm.f}</Text>
+             </View>
+           </View>
          );
        })}
-     </div>
+     </View>
    </Card>
- </div>
+ </View>
  )}
 
  {/* Meal Entries */}
- <div className="px-6 mb-8">
- <Heading
- level={4}
- mono
- subtitle={
- MEAL_TYPES.find((m) => m.key === selectedMeal)?.label ?? ''
- }
- >
- ENTRÉES DU REPAS
- </Heading>
+ <View style={{ paddingHorizontal: 24, marginBottom: 32 }}>
+ <Heading level={4} mono subtitle={MEAL_TYPES.find((m) => m.key === selectedMeal)?.label ?? ''}>ENTRÉES DU REPAS</Heading>
 
  {mealEntries.length === 0 ? (
- <Card
- className="p-6 bg-white/5 border-white/5 items-center"
- variant="flat"
- >
- <span className="text-awan-md font-black uppercase tracking-widest text-awan-tx-mute text-center block">
- AUCUNE ENTRÉE
- </span>
- <span className="text-xs font-bold text-awan-tx-mute opacity-70 mt-2 block text-center">
- Ajouter un aliment ci-dessous.
- </span>
+ <Card variant="flat" style={{ padding: 24, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white5, alignItems: 'center' }}>
+ <Text style={[sn.md, { color: theme.mute, textAlign: 'center' }]}>AUCUNE ENTRÉE</Text>
+ <Text style={{ fontSize: 12, fontWeight: Fw.value, color: theme.mute, opacity: 0.7, marginTop: 8, textAlign: 'center' }}>Ajouter un aliment ci-dessous.</Text>
  </Card>
  ) : (
- <div className="flex flex-col gap-3">
- <AnimatePresence>
+ <View style={{ gap: 12 }}>
  {mealEntries.map((m) => (
- <motion.div
- key={m.id}
- initial={{ opacity: 0, y: 8 }}
- animate={{ opacity: 1, y: 0 }}
- exit={{ opacity: 0, scale: 0.95 }}
- transition={{ duration: 0.2 }}
- >
- <Card
- className="flex-row items-center gap-4 py-4 px-5"
- variant="flat"
- >
- <div className="flex-1">
- <div className="flex flex-row items-baseline gap-2">
- <span className="text-sm font-bold text-awan-tx uppercase tracking-tight">
- {m.name}
- </span>
- {m.grams !== undefined && (
- <span className="text-awan-md font-mono font-bold text-awan-gold">
- {m.grams}g
- </span>
- )}
- {m.timeHHMM && (
- <span className="text-awan-sm font-mono font-bold text-awan-tx-mute">
- · {m.timeHHMM}
- </span>
- )}
- </div>
- <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest mt-1 block font-mono">
- {m.kcal} KCAL · P{m.p} · G{m.c} · L{m.f}
- </span>
+ <Card key={m.id} variant="flat" style={[sn.row, { gap: 16, paddingVertical: 16, paddingHorizontal: 20 }]}>
+ <View style={{ flex: 1 }}>
+ <View style={[sn.row, { alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }]}>
+ <Text style={{ fontSize: 14, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', letterSpacing: -0.35 }}>{m.name}</Text>
+ {m.grams !== undefined && <Text style={{ fontSize: Fs.md, fontFamily: FontMono, fontWeight: Fw.value, color: theme.selected }}>{m.grams}g</Text>}
+ {m.timeHHMM && <Text style={{ fontSize: Fs.sm, fontFamily: FontMono, fontWeight: Fw.value, color: theme.mute }}>· {m.timeHHMM}</Text>}
+ </View>
+ <Text style={[sn.sm, { color: theme.mute, marginTop: 4, fontFamily: FontMono, fontWeight: Fw.display }]}>{m.kcal} KCAL · P{m.p} · G{m.c} · L{m.f}</Text>
  {profile && (() => {
  const score = m.nutritionScore ?? scoreMeal(m, { kcal: profile.targetKcal, p: profile.targetP, c: profile.targetC, f: profile.targetF }).total;
- const color = score >= 70 ? theme.statusOk
-             : score >= 40 ? theme.statusWarn
-             : theme.danger;
- return (
- <span className="text-awan-xs font-mono font-black mt-1 inline-block uppercase tracking-widest" style={{ color }}>
- SCORE {score}/100
- </span>
- );
+ const color = score >= 70 ? theme.statusOk : score >= 40 ? theme.statusWarn : theme.danger;
+ return <Text style={{ fontSize: Fs.xs, fontFamily: FontMono, fontWeight: Fw.display, marginTop: 4, textTransform: 'uppercase', letterSpacing: 1.6, color }}>SCORE {score}/100</Text>;
  })()}
- </div>
- <Touch
- onPress={() => setEditEntry(m)}
- className="w-9 h-9 bg-white/5 flex items-center justify-center border border-white/10"
- >
- <Pencil size={14} className="text-awan-tx-mute" />
+ </View>
+ <Touch onPress={() => setEditEntry(m)} style={{ width: 36, height: 36, backgroundColor: Clr.white5, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Clr.white10 }}>
+ <Pencil size={14} color={theme.mute} />
  </Touch>
- <Touch
- onPress={() => handleDelete(m.id)}
- className="w-9 h-9 bg-awan-status-error/10 flex items-center justify-center border border-awan-status-error/20"
- >
- <Trash2 size={14} className="text-awan-status-error" />
+ <Touch onPress={() => handleDelete(m.id)} style={{ width: 36, height: 36, backgroundColor: `${theme.danger}1A`, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: `${theme.danger}33` }}>
+ <Trash2 size={14} color={theme.danger} />
  </Touch>
  </Card>
- </motion.div>
  ))}
- </AnimatePresence>
- </div>
+ </View>
  )}
- </div>
+ </View>
 
  {/* Add Button */}
- <div className="px-6 mb-6">
- <Touch
- onPress={() => void openAddMeal()}
- className="h-14 bg-awan-gold flex items-center justify-center shadow-lg shadow-awan-gold/10"
- >
- <div className="flex flex-row items-center gap-3">
+ <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+ <Touch onPress={() => void openAddMeal()} style={{ height: 56, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }}>
+ <View style={[sn.row, { gap: 12 }]}>
  <Plus size={18} color="black" strokeWidth={3} />
- <span className="text-awan-md font-black text-black uppercase tracking-widest">
- AJOUTER UN ALIMENT
- </span>
- </div>
+ <Text style={[sn.md, { color: '#000' }]}>AJOUTER UN ALIMENT</Text>
+ </View>
  </Touch>
- </div>
+ </View>
 
  {/* N5 — Eau / Hydratation */}
- <div className="px-6 mb-10">
- <Heading level={4} mono subtitle={`Cible ${waterTarget} mL · 35mL/kg`} className="mb-4">HYDRATATION</Heading>
- <Card className="p-5 bg-white/3 border-white/5" variant="flat">
- <div className="flex flex-row items-center justify-between mb-4">
- <div>
- <span className="text-4xl font-black font-mono text-awan-gold">
- {Math.floor(waterMl / 1000) > 0 ? `${(waterMl / 1000).toFixed(1)}L` : `${waterMl}mL`}
- </span>
- <span className="text-awan-sm font-black text-awan-tx-mute ml-2 font-mono uppercase">
- / {waterTarget >= 1000 ? `${(waterTarget / 1000).toFixed(1)}L` : `${waterTarget}mL`}
- </span>
- </div>
- <span className="text-awan-sm font-black font-mono"
- style={{ color: waterMl >= waterTarget ? theme.statusOk : waterMl >= waterTarget * 0.7 ? theme.statusWarn : theme.danger }}>
- {Math.round((waterMl / waterTarget) * 100)}%
- </span>
- </div>
- <div className="w-full h-1.5 bg-white/10 mb-4">
- <div className="h-full transition-all"
- style={{ width: `${Math.min(100, (waterMl / waterTarget) * 100)}%`, backgroundColor: theme.selected }} />
- </div>
- <div className="flex flex-row gap-3">
- <Touch
- onPress={() => void handleAddWater(250)}
- className="flex-1 py-3 border border-white/10 bg-white/5 items-center justify-center"
- >
- <span className="text-awan-sm font-black font-mono text-awan-gold">+250 mL</span>
+ <View style={{ paddingHorizontal: 24, marginBottom: 40 }}>
+ <Heading level={4} mono subtitle={`Cible ${waterTarget} mL · 35mL/kg`} style={{ marginBottom: 16 }}>HYDRATATION</Heading>
+ <Card variant="flat" style={{ padding: 20, backgroundColor: 'rgba(255,255,255,0.03)', borderWidth: 1, borderColor: Clr.white5 }}>
+ <View style={[sn.rowBetween, { marginBottom: 16 }]}>
+ <View style={[sn.row, { alignItems: 'baseline' }]}>
+ <Text style={{ fontSize: 36, fontWeight: Fw.display, fontFamily: FontMono, color: theme.selected }}>{Math.floor(waterMl / 1000) > 0 ? `${(waterMl / 1000).toFixed(1)}L` : `${waterMl}mL`}</Text>
+ <Text style={{ fontSize: Fs.sm, fontWeight: Fw.display, color: theme.mute, marginLeft: 8, fontFamily: FontMono, textTransform: 'uppercase' }}>/ {waterTarget >= 1000 ? `${(waterTarget / 1000).toFixed(1)}L` : `${waterTarget}mL`}</Text>
+ </View>
+ <Text style={{ fontSize: Fs.sm, fontWeight: Fw.display, fontFamily: FontMono, color: waterMl >= waterTarget ? theme.statusOk : waterMl >= waterTarget * 0.7 ? theme.statusWarn : theme.danger }}>{Math.round((waterMl / waterTarget) * 100)}%</Text>
+ </View>
+ <View style={{ width: '100%', height: 6, backgroundColor: Clr.white10, marginBottom: 16 }}>
+ <View style={{ height: '100%', width: `${Math.min(100, (waterMl / waterTarget) * 100)}%`, backgroundColor: theme.selected }} />
+ </View>
+ <View style={[sn.row, { gap: 12 }]}>
+ <Touch onPress={() => void handleAddWater(250)} style={{ flex: 1, paddingVertical: 12, borderWidth: 1, borderColor: Clr.white10, backgroundColor: Clr.white5, alignItems: 'center', justifyContent: 'center' }}>
+ <Text style={{ fontSize: Fs.sm, fontWeight: Fw.display, fontFamily: FontMono, color: theme.selected }}>+250 mL</Text>
  </Touch>
- <Touch
- onPress={() => void handleAddWater(500)}
- className="flex-1 py-3 bg-awan-gold/20 border border-awan-gold/30 items-center justify-center"
- >
- <span className="text-awan-sm font-black font-mono text-awan-gold">+500 mL</span>
+ <Touch onPress={() => void handleAddWater(500)} style={{ flex: 1, paddingVertical: 12, backgroundColor: Clr.gold20, borderWidth: 1, borderColor: Clr.gold30, alignItems: 'center', justifyContent: 'center' }}>
+ <Text style={{ fontSize: Fs.sm, fontWeight: Fw.display, fontFamily: FontMono, color: theme.selected }}>+500 mL</Text>
  </Touch>
- <Touch
- onPress={() => void WaterService.reset(selectedDate).then(() => setWaterMl(0))}
- className="w-12 py-3 border border-white/5 bg-white/3 items-center justify-center"
- >
- <span className="text-awan-xs font-black font-mono text-awan-tx-mute">×0</span>
+ <Touch onPress={() => void WaterService.reset(selectedDate).then(() => setWaterMl(0))} style={{ width: 48, paddingVertical: 12, borderWidth: 1, borderColor: Clr.white5, backgroundColor: 'rgba(255,255,255,0.03)', alignItems: 'center', justifyContent: 'center' }}>
+ <Text style={{ fontSize: Fs.xs, fontWeight: Fw.display, fontFamily: FontMono, color: theme.mute }}>×0</Text>
  </Touch>
- </div>
+ </View>
  </Card>
- </div>
+ </View>
  </>}
  </ScrollView>
 
- <AddMealModal
- visible={showAdd}
- mealLabel={slotLabels[selectedSlot]}
- foodsReady={foodsReady}
- onClose={() => setShowAdd(false)}
- onAdd={handleAdd}
- />
+ <AddMealModal visible={showAdd} mealLabel={slotLabels[selectedSlot]} foodsReady={foodsReady} onClose={() => setShowAdd(false)} onAdd={handleAdd} />
 
- <EditMealModal
- visible={editEntry !== null}
- entry={editEntry}
- onClose={() => setEditEntry(null)}
- onUpdate={handleUpdate}
- />
- </PageWrapper>
+ <EditMealModal visible={editEntry !== null} entry={editEntry} onClose={() => setEditEntry(null)} onUpdate={handleUpdate} />
+ </View>
  );
 }
+
+const sn = StyleSheet.create({
+ row: { flexDirection: 'row', alignItems: 'center' },
+ rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+ sheetOverlay: { flex: 1, justifyContent: 'flex-end' },
+ sheet: { width: '100%', maxWidth: 512, alignSelf: 'center', borderTopWidth: 1, borderTopColor: Clr.white10, overflow: 'hidden', maxHeight: '92%' },
+ grabberWrap: { alignItems: 'center', paddingTop: 12, paddingBottom: 4 },
+ grabber: { width: 40, height: 4, backgroundColor: Clr.white20 },
+ label: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.value, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
+ xs: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.xs_02 },
+ sm: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
+ md: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.md_02 },
+ field: { borderWidth: 1, borderColor: Clr.white5, paddingHorizontal: 20, paddingVertical: 16, fontSize: 14, fontWeight: Fw.value },
+ fieldSm: { borderWidth: 1, borderColor: Clr.white5, paddingHorizontal: 16, paddingVertical: 12, fontSize: 14, fontWeight: Fw.value },
+ half: { width: '47%', flexGrow: 1 },
+ macroBox: { padding: 8, borderWidth: 1, borderColor: Clr.white5, alignItems: 'center', flex: 1 },
+ macroStat: { width: '47%', flexGrow: 1, padding: 12, borderWidth: 1, borderColor: Clr.white5 },
+});
