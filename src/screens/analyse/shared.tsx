@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Dimensions } from 'react-native';
+import { View, Text, ActivityIndicator, Dimensions, StyleSheet } from 'react-native';
+import { FontMono } from '../../constants/typography';
+import { Fs, Fw, Ls } from '../../theme/tokens';
 import Svg, { Line, Rect, G, Text as SvgTextEl } from 'react-native-svg';
 import { useTheme } from '../../hooks/useTheme';
-import { FontMono } from '../../constants/typography';
 
 const SvgLine = Line as any;
 const SvgRect = Rect as any;
@@ -171,34 +172,42 @@ export function StackedBarChart({ data, lineA, lineB, height = 200 }: StackedBar
 
 // ─── Shared UI states ─────────────────────────────────────────────────────────
 
-export function EmptyState({ Icon, label }: { Icon: React.ComponentType<{ size: number; className?: string }>; label: string }) {
+export function EmptyState({ Icon, label }: { Icon: React.ComponentType<{ size: number; color?: string }>; label: string }) {
+  const theme = useTheme();
   return (
-    <div className="flex flex-col items-center py-20 opacity-30">
-      <Icon size={48} className="text-awan-tx-mute mb-4" />
-      <span className="text-xs font-bold uppercase tracking-widest text-awan-tx-mute">{label}</span>
-    </div>
+    <View style={sh.emptyContainer}>
+      <Icon size={48} color={theme.mute} />
+      <Text style={[sh.emptyLabel, { color: theme.mute }]}>{label}</Text>
+    </View>
   );
 }
 
 export function LoadingState({ label }: { label: string }) {
+  const theme = useTheme();
   return (
-    <div className="flex flex-col items-center py-20 opacity-30">
-      <div className="w-8 h-8 rounded-full border-2 border-awan-gold border-t-transparent animate-spin mb-4" />
-      <span className="text-awan-md font-black uppercase tracking-widest text-awan-tx-mute">{label}</span>
-    </div>
+    <View style={sh.emptyContainer}>
+      <ActivityIndicator size="small" color={theme.selected} style={{ marginBottom: 16 }} />
+      <Text style={[sh.loadLabel, { color: theme.mute }]}>{label}</Text>
+    </View>
   );
 }
 
 export function GuardCard({ message }: { message: string }) {
   const theme = useTheme();
   return (
-    <div className="py-10 text-center px-6">
-      <span className="text-awan-md font-black uppercase tracking-widest" style={{ color: theme.mute }}>
-        {message}
-      </span>
-    </div>
+    <View style={sh.guardContainer}>
+      <Text style={[sh.guardText, { color: theme.mute }]}>{message}</Text>
+    </View>
   );
 }
+
+const sh = StyleSheet.create({
+  emptyContainer: { alignItems: 'center', paddingVertical: 80, opacity: 0.3 },
+  emptyLabel: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.value, textTransform: 'uppercase', letterSpacing: Ls.xs_02, marginTop: 16 },
+  loadLabel: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.md_02 },
+  guardContainer: { paddingVertical: 40, alignItems: 'center', paddingHorizontal: 24 },
+  guardText: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.md_02, textAlign: 'center' },
+});
 
 // ─── Nutrition profile helpers ────────────────────────────────────────────────
 

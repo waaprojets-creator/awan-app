@@ -1,62 +1,83 @@
 import React from 'react';
-import { motion } from '@/components/motion';
+import { View, Text, StyleSheet } from 'react-native';
+import Animated, { FadeInLeft, FadeIn } from 'react-native-reanimated';
+import { FontSans, FontMono } from '../../constants/typography';
+import { useTheme } from '../../hooks/useTheme';
+import { Fs, Fw, Ls, Lh } from '../../theme/tokens';
 
 interface HeadingProps {
   children: React.ReactNode;
   level?: 1 | 2 | 3 | 4;
-  className?: string;
   subtitle?: string;
   mono?: boolean;
+  style?: object;
   [x: string]: any;
 }
 
-export function Heading({ 
-  children, 
-  level = 1, 
-  className = '', 
+const SIZES: Record<number, { fontSize: number; lineHeight: number; fontWeight: string }> = {
+  1: { fontSize: 24, lineHeight: 32, fontWeight: Fw.value },
+  2: { fontSize: 20, lineHeight: 28, fontWeight: Fw.value },
+  3: { fontSize: 18, lineHeight: 26, fontWeight: Fw.label },
+  4: { fontSize: Fs.sm, lineHeight: Lh.sm, fontWeight: Fw.value },
+};
+
+export function Heading({
+  children,
+  level = 1,
   subtitle,
   mono = false,
+  style,
+  className: _,
   ...props
 }: HeadingProps) {
-  const levels = {
-    1: 'text-2xl font-bold tracking-tight',
-    2: 'text-xl font-bold tracking-tight',
-    3: 'text-lg font-semibold tracking-tight',
-    4: 'text-awan-sm uppercase tracking-[0.2em] font-bold text-awan-tx',
-  };
-
-  const Tag: any = `h${level}`;
+  const theme = useTheme();
+  const sz = SIZES[level] ?? SIZES[1]!;
 
   return (
-    <div {...props} className={`mb-4 flex flex-col ${className}`}>
+    <View style={[s.wrapper, style]} {...props}>
       {subtitle ? (
-        <motion.p 
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="text-awan-sm text-awan-tx-mute mb-1 uppercase tracking-[0.3em] font-mono font-bold"
+        <Animated.Text
+          entering={FadeInLeft.duration(400)}
+          style={[s.subtitle, { color: theme.mute }]}
         >
           {subtitle}
-        </motion.p>
+        </Animated.Text>
       ) : null}
-      <Tag className={`${levels[level]} ${mono ? 'font-mono' : ''} text-awan-tx relative inline-block`}>
-        <motion.span
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8 }}
-        >
-          {children}
-        </motion.span>
-        {/* subtle scanning accent for high-level headings */}
-        {level <= 2 && (
-          <motion.div 
-            initial={{ left: '-10%', opacity: 0 }}
-            animate={{ left: '110%', opacity: [0, 0.4, 0] }}
-            transition={{ duration: 2.5, repeat: Infinity, ease: 'linear', repeatDelay: 5 }}
-            className="absolute top-0 bottom-0 w-8 bg-gradient-to-r from-transparent via-awan-gold/5 to-transparent skew-x-12 pointer-events-none"
-          />
-        )}
-      </Tag>
-    </div>
+      <Animated.Text
+        entering={FadeIn.duration(500)}
+        style={[
+          s.heading,
+          {
+            fontSize: sz.fontSize,
+            lineHeight: sz.lineHeight,
+            fontWeight: sz.fontWeight as any,
+            fontFamily: (level === 4 || mono) ? FontMono : FontSans,
+            color: theme.title,
+            letterSpacing: level === 4 ? Ls.sm_02 : undefined,
+            textTransform: level === 4 ? 'uppercase' : undefined,
+          },
+        ]}
+      >
+        {children}
+      </Animated.Text>
+    </View>
   );
 }
+
+const s = StyleSheet.create({
+  wrapper: {
+    marginBottom: 16,
+    flexDirection: 'column',
+  },
+  subtitle: {
+    fontFamily: FontMono,
+    fontSize: Fs.sm,
+    fontWeight: Fw.value,
+    textTransform: 'uppercase',
+    letterSpacing: Ls.md_03,
+    marginBottom: 4,
+  },
+  heading: {
+    position: 'relative',
+  },
+});
