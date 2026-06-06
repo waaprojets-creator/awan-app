@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, lazy, Suspense } from 'react';
-import { ScrollView, Modal } from 'react-native';
+import { View, Text, ScrollView, Modal, StyleSheet, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   startOfDay, endOfDay, subDays,
@@ -11,6 +11,7 @@ import {
 import { fr } from 'date-fns/locale';
 import { useTheme } from '../hooks/useTheme';
 import { FontMono } from '../constants/typography';
+import { Fs, Fw, Ls } from '../theme/tokens';
 import { ds } from '../utils/storage';
 import { LocalAIService } from '../services/localAIService';
 import { MealService } from '../services/mealService';
@@ -21,7 +22,6 @@ import { useWeightStore } from '../hooks/useWeightStore';
 import { useMealStore } from '../hooks/useMealStore';
 import { usePrayerStore } from '../hooks/usePrayerStore';
 import { useAppStore } from '../data/store/appStore';
-import { PageWrapper, AnimatePresence } from '../components/Animated';
 import {
   Activity, Dumbbell, Flame, TrendingUp,
   Trophy, Heart, BarChart2, Zap, Clock, Star, ScanLine,
@@ -29,10 +29,9 @@ import {
 import { Card } from '../components/ui/Card';
 import { Touch } from '../components/ui/Touch';
 import { BilanZen } from '../components/BilanZen';
-import { motion } from '@/components/motion';
+import { DateSelectPopup } from '../components/ui/DateSelectPopup';
 import type { SleepEntryLatest } from '../data/schemas/sleep/sleepEntry';
 
-// ─── Tab components (lazy — parsed only when first rendered) ─────────────────
 const TempsTab       = lazy(() => import('./analyse/TempsTab'));
 const ScanTab        = lazy(() => import('./analyse/ScanTab'));
 const ActivityTab    = lazy(() => import('./analyse/ActivityTab').then(m => ({ default: m.ActivityTab })));
@@ -54,10 +53,7 @@ const FREE_KEY = '_free';
 const FREE_COLOR = 'rgba(212, 175, 55, 0.05)';
 const FREE_LABEL = 'Temps libre';
 
-// ─── 2-level navigation ───────────────────────────────────────────────────────
-
 type DomainId = 'temps' | 'corps' | 'energie' | 'ame' | 'systeme';
-
 interface SubTab { id: string; label: string; Icon: React.ComponentType<any> }
 
 const DOMAINS: Array<{
@@ -67,50 +63,38 @@ const DOMAINS: Array<{
   subs: SubTab[];
 }> = [
   {
-    id: 'temps',
-    label: 'TEMPS',
-    Icon: Clock,
+    id: 'temps', label: 'TEMPS', Icon: Clock,
     subs: [
-      { id: 'budget',     label: 'RATIO',      Icon: BarChart2 },
-      { id: 'repartition',label: 'RÉPARTITION',Icon: Clock },
+      { id: 'budget', label: 'RATIO', Icon: BarChart2 },
+      { id: 'repartition', label: 'RÉPARTITION', Icon: Clock },
     ],
   },
   {
-    id: 'corps',
-    label: 'CORPS',
-    Icon: Dumbbell,
+    id: 'corps', label: 'CORPS', Icon: Dumbbell,
     subs: [
-      { id: 'readiness',    label: 'READINESS',   Icon: Activity },
-      { id: 'charge',       label: 'CHARGE',      Icon: Heart },
-      { id: 'performance',  label: 'PERFORMANCE', Icon: Trophy },
-      { id: 'volume',       label: 'VOLUME',      Icon: Dumbbell },
-      { id: 'morphologie',  label: 'MORPHOLOGIE', Icon: BarChart2 },
-      { id: 'symetrie',     label: 'SYMÉTRIE',    Icon: ScanLine },
+      { id: 'readiness',   label: 'READINESS',   Icon: Activity },
+      { id: 'charge',      label: 'CHARGE',      Icon: Heart },
+      { id: 'performance', label: 'PERFORMANCE', Icon: Trophy },
+      { id: 'volume',      label: 'VOLUME',      Icon: Dumbbell },
+      { id: 'morphologie', label: 'MORPHOLOGIE', Icon: BarChart2 },
+      { id: 'symetrie',    label: 'SYMÉTRIE',    Icon: ScanLine },
     ],
   },
   {
-    id: 'energie',
-    label: 'ÉNERGIE',
-    Icon: Flame,
+    id: 'energie', label: 'ÉNERGIE', Icon: Flame,
     subs: [
-      { id: 'nutrition',  label: 'NUTRITION',  Icon: Flame },
-      { id: 'disponible', label: 'DISPONIBLE', Icon: TrendingUp },
-      { id: 'synoptique', label: 'SYNOPTIQUE', Icon: BarChart2 },
-      { id: 'metabolisme',label: 'MÉTABOLISME',Icon: Zap },
+      { id: 'nutrition',   label: 'NUTRITION',   Icon: Flame },
+      { id: 'disponible',  label: 'DISPONIBLE',  Icon: TrendingUp },
+      { id: 'synoptique',  label: 'SYNOPTIQUE',  Icon: BarChart2 },
+      { id: 'metabolisme', label: 'MÉTABOLISME', Icon: Zap },
     ],
   },
   {
-    id: 'ame',
-    label: 'ÂME',
-    Icon: Star,
-    subs: [
-      { id: 'islam', label: 'ISLAM', Icon: Star },
-    ],
+    id: 'ame', label: 'ÂME', Icon: Star,
+    subs: [{ id: 'islam', label: 'ISLAM', Icon: Star }],
   },
   {
-    id: 'systeme',
-    label: 'SYSTÈME',
-    Icon: TrendingUp,
+    id: 'systeme', label: 'SYSTÈME', Icon: TrendingUp,
     subs: [
       { id: 'activite',     label: 'ACTIVITÉ',     Icon: Activity },
       { id: 'correlations', label: 'CORRÉLATIONS', Icon: TrendingUp },
@@ -119,20 +103,16 @@ const DOMAINS: Array<{
   },
 ];
 
-// Sub-tabs that use the range selector
 const RANGE_SUB_TABS = new Set(['nutrition', 'volume', 'morphologie', 'performance', 'charge', 'activite']);
-
 type RangeId = 'day' | 'week' | 'month' | 'quarter' | 'year';
 
 const RANGES: Array<{ id: RangeId; label: string; sublabel: string }> = [
-  { id: 'day',     label: 'JOUR',   sublabel: 'COURT' },
-  { id: 'week',    label: 'HEBDO',  sublabel: 'COURT' },
-  { id: 'month',   label: 'MOIS',   sublabel: 'MOYEN' },
-  { id: 'quarter', label: 'TRIM.',  sublabel: 'MOYEN' },
-  { id: 'year',    label: 'AN',     sublabel: 'LONG'  },
+  { id: 'day',     label: 'JOUR',  sublabel: 'COURT' },
+  { id: 'week',    label: 'HEBDO', sublabel: 'COURT' },
+  { id: 'month',   label: 'MOIS',  sublabel: 'MOYEN' },
+  { id: 'quarter', label: 'TRIM.', sublabel: 'MOYEN' },
+  { id: 'year',    label: 'AN',    sublabel: 'LONG'  },
 ];
-
-// ─── Dropdown period options ──────────────────────────────────────────────────
 
 interface PeriodOption { label: string; sublabel: string; anchorDate: Date }
 
@@ -152,45 +132,42 @@ function buildPeriodOptions(range: RangeId): PeriodOption[] {
 
     if (range === 'day') {
       const d = subDays(now, i);
-      label      = i === 0 ? "AUJOURD'HUI" : format(d, 'EEE d', { locale: fr }).toUpperCase();
-      sublabel   = format(d, 'MMM yyyy', { locale: fr }).toUpperCase();
+      label = i === 0 ? "AUJOURD'HUI" : format(d, 'EEE d', { locale: fr }).toUpperCase();
+      sublabel = format(d, 'MMM yyyy', { locale: fr }).toUpperCase();
       anchorDate = d;
     } else if (range === 'week') {
       const base = subWeeks(now, i);
       const sun  = endOfWeek(base, { weekStartsOn: 1 });
       const mon  = startOfWeek(base, { weekStartsOn: 1 });
-      label      = `S${getISOWeek(mon)}`;
-      sublabel   = format(mon, 'MMM yyyy', { locale: fr }).toUpperCase();
+      label = `S${getISOWeek(mon)}`;
+      sublabel = format(mon, 'MMM yyyy', { locale: fr }).toUpperCase();
       anchorDate = sun < now ? sun : now;
     } else if (range === 'month') {
-      const d    = subMonths(now, i);
-      label      = format(d, 'MMM', { locale: fr }).toUpperCase();
-      sublabel   = String(d.getFullYear());
+      const d = subMonths(now, i);
+      label = format(d, 'MMM', { locale: fr }).toUpperCase();
+      sublabel = String(d.getFullYear());
       anchorDate = i === 0 ? now : endOfMonth(d);
     } else if (range === 'quarter') {
-      const d    = subMonths(now, i * 3);
-      const q    = Math.floor(d.getMonth() / 3);
+      const d = subMonths(now, i * 3);
+      const q = Math.floor(d.getMonth() / 3);
       const qEnd = endOfMonth(new Date(d.getFullYear(), q * 3 + 2, 1));
-      label      = `T${q + 1}`;
-      sublabel   = String(d.getFullYear());
+      label = `T${q + 1}`;
+      sublabel = String(d.getFullYear());
       anchorDate = qEnd < now ? qEnd : now;
     } else {
-      const d    = subYears(now, i);
-      label      = String(d.getFullYear());
-      sublabel   = '';
+      const d = subYears(now, i);
+      label = String(d.getFullYear());
+      sublabel = '';
       anchorDate = i === 0 ? now : endOfYear(d);
     }
-
     opts.push({ label, sublabel, anchorDate });
   }
   return opts;
 }
 
-/** Label shown on the dropdown button for the current anchor date + range */
 function periodButtonLabel(range: RangeId, anchor: Date): string {
   const now = new Date();
   const isToday = ds(anchor) === ds(now);
-
   if (range === 'day')     return isToday ? "AUJOURD'HUI" : format(anchor, 'EEE d MMM yyyy', { locale: fr }).toUpperCase();
   if (range === 'week') {
     const mon = startOfWeek(anchor, { weekStartsOn: 1 });
@@ -204,24 +181,18 @@ function periodButtonLabel(range: RangeId, anchor: Date): string {
   return String(anchor.getFullYear());
 }
 
-/** Compute interval from anchor date + range type, applying j-1 rule for non-day ranges */
 function computeInterval(range: RangeId, anchor: Date): { start: Date; end: Date } {
-  const now  = new Date();
+  const now = new Date();
   const isCurrentPeriod = anchor >= startOfDay(now);
 
-  if (range === 'day') {
-    // JOUR : inclut la journée en cours si c'est aujourd'hui
-    return { start: startOfDay(anchor), end: endOfDay(anchor) };
-  }
+  if (range === 'day') return { start: startOfDay(anchor), end: endOfDay(anchor) };
 
-  // Pour tous les autres types : si période en cours → fin = hier (j-1), sinon fin naturelle
   const naturalEnd = range === 'week'    ? endOfWeek(anchor, { weekStartsOn: 1 })
                    : range === 'month'   ? endOfMonth(anchor)
                    : range === 'quarter' ? endOfMonth(new Date(anchor.getFullYear(), Math.floor(anchor.getMonth() / 3) * 3 + 2, 1))
                    :                      endOfYear(anchor);
 
   const end = isCurrentPeriod ? endOfDay(subDays(now, 1)) : endOfDay(naturalEnd);
-
   const start = range === 'week'    ? startOfWeek(anchor, { weekStartsOn: 1 })
               : range === 'month'   ? startOfMonth(anchor)
               : range === 'quarter' ? startOfDay(new Date(anchor.getFullYear(), Math.floor(anchor.getMonth() / 3) * 3, 1))
@@ -230,17 +201,13 @@ function computeInterval(range: RangeId, anchor: Date): { start: Date; end: Date
   return { start, end };
 }
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
-
 export default function AnalyseScreen() {
-  const insets = useSafeAreaInsets();
   const theme = useTheme();
   const today = ds(new Date());
 
   const [domain, setDomain] = useState<DomainId>('temps');
   const [subTab, setSubTab] = useState<string>('budget');
   const [range, setRange] = useState<RangeId>('week');
-  // anchorDates: last selected end-date anchor per range type — persists across sub-tab switches
   const [anchorDates, setAnchorDates] = useState<Record<RangeId, Date>>({
     day: new Date(), week: new Date(), month: new Date(), quarter: new Date(), year: new Date(),
   });
@@ -258,7 +225,6 @@ export default function AnalyseScreen() {
   const mealStoreToday = useMealStore(today);
   const dataVersion = useAppStore((s) => s.dataVersion);
 
-  // Reset sub-tab to first when domain changes
   useEffect(() => {
     const d = DOMAINS.find(d => d.id === domain);
     if (d && d.subs[0]) setSubTab(d.subs[0].id);
@@ -308,19 +274,19 @@ export default function AnalyseScreen() {
 
   const weightTrend = useMemo(() => {
     const sortedWeights = [...weightStore.entries].sort((a, b) => a.date.localeCompare(b.date));
-    const filtered = measureStore.history
+    return measureStore.history
       .filter(m => { const d = parseISO(m.date); return d >= interval.start && d <= interval.end; })
-      .slice().sort((a, b) => a.date.localeCompare(b.date));
-    return filtered.map(m => {
-      let lo = 0; let hi = sortedWeights.length - 1; let w: typeof sortedWeights[0] | undefined;
-      while (lo <= hi) {
-        const mid = (lo + hi) >>> 1;
-        const entry = sortedWeights[mid];
-        if (entry && entry.date <= m.date) { w = entry; lo = mid + 1; }
-        else hi = mid - 1;
-      }
-      return { label: format(parseISO(m.date), 'dd/MM'), weight: w?.weightKg ?? null };
-    });
+      .slice().sort((a, b) => a.date.localeCompare(b.date))
+      .map(m => {
+        let lo = 0; let hi = sortedWeights.length - 1; let w: typeof sortedWeights[0] | undefined;
+        while (lo <= hi) {
+          const mid = (lo + hi) >>> 1;
+          const entry = sortedWeights[mid];
+          if (entry && entry.date <= m.date) { w = entry; lo = mid + 1; }
+          else hi = mid - 1;
+        }
+        return { label: format(parseISO(m.date), 'dd/MM'), weight: w?.weightKg ?? null };
+      });
   }, [measureStore.history, weightStore.entries, interval]);
 
   useEffect(() => {
@@ -363,87 +329,46 @@ export default function AnalyseScreen() {
 
   const currentDomain = DOMAINS.find(d => d.id === domain)!;
 
-  // ─── Content renderer ────────────────────────────────────────────────────────
-
   function renderContent() {
     switch (subTab) {
-      // ── TEMPS ──────────────────────────────────────────────────────────────
       case 'budget':       return <BudgetTab />;
       case 'repartition':  return <TempsTab />;
-
-      // ── CORPS ──────────────────────────────────────────────────────────────
       case 'readiness':    return <ReadinessTab />;
       case 'charge':       return <RecoveryTab sessions={workoutStore.sessions} />;
       case 'performance':  return <PerformanceTab sessions={workoutStore.sessions} />;
       case 'volume':       return <MuscuTab stats={muscuStats} loading={workoutStore.loading} />;
-      case 'morphologie':  return (
-        <BiometrieTab
-          weightTrend={weightTrend}
-          history={measureStore.history}
-          loading={measureStore.loading}
-        />
-      );
-      case 'symetrie':     return (
-        <OrthometryTab
-          history={measureStore.history}
-          loading={measureStore.loading}
-        />
-      );
-
-      // ── ÉNERGIE ────────────────────────────────────────────────────────────
-      case 'nutrition':    return (
-        <NutritionTab
-          mealsByDay={mealsByDay}
-          mealsLoading={mealsLoading}
-          todayKcal={mealStoreToday.totals.kcal}
-          todayP={mealStoreToday.totals.p}
-          todayC={mealStoreToday.totals.c}
-          todayF={mealStoreToday.totals.f}
-        />
-      );
-      case 'disponible':   return (
-        <FluxDensiteTab sessions={workoutStore.sessions} weightKg={bodyWeightKg} />
-      );
+      case 'morphologie':  return <BiometrieTab weightTrend={weightTrend} history={measureStore.history} loading={measureStore.loading} />;
+      case 'symetrie':     return <OrthometryTab history={measureStore.history} loading={measureStore.loading} />;
+      case 'nutrition':    return <NutritionTab mealsByDay={mealsByDay} mealsLoading={mealsLoading} todayKcal={mealStoreToday.totals.kcal} todayP={mealStoreToday.totals.p} todayC={mealStoreToday.totals.c} todayF={mealStoreToday.totals.f} />;
+      case 'disponible':   return <FluxDensiteTab sessions={workoutStore.sessions} weightKg={bodyWeightKg} />;
       case 'synoptique':   return <SynoptiqueTab sessions={workoutStore.sessions} />;
       case 'metabolisme':  return <MetaboliqueTab />;
-
-      // ── ÂME ────────────────────────────────────────────────────────────────
       case 'islam':        return <IslamTab />;
-
-      // ── SYSTÈME ────────────────────────────────────────────────────────────
       case 'activite':     return <ActivityTab data={activityData} />;
-      case 'correlations': return (
-        <CorrelationTab
-          sessions={workoutStore.sessions}
-          history={measureStore.history}
-          weightEntries={weightStore.entries}
-          todayKcal={mealStoreToday.totals.kcal}
-        />
-      );
+      case 'correlations': return <CorrelationTab sessions={workoutStore.sessions} history={measureStore.history} weightEntries={weightStore.entries} todayKcal={mealStoreToday.totals.kcal} />;
       case 'adiposite':    return <ScanTab />;
-
       default: return null;
     }
   }
 
   return (
-    <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Header */}
-        <div className="px-6 pt-4 pb-4">
-          <div className="mt-0">
-            <span className="text-awan-xl font-black text-awan-tx tracking-[0.15em] uppercase block">ANALYSE TACTIQUE</span>
-            <span className="text-awan-sm text-awan-tx-mute tracking-widest uppercase mt-1 block">Intelligence de Situation</span>
-          </div>
+        <View style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 16 }}>
+          <View>
+            <Text style={[s.titleMain, { color: theme.title }]}>ANALYSE TACTIQUE</Text>
+            <Text style={[s.titleSub, { color: theme.mute }]}>Intelligence de Situation</Text>
+          </View>
 
-          <div className="mt-6 border-l-2 border-awan-gold/40 pl-4">
-            <span className="block text-awan-md font-bold text-awan-tx leading-relaxed italic">
+          <View style={[s.deviseBar, { borderLeftColor: `${theme.selected}66` }]}>
+            <Text style={[s.deviseText, { color: theme.title }]}>
               « L'avenir s'esquisse en encrant aujourd'hui dans les lignes du passé. »
-            </span>
-            <span className="block awan-label text-awan-tx-mute mt-2">— Devise AWAN</span>
-          </div>
+            </Text>
+            <Text style={[s.deviseLabel, { color: theme.mute }]}>— Devise AWAN</Text>
+          </View>
 
-          <div className="mt-8">
+          <View style={{ marginTop: 32 }}>
             <BilanZen
               summary={aiSummary}
               loading={aiLoading}
@@ -458,142 +383,122 @@ export default function AnalyseScreen() {
                 }).then(s => { setAiSummary(s); setAiLoading(false); });
               }}
             />
-          </div>
-        </div>
+          </View>
+        </View>
 
         {/* L1 — Domain bar */}
-        <div className="mb-0">
+        <View style={{ borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)' }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 24 }}>
-            <div className="border-b border-white/10 flex flex-row">
+            <View style={{ flexDirection: 'row' }}>
               {DOMAINS.map(({ id, label, Icon }) => (
                 <Touch
                   key={id}
-                  className={`px-4 py-3 items-center justify-center border-b-2 transition-all min-w-[64px] ${
-                    domain === id ? 'border-awan-gold' : 'border-transparent opacity-40'
-                  }`}
                   onPress={() => setDomain(id)}
+                  style={[s.domainTab, { opacity: domain === id ? 1 : 0.4 }]}
                 >
-                  <Icon size={16} className={domain === id ? 'text-awan-gold' : 'text-awan-tx-mute'} />
-                  <span className={`awan-label-sm mt-1 ${domain === id ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
+                  <Icon size={16} color={domain === id ? theme.selected : theme.mute} />
+                  <Text style={[s.domainLabel, { color: domain === id ? theme.selected : theme.mute }]}>
                     {label}
-                  </span>
+                  </Text>
+                  {domain === id && (
+                    <View style={[s.activeIndicator, { backgroundColor: theme.selected }]} />
+                  )}
                 </Touch>
               ))}
-            </div>
+            </View>
           </ScrollView>
-        </div>
+        </View>
 
-        {/* L2 — Sub-tab bar (hidden when domain has only 1 sub-tab) */}
+        {/* L2 — Sub-tab bar */}
         {currentDomain.subs.length > 1 && (
-          <div className="mb-0">
+          <View style={{ borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' }}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 24 }}>
-              <div className="border-b border-white/5 flex flex-row">
+              <View style={{ flexDirection: 'row' }}>
                 {currentDomain.subs.map(({ id, label, Icon }) => (
                   <Touch
                     key={id}
-                    className={`px-3 py-2.5 items-center justify-center border-b-2 transition-all min-w-[64px] ${
-                      subTab === id ? 'border-awan-gold/70' : 'border-transparent opacity-30'
-                    }`}
                     onPress={() => setSubTab(id)}
+                    style={[s.subTab, { opacity: subTab === id ? 1 : 0.3 }]}
                   >
-                    <Icon size={13}
-                      className={subTab === id ? 'text-awan-gold' : 'text-awan-tx-mute'}
-                      style={{ opacity: subTab === id ? 1 : 0.5 }}
-                    />
-                    <span className={`mt-1 uppercase font-black tracking-[0.15em] ${
-                      subTab === id ? 'text-awan-gold' : 'text-awan-tx-mute'
-                    }`}
-                      style={{ fontFamily: FontMono, fontSize: 9 }}>
+                    <Icon size={13} color={subTab === id ? theme.selected : theme.mute} />
+                    <Text style={[s.subTabLabel, { color: subTab === id ? theme.selected : theme.mute }]}>
                       {label}
-                    </span>
+                    </Text>
+                    {subTab === id && (
+                      <View style={[s.subActiveIndicator, { backgroundColor: `${theme.selected}B3` }]} />
+                    )}
                   </Touch>
                 ))}
-              </div>
+              </View>
             </ScrollView>
-          </div>
+          </View>
         )}
 
-        {/* Range selector — L1 type + dropdown période */}
+        {/* Range selector */}
         {RANGE_SUB_TABS.has(subTab) && (
-          <div className="mt-5 mb-2 px-6 space-y-3">
-
-            {/* L1 — granularité */}
-            <div className="flex flex-row gap-2">
+          <View style={{ marginTop: 20, marginBottom: 8, paddingHorizontal: 24, gap: 12 }}>
+            {/* L1 — granularity */}
+            <View style={s.rangeRow}>
               {RANGES.map(r => {
                 const active = range === r.id;
                 return (
                   <Touch
                     key={r.id}
-                    className={`flex-1 py-2 border items-center ${active ? 'bg-awan-gold/20 border-awan-gold' : 'border-white/10'}`}
                     onPress={() => setRange(r.id)}
+                    style={[s.rangeBtn, {
+                      backgroundColor: active ? 'rgba(212,175,55,0.2)' : 'transparent',
+                      borderColor: active ? theme.selected : 'rgba(255,255,255,0.1)',
+                    }]}
                   >
-                    <span className={`text-awan-xs font-black tracking-widest font-mono ${active ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
+                    <Text style={[s.rangeLabelMain, { color: active ? theme.selected : theme.mute }]}>
                       {r.label}
-                    </span>
-                    <span className={`font-mono opacity-50 ${active ? 'text-awan-gold' : 'text-awan-tx-mute'}`} style={{ fontSize: 8 }}>
+                    </Text>
+                    <Text style={[s.rangeLabelSub, { color: active ? theme.selected : theme.mute, opacity: 0.5 }]}>
                       {r.sublabel}
-                    </span>
+                    </Text>
                   </Touch>
                 );
               })}
-            </div>
+            </View>
 
-            {/* L2 — sélecteur de période */}
+            {/* L2 — period selector */}
             {range === 'day' ? (
-              // JOUR : sélecteur calendrier natif — aucune limite de date
-              <div className="relative w-full">
-                <div className="w-full border border-white/10 bg-white/3 py-3 px-4 flex flex-row items-center justify-between pointer-events-none">
-                  <span className="text-awan-sm font-black font-mono tracking-widest text-awan-tx">
-                    {periodButtonLabel('day', anchorDates.day ?? new Date())}
-                  </span>
-                  <span className="text-awan-tx-mute font-mono text-lg">▾</span>
-                </div>
-                <input
-                  type="date"
-                  max={format(new Date(), 'yyyy-MM-dd')}
-                  value={format(anchorDates.day ?? new Date(), 'yyyy-MM-dd')}
-                  onChange={(e: any) => {
-                    const d = new Date(e.target.value + 'T12:00:00');
-                    if (!isNaN(d.getTime()))
-                      setAnchorDates((prev: Record<RangeId, Date>) => ({ ...prev, day: d }));
-                  }}
-                  style={{
-                    position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer',
-                    width: '100%', height: '100%',
-                  }}
-                />
-              </div>
+              <DateSelectPopup
+                value={format(anchorDates.day ?? new Date(), 'yyyy-MM-dd')}
+                onChange={(d) => {
+                  const date = new Date(d + 'T12:00:00');
+                  if (!isNaN(date.getTime()))
+                    setAnchorDates((prev: Record<RangeId, Date>) => ({ ...prev, day: date }));
+                }}
+                max={format(new Date(), 'yyyy-MM-dd')}
+                label="JOUR"
+              />
             ) : (
-              // Autres types : dropdown modal
               <Touch
-                className="w-full border border-white/10 bg-white/3 py-3 px-4 flex flex-row items-center justify-between"
                 onPress={() => setShowPeriodPicker(true)}
+                style={s.periodBtn}
               >
-                <span className="text-awan-sm font-black font-mono tracking-widest text-awan-tx">
+                <Text style={[s.periodBtnLabel, { color: theme.title }]}>
                   {periodButtonLabel(range, anchorDates[range] ?? new Date())}
-                </span>
-                <span className="text-awan-tx-mute font-mono text-lg">▾</span>
+                </Text>
+                <Text style={[s.periodBtnChevron, { color: theme.mute }]}>▾</Text>
               </Touch>
             )}
-          </div>
+          </View>
         )}
 
         {/* Period picker modal */}
         <Modal visible={showPeriodPicker} transparent animationType="slide">
-          <div className="flex-1 bg-black/70 justify-end backdrop-blur-sm">
-            <div className="bg-awan-surface border-t border-white/10 max-h-[60vh]">
-              {/* Header */}
-              <div className="px-6 py-4 border-b border-white/5 flex flex-row items-center justify-between">
-                <span className="text-awan-sm font-black uppercase tracking-widest font-mono text-awan-tx">
-                  SÉLECTIONNER LA PÉRIODE
-                </span>
-                <Touch onPress={() => setShowPeriodPicker(false)} className="px-3 py-1 border border-white/10">
-                  <span className="text-awan-xs font-black font-mono text-awan-tx-mute">FERMER</span>
+          <View style={[s.modalOverlay]}>
+            <View style={[s.modalSheet, { backgroundColor: theme.surface }]}>
+              <View style={[s.modalHeader, { borderBottomColor: 'rgba(255,255,255,0.05)' }]}>
+                <Text style={[s.modalTitle, { color: theme.title }]}>SÉLECTIONNER LA PÉRIODE</Text>
+                <Touch onPress={() => setShowPeriodPicker(false)} style={[s.modalClose, { borderColor: 'rgba(255,255,255,0.1)' }]}>
+                  <Text style={[s.modalCloseLabel, { color: theme.mute }]}>FERMER</Text>
                 </Touch>
-              </div>
-              {/* Options */}
+              </View>
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
                 {buildPeriodOptions(range).map((opt, i) => {
                   const anchor = anchorDates[range] ?? new Date();
@@ -603,52 +508,77 @@ export default function AnalyseScreen() {
                   return (
                     <Touch
                       key={i}
-                      className={`px-6 py-4 border-b flex flex-row items-center justify-between ${
-                        active ? 'bg-awan-gold/10 border-awan-gold/20' : 'border-white/5'
-                      }`}
                       onPress={() => {
                         setAnchorDates((prev: Record<RangeId, Date>) => ({ ...prev, [range]: opt.anchorDate }));
                         setShowPeriodPicker(false);
                       }}
+                      style={[s.periodOption, {
+                        backgroundColor: active ? 'rgba(212,175,55,0.1)' : 'transparent',
+                        borderBottomColor: active ? 'rgba(212,175,55,0.2)' : 'rgba(255,255,255,0.05)',
+                      }]}
                     >
-                      <div>
-                        <span className={`text-awan-md font-black font-mono tracking-widest ${active ? 'text-awan-gold' : 'text-awan-tx'}`}>
+                      <View>
+                        <Text style={[s.periodOptLabel, { color: active ? theme.selected : theme.title }]}>
                           {opt.label}
-                        </span>
+                        </Text>
                         {opt.sublabel ? (
-                          <span className={`text-awan-xs font-mono block mt-0.5 ${active ? 'text-awan-gold opacity-60' : 'text-awan-tx-mute'}`}>
+                          <Text style={[s.periodOptSub, { color: active ? theme.selected : theme.mute, opacity: active ? 0.6 : 1 }]}>
                             {opt.sublabel}
-                          </span>
+                          </Text>
                         ) : null}
-                      </div>
-                      {active && <span className="text-awan-gold font-mono text-sm">●</span>}
+                      </View>
+                      {active && <Text style={[s.periodOptDot, { color: theme.selected }]}>●</Text>}
                     </Touch>
                   );
                 })}
               </ScrollView>
-            </div>
-          </div>
+            </View>
+          </View>
         </Modal>
 
         {/* Content */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={subTab + range}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="px-6 mt-6"
-          >
-            <Suspense fallback={
-              <div className="flex items-center justify-center py-20 opacity-40">
-                <div className="w-6 h-6 rounded-full border-2 border-awan-gold border-t-transparent animate-spin" />
-              </div>
-            }>
-              {renderContent()}
-            </Suspense>
-          </motion.div>
-        </AnimatePresence>
+        <View style={{ paddingHorizontal: 24, marginTop: 24 }}>
+          <Suspense fallback={
+            <View style={s.suspenseFallback}>
+              <ActivityIndicator size="small" color={theme.selected} />
+            </View>
+          }>
+            {renderContent()}
+          </Suspense>
+        </View>
       </ScrollView>
-    </PageWrapper>
+    </View>
   );
 }
+
+const s = StyleSheet.create({
+  titleMain: { fontFamily: FontMono, fontSize: 18, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.md_03 },
+  titleSub: { fontFamily: FontMono, fontSize: Fs.sm, textTransform: 'uppercase', letterSpacing: Ls.sm_02, marginTop: 4 },
+  deviseBar: { marginTop: 24, borderLeftWidth: 2, paddingLeft: 16 },
+  deviseText: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.value, fontStyle: 'italic', lineHeight: 22 },
+  deviseLabel: { fontFamily: FontMono, fontSize: Fs.xs, textTransform: 'uppercase', letterSpacing: Ls.sm_02, marginTop: 8 },
+  domainTab: { paddingHorizontal: 16, paddingVertical: 12, alignItems: 'center', minWidth: 64 },
+  domainLabel: { fontFamily: FontMono, fontSize: 8, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02, marginTop: 4 },
+  activeIndicator: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 2 },
+  subTab: { paddingHorizontal: 12, paddingVertical: 10, alignItems: 'center', minWidth: 64 },
+  subTabLabel: { fontFamily: FontMono, fontSize: 9, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02, marginTop: 4 },
+  subActiveIndicator: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 2 },
+  rangeRow: { flexDirection: 'row', gap: 8 },
+  rangeBtn: { flex: 1, paddingVertical: 8, alignItems: 'center', borderWidth: 1 },
+  rangeLabelMain: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.display, letterSpacing: Ls.sm_02 },
+  rangeLabelSub: { fontFamily: FontMono, fontSize: 8 },
+  periodBtn: { borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.03)', paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  periodBtnLabel: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display, letterSpacing: Ls.sm_02 },
+  periodBtnChevron: { fontFamily: FontMono, fontSize: 18 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  modalSheet: { borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', maxHeight: '60%' },
+  modalHeader: { paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  modalTitle: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
+  modalClose: { paddingHorizontal: 12, paddingVertical: 4, borderWidth: 1 },
+  modalCloseLabel: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.display },
+  periodOption: { paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  periodOptLabel: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display, letterSpacing: Ls.sm_02 },
+  periodOptSub: { fontFamily: FontMono, fontSize: Fs.xs, marginTop: 2 },
+  periodOptDot: { fontFamily: FontMono, fontSize: Fs.md },
+  suspenseFallback: { alignItems: 'center', justifyContent: 'center', paddingVertical: 80, opacity: 0.4 },
+});
