@@ -12,7 +12,7 @@ import { Heading } from '../../components/ui/Heading';
 import { ds } from '../../utils/storage';
 import { useTheme } from '../../hooks/useTheme';
 import { FontMono } from '../../constants/typography';
-import { Fs, Fw, Ls } from '../../theme/tokens';
+import { Fs, Fw, Ls, Clr } from '../../theme/tokens';
 
 const SvgPath_ = Path as any;
 const SvgCircle_ = Circle as any;
@@ -435,7 +435,7 @@ const s = StyleSheet.create({
   rangeLabelMain: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display, letterSpacing: Ls.sm_02 },
   rangeLabelSub: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02, marginTop: 2 },
   emptyChart: { height: 100, alignItems: 'center', justifyContent: 'center', borderStyle: 'dashed', borderWidth: 1 },
-  legendContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' },
+  legendContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: Clr.white5 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   legendTitle: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
   legendSub: { fontFamily: FontMono, fontSize: Fs.sm },

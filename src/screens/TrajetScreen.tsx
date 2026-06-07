@@ -7,11 +7,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Navigation2, Search, Trash2, Layers, Info, X, Zap, MapPin,
 } from 'lucide-react-native';
-import { AnimatePresence, motion } from '@/components/motion';
 
 import { useTheme } from '../hooks/useTheme';
 import { FontSans, FontMono } from '../constants/typography';
-import { Fs, Fw, Ls, Sp, Clr, T } from '../theme/tokens';
+import { Fs, Fw, Ls, Sp, Clr } from '../theme/tokens';
 import { ds, uid } from '../utils/storage';
 import { TRANSPORT_ICONS } from '../constants/icons';
 import { L as LABELS, TRANSPORT_OPTIONS } from '../constants/labels';
@@ -19,7 +18,7 @@ import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
 import { ORSService } from '../services/orsService';
 
-import { PageWrapper, StaggerItem } from '../components/Animated';
+import { PageWrapper } from '../components/Animated';
 import { DailyCanvas } from '../components/DailyCanvas';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';

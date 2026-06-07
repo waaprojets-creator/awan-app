@@ -20,7 +20,7 @@ import { computeWeeklyTonnage } from '../../services/analyticsService';
 import { PeriodizationService } from '../../services/periodizationService';
 import { BarChart, EmptyState } from './shared';
 import { FontMono } from '../../constants/typography';
-import { Fs, Fw, Ls } from '../../theme/tokens';
+import { Fs, Fw, Ls, Clr } from '../../theme/tokens';
 
 const SvgPath_ = Path as any;
 const SvgCircle_ = Circle as any;
@@ -190,7 +190,7 @@ export function PerformanceTab({ sessions, assessments = [] }: PerformanceTabPro
               key={entry.exerciseId}
               onPress={() => setSelectedExercise(selectedExercise === entry.exerciseId ? null : entry.exerciseId)}
               style={[s.exerciseRow, {
-                borderBottomColor: selectedExercise === entry.exerciseId ? theme.selected : 'rgba(255,255,255,0.05)',
+                borderBottomColor: selectedExercise === entry.exerciseId ? theme.selected : Clr.white5,
               }]}
             >
               <View style={s.row}>
@@ -208,7 +208,7 @@ export function PerformanceTab({ sessions, assessments = [] }: PerformanceTabPro
         </View>
 
         {selectedExercise && oneRmTrend[selectedExercise] && (
-          <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingTop: 16 }}>
+          <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: Clr.white5, paddingTop: 16 }}>
             <Text style={[s.sparklineLabel, { color: theme.mute }]}>
               ÉVOLUTION 90J · {top5.find(e => e.exerciseId === selectedExercise)?.name ?? ''}
             </Text>

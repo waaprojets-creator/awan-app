@@ -7,7 +7,7 @@ import { L } from '../constants/labels';
 import { Touch } from './ui/Touch';
 import { useTheme } from '../hooks/useTheme';
 import { FontSans } from '../constants/typography';
-import { Fw, Ls } from '../theme/tokens';
+import { Fw, Ls, Clr } from '../theme/tokens';
 
 interface AppHeaderProps {
   currentRoute: string;
@@ -41,7 +41,7 @@ export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) 
         {
           paddingTop: insets.top + 8,
           backgroundColor: theme.bg,
-          borderBottomColor: 'rgba(255,255,255,0.05)',
+          borderBottomColor: Clr.white5,
         },
       ]}
     >

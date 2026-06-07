@@ -5,7 +5,7 @@ import { Ruler } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import { FontMono } from '../../constants/typography';
-import { Fs, Fw, Ls } from '../../theme/tokens';
+import { Fs, Fw, Ls, Clr } from '../../theme/tokens';
 import type { MeasurementLatest } from '../../data/schemas/anthropo/measurement';
 import { analyzeSymmetry, asymmetryToHeatmapValue } from '../../services/symmetryService';
 import { BodySvg } from '../../components/BodySvg';
@@ -63,7 +63,7 @@ export function OrthometryTab({ history, loading }: OrthometryTabProps) {
           <BodySvg mode="heatmap" muscleValues={heatmapValues} />
           <View style={{ flex: 1, gap: 8 }}>
             {results.map(r => (
-              <View key={r.muscleKey} style={[s.muscleRow, { borderBottomColor: 'rgba(255,255,255,0.05)' }]}>
+              <View key={r.muscleKey} style={[s.muscleRow, { borderBottomColor: Clr.white5 }]}>
                 <Text style={[s.label, { color: theme.title }]}>{r.muscleKey}</Text>
                 <View style={s.row}>
                   <Text style={[s.mono, { color: theme.mute }]}>{r.leftCm}↔{r.rightCm}</Text>

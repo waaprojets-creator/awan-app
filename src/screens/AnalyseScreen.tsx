@@ -11,7 +11,7 @@ import {
 import { fr } from 'date-fns/locale';
 import { useTheme } from '../hooks/useTheme';
 import { FontMono } from '../constants/typography';
-import { Fs, Fw, Ls } from '../theme/tokens';
+import { Fs, Fw, Ls, Clr } from '../theme/tokens';
 import { ds } from '../utils/storage';
 import { LocalAIService } from '../services/localAIService';
 import { MealService } from '../services/mealService';
@@ -412,7 +412,7 @@ export default function AnalyseScreen() {
 
         {/* L2 — Sub-tab bar */}
         {currentDomain.subs.length > 1 && (
-          <View style={{ borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' }}>
+          <View style={{ borderBottomWidth: 1, borderBottomColor: Clr.white5 }}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 24 }}>
               <View style={{ flexDirection: 'row' }}>
@@ -493,7 +493,7 @@ export default function AnalyseScreen() {
         <Modal visible={showPeriodPicker} transparent animationType="slide">
           <View style={[s.modalOverlay]}>
             <View style={[s.modalSheet, { backgroundColor: theme.surface }]}>
-              <View style={[s.modalHeader, { borderBottomColor: 'rgba(255,255,255,0.05)' }]}>
+              <View style={[s.modalHeader, { borderBottomColor: Clr.white5 }]}>
                 <Text style={[s.modalTitle, { color: theme.title }]}>SÉLECTIONNER LA PÉRIODE</Text>
                 <Touch onPress={() => setShowPeriodPicker(false)} style={[s.modalClose, { borderColor: 'rgba(255,255,255,0.1)' }]}>
                   <Text style={[s.modalCloseLabel, { color: theme.mute }]}>FERMER</Text>
@@ -514,7 +514,7 @@ export default function AnalyseScreen() {
                       }}
                       style={[s.periodOption, {
                         backgroundColor: active ? 'rgba(212,175,55,0.1)' : 'transparent',
-                        borderBottomColor: active ? 'rgba(212,175,55,0.2)' : 'rgba(255,255,255,0.05)',
+                        borderBottomColor: active ? 'rgba(212,175,55,0.2)' : Clr.white5,
                       }]}
                     >
                       <View>
