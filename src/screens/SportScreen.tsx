@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { ScrollView, TextInput as RNTextInput, Modal, FlatList as RNFlatList } from 'react-native';
-
-const TextInput = RNTextInput as React.ComponentType<any>;
-const FlatList = RNFlatList as React.ComponentType<any>;
-import { motion } from '@/components/motion';
+import { View, Text, ScrollView, TextInput as RNTextInput, Modal, FlatList as RNFlatList, Pressable, Platform, Alert, StyleSheet } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
 import {
@@ -29,8 +26,8 @@ import {
  Minus,
  Timer,
  Flame,
+ Download,
 } from 'lucide-react-native';
-import { PageWrapper, StaggerList, StaggerItem } from '../components/Animated';
 import { InstrumentCard } from '../components/ui/InstrumentCard';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Card } from '../components/ui/Card';
@@ -59,13 +56,18 @@ import { suggestProgression } from '../services/autoProgressionService';
 import { BodySvg } from '../components/BodySvg';
 import type { MuscleId } from '../components/BodySvg';
 import { buildIAExport } from '../services/iaExportService';
-import { Download } from 'lucide-react-native';
 import { WorkoutListView } from '../modules/sport/components/WorkoutListView';
 import { RoutineGeneratorView } from '../modules/sport/components/RoutineGeneratorView';
 import { cacheForRoutine } from '../services/mediaCacheService';
+import { safeStorage } from '../utils/safeStorage';
 import { L } from '../constants/labels';
-import { useTheme } from '../hooks/useTheme';
+import { useTheme, type AwanTheme } from '../hooks/useTheme';
 import { FontSans, FontMono } from '../constants/typography';
+import { Fs, Fw, Ls, Clr } from '../theme/tokens';
+
+const TextInput = RNTextInput as React.ComponentType<any>;
+const FlatList = RNFlatList as React.ComponentType<any>;
+const SvgCircle = Circle as any;
 
 type ViewMode = 'list' | 'create' | 'edit' | 'active' | 'history' | 'finish' | 'recovery' | 'workouts' | 'generate';
 
@@ -78,12 +80,14 @@ const SET_KIND_LABEL: Record<SetKind, string> = {
  failure: 'FAILURE',
 };
 
-const SET_KIND_COLOR: Record<SetKind, string> = {
- warmup: 'text-awan-tx-mute',
- working: 'text-awan-gold',
- drop: 'text-orange-400',
- failure: 'text-red-400',
-};
+function setKindColor(kind: SetKind, theme: AwanTheme): string {
+ switch (kind) {
+ case 'warmup': return theme.mute;
+ case 'working': return theme.selected;
+ case 'drop': return '#FB923C';
+ case 'failure': return '#F87171';
+ }
+}
 
 const ACTIVE_SESSION_KEY = 'awan.sport.activeSession';
 const BEST_ONERMS_KEY = 'awan.sport.bestOneRMs';
@@ -110,7 +114,7 @@ function computeOneRM(weightKg: number, reps: number): number {
 }
 
 function loadBestOneRMs(): Record<string, number> {
- try { return JSON.parse(localStorage.getItem(BEST_ONERMS_KEY) ?? '{}'); } catch { return {}; }
+ try { return JSON.parse(safeStorage.get(BEST_ONERMS_KEY) ?? '{}'); } catch { return {}; }
 }
 
 async function notifyRestEnd() {
@@ -124,16 +128,7 @@ async function notifyRestEnd() {
  trigger: null,
  });
  } catch {
- try {
- const ctx = new AudioContext();
- const osc = ctx.createOscillator();
- const gain = ctx.createGain();
- osc.connect(gain); gain.connect(ctx.destination);
- osc.frequency.setValueAtTime(880, ctx.currentTime);
- gain.gain.setValueAtTime(0.3, ctx.currentTime);
- gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
- osc.start(); osc.stop(ctx.currentTime + 0.4);
- } catch { /* silent */ }
+ /* notifications indisponibles — échec silencieux */
  }
 }
 
@@ -174,48 +169,47 @@ function volumeToMuscleValues(vol: Record<string, number>): Partial<Record<Muscl
 
 function CycleScoreSection({ sessions }: { sessions: WorkoutSessionLatest[] }) {
   const result = useMemo(() => computeCycleScore(sessions), [sessions]);
-  if (result.sessionsCount === 0) return null;
   const theme = useTheme();
+  if (result.sessionsCount === 0) return null;
   const status = result.score >= 80 ? 'ok' : result.score >= 60 ? 'warn' : 'error';
   const statusVar = status === 'ok' ? theme.statusOk : status === 'warn' ? theme.statusWarn : theme.danger;
   return (
-    <div className="mb-6">
-      <span className="awan-label text-awan-tx-mute mb-3 block">NOTE CYCLE — 4 SEMAINES</span>
-      <Card className="p-5 bg-white/5">
-        <div className="flex flex-row items-baseline gap-3 mb-3">
-          <span className="text-4xl font-mono font-bold" style={{ color: statusVar }}>{result.score}</span>
-          <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest">/ 100</span>
-          <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest ml-auto">{result.sessionsCount} séances · {result.weeksObserved}/4 sem</span>
-        </div>
-        <span className="text-awan-md font-bold text-awan-tx block leading-relaxed">{result.diagnostic}</span>
-        <div className="grid grid-cols-3 gap-2 mt-4">
+    <View style={{ marginBottom: 24 }}>
+      <Text style={[ss.label, { color: theme.mute, marginBottom: 12 }]}>NOTE CYCLE — 4 SEMAINES</Text>
+      <Card style={{ padding: 20, backgroundColor: Clr.white5 }}>
+        <View style={[ss.row, { alignItems: 'baseline', gap: 12, marginBottom: 12 }]}>
+          <Text style={{ fontSize: 36, fontFamily: FontMono, fontWeight: Fw.value, color: statusVar }}>{result.score}</Text>
+          <Text style={[ss.sm, { color: theme.mute }]}>/ 100</Text>
+          <Text style={[ss.sm, { color: theme.mute, marginLeft: 'auto' }]}>{result.sessionsCount} séances · {result.weeksObserved}/4 sem</Text>
+        </View>
+        <Text style={{ fontSize: Fs.md, fontWeight: Fw.value, color: theme.title, fontFamily: FontSans, lineHeight: Math.round(Fs.md * 1.5) }}>{result.diagnostic}</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
           <BreakdownChip label="ADH." value={result.breakdown.adherence} max={20} />
           <BreakdownChip label="FRÉQ." value={result.breakdown.frequency} max={20} />
           <BreakdownChip label="PROG." value={result.breakdown.progression} max={20} />
           <BreakdownChip label="PLATE." value={result.breakdown.plateau} max={15} />
           <BreakdownChip label="RÉCUP." value={result.breakdown.recovery} max={15} />
           <BreakdownChip label="CONST." value={result.breakdown.consistency} max={10} />
-        </div>
+        </View>
       </Card>
-    </div>
+    </View>
   );
 }
 
 function BreakdownChip({ label, value, max }: { label: string; value: number; max: number }) {
   const theme = useTheme();
   const ratio = max > 0 ? value / max : 0;
-  const color = ratio >= 0.8 ? theme.statusOk
-              : ratio >= 0.5 ? theme.statusWarn
-              : theme.danger;
+  const color = ratio >= 0.8 ? theme.statusOk : ratio >= 0.5 ? theme.statusWarn : theme.danger;
   return (
-    <div className="bg-white/5 px-2 py-1.5 flex flex-col items-center">
-      <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">{label}</span>
-      <span className="text-awan-md font-mono font-bold" style={{ color }}>{value}/{max}</span>
-    </div>
+    <View style={{ width: '31%', flexGrow: 1, backgroundColor: Clr.white5, paddingHorizontal: 8, paddingVertical: 6, alignItems: 'center' }}>
+      <Text style={[ss.xs, { color: theme.mute }]}>{label}</Text>
+      <Text style={{ fontSize: Fs.md, fontFamily: FontMono, fontWeight: Fw.value, color }}>{value}/{max}</Text>
+    </View>
   );
 }
 
 function VolumeHeatmapSection({ sessions }: { sessions: WorkoutSessionLatest[] }) {
+  const theme = useTheme();
   const weekStart = (() => {
     const d = new Date();
     d.setDate(d.getDate() - d.getDay());
@@ -226,10 +220,10 @@ function VolumeHeatmapSection({ sessions }: { sessions: WorkoutSessionLatest[] }
   if (Object.values(vol).every(v => v === 0)) return null;
   const muscleValues = volumeToMuscleValues(vol);
   return (
-    <div className="mb-6">
-      <span className="awan-label text-awan-tx-mute mb-3 block">HEATMAP MUSCULAIRE — SEMAINE</span>
+    <View style={{ marginBottom: 24 }}>
+      <Text style={[ss.label, { color: theme.mute, marginBottom: 12 }]}>HEATMAP MUSCULAIRE — SEMAINE</Text>
       <BodySvg mode="heatmap" muscleValues={muscleValues as Record<MuscleId, number>} />
-    </div>
+    </View>
   );
 }
 
@@ -245,33 +239,34 @@ function VolumeWeekSection({ sessions }: { sessions: WorkoutSessionLatest[] }) {
   const entries = Object.entries(VOLUME_LANDMARKS).filter(([k]) => (vol[k] ?? 0) > 0 || true).slice(0, 6);
   if (entries.every(([k]) => (vol[k] ?? 0) === 0)) return null;
   return (
-    <div className="mb-6">
-      <span className="awan-label text-awan-tx-mute mb-3 block">VOLUME SEMAINE</span>
-      <div className="flex flex-col gap-2">
+    <View style={{ marginBottom: 24 }}>
+      <Text style={[ss.label, { color: theme.mute, marginBottom: 12 }]}>VOLUME SEMAINE</Text>
+      <View style={{ gap: 8 }}>
         {entries.map(([muscle, lm]) => {
           const sets = vol[muscle] ?? 0;
           if (sets === 0) return null;
           const pct = Math.min(100, (sets / lm.mrv) * 100);
           const barColor = sets < lm.mev ? theme.danger : sets <= lm.mav[1] ? theme.statusOk : sets >= lm.mrv * 0.8 ? theme.statusWarn : theme.statusOk;
           return (
-            <div key={muscle} className="flex flex-row items-center gap-3">
-              <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest w-20 shrink-0">{lm.label}</span>
-              <div className="flex-1 h-[3px] bg-white/5 relative">
-                <div className="absolute inset-y-0 left-0" style={{ width: `${pct}%`, backgroundColor: barColor }} />
-              </div>
-              <span className="text-awan-md font-bold font-mono" style={{ color: barColor, minWidth: 32, textAlign: 'right' }}>{sets}</span>
-            </div>
+            <View key={muscle} style={[ss.row, { gap: 12 }]}>
+              <Text style={[ss.xs, { color: theme.mute, width: 80, flexShrink: 0 }]}>{lm.label}</Text>
+              <View style={{ flex: 1, height: 3, backgroundColor: Clr.white5 }}>
+                <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${pct}%`, backgroundColor: barColor }} />
+              </View>
+              <Text style={{ fontSize: Fs.md, fontWeight: Fw.value, fontFamily: FontMono, color: barColor, minWidth: 32, textAlign: 'right' }}>{sets}</Text>
+            </View>
           );
         })}
-      </div>
-    </div>
+      </View>
+    </View>
   );
 }
 
 export default function SportScreen() {
  const theme = useTheme();
- useAppState() as any;
+ useAppState();
  const { addEntry, moveEntry, getEntriesByDate } = useDaily();
+ void moveEntry; void getEntriesByDate;
  const workoutStore = useWorkoutStore();
 
  const [view, setView] = useState<ViewMode>('list');
@@ -288,23 +283,22 @@ export default function SportScreen() {
  const prevSessionVolumeRef = useRef<number | null>(null);
 
  const today = ds(new Date());
-
- // Catalogue chargé à la demande (B.3) — pas au mount
+ void today;
 
  useEffect(() => {
  try {
- const saved = localStorage.getItem(ACTIVE_SESSION_KEY);
+ const saved = safeStorage.get(ACTIVE_SESSION_KEY);
  if (saved) setResumeModal(JSON.parse(saved) as ActiveSession);
  } catch { /* ignore */ }
  try {
- const savedDraft = localStorage.getItem(ROUTINE_DRAFT_KEY);
+ const savedDraft = safeStorage.get(ROUTINE_DRAFT_KEY);
  if (savedDraft) setDraftResumeModal(JSON.parse(savedDraft) as RoutineDraft);
  } catch { /* ignore */ }
  }, []);
 
  useEffect(() => {
- if (!activeSession) { localStorage.removeItem(ACTIVE_SESSION_KEY); return; }
- const save = () => { try { localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(activeSession)); } catch { /* ignore */ } };
+ if (!activeSession) { safeStorage.remove(ACTIVE_SESSION_KEY); return; }
+ const save = () => { try { safeStorage.set(ACTIVE_SESSION_KEY, JSON.stringify(activeSession)); } catch { /* ignore */ } };
  save();
  const id = setInterval(save, 30_000);
  return () => clearInterval(id);
@@ -338,13 +332,13 @@ export default function SportScreen() {
 
  const saveRoutine = useCallback((r: RoutineLatest) => {
  workoutStore.saveRoutine(r);
- try { localStorage.removeItem(ROUTINE_DRAFT_KEY); } catch { /* ignore */ }
+ try { safeStorage.remove(ROUTINE_DRAFT_KEY); } catch { /* ignore */ }
  setEditingRoutine(null);
  setView('list');
  }, [workoutStore]);
 
  const cancelRoutineEdit = useCallback(() => {
- try { localStorage.removeItem(ROUTINE_DRAFT_KEY); } catch { /* ignore */ }
+ try { safeStorage.remove(ROUTINE_DRAFT_KEY); } catch { /* ignore */ }
  setDraftToResume(null);
  setEditingRoutine(null);
  setView('list');
@@ -359,7 +353,6 @@ export default function SportScreen() {
  // S7: auto-progression suggestions
  const suggestions = suggestProgression(routine.exercises, routineSessions);
  const suggestionMap = new Map(suggestions.map(s => [s.exerciseId, s.suggestedWeightKg]));
- // Stocker le volume de la session précédente pour le delta post-séance
  if (lastSession) {
  const prevVol = lastSession.exercises.flatMap(e => e.sets.filter(s => s.kind === 'working'))
  .reduce((acc, s) => acc + (s.weightKg ?? 0) * (s.reps ?? 0), 0);
@@ -375,7 +368,6 @@ export default function SportScreen() {
  .slice(-1)[0];
  const plannedWeightKg = re.plannedWeightKg ?? undefined;
  const plannedReps = re.plannedReps;
- // S7: suggested weight overrides last actual; last actual overrides planned
  const suggestedWeight = suggestionMap.get(re.exerciseId);
  const prefillWeight = suggestedWeight ?? lastWorkingSet?.weightKg ?? plannedWeightKg;
  const sets: ActiveSet[] = Array.from({ length: re.plannedSets }, (_, i) => ({
@@ -486,7 +478,6 @@ export default function SportScreen() {
 
  workoutStore.saveSession(session);
 
- // Advance meso week if current date is past the next week boundary
  (() => {
    const p = PeriodizationService.getOrInit();
    const weekBoundary = new Date(p.startDate);
@@ -513,7 +504,7 @@ export default function SportScreen() {
  ],
  });
 
- localStorage.removeItem(ACTIVE_SESSION_KEY);
+ safeStorage.remove(ACTIVE_SESSION_KEY);
  setActiveSession(null);
  setView('list');
  }, [activeSession, workoutStore, addEntry]);
@@ -533,63 +524,73 @@ export default function SportScreen() {
  }, [workoutStore]);
  const handleRoutineDeleteCancel = useCallback(() => setConfirmDeleteId(null), []);
 
+ const handleExportIA = useCallback(async () => {
+ const { json, promptWithData } = await buildIAExport(workoutStore.routines);
+ const filename = `awan-sport-ia-${ds(new Date())}.json`;
+ if (Platform.OS !== 'web') {
+ try {
+ const FileSystem = await import('expo-file-system');
+ const Sharing = await import('expo-sharing');
+ const uri = (FileSystem.documentDirectory ?? '') + filename;
+ await FileSystem.writeAsStringAsync(uri, json, { encoding: FileSystem.EncodingType.UTF8 });
+ await Sharing.shareAsync(uri);
+ } catch { Alert.alert('Erreur', 'Export impossible'); }
+ } else {
+ try {
+ await navigator.clipboard.writeText(promptWithData);
+ const blob = new Blob([json], { type: 'application/json' });
+ const url = URL.createObjectURL(blob);
+ const a = document.createElement('a');
+ a.href = url; a.download = filename; a.click();
+ URL.revokeObjectURL(url);
+ } catch { /* ignore */ }
+ }
+ }, [workoutStore.routines]);
+
  if (view === 'recovery' && pendingRoutine) {
  return (
-   <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
-     <div className="px-6 pt-4 pb-2">
+   <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+     <View style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 8 }}>
        <ScreenHeader tag="SPORT · RÉCUPÉRATION" title={pendingRoutine.routine.name} />
-     </div>
-     <div className="flex-1 flex flex-col items-center justify-center px-6 gap-8">
-       <div className="w-full">
-         <span className="block text-center text-awan-sm font-black text-awan-tx-mute tracking-widest uppercase mb-6">
-           SCORE DE RÉCUPÉRATION DU JOUR
-         </span>
-         <div className="flex flex-row flex-wrap justify-center gap-3">
-           {[1,2,3,4,5,6,7,8,9,10].map(n => (
-             <button
-               key={n}
-               onClick={() => setRecoveryScore(n)}
-               style={{
-                 width: 44, height: 44,
-                 fontFamily: FontMono, fontSize: 14, fontWeight: 700,
-                 background: recoveryScore === n ? theme.selected : theme.surface,
-                 color: recoveryScore === n ? '#000' : theme.title,
-                 border: recoveryScore === n ? 'none' : '1px solid rgba(128,128,128,0.25)',
-                 cursor: 'pointer',
-               }}
-             >
-               {n}
-             </button>
-           ))}
-         </div>
-         <div className="flex flex-row justify-between mt-4 px-2">
-           <span className="text-awan-sm text-awan-tx-mute font-bold uppercase tracking-widest">épuisé</span>
-           <span className="text-awan-sm text-awan-tx-mute font-bold uppercase tracking-widest">parfait</span>
-         </div>
-       </div>
-       <div className="flex flex-col gap-3 w-full">
+     </View>
+     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, gap: 32 }}>
+       <View style={{ width: '100%' }}>
+         <Text style={[ss.sm, { textAlign: 'center', color: theme.mute, marginBottom: 24 }]}>SCORE DE RÉCUPÉRATION DU JOUR</Text>
+         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12 }}>
+           {[1,2,3,4,5,6,7,8,9,10].map(n => {
+             const active = recoveryScore === n;
+             return (
+               <Touch key={n} onPress={() => setRecoveryScore(n)} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: active ? theme.selected : theme.surface, borderWidth: active ? 0 : 1, borderColor: 'rgba(128,128,128,0.25)' }}>
+                 <Text style={{ fontFamily: FontMono, fontSize: 14, fontWeight: Fw.value, color: active ? '#000' : theme.title }}>{n}</Text>
+               </Touch>
+             );
+           })}
+         </View>
+         <View style={[ss.rowBetween, { marginTop: 16, paddingHorizontal: 8 }]}>
+           <Text style={[ss.smThin, { color: theme.mute }]}>épuisé</Text>
+           <Text style={[ss.smThin, { color: theme.mute }]}>parfait</Text>
+         </View>
+       </View>
+       <View style={{ gap: 12, width: '100%' }}>
          <Touch
            onPress={async () => {
              if (!pendingRoutine) return;
              await startWorkout(pendingRoutine.routine, pendingRoutine.opts);
              setPendingRoutine(null);
-             // Store recovery score to be saved in session via handleSessionUpdate
              if (recoveryScore !== null) {
                handleSessionUpdate(s => ({ ...s, recoveryScore }));
              }
            }}
-           className="bg-awan-gold p-4 items-center"
+           style={{ backgroundColor: theme.selected, padding: 16, alignItems: 'center' }}
          >
-           <span className="text-awan-lg font-black text-black uppercase tracking-widest">
-             {recoveryScore !== null ? `DÉMARRER — RÉCUP ${recoveryScore}/10` : 'DÉMARRER SANS NOTER'}
-           </span>
+           <Text style={{ fontSize: Fs.lg, fontWeight: Fw.display, color: '#000', textTransform: 'uppercase', letterSpacing: Ls.lg_02, fontFamily: FontMono }}>{recoveryScore !== null ? `DÉMARRER — RÉCUP ${recoveryScore}/10` : 'DÉMARRER SANS NOTER'}</Text>
          </Touch>
-         <Touch onPress={() => { setPendingRoutine(null); setView('list'); }} className="p-4 items-center" style={{ border: '1px solid rgba(128,128,128,0.25)' }}>
-           <span className="text-awan-md font-bold text-awan-tx-mute uppercase tracking-widest">ANNULER</span>
+         <Touch onPress={() => { setPendingRoutine(null); setView('list'); }} style={{ padding: 16, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(128,128,128,0.25)' }}>
+           <Text style={[ss.mdBlack, { color: theme.mute }]}>ANNULER</Text>
          </Touch>
-       </div>
-     </div>
-   </PageWrapper>
+       </View>
+     </View>
+   </View>
  );
  }
 
@@ -612,7 +613,7 @@ export default function SportScreen() {
  onUpdate={handleSessionUpdate}
  onFinishRequest={() => setView('finish')}
  onAbort={() => {
- localStorage.removeItem(ACTIVE_SESSION_KEY);
+ safeStorage.remove(ACTIVE_SESSION_KEY);
  setActiveSession(null);
  setView('list');
  }}
@@ -655,7 +656,6 @@ export default function SportScreen() {
  onBack={() => setView('workouts')}
  onSave={async (routines) => {
  await Promise.all(routines.map(r => workoutStore.saveRoutine(r)));
- // Pre-warm image cache silently after saving
  const ids = routines.flatMap(r => r.exercises.map(e => e.exerciseId));
  cacheForRoutine(ids).catch(() => {});
  setView('workouts');
@@ -665,190 +665,137 @@ export default function SportScreen() {
  }
 
  return (
- <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
+ <View style={{ flex: 1, backgroundColor: 'transparent' }}>
  {resumeModal && (
  <Modal visible={true} transparent animationType="fade">
- <div className="flex-1 flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}>
- <div className="w-full bg-awan-surface rounded-t-3xl border-t border-white/10 p-6 pb-10">
- <span className="awan-label text-awan-gold mb-2 block">SÉANCE EN COURS</span>
- <span className="text-lg font-bold text-awan-tx uppercase mb-1 block">{resumeModal.routineName}</span>
- <span className="text-awan-md font-bold text-awan-tx-mute uppercase tracking-widest mb-6 block">
- Démarrée à {new Date(resumeModal.startTime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
- </span>
- <div className="flex flex-row gap-3">
- <Touch
- className="flex-1 h-14 bg-awan-gold flex items-center justify-center"
- onPress={() => { setActiveSession(resumeModal); setResumeModal(null); setView('active'); }}
- >
- <span className="awan-label text-black font-black">REPRENDRE</span>
+ <View style={[ss.sheetOverlay, { backgroundColor: 'rgba(0,0,0,0.75)' }]}>
+ <View style={[ss.sheet, { backgroundColor: theme.surface, padding: 24, paddingBottom: 40 }]}>
+ <Text style={[ss.label, { color: theme.selected, marginBottom: 8 }]}>SÉANCE EN COURS</Text>
+ <Text style={{ fontSize: 18, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', marginBottom: 4, fontFamily: FontSans }}>{resumeModal.routineName}</Text>
+ <Text style={[ss.mdBlack, { color: theme.mute, marginBottom: 24 }]}>Démarrée à {new Date(resumeModal.startTime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</Text>
+ <View style={[ss.row, { gap: 12 }]}>
+ <Touch style={{ flex: 1, height: 56, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }} onPress={() => { setActiveSession(resumeModal); setResumeModal(null); setView('active'); }}>
+ <Text style={[ss.label, { color: '#000' }]}>REPRENDRE</Text>
  </Touch>
- <Touch
- className="flex-1 h-14 bg-white/5 border border-white/10 flex items-center justify-center"
- onPress={() => { localStorage.removeItem(ACTIVE_SESSION_KEY); setResumeModal(null); }}
- >
- <span className="awan-label text-awan-tx-mute">ABANDONNER</span>
+ <Touch style={{ flex: 1, height: 56, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white10, alignItems: 'center', justifyContent: 'center' }} onPress={() => { safeStorage.remove(ACTIVE_SESSION_KEY); setResumeModal(null); }}>
+ <Text style={[ss.label, { color: theme.mute }]}>ABANDONNER</Text>
  </Touch>
- </div>
- </div>
- </div>
+ </View>
+ </View>
+ </View>
  </Modal>
  )}
  {!resumeModal && draftResumeModal && (
  <Modal visible={true} transparent animationType="fade">
- <div className="flex-1 flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}>
- <div className="w-full bg-awan-surface rounded-t-3xl border-t border-white/10 p-6 pb-10">
- <span className="awan-label text-awan-gold mb-2 block">ROUTINE EN COURS D'ÉDITION</span>
- <span className="text-lg font-bold text-awan-tx uppercase mb-1 block">
- {draftResumeModal.name.trim() || 'SANS NOM'}
- </span>
- <span className="text-awan-md font-bold text-awan-tx-mute uppercase tracking-widest mb-6 block">
- {draftResumeModal.exercises.length} EXERCICES · Sauvegardé à {new Date(draftResumeModal.savedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
- </span>
- <div className="flex flex-row gap-3">
- <Touch
- className="flex-1 h-14 bg-awan-gold flex items-center justify-center"
- onPress={() => {
+ <View style={[ss.sheetOverlay, { backgroundColor: 'rgba(0,0,0,0.75)' }]}>
+ <View style={[ss.sheet, { backgroundColor: theme.surface, padding: 24, paddingBottom: 40 }]}>
+ <Text style={[ss.label, { color: theme.selected, marginBottom: 8 }]}>ROUTINE EN COURS D'ÉDITION</Text>
+ <Text style={{ fontSize: 18, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', marginBottom: 4, fontFamily: FontSans }}>{draftResumeModal.name.trim() || 'SANS NOM'}</Text>
+ <Text style={[ss.mdBlack, { color: theme.mute, marginBottom: 24 }]}>{draftResumeModal.exercises.length} EXERCICES · Sauvegardé à {new Date(draftResumeModal.savedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</Text>
+ <View style={[ss.row, { gap: 12 }]}>
+ <Touch style={{ flex: 1, height: 56, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }} onPress={() => {
  const draft = draftResumeModal;
  setDraftToResume(draft);
  setDraftResumeModal(null);
- const existing = draft.existingId
- ? workoutStore.routines.find(r => r.id === draft.existingId) ?? null
- : null;
+ const existing = draft.existingId ? workoutStore.routines.find(r => r.id === draft.existingId) ?? null : null;
  setEditingRoutine(existing);
  setView(existing ? 'edit' : 'create');
- }}
- >
- <span className="awan-label text-black font-black">REPRENDRE</span>
+ }}>
+ <Text style={[ss.label, { color: '#000' }]}>REPRENDRE</Text>
  </Touch>
- <Touch
- className="flex-1 h-14 bg-white/5 border border-white/10 flex items-center justify-center"
- onPress={() => { try { localStorage.removeItem(ROUTINE_DRAFT_KEY); } catch { /* ignore */ } setDraftResumeModal(null); }}
- >
- <span className="awan-label text-awan-tx-mute">ABANDONNER</span>
+ <Touch style={{ flex: 1, height: 56, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white10, alignItems: 'center', justifyContent: 'center' }} onPress={() => { try { safeStorage.remove(ROUTINE_DRAFT_KEY); } catch { /* ignore */ } setDraftResumeModal(null); }}>
+ <Text style={[ss.label, { color: theme.mute }]}>ABANDONNER</Text>
  </Touch>
- </div>
- </div>
- </div>
+ </View>
+ </View>
+ </View>
  </Modal>
  )}
  <ScrollView contentContainerStyle={{ paddingBottom: 120 }} style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
- <div className="px-6 pt-4 pb-6">
+ <View style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24 }}>
  <ScreenHeader tag="BODY · SPORT" title="SPORT" />
  {(() => {
    const p = PeriodizationService.getOrInit();
    return (
-     <div className="mb-4 px-1">
-       <span className="text-awan-sm font-black text-awan-tx-mute tracking-widest uppercase">
-         PHASE {p.phase} · SEMAINE {p.mesoWeek} · {PeriodizationService.getPhaseLabel(p.phase)}
-       </span>
-     </div>
+     <View style={{ marginBottom: 16, paddingHorizontal: 4 }}>
+       <Text style={[ss.sm, { color: theme.mute }]}>PHASE {p.phase} · SEMAINE {p.mesoWeek} · {PeriodizationService.getPhaseLabel(p.phase)}</Text>
+     </View>
    );
  })()}
 
- <div className="grid grid-cols-2 gap-3 mb-6">
+ <View style={{ flexDirection: 'row', gap: 12, marginBottom: 24 }}>
  {(() => {
  const cnt = sessionsThisWeek(workoutStore.sessions as any);
  const pct = Math.min(100, cnt * 25);
  return (
  <>
- <InstrumentCard
- label="FLUX"
- value={`${pct}`}
- unit="%"
- status={pct >= 75 ? 'ok' : pct >= 40 ? 'warn' : 'error'}
- progress={pct}
- index={1}
- />
- <InstrumentCard
- label="SÉANCES"
- value={cnt}
- unit="/sem"
- status={cnt > 0 ? 'ok' : 'mute'}
- index={2}
- />
+ <View style={{ flex: 1 }}>
+ <InstrumentCard label="FLUX" value={`${pct}`} unit="%" status={pct >= 75 ? 'ok' : pct >= 40 ? 'warn' : 'error'} progress={pct} index={1} />
+ </View>
+ <View style={{ flex: 1 }}>
+ <InstrumentCard label="SÉANCES" value={cnt} unit="/sem" status={cnt > 0 ? 'ok' : 'mute'} index={2} />
+ </View>
  </>
  );
  })()}
- </div>
+ </View>
 
  <VolumeWeekSection sessions={workoutStore.sessions as WorkoutSessionLatest[]} />
  <CycleScoreSection sessions={workoutStore.sessions as WorkoutSessionLatest[]} />
  <VolumeHeatmapSection sessions={workoutStore.sessions as WorkoutSessionLatest[]} />
 
  {nextRoutine && (
- <Card className="p-6 bg-awan-gold/5 border-awan-gold/20 mb-6" onPress={() => { setPendingRoutine({ routine: nextRoutine }); setRecoveryScore(null); setView('recovery'); }}>
- <div className="flex flex-row items-center justify-between">
- <div className="flex-1">
- <span className="awan-label text-awan-gold mb-1 block">PROCHAINE SÉANCE</span>
- <Heading level={3} className="mb-1">{nextRoutine.name}</Heading>
- <div className="flex flex-row items-center gap-3 mt-2">
+ <Card style={{ padding: 24, backgroundColor: 'rgba(212,175,55,0.05)', borderColor: Clr.gold20, marginBottom: 24 }} onPress={() => { setPendingRoutine({ routine: nextRoutine }); setRecoveryScore(null); setView('recovery'); }}>
+ <View style={ss.rowBetween}>
+ <View style={{ flex: 1 }}>
+ <Text style={[ss.label, { color: theme.selected, marginBottom: 4 }]}>PROCHAINE SÉANCE</Text>
+ <Heading level={3} style={{ marginBottom: 4 }}>{nextRoutine.name}</Heading>
+ <View style={[ss.row, { gap: 12, marginTop: 8 }]}>
  {nextRoutine.cycleLetter && (
- <div className="bg-awan-gold/15 px-2 py-0.5 rounded border border-awan-gold/30">
- <span className="text-awan-sm font-black text-awan-gold tracking-widest">CYCLE {nextRoutine.cycleLetter}</span>
- </div>
+ <View style={{ backgroundColor: Clr.gold12, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: Clr.gold30 }}>
+ <Text style={{ fontSize: Fs.sm, fontWeight: Fw.display, color: theme.selected, letterSpacing: Ls.sm_02, fontFamily: FontMono }}>CYCLE {nextRoutine.cycleLetter}</Text>
+ </View>
  )}
- <span className="text-awan-md font-bold text-awan-tx-mute uppercase tracking-widest">
- {nextRoutine.exercises.length} EXERCICES
- </span>
- </div>
- </div>
- <div className="w-14 h-14 bg-awan-gold flex items-center justify-center shadow-xl shadow-awan-gold/30">
+ <Text style={[ss.mdBlack, { color: theme.mute }]}>{nextRoutine.exercises.length} EXERCICES</Text>
+ </View>
+ </View>
+ <View style={{ width: 56, height: 56, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }}>
  <Play size={24} color="black" strokeWidth={3} />
- </div>
- </div>
+ </View>
+ </View>
  </Card>
  )}
 
- <div className="mb-3 flex flex-row gap-3">
- <Touch
- className="flex-1 h-14 bg-awan-gold flex items-center justify-center"
- onPress={() => { setEditingRoutine(null); setView('create'); }}
- >
- <div className="flex flex-row items-center gap-2">
+ <View style={[ss.row, { marginBottom: 12, gap: 12 }]}>
+ <Touch style={{ flex: 1, height: 56, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }} onPress={() => { setEditingRoutine(null); setView('create'); }}>
+ <View style={[ss.row, { gap: 8 }]}>
  <Plus size={18} color="black" strokeWidth={3} />
- <span className="awan-label text-black font-black">NOUVELLE ROUTINE</span>
- </div>
+ <Text style={[ss.label, { color: '#000' }]}>NOUVELLE ROUTINE</Text>
+ </View>
  </Touch>
- <Touch
- className="px-5 h-14 bg-white/5 flex items-center justify-center border border-white/10"
- onPress={() => setView('history')}
- >
- <History size={18} className="text-awan-tx-mute" />
+ <Touch style={{ paddingHorizontal: 20, height: 56, backgroundColor: Clr.white5, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Clr.white10 }} onPress={() => setView('history')}>
+ <History size={18} color={theme.mute} />
  </Touch>
- </div>
- <Touch
- className="mb-3 h-12 bg-white/5 flex items-center justify-center border border-white/10"
- onPress={() => setView('workouts')}
- >
- <span className="awan-label text-awan-tx-mute">{L.sport.myRoutines} →</span>
+ </View>
+ <Touch style={{ marginBottom: 12, height: 48, backgroundColor: Clr.white5, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Clr.white10 }} onPress={() => setView('workouts')}>
+ <Text style={[ss.label, { color: theme.mute }]}>{L.sport.myRoutines} →</Text>
  </Touch>
- <Touch
- className="mb-6 h-12 bg-white/5 flex items-center justify-center border border-white/10 flex-row gap-2"
- onPress={async () => {
-   const { json, promptWithData } = await buildIAExport(workoutStore.routines);
-   try { await navigator.clipboard.writeText(promptWithData); } catch { /* ignore */ }
-   const blob = new Blob([json], { type: 'application/json' });
-   const url = URL.createObjectURL(blob);
-   const a = document.createElement('a');
-   a.href = url; a.download = `awan-sport-ia-${ds(new Date())}.json`; a.click();
-   URL.revokeObjectURL(url);
- }}
- >
- <Download size={14} className="text-awan-tx-mute" />
- <span className="awan-label text-awan-tx-mute">EXPORT ANALYSE IA</span>
+ <Touch style={[ss.row, { marginBottom: 24, height: 48, backgroundColor: Clr.white5, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Clr.white10, gap: 8 }]} onPress={handleExportIA}>
+ <Download size={14} color={theme.mute} />
+ <Text style={[ss.label, { color: theme.mute }]}>EXPORT ANALYSE IA</Text>
  </Touch>
 
- <div className="mb-20">
+ <View style={{ marginBottom: 80 }}>
  <Heading level={4} mono subtitle="Protocoles Enregistrés">ROUTINES</Heading>
  {workoutStore.routines.length === 0 ? (
- <Card className="py-16 items-center bg-white/5 border-white/10 border-dashed">
- <Dumbbell size={48} className="text-white/10 mb-6" />
- <span className="awan-label mb-2">AUCUNE ROUTINE</span>
+ <Card style={{ paddingVertical: 64, alignItems: 'center', backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white10, borderStyle: 'dashed' }}>
+ <Dumbbell size={48} color={Clr.white10} style={{ marginBottom: 24 }} />
+ <Text style={[ss.label, { color: theme.mute, marginBottom: 8 }]}>AUCUNE ROUTINE</Text>
  </Card>
  ) : (
- <StaggerList>
+ <View>
  {workoutStore.routines.map(r => (
- <StaggerItem key={r.id} className="mb-4">
+ <View key={r.id} style={{ marginBottom: 16 }}>
  <RoutineCard
  routine={r}
  isConfirmingDelete={confirmDeleteId === r.id}
@@ -858,14 +805,14 @@ export default function SportScreen() {
  onDeleteCancel={handleRoutineDeleteCancel}
  onDeleteRequest={deleteRoutine}
  />
- </StaggerItem>
+ </View>
  ))}
- </StaggerList>
+ </View>
  )}
- </div>
- </div>
+ </View>
+ </View>
  </ScrollView>
- </PageWrapper>
+ </View>
  );
 }
 
@@ -955,7 +902,6 @@ function RoutineEditor({
  const [viewingEx, setViewingEx] = useState<ExerciseEntry | null>(null);
  const [saveError, setSaveError] = useState('');
 
- // S1.2 — Persistance debouncée du draft de routine
  useEffect(() => {
  const handle = setTimeout(() => {
  const draft: RoutineDraft = {
@@ -966,7 +912,7 @@ function RoutineEditor({
  exercises,
  savedAt: Date.now(),
  };
- try { localStorage.setItem(ROUTINE_DRAFT_KEY, JSON.stringify(draft)); } catch { /* quota */ }
+ try { safeStorage.set(ROUTINE_DRAFT_KEY, JSON.stringify(draft)); } catch { /* quota */ }
  }, 1000);
  return () => clearTimeout(handle);
  }, [name, cycleLetter, defaultRestSec, exercises, existing]);
@@ -1017,184 +963,125 @@ function RoutineEditor({
  }, [name, cycleLetter, exercises, defaultRestSec, existing, onSave]);
 
  return (
- <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }} className="bg-awan-bg">
- <div style={{ flexShrink: 0 }} className="px-6 pt-12 pb-6 border-b border-white/5 bg-white/5">
- <div className="flex flex-row items-center gap-4">
- <Touch onPress={onCancel} className="w-10 h-10 bg-white/5 flex items-center justify-center">
- <ChevronLeft size={20} className="text-awan-tx-mute" />
+ <View style={{ flex: 1, backgroundColor: theme.bg }}>
+ <View style={[ss.topBar, { backgroundColor: Clr.white5 }]}>
+ <View style={[ss.row, { gap: 16 }]}>
+ <Touch onPress={onCancel} style={ss.iconBtn}>
+ <ChevronLeft size={20} color={theme.mute} />
  </Touch>
- <Heading level={2} className="mb-0 flex-1" subtitle={existing ? 'Modification' : 'Nouvelle routine'}>PROTOCOLE</Heading>
- <Touch onPress={handleSave} className="w-10 h-10 bg-awan-gold flex items-center justify-center shadow-lg shadow-awan-gold/20">
+ <Heading level={2} style={{ marginBottom: 0, flex: 1 }} subtitle={existing ? 'Modification' : 'Nouvelle routine'}>PROTOCOLE</Heading>
+ <Touch onPress={handleSave} style={{ width: 40, height: 40, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }}>
  <CheckCircle2 size={20} color="black" strokeWidth={3} />
  </Touch>
- </div>
- </div>
+ </View>
+ </View>
 
  <ScrollView contentContainerStyle={{ paddingBottom: 140, padding: 24 }} style={{ flex: 1, minHeight: 0 }}>
- <div className="mb-6">
- <span className="awan-label mb-3 block">NOM</span>
- <TextInput
- className="bg-white/5 border border-white/5 p-5 text-awan-tx font-bold text-base"
- value={name}
- onChangeText={(v: string) => { setName(v); if (saveError) setSaveError(''); }}
- placeholder="Push, Pull, Legs..."
- placeholderTextColor="#3a3a3a"
- />
+ <View style={{ marginBottom: 24 }}>
+ <Text style={[ss.label, { color: theme.mute, marginBottom: 12 }]}>NOM</Text>
+ <TextInput style={{ backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white5, padding: 20, color: theme.title, fontWeight: Fw.value, fontSize: 16, fontFamily: FontSans }} value={name} onChangeText={(v: string) => { setName(v); if (saveError) setSaveError(''); }} placeholder="Push, Pull, Legs..." placeholderTextColor="#3a3a3a" />
  {saveError ? (
-   <span style={{ fontFamily: FontMono, fontSize: '10px', color: theme.danger, letterSpacing: '0.15em', marginTop: 6, display: 'block' }}>
-     ⚠ {saveError.toUpperCase()}
-   </span>
+   <Text style={{ fontFamily: FontMono, fontSize: 10, color: theme.danger, letterSpacing: 1.5, marginTop: 6 }}>⚠ {saveError.toUpperCase()}</Text>
  ) : null}
- </div>
+ </View>
 
- <div className="mb-6">
- <span className="awan-label mb-3 block">CYCLE A/B/C/D</span>
- <div className="flex flex-row gap-2">
- {CYCLE_LETTERS.map(l => (
- <Touch
- key={l ?? 'none'}
- onPress={() => setCycleLetter(l)}
- className={`flex-1 h-12 border flex items-center justify-center ${
- cycleLetter === l ? 'bg-awan-gold border-awan-gold' : 'bg-white/5 border-white/5'
- }`}
- >
- <span className={`text-sm font-black ${cycleLetter === l ? 'text-black' : 'text-awan-tx-mute'}`}>
- {l ?? '—'}
- </span>
+ <View style={{ marginBottom: 24 }}>
+ <Text style={[ss.label, { color: theme.mute, marginBottom: 12 }]}>CYCLE A/B/C/D</Text>
+ <View style={[ss.row, { gap: 8 }]}>
+ {CYCLE_LETTERS.map(l => {
+ const active = cycleLetter === l;
+ return (
+ <Touch key={l ?? 'none'} onPress={() => setCycleLetter(l)} style={{ flex: 1, height: 48, borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: active ? theme.selected : Clr.white5, borderColor: active ? theme.selected : Clr.white5 }}>
+ <Text style={{ fontSize: 14, fontWeight: Fw.display, color: active ? '#000' : theme.mute }}>{l ?? '—'}</Text>
  </Touch>
- ))}
- </div>
- </div>
+ );
+ })}
+ </View>
+ </View>
 
- <div className="mb-6">
- <span className="awan-label mb-3 block">REPOS PAR DÉFAUT (sec)</span>
- <div className="flex flex-row items-center gap-3">
- <Touch onPress={() => setDefaultRestSec(Math.max(0, defaultRestSec - 15))} className="w-12 h-12 bg-white/5 flex items-center justify-center">
- <Minus size={16} className="text-awan-tx-mute" />
+ <View style={{ marginBottom: 24 }}>
+ <Text style={[ss.label, { color: theme.mute, marginBottom: 12 }]}>REPOS PAR DÉFAUT (sec)</Text>
+ <View style={[ss.row, { gap: 12 }]}>
+ <Touch onPress={() => setDefaultRestSec(Math.max(0, defaultRestSec - 15))} style={{ width: 48, height: 48, backgroundColor: Clr.white5, alignItems: 'center', justifyContent: 'center' }}>
+ <Minus size={16} color={theme.mute} />
  </Touch>
- <div className="flex-1 bg-awan-surface h-12 flex items-center justify-center">
- <span className="text-awan-gold font-mono font-bold text-lg">{defaultRestSec}s</span>
- </div>
- <Touch onPress={() => setDefaultRestSec(defaultRestSec + 15)} className="w-12 h-12 bg-white/5 flex items-center justify-center">
- <Plus size={16} className="text-awan-tx-mute" />
+ <View style={{ flex: 1, backgroundColor: theme.surface, height: 48, alignItems: 'center', justifyContent: 'center' }}>
+ <Text style={{ color: theme.selected, fontFamily: FontMono, fontWeight: Fw.value, fontSize: 18 }}>{defaultRestSec}s</Text>
+ </View>
+ <Touch onPress={() => setDefaultRestSec(defaultRestSec + 15)} style={{ width: 48, height: 48, backgroundColor: Clr.white5, alignItems: 'center', justifyContent: 'center' }}>
+ <Plus size={16} color={theme.mute} />
  </Touch>
- </div>
- </div>
+ </View>
+ </View>
 
- <div className="mb-6">
+ <View style={{ marginBottom: 24 }}>
  <Heading level={4} mono subtitle={`${exercises.length} indexé(s)`}>EXERCICES</Heading>
  {exercises.length === 0 && (
- <div className="py-12 border-2 border-dashed border-white/5 items-center">
- <span className="text-awan-md font-bold text-awan-tx-mute uppercase tracking-[0.2em] italic">Aucun exercice</span>
- </div>
+ <View style={{ paddingVertical: 48, borderWidth: 2, borderColor: Clr.white5, borderStyle: 'dashed', alignItems: 'center' }}>
+ <Text style={{ fontSize: Fs.md, fontWeight: Fw.value, color: theme.mute, textTransform: 'uppercase', letterSpacing: 2, fontStyle: 'italic' }}>Aucun exercice</Text>
+ </View>
  )}
- <StaggerList>
  {exercises.map((ex, idx) => (
- <StaggerItem key={ex.rid} className="mb-3">
- <Card className="p-4 bg-white/5" variant="flat">
- <div className="flex flex-row items-start justify-between mb-3">
- <div className="flex-1">
- <span className="text-sm font-bold text-awan-tx uppercase tracking-tight block">{ex.name}</span>
- <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-widest">
- {MUSCLES[ex.primaryMuscle ?? '']} • {ex.equipment}
- </span>
- </div>
- <div className="flex flex-row items-center gap-2">
- <Touch onPress={() => {
- const full = searchExercises('').find(e => e.id === ex.exerciseId);
- if (full) setViewingEx(full);
- }} className="w-8 h-8 bg-white/5 flex items-center justify-center border border-white/10">
- <Info size={14} className="text-awan-tx-mute" />
+ <View key={ex.rid} style={{ marginBottom: 12 }}>
+ <Card variant="flat" style={{ padding: 16, backgroundColor: Clr.white5 }}>
+ <View style={[ss.rowBetween, { alignItems: 'flex-start', marginBottom: 12 }]}>
+ <View style={{ flex: 1 }}>
+ <Text style={{ fontSize: 14, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', letterSpacing: -0.35, fontFamily: FontSans }}>{ex.name}</Text>
+ <Text style={[ss.sm, { color: theme.mute }]}>{MUSCLES[ex.primaryMuscle ?? '']} • {ex.equipment}</Text>
+ </View>
+ <View style={[ss.row, { gap: 8 }]}>
+ <Touch onPress={() => { const full = searchExercises('').find(e => e.id === ex.exerciseId); if (full) setViewingEx(full); }} style={{ width: 32, height: 32, backgroundColor: Clr.white5, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Clr.white10 }}>
+ <Info size={14} color={theme.mute} />
  </Touch>
  <Touch onPress={() => removeExercise(idx)}>
- <Trash2 size={16} className="text-awan-status-error/40" />
+ <Trash2 size={16} color={`${theme.danger}66`} />
  </Touch>
- </div>
- </div>
- <div className="grid grid-cols-3 gap-2">
- <NumField
- label="SETS"
- value={ex.plannedSets}
- onChange={v => updateExercise(idx, { plannedSets: v })}
- step={1}
- min={1}
- />
- <NumField
- label="REPS"
- value={ex.plannedReps}
- onChange={v => updateExercise(idx, { plannedReps: v })}
- step={1}
- min={1}
- />
- <NumField
- label="REPOS (s)"
- value={ex.restSec}
- onChange={v => updateExercise(idx, { restSec: v })}
- step={15}
- min={0}
- />
- </div>
+ </View>
+ </View>
+ <View style={[ss.row, { gap: 8 }]}>
+ <NumField label="SETS" value={ex.plannedSets} onChange={v => updateExercise(idx, { plannedSets: v })} step={1} min={1} />
+ <NumField label="REPS" value={ex.plannedReps} onChange={v => updateExercise(idx, { plannedReps: v })} step={1} min={1} />
+ <NumField label="REPOS (s)" value={ex.restSec} onChange={v => updateExercise(idx, { restSec: v })} step={15} min={0} />
+ </View>
  </Card>
- </StaggerItem>
+ </View>
  ))}
- </StaggerList>
- <Touch
- className="mt-4 h-14 bg-white/5 border border-dashed border-awan-gold/40 flex items-center justify-center"
- onPress={() => { void loadExerciseCatalog().then(() => setIsPicking(true)); }}
- >
- <div className="flex flex-row items-center gap-3">
- <Plus size={18} className="text-awan-gold" />
- <span className="awan-label text-awan-gold">AJOUTER UN EXERCICE</span>
- </div>
+ <Touch style={{ marginTop: 16, height: 56, backgroundColor: Clr.white5, borderWidth: 1, borderColor: `${theme.selected}66`, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' }} onPress={() => { void loadExerciseCatalog().then(() => setIsPicking(true)); }}>
+ <View style={[ss.row, { gap: 12 }]}>
+ <Plus size={18} color={theme.selected} />
+ <Text style={[ss.label, { color: theme.selected }]}>AJOUTER UN EXERCICE</Text>
+ </View>
  </Touch>
- </div>
+ </View>
  </ScrollView>
 
- <ExercisePicker
- visible={isPicking}
- onClose={() => setIsPicking(false)}
- onPick={addExercise}
- onViewDetail={setViewingEx}
- />
+ <ExercisePicker visible={isPicking} onClose={() => setIsPicking(false)} onPick={addExercise} onViewDetail={setViewingEx} />
  <ExerciseDetail exercise={viewingEx} onClose={() => setViewingEx(null)} />
- </div>
+ </View>
  );
 }
 
-function NumField({
- label,
- value,
- onChange,
- step,
- min,
-}: {
- label: string;
- value: number;
- onChange: (v: number) => void;
- step: number;
- min: number;
-}) {
+function NumField({ label, value, onChange, step, min }: { label: string; value: number; onChange: (v: number) => void; step: number; min: number }) {
+ const theme = useTheme();
  return (
- <div>
- <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-widest mb-1 block">{label}</span>
- <div className="flex flex-row items-center gap-1">
- <Touch onPress={() => onChange(Math.max(min, value - step))} className="w-8 h-10 bg-awan-surface flex items-center justify-center">
- <Minus size={12} className="text-awan-tx-mute" />
+ <View style={{ flex: 1 }}>
+ <Text style={[ss.sm, { color: theme.mute, marginBottom: 4 }]}>{label}</Text>
+ <View style={[ss.row, { gap: 4 }]}>
+ <Touch onPress={() => onChange(Math.max(min, value - step))} style={{ width: 32, height: 40, backgroundColor: theme.surface, alignItems: 'center', justifyContent: 'center' }}>
+ <Minus size={12} color={theme.mute} />
  </Touch>
- <div className="flex-1 bg-awan-surface h-10 flex items-center justify-center">
- <span className="text-awan-tx font-mono font-bold text-sm">{value}</span>
- </div>
- <Touch onPress={() => onChange(value + step)} className="w-8 h-10 bg-awan-surface flex items-center justify-center">
- <Plus size={12} className="text-awan-tx-mute" />
+ <View style={{ flex: 1, backgroundColor: theme.surface, height: 40, alignItems: 'center', justifyContent: 'center' }}>
+ <Text style={{ color: theme.title, fontFamily: FontMono, fontWeight: Fw.value, fontSize: 14 }}>{value}</Text>
+ </View>
+ <Touch onPress={() => onChange(value + step)} style={{ width: 32, height: 40, backgroundColor: theme.surface, alignItems: 'center', justifyContent: 'center' }}>
+ <Plus size={12} color={theme.mute} />
  </Touch>
- </div>
- </div>
+ </View>
+ </View>
  );
 }
 
-// ─── Exercise Picker ────────────────────────────────────────────────────────
-
-// ─── Routine card (memoized to prevent re-renders on unrelated state changes) ─
+// ─── Routine card ─────────────────────────────────────────────────────────────
 
 interface RoutineCardProps {
   routine: RoutineLatest;
@@ -1211,75 +1098,66 @@ const RoutineCard = React.memo(function RoutineCard({
 }: RoutineCardProps) {
   const theme = useTheme();
   return (
-    <Card className="p-6 bg-awan-surface" onPress={() => onStart(r)}>
-      <div className="flex flex-row justify-between items-center mb-2">
-        <span className="text-lg font-bold text-awan-tx uppercase tracking-tight flex-1">{r.name}</span>
-        <div className="flex flex-row gap-2">
-          <Touch onPress={(e: any) => { e.stopPropagation(); onEdit(r); }}>
-            <Info size={16} className="text-awan-tx-mute" />
+    <Card style={{ padding: 24, backgroundColor: theme.surface }} onPress={() => onStart(r)}>
+      <View style={[ss.rowBetween, { marginBottom: 8 }]}>
+        <Text style={{ fontSize: 18, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', letterSpacing: -0.45, flex: 1, fontFamily: FontSans }}>{r.name}</Text>
+        <View style={[ss.row, { gap: 8 }]}>
+          <Touch onPress={(e: any) => { e?.stopPropagation?.(); onEdit(r); }}>
+            <Info size={16} color={theme.mute} />
           </Touch>
           {isConfirmingDelete ? (
-            <div className="flex flex-row items-center gap-2">
-              <Touch onPress={(e: any) => { e.stopPropagation(); onDeleteExecute(r.id); }}>
-                <span style={{ color: theme.danger, fontSize: 11, fontWeight: 900, letterSpacing: '0.1em' }}>SUPPR</span>
+            <View style={[ss.row, { gap: 8 }]}>
+              <Touch onPress={(e: any) => { e?.stopPropagation?.(); onDeleteExecute(r.id); }}>
+                <Text style={{ color: theme.danger, fontSize: 11, fontWeight: Fw.display, letterSpacing: 1.1 }}>SUPPR</Text>
               </Touch>
-              <Touch onPress={(e: any) => { e.stopPropagation(); onDeleteCancel(); }}>
-                <X size={14} className="text-awan-tx-mute" />
+              <Touch onPress={(e: any) => { e?.stopPropagation?.(); onDeleteCancel(); }}>
+                <X size={14} color={theme.mute} />
               </Touch>
-            </div>
+            </View>
           ) : (
-            <Touch onPress={(e: any) => { e.stopPropagation(); onDeleteRequest(r); }}>
-              <Trash2 size={16} className="text-white/20" />
+            <Touch onPress={(e: any) => { e?.stopPropagation?.(); onDeleteRequest(r); }}>
+              <Trash2 size={16} color={Clr.white20} />
             </Touch>
           )}
-        </div>
-      </div>
-      <div className="flex flex-row items-center gap-3">
+        </View>
+      </View>
+      <View style={[ss.row, { gap: 12 }]}>
         {r.cycleLetter && (
-          <div className="bg-awan-gold/10 px-2 py-0.5 rounded border border-awan-gold/20">
-            <span className="text-awan-sm font-black text-awan-gold tracking-widest">CYCLE {r.cycleLetter}</span>
-          </div>
+          <View style={{ backgroundColor: Clr.gold10, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: Clr.gold20 }}>
+            <Text style={{ fontSize: Fs.sm, fontWeight: Fw.display, color: theme.selected, letterSpacing: Ls.sm_02, fontFamily: FontMono }}>CYCLE {r.cycleLetter}</Text>
+          </View>
         )}
-        <div className="bg-white/5 px-2 py-0.5 rounded">
-          <span className="text-awan-sm font-black text-awan-tx-mute tracking-widest">{r.exercises.length} EX</span>
-        </div>
-      </div>
-      <div className="absolute right-6 bottom-6 w-10 h-10 bg-awan-gold/20 flex items-center justify-center border border-awan-gold/20">
-        <Play size={18} className="text-awan-gold" strokeWidth={3} />
-      </div>
+        <View style={{ backgroundColor: Clr.white5, paddingHorizontal: 8, paddingVertical: 2 }}>
+          <Text style={{ fontSize: Fs.sm, fontWeight: Fw.display, color: theme.mute, letterSpacing: Ls.sm_02, fontFamily: FontMono }}>{r.exercises.length} EX</Text>
+        </View>
+      </View>
+      <View style={{ position: 'absolute', right: 24, bottom: 24, width: 40, height: 40, backgroundColor: Clr.gold20, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Clr.gold20 }}>
+        <Play size={18} color={theme.selected} strokeWidth={3} />
+      </View>
     </Card>
   );
 });
 
 const MuscleFilterButton = React.memo(function MuscleFilterButton({
-  muscleId,
-  label,
-  isActive,
-  onPress,
+  muscleId, label, isActive, onPress,
 }: { muscleId: string; label: string; isActive: boolean; onPress: (id: string) => void }) {
+  const theme = useTheme();
   return (
-    <Touch
-      onPress={() => onPress(muscleId)}
-      className={`px-4 py-2 border transition-all ${isActive ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'}`}
-    >
-      <span className={`text-awan-md font-black uppercase tracking-widest ${isActive ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
-        {label}
-      </span>
+    <Touch onPress={() => onPress(muscleId)} style={{ paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, backgroundColor: isActive ? Clr.gold20 : Clr.white5, borderColor: isActive ? theme.selected : Clr.white5 }}>
+      <Text style={[ss.mdBlack, { color: isActive ? theme.selected : theme.mute }]}>{label}</Text>
     </Touch>
   );
 });
 
 function ExercisePicker({
- visible,
- onClose,
- onPick,
- onViewDetail,
+ visible, onClose, onPick, onViewDetail,
 }: {
  visible: boolean;
  onClose: () => void;
  onPick: (ex: ExerciseEntry) => void;
  onViewDetail?: (ex: ExerciseEntry) => void;
 }) {
+ const theme = useTheme();
  const [search, setSearch] = useState('');
  const [filterMuscle, setFilterMuscle] = useState<string | null>(null);
  const handleMusclePress = useCallback((id: string) => setFilterMuscle(id), []);
@@ -1291,90 +1169,61 @@ function ExercisePicker({
 
  return (
  <Modal visible={visible} animationType="slide" transparent>
- <div className="flex-1 bg-awan-bg">
- <div className="px-6 pt-12 pb-6 border-b border-white/5 bg-white/5">
- <div className="flex flex-row items-center justify-between mb-6">
- <Heading level={2} className="mb-0" subtitle="Free Exercise DB">CATALOGUE</Heading>
- <Touch onPress={() => { onClose(); setSearch(''); setFilterMuscle(null); }} className="w-10 h-10 bg-white/5 flex items-center justify-center">
- <X size={20} className="text-awan-tx-mute" />
+ <View style={{ flex: 1, backgroundColor: theme.bg }}>
+ <View style={[ss.topBar, { backgroundColor: Clr.white5 }]}>
+ <View style={[ss.rowBetween, { marginBottom: 24 }]}>
+ <Heading level={2} style={{ marginBottom: 0 }} subtitle="Free Exercise DB">CATALOGUE</Heading>
+ <Touch onPress={() => { onClose(); setSearch(''); setFilterMuscle(null); }} style={ss.iconBtn}>
+ <X size={20} color={theme.mute} />
  </Touch>
- </div>
+ </View>
 
- <Card className="p-0 border-white/5 bg-white/5 overflow-hidden mb-4">
- <div className="flex flex-row items-center px-4 py-1">
- <Search size={16} className="text-awan-tx-mute mr-3" />
- <TextInput
- className="flex-1 h-12 text-sm font-bold text-awan-tx outline-none bg-transparent"
- placeholder="Rechercher..."
- placeholderTextColor="rgba(255,255,255,0.2)"
- value={search}
- onChangeText={setSearch}
- />
- </div>
- </Card>
+ <View style={[ss.row, { backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white5, paddingHorizontal: 16, paddingVertical: 4, marginBottom: 16 }]}>
+ <Search size={16} color={theme.mute} style={{ marginRight: 12 }} />
+ <TextInput style={{ flex: 1, height: 48, fontSize: 14, fontWeight: Fw.value, color: theme.title, backgroundColor: 'transparent', fontFamily: FontSans }} placeholder="Rechercher..." placeholderTextColor="rgba(255,255,255,0.2)" value={search} onChangeText={setSearch} />
+ </View>
 
  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', gap: 8 }}>
- <Touch
- onPress={() => setFilterMuscle(null)}
- className={`px-4 py-2 border transition-all ${
- !filterMuscle ? 'bg-awan-gold/20 border-awan-gold' : 'bg-white/5 border-white/5'
- }`}
- >
- <span className={`text-awan-md font-black uppercase tracking-widest ${!filterMuscle ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>Tous</span>
+ <Touch onPress={() => setFilterMuscle(null)} style={{ paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, backgroundColor: !filterMuscle ? Clr.gold20 : Clr.white5, borderColor: !filterMuscle ? theme.selected : Clr.white5 }}>
+ <Text style={[ss.mdBlack, { color: !filterMuscle ? theme.selected : theme.mute }]}>Tous</Text>
  </Touch>
  {Object.entries(MUSCLES).map(([id, label]) => (
- <MuscleFilterButton
-   key={id}
-   muscleId={id}
-   label={label}
-   isActive={filterMuscle === id}
-   onPress={handleMusclePress}
- />
+ <MuscleFilterButton key={id} muscleId={id} label={label} isActive={filterMuscle === id} onPress={handleMusclePress} />
  ))}
  </ScrollView>
- </div>
+ </View>
 
  <FlatList
  data={results}
  keyExtractor={(item: ExerciseEntry) => item.id}
- className="flex-1"
+ style={{ flex: 1 }}
  contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
  renderItem={({ item: ex }: { item: ExerciseEntry }) => (
- <Card className="flex-row items-center gap-3 py-4 px-5 bg-white/5 mb-3" variant="flat" onPress={() => onPick(ex)}>
- <div className="flex-1">
- <span className="text-base font-bold text-awan-tx uppercase tracking-tight block">{ex.n}</span>
- <span className="text-awan-md font-bold text-awan-tx-mute uppercase tracking-widest">
- {MUSCLES[ex.pm[0] ?? '']} • {ex.eq}
- </span>
- </div>
+ <Card variant="flat" style={[ss.row, { gap: 12, paddingVertical: 16, paddingHorizontal: 20, backgroundColor: Clr.white5, marginBottom: 12 }]} onPress={() => onPick(ex)}>
+ <View style={{ flex: 1 }}>
+ <Text style={{ fontSize: 16, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', letterSpacing: -0.4, fontFamily: FontSans }}>{ex.n}</Text>
+ <Text style={[ss.mdBlack, { color: theme.mute }]}>{MUSCLES[ex.pm[0] ?? '']} • {ex.eq}</Text>
+ </View>
  {onViewDetail && (
- <Touch
- onPress={(e: any) => { e.stopPropagation?.(); onViewDetail(ex); }}
- className="w-9 h-9 bg-white/5 flex items-center justify-center border border-white/10"
- >
- <Info size={16} className="text-awan-tx-mute" />
+ <Touch onPress={(e: any) => { e?.stopPropagation?.(); onViewDetail(ex); }} style={{ width: 36, height: 36, backgroundColor: Clr.white5, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Clr.white10 }}>
+ <Info size={16} color={theme.mute} />
  </Touch>
  )}
- <div className="w-9 h-9 bg-awan-gold/20 flex items-center justify-center border border-awan-gold/30">
- <Plus size={18} className="text-awan-gold" />
- </div>
+ <View style={{ width: 36, height: 36, backgroundColor: Clr.gold20, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Clr.gold30 }}>
+ <Plus size={18} color={theme.selected} />
+ </View>
  </Card>
  )}
  />
- </div>
+ </View>
  </Modal>
  );
 }
 
 // ─── Exercise Detail Modal ──────────────────────────────────────────────────
 
-function ExerciseDetail({
- exercise,
- onClose,
-}: {
- exercise: ExerciseEntry | null;
- onClose: () => void;
-}) {
+function ExerciseDetail({ exercise, onClose }: { exercise: ExerciseEntry | null; onClose: () => void }) {
+ const theme = useTheme();
  if (!exercise) return null;
  const musclePrimary = exercise.pm.map(m => MUSCLES[m] ?? m).join(', ');
  const muscleSecondary = exercise.sm?.map((m: string) => MUSCLES[m] ?? m).join(', ');
@@ -1382,72 +1231,44 @@ function ExerciseDetail({
  const forceMap: Record<string, string> = { pull: 'Tiré', push: 'Poussé', static: 'Statique' };
  const catMap: Record<string, string> = { strength: 'Force', stretching: 'Étirement', cardio: 'Cardio', plyometrics: 'Pliométrie', powerlifting: 'Force max', strongman: 'Homme fort', olympic_weightlifting: 'Haltérophilie' };
 
+ const Badge = ({ children, gold }: { children: React.ReactNode; gold?: boolean }) => (
+ <View style={{ backgroundColor: gold ? Clr.gold10 : Clr.white5, borderWidth: 1, borderColor: gold ? Clr.gold20 : Clr.white10, paddingHorizontal: 12, paddingVertical: 6 }}>
+ <Text style={[ss.mdBlack, { color: gold ? theme.selected : theme.mute }]}>{children}</Text>
+ </View>
+ );
+
  return (
  <Modal visible={true} transparent animationType="fade" onRequestClose={onClose}>
- <div
- className="flex-1 flex justify-center items-end"
- style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}
- onClick={onClose}
- >
- <motion.div
- initial={{ opacity: 0, y: 40 }}
- animate={{ opacity: 1, y: 0 }}
- transition={{ duration: 0.25, ease: 'easeOut' }}
- className="w-full bg-awan-surface rounded-t-3xl border-t border-white/10 overflow-hidden"
- style={{ maxHeight: '75vh' }}
- onClick={(e: any) => e.stopPropagation()}
- >
- {/* Handle */}
- <div className="flex justify-center pt-3 pb-1">
- <div className="w-10 h-1 bg-white/20 " />
- </div>
-
- {/* Header */}
- <div className="px-6 pb-4 border-b border-white/5 flex flex-row items-start justify-between">
- <div className="flex-1 pr-4">
- <span className="awan-label text-awan-gold mb-1 block">{musclePrimary.toUpperCase()}</span>
- <span className="text-xl font-bold text-awan-tx uppercase tracking-tight">{exercise.n}</span>
- </div>
- <Touch onPress={onClose} className="w-9 h-9 bg-white/5 flex items-center justify-center mt-1">
- <X size={18} className="text-awan-tx-mute" />
+ <View style={[ss.sheetOverlay, { backgroundColor: 'rgba(0,0,0,0.75)' }]}>
+ <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+ <View style={[ss.sheet, { backgroundColor: theme.surface, maxHeight: '75%' }]}>
+ <View style={ss.grabberWrap}><View style={ss.grabber} /></View>
+ <View style={[ss.rowBetween, { alignItems: 'flex-start', paddingHorizontal: 24, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: Clr.white5 }]}>
+ <View style={{ flex: 1, paddingRight: 16 }}>
+ <Text style={[ss.label, { color: theme.selected, marginBottom: 4 }]}>{musclePrimary.toUpperCase()}</Text>
+ <Text style={{ fontSize: 20, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', letterSpacing: -0.4, fontFamily: FontSans }}>{exercise.n}</Text>
+ </View>
+ <Touch onPress={onClose} style={{ width: 36, height: 36, backgroundColor: Clr.white5, alignItems: 'center', justifyContent: 'center', marginTop: 4 }}>
+ <X size={18} color={theme.mute} />
  </Touch>
- </div>
+ </View>
 
  <ScrollView style={{ maxHeight: 400 }} contentContainerStyle={{ padding: 24, paddingBottom: 40 }}>
- {/* Badges */}
- <div className="flex flex-row flex-wrap gap-2 mb-6">
- {exercise.eq && (
- <div className="bg-white/5 border border-white/10 px-3 py-1.5 ">
- <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest">{exercise.eq}</span>
- </div>
- )}
- {exercise.lvl && (
- <div className="bg-white/5 border border-white/10 px-3 py-1.5 ">
- <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest">{levelMap[exercise.lvl] ?? exercise.lvl}</span>
- </div>
- )}
- {exercise.cat && (
- <div className="bg-awan-gold/10 border border-awan-gold/20 px-3 py-1.5 ">
- <span className="text-awan-md font-black text-awan-gold uppercase tracking-widest">{catMap[exercise.cat] ?? exercise.cat}</span>
- </div>
- )}
- {exercise.force && (
- <div className="bg-white/5 border border-white/10 px-3 py-1.5 ">
- <span className="text-awan-md font-black text-awan-tx-mute uppercase tracking-widest">{forceMap[exercise.force] ?? exercise.force}</span>
- </div>
- )}
- </div>
-
- {/* Muscles secondaires */}
+ <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+ {exercise.eq && <Badge>{exercise.eq}</Badge>}
+ {exercise.lvl && <Badge>{levelMap[exercise.lvl] ?? exercise.lvl}</Badge>}
+ {exercise.cat && <Badge gold>{catMap[exercise.cat] ?? exercise.cat}</Badge>}
+ {exercise.force && <Badge>{forceMap[exercise.force] ?? exercise.force}</Badge>}
+ </View>
  {muscleSecondary && (
- <div className="mb-5">
- <span className="awan-label mb-2 block">MUSCLES SECONDAIRES</span>
- <span className="text-sm font-bold text-awan-tx">{muscleSecondary}</span>
- </div>
+ <View style={{ marginBottom: 20 }}>
+ <Text style={[ss.label, { color: theme.mute, marginBottom: 8 }]}>MUSCLES SECONDAIRES</Text>
+ <Text style={{ fontSize: 14, fontWeight: Fw.value, color: theme.title, fontFamily: FontSans }}>{muscleSecondary}</Text>
+ </View>
  )}
  </ScrollView>
- </motion.div>
- </div>
+ </View>
+ </View>
  </Modal>
  );
 }
@@ -1460,64 +1281,41 @@ function RestRing({ remaining, total }: { remaining: number; total: number }) {
  const circ = 2 * Math.PI * r;
  const pct = total > 0 ? remaining / total : 0;
  return (
- <svg width={36} height={36} viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
- <circle cx={18} cy={18} r={r} fill="none" stroke={theme.borderSoft} strokeWidth={2.5} />
- <circle
- cx={18} cy={18} r={r} fill="none"
- stroke={theme.statusWarn}
- strokeWidth={2.5}
- strokeDasharray={`${circ * pct} ${circ}`}
- strokeLinecap="round"
- />
- </svg>
+ <View style={{ width: 36, height: 36, flexShrink: 0, transform: [{ rotate: '-90deg' }] }}>
+ <Svg width={36} height={36} viewBox="0 0 36 36">
+ <SvgCircle cx={18} cy={18} r={r} fill="none" stroke={theme.borderSoft} strokeWidth={2.5} />
+ <SvgCircle cx={18} cy={18} r={r} fill="none" stroke={theme.statusWarn} strokeWidth={2.5} strokeDasharray={`${circ * pct} ${circ}`} strokeLinecap="round" />
+ </Svg>
+ </View>
  );
 }
 
-function ChronoOverlay({
- timer,
- restRemaining,
- restTotal,
- routineName,
-}: {
- timer: number;
- restRemaining: number;
- restTotal: number;
- routineName: string;
-}) {
+function ChronoOverlay({ timer, restRemaining, restTotal, routineName }: { timer: number; restRemaining: number; restTotal: number; routineName: string }) {
  const theme = useTheme();
  const isResting = restRemaining > 0;
  return (
- <div
- style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 80, backdropFilter: 'blur(12px)' }}
- className="bg-awan-bg/90 border-b border-awan-gold/10"
- >
- <div className="flex flex-row items-center px-5 py-2 gap-4">
- <div className="flex flex-row items-center gap-2 flex-1">
- <Clock size={11} className="text-awan-tx-mute" />
- <span className="text-sm font-mono font-bold text-awan-gold tracking-widest tabular-nums">{formatTime(timer)}</span>
- </div>
+ <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 80, backgroundColor: theme.bg, borderBottomWidth: 1, borderBottomColor: Clr.gold10 }}>
+ <View style={[ss.row, { paddingHorizontal: 20, paddingVertical: 8, gap: 16 }]}>
+ <View style={[ss.row, { gap: 8, flex: 1 }]}>
+ <Clock size={11} color={theme.mute} />
+ <Text style={{ fontSize: 14, fontFamily: FontMono, fontWeight: Fw.value, color: theme.selected, letterSpacing: 1.4 }}>{formatTime(timer)}</Text>
+ </View>
  {isResting && (
- <div className="flex flex-row items-center gap-2">
+ <View style={[ss.row, { gap: 8 }]}>
  <RestRing remaining={restRemaining} total={restTotal} />
- <span className="text-sm font-mono font-bold tracking-widest tabular-nums" style={{ color: theme.statusWarn }}>
- {formatTime(restRemaining)}
- </span>
- </div>
+ <Text style={{ fontSize: 14, fontFamily: FontMono, fontWeight: Fw.value, letterSpacing: 1.4, color: theme.statusWarn }}>{formatTime(restRemaining)}</Text>
+ </View>
  )}
- <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest max-w-[100px] truncate">{routineName}</span>
- </div>
- </div>
+ <Text numberOfLines={1} style={[ss.xs, { color: theme.mute, maxWidth: 100 }]}>{routineName}</Text>
+ </View>
+ </View>
  );
 }
 
 // ─── Active Workout ─────────────────────────────────────────────────────────
 
 function ActiveWorkout({
- session,
- timer,
- onUpdate,
- onFinishRequest,
- onAbort,
+ session, timer, onUpdate, onFinishRequest, onAbort,
 }: {
  session: ActiveSession;
  timer: number;
@@ -1557,10 +1355,7 @@ function ActiveWorkout({
  onUpdate(s => {
  const exercises = s.exercises.map((ex, i) => {
  if (i !== exIdx) return ex;
- return {
- ...ex,
- sets: ex.sets.map((set, j) => (j !== setIdx ? set : { ...set, ...patch })),
- };
+ return { ...ex, sets: ex.sets.map((set, j) => (j !== setIdx ? set : { ...set, ...patch })) };
  });
  return { ...s, exercises };
  });
@@ -1584,15 +1379,13 @@ function ActiveWorkout({
  try {
  const stored = loadBestOneRMs();
  stored[ex.exerciseId] = oneRM;
- localStorage.setItem(BEST_ONERMS_KEY, JSON.stringify(stored));
+ safeStorage.set(BEST_ONERMS_KEY, JSON.stringify(stored));
  } catch { /* ignore */ }
  }
  }
 
  const exercises = s.exercises.map((e, i) =>
- i !== exIdx
- ? e
- : { ...e, sets: e.sets.map((st, j) => j !== setIdx ? st : { ...st, completed: true, completedAt: Date.now(), isPR }) },
+ i !== exIdx ? e : { ...e, sets: e.sets.map((st, j) => j !== setIdx ? st : { ...st, completed: true, completedAt: Date.now(), isPR }) },
  );
  const restEndAt = Date.now() + ex.restSec * 1000;
  return { ...s, exercises, restEndAt, bestOneRMs: newBestOneRMs };
@@ -1606,17 +1399,7 @@ function ActiveWorkout({
  const last = ex.sets[ex.sets.length - 1];
  return {
  ...ex,
- sets: [
- ...ex.sets,
- {
- kind: 'working' as SetKind,
- weightKg: last?.weightKg,
- reps: last?.reps,
- rir: undefined,
- completed: false,
- index: ex.sets.length,
- },
- ],
+ sets: [...ex.sets, { kind: 'working' as SetKind, weightKg: last?.weightKg, reps: last?.reps, rir: undefined, completed: false, index: ex.sets.length }],
  };
  });
  return { ...s, exercises };
@@ -1645,127 +1428,95 @@ function ActiveWorkout({
  }, [onUpdate]);
 
  if (session.stage === 'arrived') {
- return (
- <PreWorkout
- session={session}
- onUpdate={onUpdate}
- onStart={startWorkoutPhase}
- onAbort={onAbort}
- />
- );
+ return <PreWorkout session={session} onUpdate={onUpdate} onStart={startWorkoutPhase} onAbort={onAbort} />;
  }
 
- return (
- <div className="flex-1 bg-awan-bg">
- <ChronoOverlay
- timer={timer}
- restRemaining={restRemaining}
- restTotal={session.exercises[session.currentExerciseIdx]?.restSec ?? 90}
- routineName={session.routineName}
- />
- <div style={{ paddingTop: 44 }} className="px-6 pt-12 pb-6 border-b border-white/5 bg-white/10">
- <div className="flex flex-row justify-between items-center mb-6">
- <div className="flex-1">
- <span className="awan-label text-awan-gold mb-1 block">SÉANCE EN COURS</span>
- <Heading level={2} className="mb-0 uppercase">{session.routineName}</Heading>
- </div>
- <Touch onPress={onFinishRequest} className="bg-awan-gold px-5 py-3 ">
- <span className="awan-label text-black font-black">TERMINER</span>
- </Touch>
- </div>
+ const restTotal = session.exercises[session.currentExerciseIdx]?.restSec ?? 90;
 
- <div className="grid grid-cols-2 gap-3">
- <Card className="flex-row items-center justify-center py-3 bg-awan-surface border-awan-gold/20">
- <Clock size={16} className="text-awan-gold mr-2" />
- <span className="text-xl font-mono font-bold text-awan-gold tracking-widest tabular-nums">{formatTime(timer)}</span>
+ return (
+ <View style={{ flex: 1, backgroundColor: theme.bg }}>
+ <ChronoOverlay timer={timer} restRemaining={restRemaining} restTotal={restTotal} routineName={session.routineName} />
+ <View style={{ paddingTop: 44, paddingHorizontal: 24, paddingBottom: 24, borderBottomWidth: 1, borderBottomColor: Clr.white5, backgroundColor: Clr.white10 }}>
+ <View style={[ss.rowBetween, { marginBottom: 24, marginTop: 32 }]}>
+ <View style={{ flex: 1 }}>
+ <Text style={[ss.label, { color: theme.selected, marginBottom: 4 }]}>SÉANCE EN COURS</Text>
+ <Heading level={2} style={{ marginBottom: 0 }}>{session.routineName}</Heading>
+ </View>
+ <Touch onPress={onFinishRequest} style={{ backgroundColor: theme.selected, paddingHorizontal: 20, paddingVertical: 12 }}>
+ <Text style={[ss.label, { color: '#000' }]}>TERMINER</Text>
+ </Touch>
+ </View>
+
+ <View style={[ss.row, { gap: 12 }]}>
+ <Card style={[ss.row, { flex: 1, justifyContent: 'center', paddingVertical: 12, backgroundColor: theme.surface, borderColor: Clr.gold20 }]}>
+ <Clock size={16} color={theme.selected} style={{ marginRight: 8 }} />
+ <Text style={{ fontSize: 20, fontFamily: FontMono, fontWeight: Fw.value, color: theme.selected, letterSpacing: 1.8 }}>{formatTime(timer)}</Text>
  </Card>
- <Card className={`flex-row items-center justify-center gap-2 py-3 bg-awan-surface ${restRemaining > 0 ? 'border-awan-status-warn/30' : 'border-white/5'}`}>
+ <Card style={[ss.row, { flex: 1, justifyContent: 'center', gap: 8, paddingVertical: 12, backgroundColor: theme.surface, borderColor: restRemaining > 0 ? `${theme.statusWarn}4D` : Clr.white5 }]}>
  {restRemaining > 0
- ? <RestRing remaining={restRemaining} total={session.exercises[session.currentExerciseIdx]?.restSec ?? 90} />
- : <Timer size={16} className="text-awan-tx-mute" />
+ ? <RestRing remaining={restRemaining} total={restTotal} />
+ : <Timer size={16} color={theme.mute} />
  }
- <span className={`text-xl font-mono font-bold tracking-widest tabular-nums ${restRemaining > 0 ? 'text-awan-status-warn' : 'text-awan-tx-mute'}`}>
- {formatTime(restRemaining)}
- </span>
+ <Text style={{ fontSize: 20, fontFamily: FontMono, fontWeight: Fw.value, letterSpacing: 1.8, color: restRemaining > 0 ? theme.statusWarn : theme.mute }}>{formatTime(restRemaining)}</Text>
  {restRemaining > 0 && (
- <Touch onPress={skipRest} className="ml-1 px-2 py-1 bg-white/10 rounded">
- <span className="text-awan-sm font-black text-awan-tx tracking-widest">PASSER</span>
+ <Touch onPress={skipRest} style={{ marginLeft: 4, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: Clr.white10 }}>
+ <Text style={{ fontSize: Fs.sm, fontWeight: Fw.display, color: theme.title, letterSpacing: Ls.sm_02 }}>PASSER</Text>
  </Touch>
  )}
  </Card>
- </div>
- </div>
+ </View>
+ </View>
 
- <ScrollView contentContainerStyle={{ paddingBottom: 160, paddingHorizontal: 16, paddingVertical: 16, maxWidth: '100%' }} style={{ flex: 1, width: '100%', maxWidth: '100%' }}>
+ <ScrollView contentContainerStyle={{ paddingBottom: 160, paddingHorizontal: 16, paddingVertical: 16 }} style={{ flex: 1, width: '100%' }}>
  {session.exercises.map((ex, exIdx) => (
- <Card key={ex.rid} className="mb-6 p-3 border-white/10 bg-white/5">
- <div className="mb-4">
- <div className="flex flex-row items-start justify-between">
- <span className="text-base font-bold text-awan-tx uppercase tracking-tight flex-1">{ex.name}</span>
+ <Card key={ex.rid} style={{ marginBottom: 24, padding: 12, borderColor: Clr.white10, backgroundColor: Clr.white5 }}>
+ <View style={{ marginBottom: 16 }}>
+ <View style={[ss.rowBetween, { alignItems: 'flex-start' }]}>
+ <Text style={{ fontSize: 16, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', letterSpacing: -0.4, flex: 1, fontFamily: FontSans }}>{ex.name}</Text>
  {ex.sets.every(s => !s.completed) && (
- <Touch
- onPress={async () => {
-   await loadExerciseCatalog();
-   setSubstituteTarget({ exIdx, muscle: ex.primaryMuscle ?? '' });
- }}
- className="px-2 py-1 bg-white/5 border border-white/5 ml-2"
- >
- <span className="text-awan-xxs font-black text-awan-tx-mute tracking-widest uppercase">REMPLACER</span>
+ <Touch onPress={async () => { await loadExerciseCatalog(); setSubstituteTarget({ exIdx, muscle: ex.primaryMuscle ?? '' }); }} style={{ paddingHorizontal: 8, paddingVertical: 4, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white5, marginLeft: 8 }}>
+ <Text style={[ss.xxs, { color: theme.mute }]}>REMPLACER</Text>
  </Touch>
  )}
- </div>
- <span className="text-awan-sm font-bold text-awan-tx-mute uppercase tracking-widest">
- {MUSCLES[ex.primaryMuscle ?? '']} • {ex.equipment} • repos {ex.restSec}s
- </span>
- </div>
+ </View>
+ <Text style={[ss.sm, { color: theme.mute }]}>{MUSCLES[ex.primaryMuscle ?? '']} • {ex.equipment} • repos {ex.restSec}s</Text>
+ </View>
 
- <div className="flex flex-row mb-3 px-1 gap-1">
- <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest w-6 text-center">N°</span>
- <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest w-14 text-center">TYPE</span>
- <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest flex-1 text-center">KG</span>
- <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest flex-1 text-center">REPS</span>
- <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest w-8 text-center">RIR</span>
- <span className="w-8" />
- </div>
+ <View style={[ss.row, { marginBottom: 12, paddingHorizontal: 4, gap: 4 }]}>
+ <Text style={[ss.sm, { color: theme.mute, width: 24, textAlign: 'center' }]}>N°</Text>
+ <Text style={[ss.sm, { color: theme.mute, width: 56, textAlign: 'center' }]}>TYPE</Text>
+ <Text style={[ss.sm, { color: theme.mute, flex: 1, textAlign: 'center' }]}>KG</Text>
+ <Text style={[ss.sm, { color: theme.mute, flex: 1, textAlign: 'center' }]}>REPS</Text>
+ <Text style={[ss.sm, { color: theme.mute, width: 32, textAlign: 'center' }]}>RIR</Text>
+ <View style={{ width: 32 }} />
+ </View>
 
  {ex.sets.map((set, setIdx) => (
- <SetRow
- key={setIdx}
- set={set}
- index={setIdx}
- onChange={patch => updateSet(exIdx, setIdx, patch)}
- onComplete={() => completeSet(exIdx, setIdx)}
- />
+ <SetRow key={setIdx} set={set} index={setIdx} onChange={patch => updateSet(exIdx, setIdx, patch)} onComplete={() => completeSet(exIdx, setIdx)} />
  ))}
 
- <Touch
- className="mt-3 h-10 bg-white/5 border border-white/5 flex items-center justify-center"
- onPress={() => addSet(exIdx)}
- >
- <div className="flex flex-row items-center gap-2">
- <Plus size={12} className="text-awan-tx-mute" strokeWidth={3} />
- <span className="text-awan-sm font-black text-awan-tx-mute tracking-widest">AJOUTER UN SET</span>
- </div>
+ <Touch style={{ marginTop: 12, height: 40, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white5, alignItems: 'center', justifyContent: 'center' }} onPress={() => addSet(exIdx)}>
+ <View style={[ss.row, { gap: 8 }]}>
+ <Plus size={12} color={theme.mute} strokeWidth={3} />
+ <Text style={{ fontSize: Fs.sm, fontWeight: Fw.display, color: theme.mute, letterSpacing: Ls.sm_02 }}>AJOUTER UN SET</Text>
+ </View>
  </Touch>
  </Card>
  ))}
 
  {confirmAbandon ? (
- <div className="mt-6 py-4 flex flex-row items-center justify-center gap-4">
- <span style={{ color: theme.mute, fontSize: 11, fontWeight: 700, letterSpacing: '0.15em' }}>QUITTER SANS SAUVEGARDER ?</span>
+ <View style={[ss.row, { marginTop: 24, paddingVertical: 16, justifyContent: 'center', gap: 16 }]}>
+ <Text style={{ color: theme.mute, fontSize: 11, fontWeight: Fw.value, letterSpacing: 1.5 }}>QUITTER SANS SAUVEGARDER ?</Text>
  <Touch onPress={onAbort}>
- <span style={{ color: theme.danger, fontSize: 11, fontWeight: 900, letterSpacing: '0.1em' }}>OUI</span>
+ <Text style={{ color: theme.danger, fontSize: 11, fontWeight: Fw.display, letterSpacing: 1.1 }}>OUI</Text>
  </Touch>
  <Touch onPress={() => setConfirmAbandon(false)}>
- <span style={{ color: theme.mute, fontSize: 11, fontWeight: 700, letterSpacing: '0.1em' }}>NON</span>
+ <Text style={{ color: theme.mute, fontSize: 11, fontWeight: Fw.value, letterSpacing: 1.1 }}>NON</Text>
  </Touch>
- </div>
+ </View>
  ) : (
- <Touch
- className="mt-6 py-4 items-center"
- onPress={() => setConfirmAbandon(true)}
- >
- <span className="text-awan-md font-black text-awan-status-error uppercase tracking-[0.3em] opacity-50">ANNULER LA SÉANCE</span>
+ <Touch style={{ marginTop: 24, paddingVertical: 16, alignItems: 'center' }} onPress={() => setConfirmAbandon(true)}>
+ <Text style={{ fontSize: Fs.md, fontWeight: Fw.display, color: theme.danger, textTransform: 'uppercase', letterSpacing: 3, opacity: 0.5 }}>ANNULER LA SÉANCE</Text>
  </Touch>
  )}
  </ScrollView>
@@ -1773,146 +1524,78 @@ function ActiveWorkout({
  {/* S3: Substitution modal */}
  {substituteTarget && (
  <Modal visible={true} transparent animationType="slide">
- <div className="flex-1 flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}>
- <div className="w-full bg-awan-surface border-t border-white/10 rounded-t-3xl" style={{ maxHeight: '70vh' }}>
- <div className="px-6 pt-4 pb-3 border-b border-white/5 flex flex-row justify-between items-center">
- <span className="awan-label text-awan-gold">REMPLACER PAR...</span>
- <Touch onPress={() => setSubstituteTarget(null)} className="w-8 h-8 bg-white/5 flex items-center justify-center">
- <X size={14} className="text-awan-tx-mute" />
+ <View style={[ss.sheetOverlay, { backgroundColor: 'rgba(0,0,0,0.75)' }]}>
+ <View style={[ss.sheet, { backgroundColor: theme.surface, maxHeight: '70%' }]}>
+ <View style={[ss.rowBetween, { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: Clr.white5 }]}>
+ <Text style={[ss.label, { color: theme.selected }]}>REMPLACER PAR...</Text>
+ <Touch onPress={() => setSubstituteTarget(null)} style={{ width: 32, height: 32, backgroundColor: Clr.white5, alignItems: 'center', justifyContent: 'center' }}>
+ <X size={14} color={theme.mute} />
  </Touch>
- </div>
+ </View>
  <ScrollView style={{ flex: 1, maxHeight: 400 } as any} contentContainerStyle={{ padding: 16 }}>
  {searchExercises(substituteTarget.muscle).filter(ex => ex.pm[0] === substituteTarget.muscle || ex.pm.includes(substituteTarget.muscle)).slice(0, 20).map(ex => (
- <Touch
- key={ex.id}
- onPress={() => substituteExercise(substituteTarget.exIdx, ex)}
- className="mb-2 px-4 py-3 bg-white/5 border border-white/5 flex flex-row justify-between items-center"
- >
- <div className="flex-1">
- <span className="text-sm font-bold text-awan-tx uppercase tracking-tight block">{ex.n}</span>
- <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">{ex.eq}</span>
- </div>
- <span className="text-awan-xs font-black text-awan-gold uppercase tracking-widest ml-2">{MUSCLES[ex.pm[0] ?? ''] ?? ex.pm[0]}</span>
+ <Touch key={ex.id} onPress={() => substituteExercise(substituteTarget.exIdx, ex)} style={[ss.rowBetween, { marginBottom: 8, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white5 }]}>
+ <View style={{ flex: 1 }}>
+ <Text style={{ fontSize: 14, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', letterSpacing: -0.35, fontFamily: FontSans }}>{ex.n}</Text>
+ <Text style={[ss.xs, { color: theme.mute }]}>{ex.eq}</Text>
+ </View>
+ <Text style={[ss.xs, { color: theme.selected, marginLeft: 8 }]}>{MUSCLES[ex.pm[0] ?? ''] ?? ex.pm[0]}</Text>
  </Touch>
  ))}
  </ScrollView>
- </div>
- </div>
+ </View>
+ </View>
  </Modal>
  )}
- </div>
+ </View>
  );
 }
 
-function SetRow({
- set,
- index,
- onChange,
- onComplete,
-}: {
- set: ActiveSet;
- index: number;
- onChange: (patch: Partial<ActiveSet>) => void;
- onComplete: () => void;
-}) {
+function SetRow({ set, index, onChange, onComplete }: { set: ActiveSet; index: number; onChange: (patch: Partial<ActiveSet>) => void; onComplete: () => void }) {
  const theme = useTheme();
  const [kindMenu, setKindMenu] = useState(false);
  const completed = set.completed;
 
  return (
- <div className={`flex flex-row items-center gap-1 mb-2 ${completed ? 'opacity-50' : ''}`}>
- <div className="w-6 text-center">
- <span className="text-xs font-mono font-black text-awan-tx-mute">{index + 1}</span>
- </div>
- <Touch onPress={() => setKindMenu(v => !v)} className="w-14 h-10 bg-awan-surface flex items-center justify-center relative">
- <span className={`text-awan-sm font-black tracking-widest ${SET_KIND_COLOR[set.kind]}`}>{SET_KIND_LABEL[set.kind]}</span>
+ <View style={[ss.row, { gap: 4, marginBottom: 8, opacity: completed ? 0.5 : 1 }]}>
+ <View style={{ width: 24, alignItems: 'center' }}>
+ <Text style={{ fontSize: 12, fontFamily: FontMono, fontWeight: Fw.display, color: theme.mute }}>{index + 1}</Text>
+ </View>
+ <View style={{ width: 56 }}>
+ <Touch onPress={() => setKindMenu(v => !v)} style={{ height: 40, backgroundColor: theme.surface, alignItems: 'center', justifyContent: 'center' }}>
+ <Text style={{ fontSize: Fs.sm, fontWeight: Fw.display, letterSpacing: Ls.sm_02, color: setKindColor(set.kind, theme) }}>{SET_KIND_LABEL[set.kind]}</Text>
+ </Touch>
  {kindMenu && (
- <div className="absolute top-full left-0 mt-1 bg-awan-surface border border-white/10 z-10 min-w-[100px]">
+ <View style={{ position: 'absolute', top: 42, left: 0, backgroundColor: theme.surface, borderWidth: 1, borderColor: Clr.white10, zIndex: 10, minWidth: 100 }}>
  {(['warmup', 'working', 'drop', 'failure'] as SetKind[]).map(k => (
- <Touch
- key={k}
- onPress={() => { onChange({ kind: k }); setKindMenu(false); }}
- className="px-3 py-2 hover:bg-white/5 border-b border-white/5 last:border-0"
- >
- <span className={`text-awan-sm font-black tracking-widest ${SET_KIND_COLOR[k]}`}>{SET_KIND_LABEL[k]}</span>
+ <Touch key={k} onPress={() => { onChange({ kind: k }); setKindMenu(false); }} style={{ paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Clr.white5 }}>
+ <Text style={{ fontSize: Fs.sm, fontWeight: Fw.display, letterSpacing: Ls.sm_02, color: setKindColor(k, theme) }}>{SET_KIND_LABEL[k]}</Text>
  </Touch>
  ))}
- </div>
+ </View>
  )}
- </Touch>
- <TextInput
- className="flex-1 bg-awan-surface border border-white/5 h-10 text-center text-awan-gold font-mono font-bold text-sm"
- keyboardType="decimal-pad"
- value={set.weightKg !== undefined ? String(set.weightKg) : ''}
- onChangeText={(v: string) => {
- const n = parseFloat(v.replace(',', '.'));
- onChange({ weightKg: isNaN(n) ? undefined : n });
- }}
- placeholder="0"
- placeholderTextColor="#3a3a3a"
- editable={!completed}
- />
- <TextInput
- className="flex-1 bg-awan-surface border border-white/5 h-10 text-center text-awan-tx font-mono font-bold text-sm"
- keyboardType="number-pad"
- value={set.reps !== undefined ? String(set.reps) : ''}
- onChangeText={(v: string) => {
- const n = parseInt(v, 10);
- onChange({ reps: isNaN(n) ? undefined : n });
- }}
- placeholder="0"
- placeholderTextColor="#3a3a3a"
- editable={!completed}
- />
- <TextInput
- className="w-8 bg-awan-surface border border-white/5 h-10 text-center text-awan-tx-mute font-mono font-bold text-sm"
- keyboardType="number-pad"
- value={set.rir !== undefined ? String(set.rir) : ''}
- onChangeText={(v: string) => {
- const n = parseInt(v, 10);
- if (isNaN(n)) { onChange({ rir: undefined }); return; }
- onChange({ rir: Math.max(0, Math.min(5, n)) });
- }}
- placeholder="–"
- placeholderTextColor="#3a3a3a"
- editable={!completed}
- />
- <div className="relative">
- <Touch
- onPress={onComplete}
- disabled={completed}
- className={`w-8 h-10 flex items-center justify-center ${
- completed ? 'bg-awan-status-ok/20' : 'bg-awan-gold/20 border border-awan-gold/30'
- }`}
- >
- <CheckCircle2
- size={18}
- className={completed ? 'text-awan-status-ok' : 'text-awan-gold'}
- strokeWidth={completed ? 2 : 3}
- />
+ </View>
+ <TextInput style={{ flex: 1, backgroundColor: theme.surface, borderWidth: 1, borderColor: Clr.white5, height: 40, textAlign: 'center', color: theme.selected, fontFamily: FontMono, fontWeight: Fw.value, fontSize: 14 }} keyboardType="decimal-pad" value={set.weightKg !== undefined ? String(set.weightKg) : ''} onChangeText={(v: string) => { const n = parseFloat(v.replace(',', '.')); onChange({ weightKg: isNaN(n) ? undefined : n }); }} placeholder="0" placeholderTextColor="#3a3a3a" editable={!completed} />
+ <TextInput style={{ flex: 1, backgroundColor: theme.surface, borderWidth: 1, borderColor: Clr.white5, height: 40, textAlign: 'center', color: theme.title, fontFamily: FontMono, fontWeight: Fw.value, fontSize: 14 }} keyboardType="number-pad" value={set.reps !== undefined ? String(set.reps) : ''} onChangeText={(v: string) => { const n = parseInt(v, 10); onChange({ reps: isNaN(n) ? undefined : n }); }} placeholder="0" placeholderTextColor="#3a3a3a" editable={!completed} />
+ <TextInput style={{ width: 32, backgroundColor: theme.surface, borderWidth: 1, borderColor: Clr.white5, height: 40, textAlign: 'center', color: theme.mute, fontFamily: FontMono, fontWeight: Fw.value, fontSize: 14 }} keyboardType="number-pad" value={set.rir !== undefined ? String(set.rir) : ''} onChangeText={(v: string) => { const n = parseInt(v, 10); if (isNaN(n)) { onChange({ rir: undefined }); return; } onChange({ rir: Math.max(0, Math.min(5, n)) }); }} placeholder="–" placeholderTextColor="#3a3a3a" editable={!completed} />
+ <View style={{ position: 'relative' }}>
+ <Touch onPress={onComplete} disabled={completed} style={{ width: 32, height: 40, alignItems: 'center', justifyContent: 'center', backgroundColor: completed ? `${theme.statusOk}33` : Clr.gold20, borderWidth: completed ? 0 : 1, borderColor: Clr.gold30 }}>
+ <CheckCircle2 size={18} color={completed ? theme.statusOk : theme.selected} strokeWidth={completed ? 2 : 3} />
  </Touch>
  {set.isPR === true && set.completed && (
- <motion.div
- initial={{ scale: 0, opacity: 0 }}
- animate={{ scale: 1, opacity: 1 }}
- transition={{ type: 'spring', stiffness: 400, damping: 12 }}
- style={{ position: 'absolute', top: -6, right: -6, backgroundColor: theme.selected, borderRadius: 6, paddingInline: 4, paddingBlock: 2 }}
- >
- <span className="text-black" style={{ fontSize: 7, fontWeight: 900, letterSpacing: '0.1em' }}>PR</span>
- </motion.div>
+ <View style={{ position: 'absolute', top: -6, right: -6, backgroundColor: theme.selected, borderRadius: 6, paddingHorizontal: 4, paddingVertical: 2 }}>
+ <Text style={{ color: '#000', fontSize: 7, fontWeight: Fw.display, letterSpacing: 0.7 }}>PR</Text>
+ </View>
  )}
- </div>
- </div>
+ </View>
+ </View>
  );
 }
 
 // ─── Pre-Workout (context picker) ───────────────────────────────────────────
 
 function PreWorkout({
- session,
- onUpdate,
- onStart,
- onAbort,
+ session, onUpdate, onStart, onAbort,
 }: {
  session: ActiveSession;
  onUpdate: (updater: (s: ActiveSession) => ActiveSession) => void;
@@ -1926,188 +1609,141 @@ function PreWorkout({
    return (
      <PreEditExercises
        exercises={session.exercises}
-       onDone={(updated) => {
-         onUpdate(s => ({ ...s, exercises: updated }));
-         setShowPreEdit(false);
-       }}
+       onDone={(updated) => { onUpdate(s => ({ ...s, exercises: updated })); setShowPreEdit(false); }}
        onBack={() => setShowPreEdit(false)}
      />
    );
  }
 
  return (
- <div className="flex-1 bg-awan-bg">
- <div className="px-6 pt-12 pb-6 border-b border-white/5 bg-white/10">
- <div className="flex flex-row items-center gap-4 mb-4">
- <Touch onPress={onAbort} className="w-10 h-10 bg-white/5 flex items-center justify-center">
- <ChevronLeft size={20} className="text-awan-tx-mute" />
+ <View style={{ flex: 1, backgroundColor: theme.bg }}>
+ <View style={[ss.topBar, { backgroundColor: Clr.white10 }]}>
+ <View style={[ss.row, { gap: 16, marginBottom: 16 }]}>
+ <Touch onPress={onAbort} style={ss.iconBtn}>
+ <ChevronLeft size={20} color={theme.mute} />
  </Touch>
- <Heading level={2} className="mb-0 flex-1" subtitle="Vestiaire">CONTEXTE</Heading>
- </div>
- <span className="text-base font-bold text-awan-tx uppercase">{session.routineName}</span>
- </div>
+ <Heading level={2} style={{ marginBottom: 0, flex: 1 }} subtitle="Vestiaire">CONTEXTE</Heading>
+ </View>
+ <Text style={{ fontSize: 16, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', fontFamily: FontSans }}>{session.routineName}</Text>
+ </View>
 
  <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 120 }} style={{ flex: 1 }}>
- <div className="mb-8">
- <span className="awan-label mb-3 block">CONFIGURATION</span>
- <div className="flex flex-row gap-3">
- <Touch
- onPress={() => onUpdate(s => ({ ...s, solo: true }))}
- className={`flex-1 h-16 border flex items-center justify-center ${
- session.solo ? 'bg-awan-gold/15 border-awan-gold' : 'bg-white/5 border-white/5'
- }`}
- >
- <span className={`text-sm font-black tracking-widest ${session.solo ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>SEUL</span>
+ <View style={{ marginBottom: 32 }}>
+ <Text style={[ss.label, { color: theme.mute, marginBottom: 12 }]}>CONFIGURATION</Text>
+ <View style={[ss.row, { gap: 12 }]}>
+ <Touch onPress={() => onUpdate(s => ({ ...s, solo: true }))} style={{ flex: 1, height: 64, borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: session.solo ? Clr.gold12 : Clr.white5, borderColor: session.solo ? theme.selected : Clr.white5 }}>
+ <Text style={{ fontSize: 14, fontWeight: Fw.display, letterSpacing: Ls.sm_02, color: session.solo ? theme.selected : theme.mute }}>SEUL</Text>
  </Touch>
- <Touch
- onPress={() => onUpdate(s => ({ ...s, solo: false }))}
- className={`flex-1 h-16 border flex items-center justify-center ${
- !session.solo ? 'bg-awan-gold/15 border-awan-gold' : 'bg-white/5 border-white/5'
- }`}
- >
- <span className={`text-sm font-black tracking-widest ${!session.solo ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>À PLUSIEURS</span>
+ <Touch onPress={() => onUpdate(s => ({ ...s, solo: false }))} style={{ flex: 1, height: 64, borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: !session.solo ? Clr.gold12 : Clr.white5, borderColor: !session.solo ? theme.selected : Clr.white5 }}>
+ <Text style={{ fontSize: 14, fontWeight: Fw.display, letterSpacing: Ls.sm_02, color: !session.solo ? theme.selected : theme.mute }}>À PLUSIEURS</Text>
  </Touch>
- </div>
- </div>
+ </View>
+ </View>
 
- <div className="mb-8">
- <span className="awan-label mb-3 block">TEMPS DISPONIBLE</span>
- <div className="flex flex-row flex-wrap gap-2">
- {[30, 45, 60, 75, 90, 120].map(min => (
- <Touch
- key={min}
- onPress={() => onUpdate(s => ({ ...s, availableTimeMin: min }))}
- className={`px-4 py-3 border ${
- session.availableTimeMin === min ? 'bg-awan-gold/15 border-awan-gold' : 'bg-white/5 border-white/5'
- }`}
- >
- <span className={`text-sm font-bold ${session.availableTimeMin === min ? 'text-awan-gold' : 'text-awan-tx-mute'}`}>
- {min} min
- </span>
+ <View style={{ marginBottom: 32 }}>
+ <Text style={[ss.label, { color: theme.mute, marginBottom: 12 }]}>TEMPS DISPONIBLE</Text>
+ <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+ {[30, 45, 60, 75, 90, 120].map(min => {
+ const active = session.availableTimeMin === min;
+ return (
+ <Touch key={min} onPress={() => onUpdate(s => ({ ...s, availableTimeMin: min }))} style={{ paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, backgroundColor: active ? Clr.gold12 : Clr.white5, borderColor: active ? theme.selected : Clr.white5 }}>
+ <Text style={{ fontSize: 14, fontWeight: Fw.value, color: active ? theme.selected : theme.mute }}>{min} min</Text>
  </Touch>
- ))}
- </div>
- </div>
+ );
+ })}
+ </View>
+ </View>
 
- <Touch
- className="mt-4 h-12 bg-white/5 border border-white/10 flex items-center justify-center gap-2"
- onPress={() => setShowPreEdit(true)}
- >
- <span className="awan-label text-awan-tx-mute">MODIFIER EXERCICES →</span>
+ <Touch style={[ss.row, { marginTop: 16, height: 48, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white10, alignItems: 'center', justifyContent: 'center', gap: 8 }]} onPress={() => setShowPreEdit(true)}>
+ <Text style={[ss.label, { color: theme.mute }]}>MODIFIER EXERCICES →</Text>
  </Touch>
- <Touch
- className="h-16 bg-awan-gold flex items-center justify-center shadow-xl shadow-awan-gold/20 mt-3"
- onPress={onStart}
- >
- <div className="flex flex-row items-center gap-3">
+ <Touch style={{ height: 64, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center', marginTop: 12 }} onPress={onStart}>
+ <View style={[ss.row, { gap: 12 }]}>
  <Flame size={20} color="black" />
- <span className="awan-label text-black font-black">DÉMARRER L'ÉCHAUFFEMENT</span>
- </div>
+ <Text style={[ss.label, { color: '#000' }]}>DÉMARRER L'ÉCHAUFFEMENT</Text>
+ </View>
  </Touch>
  </ScrollView>
- </div>
+ </View>
  );
 }
 
 // S2: Pre-edit exercises before session start
 function PreEditExercises({
- exercises,
- onDone,
- onBack,
+ exercises, onDone, onBack,
 }: {
  exercises: ActiveExercise[];
  onDone: (updated: ActiveExercise[]) => void;
  onBack: () => void;
 }) {
+ const theme = useTheme();
  const [exos, setExos] = useState<ActiveExercise[]>(exercises);
 
  const updateWeight = (idx: number, val: string) => {
    const n = parseFloat(val);
-   setExos(prev => prev.map((e, i) => i !== idx ? e : {
-     ...e,
-     sets: e.sets.map(s => ({ ...s, weightKg: isNaN(n) ? s.weightKg : n, plannedWeightKg: isNaN(n) ? s.plannedWeightKg : n })),
-   }));
+   setExos(prev => prev.map((e, i) => i !== idx ? e : { ...e, sets: e.sets.map(s => ({ ...s, weightKg: isNaN(n) ? s.weightKg : n, plannedWeightKg: isNaN(n) ? s.plannedWeightKg : n })) }));
  };
 
  const updateReps = (idx: number, val: string) => {
    const n = parseInt(val);
-   setExos(prev => prev.map((e, i) => i !== idx ? e : {
-     ...e,
-     sets: e.sets.map(s => ({ ...s, reps: isNaN(n) ? s.reps : n, plannedReps: isNaN(n) ? s.plannedReps : n })),
-   }));
+   setExos(prev => prev.map((e, i) => i !== idx ? e : { ...e, sets: e.sets.map(s => ({ ...s, reps: isNaN(n) ? s.reps : n, plannedReps: isNaN(n) ? s.plannedReps : n })) }));
  };
 
  const removeExercise = (idx: number) => setExos(prev => prev.filter((_, i) => i !== idx));
 
  return (
-   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 bg-awan-bg">
-     <div className="px-6 pt-12 pb-6 border-b border-white/5 bg-white/5">
-       <div className="flex flex-row items-center gap-4">
-         <Touch onPress={onBack} className="w-10 h-10 bg-white/5 flex items-center justify-center">
-           <ChevronLeft size={20} className="text-awan-tx-mute" />
+   <View style={{ flex: 1, backgroundColor: theme.bg }}>
+     <View style={[ss.topBar, { backgroundColor: Clr.white5 }]}>
+       <View style={[ss.row, { gap: 16 }]}>
+         <Touch onPress={onBack} style={ss.iconBtn}>
+           <ChevronLeft size={20} color={theme.mute} />
          </Touch>
-         <Heading level={2} className="mb-0 flex-1" subtitle="Avant de commencer">MODIFIER SÉANCE</Heading>
-       </div>
-     </div>
+         <Heading level={2} style={{ marginBottom: 0, flex: 1 }} subtitle="Avant de commencer">MODIFIER SÉANCE</Heading>
+       </View>
+     </View>
      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 120 }} style={{ flex: 1 }}>
        {exos.map((ex, idx) => (
-         <div key={ex.rid} className="mb-4">
-           <div className="flex flex-row items-center justify-between mb-2">
-             <span className="text-sm font-bold text-awan-tx uppercase tracking-tight flex-1">{ex.name}</span>
-             <Touch onPress={() => removeExercise(idx)} className="w-8 h-8 bg-white/5 flex items-center justify-center">
-               <Trash2 size={14} className="text-white/30" />
+         <View key={ex.rid} style={{ marginBottom: 16 }}>
+           <View style={[ss.rowBetween, { marginBottom: 8 }]}>
+             <Text style={{ fontSize: 14, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', letterSpacing: -0.35, flex: 1, fontFamily: FontSans }}>{ex.name}</Text>
+             <Touch onPress={() => removeExercise(idx)} style={{ width: 32, height: 32, backgroundColor: Clr.white5, alignItems: 'center', justifyContent: 'center' }}>
+               <Trash2 size={14} color={Clr.white20} />
              </Touch>
-           </div>
-           <div className="flex flex-row gap-2">
-             <div className="flex-1">
-               <span className="text-awan-xxs font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">POIDS KG</span>
-               <TextInput
-                 className="bg-white/5 border border-white/5 px-3 py-2 text-sm font-mono font-bold text-awan-gold"
-                 value={String(ex.sets[0]?.weightKg ?? ex.sets[0]?.plannedWeightKg ?? '')}
-                 onChangeText={(v: string) => updateWeight(idx, v)}
-                 keyboardType="decimal-pad"
-               />
-             </div>
-             <div className="flex-1">
-               <span className="text-awan-xxs font-black text-awan-tx-mute uppercase tracking-widest mb-1 block">REPS</span>
-               <TextInput
-                 className="bg-white/5 border border-white/5 px-3 py-2 text-sm font-mono font-bold text-awan-tx"
-                 value={String(ex.sets[0]?.reps ?? ex.sets[0]?.plannedReps ?? '')}
-                 onChangeText={(v: string) => updateReps(idx, v)}
-                 keyboardType="number-pad"
-               />
-             </div>
-             <div className="flex items-end pb-1">
-               <span className="text-awan-xs font-black text-awan-tx-mute font-mono">{ex.sets.length} × sets</span>
-             </div>
-           </div>
-         </div>
+           </View>
+           <View style={[ss.row, { gap: 8 }]}>
+             <View style={{ flex: 1 }}>
+               <Text style={[ss.xxs, { color: theme.mute, marginBottom: 4 }]}>POIDS KG</Text>
+               <TextInput style={{ backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white5, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, fontFamily: FontMono, fontWeight: Fw.value, color: theme.selected }} value={String(ex.sets[0]?.weightKg ?? ex.sets[0]?.plannedWeightKg ?? '')} onChangeText={(v: string) => updateWeight(idx, v)} keyboardType="decimal-pad" />
+             </View>
+             <View style={{ flex: 1 }}>
+               <Text style={[ss.xxs, { color: theme.mute, marginBottom: 4 }]}>REPS</Text>
+               <TextInput style={{ backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white5, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, fontFamily: FontMono, fontWeight: Fw.value, color: theme.title }} value={String(ex.sets[0]?.reps ?? ex.sets[0]?.plannedReps ?? '')} onChangeText={(v: string) => updateReps(idx, v)} keyboardType="number-pad" />
+             </View>
+             <View style={{ alignItems: 'flex-end', justifyContent: 'flex-end', paddingBottom: 4 }}>
+               <Text style={{ fontSize: Fs.xs, fontWeight: Fw.display, color: theme.mute, fontFamily: FontMono }}>{ex.sets.length} × sets</Text>
+             </View>
+           </View>
+         </View>
        ))}
        {exos.length === 0 && (
-         <div className="py-16 items-center opacity-30">
-           <span className="awan-label text-center block">TOUS LES EXERCICES SUPPRIMÉS</span>
-         </div>
+         <View style={{ paddingVertical: 64, alignItems: 'center', opacity: 0.3 }}>
+           <Text style={[ss.label, { color: theme.mute, textAlign: 'center' }]}>TOUS LES EXERCICES SUPPRIMÉS</Text>
+         </View>
        )}
      </ScrollView>
-     <div className="px-6 pb-10 pt-4 border-t border-white/5 bg-awan-bg">
-       <Touch
-         onPress={() => onDone(exos.map((e, i) => ({ ...e, order: i })))}
-         className="h-16 bg-awan-gold flex items-center justify-center"
-       >
-         <span className="awan-label text-black font-black">CONFIRMER MODIFICATIONS</span>
+     <View style={{ paddingHorizontal: 24, paddingBottom: 40, paddingTop: 16, borderTopWidth: 1, borderTopColor: Clr.white5, backgroundColor: theme.bg }}>
+       <Touch onPress={() => onDone(exos.map((e, i) => ({ ...e, order: i })))} style={{ height: 64, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }}>
+         <Text style={[ss.label, { color: '#000' }]}>CONFIRMER MODIFICATIONS</Text>
        </Touch>
-     </div>
-   </motion.div>
+     </View>
+   </View>
  );
 }
 
 // ─── Finish Workout (feeling + RPE + note) ──────────────────────────────────
 
 function FinishWorkout({
- session,
- prevVolume,
- onSave,
- onCancel,
+ session, prevVolume, onSave, onCancel,
 }: {
  session: ActiveSession;
  prevVolume: number | null;
@@ -2120,12 +1756,9 @@ function FinishWorkout({
  const [note, setNote] = useState('');
 
  const stats = useMemo(() => {
- const workingSets = session.exercises.flatMap(e =>
- e.sets.filter(s => s.completed && s.kind === 'working'),
- );
+ const workingSets = session.exercises.flatMap(e => e.sets.filter(s => s.completed && s.kind === 'working'));
  const volume = workingSets.reduce((acc, s) => acc + (s.weightKg ?? 0) * (s.reps ?? 0), 0);
 
- // S4: density + best 1RM — build pseudo WorkoutSessionLatest from active session
  const pseudoExercises = session.exercises.map(ex => ({
  rid: ex.rid,
  exerciseId: ex.exerciseId,
@@ -2170,197 +1803,178 @@ function FinishWorkout({
  const oneRmMap = bestOneRmFromSession(pseudoSession);
  const oneRmEntries = Object.entries(oneRmMap).sort((a, b) => b[1] - a[1]);
  const topOneRm = oneRmEntries[0];
- const topExerciseName = topOneRm
- ? (session.exercises.find(e => e.exerciseId === topOneRm[0])?.name ?? topOneRm[0])
- : null;
+ const topExerciseName = topOneRm ? (session.exercises.find(e => e.exerciseId === topOneRm[0])?.name ?? topOneRm[0]) : null;
 
  return { workingCount: workingSets.length, volume, density, topOneRm, topExerciseName };
  }, [session]);
 
  return (
- <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 bg-awan-bg">
- <div className="px-6 pt-12 pb-6 border-b border-white/5 bg-white/5">
- <div className="flex flex-row items-center gap-4">
- <Touch onPress={onCancel} className="w-10 h-10 bg-white/5 flex items-center justify-center">
- <ChevronLeft size={20} className="text-awan-tx-mute" />
+ <View style={{ flex: 1, backgroundColor: theme.bg }}>
+ <View style={[ss.topBar, { backgroundColor: Clr.white5 }]}>
+ <View style={[ss.row, { gap: 16 }]}>
+ <Touch onPress={onCancel} style={ss.iconBtn}>
+ <ChevronLeft size={20} color={theme.mute} />
  </Touch>
- <Heading level={2} className="mb-0 flex-1" subtitle="Bilan post-séance">DÉBRIEF</Heading>
- </div>
- </div>
+ <Heading level={2} style={{ marginBottom: 0, flex: 1 }} subtitle="Bilan post-séance">DÉBRIEF</Heading>
+ </View>
+ </View>
 
  <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 140 }} style={{ flex: 1 }}>
- <div className="grid grid-cols-2 gap-3 mb-8">
- <Card className="p-4 bg-white/5">
- <span className="awan-label mb-1 block">SETS WORKING</span>
- <span className="text-2xl font-mono font-bold text-awan-gold">{stats.workingCount}</span>
+ <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 32 }}>
+ <Card style={[ss.statHalf, { backgroundColor: Clr.white5 }]}>
+ <Text style={[ss.label, { color: theme.mute, marginBottom: 4 }]}>SETS WORKING</Text>
+ <Text style={{ fontSize: 24, fontFamily: FontMono, fontWeight: Fw.value, color: theme.selected }}>{stats.workingCount}</Text>
  </Card>
- <Card className="p-4 bg-white/5">
- <span className="awan-label mb-1 block">VOLUME (kg)</span>
- <span className="text-2xl font-mono font-bold text-awan-gold">{Math.round(stats.volume)}</span>
+ <Card style={[ss.statHalf, { backgroundColor: Clr.white5 }]}>
+ <Text style={[ss.label, { color: theme.mute, marginBottom: 4 }]}>VOLUME (kg)</Text>
+ <Text style={{ fontSize: 24, fontFamily: FontMono, fontWeight: Fw.value, color: theme.selected }}>{Math.round(stats.volume)}</Text>
  {prevVolume !== null && (
- <span className="font-mono text-awan-md mt-1 block" style={{
- color: stats.volume >= prevVolume
- ? theme.statusOk
- : theme.danger
- }}>
- {stats.volume >= prevVolume ? '▲' : '▼'} {Math.abs(Math.round(stats.volume - prevVolume))} kg vs S-1
- </span>
+ <Text style={{ fontFamily: FontMono, fontSize: Fs.md, marginTop: 4, color: stats.volume >= prevVolume ? theme.statusOk : theme.danger }}>{stats.volume >= prevVolume ? '▲' : '▼'} {Math.abs(Math.round(stats.volume - prevVolume))} kg vs S-1</Text>
  )}
  </Card>
  {stats.density !== null && (
- <Card className="p-4 bg-white/5">
- <span className="awan-label mb-1 block">DENSITÉ</span>
- <span className="text-2xl font-mono font-bold text-awan-gold">{stats.density}</span>
- <span className="font-mono text-awan-sm text-awan-tx-mute mt-1 block uppercase tracking-widest">kg·rep/min actif</span>
+ <Card style={[ss.statHalf, { backgroundColor: Clr.white5 }]}>
+ <Text style={[ss.label, { color: theme.mute, marginBottom: 4 }]}>DENSITÉ</Text>
+ <Text style={{ fontSize: 24, fontFamily: FontMono, fontWeight: Fw.value, color: theme.selected }}>{stats.density}</Text>
+ <Text style={[ss.sm, { color: theme.mute, marginTop: 4, fontFamily: FontMono }]}>kg·rep/min actif</Text>
  </Card>
  )}
  {stats.topOneRm && stats.topExerciseName && (
- <Card className="p-4 bg-white/5">
- <span className="awan-label mb-1 block">EST. 1RM</span>
- <span className="text-2xl font-mono font-bold text-awan-gold">{stats.topOneRm[1]}</span>
- <span className="font-mono text-awan-sm text-awan-tx-mute mt-1 block uppercase tracking-widest">kg · {stats.topExerciseName}</span>
+ <Card style={[ss.statHalf, { backgroundColor: Clr.white5 }]}>
+ <Text style={[ss.label, { color: theme.mute, marginBottom: 4 }]}>EST. 1RM</Text>
+ <Text style={{ fontSize: 24, fontFamily: FontMono, fontWeight: Fw.value, color: theme.selected }}>{stats.topOneRm[1]}</Text>
+ <Text style={[ss.sm, { color: theme.mute, marginTop: 4, fontFamily: FontMono }]}>kg · {stats.topExerciseName}</Text>
  </Card>
  )}
- </div>
+ </View>
 
- <div className="mb-8">
- <span className="awan-label mb-3 block">FORME / ÉNERGIE (1-5)</span>
- <div className="flex flex-row gap-2">
- {[1, 2, 3, 4, 5].map(n => (
- <Touch
- key={n}
- onPress={() => setFeeling(n)}
- className={`flex-1 h-14 border flex items-center justify-center ${
- feeling === n ? 'bg-awan-gold border-awan-gold' : 'bg-white/5 border-white/5'
- }`}
- >
- <span className={`text-base font-black ${feeling === n ? 'text-black' : 'text-awan-tx-mute'}`}>{n}</span>
+ <View style={{ marginBottom: 32 }}>
+ <Text style={[ss.label, { color: theme.mute, marginBottom: 12 }]}>FORME / ÉNERGIE (1-5)</Text>
+ <View style={[ss.row, { gap: 8 }]}>
+ {[1, 2, 3, 4, 5].map(n => {
+ const active = feeling === n;
+ return (
+ <Touch key={n} onPress={() => setFeeling(n)} style={{ flex: 1, height: 56, borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: active ? theme.selected : Clr.white5, borderColor: active ? theme.selected : Clr.white5 }}>
+ <Text style={{ fontSize: 16, fontWeight: Fw.display, color: active ? '#000' : theme.mute }}>{n}</Text>
  </Touch>
- ))}
- </div>
- </div>
+ );
+ })}
+ </View>
+ </View>
 
- <div className="mb-8">
- <span className="awan-label mb-3 block">SESSION-RPE (1-10)</span>
- <div className="flex flex-row flex-wrap gap-2">
- {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
- <Touch
- key={n}
- onPress={() => setSessionRPE(n)}
- className={`w-12 h-12 border flex items-center justify-center ${
- sessionRPE === n ? 'bg-awan-gold border-awan-gold' : 'bg-white/5 border-white/5'
- }`}
- >
- <span className={`text-sm font-black ${sessionRPE === n ? 'text-black' : 'text-awan-tx-mute'}`}>{n}</span>
+ <View style={{ marginBottom: 32 }}>
+ <Text style={[ss.label, { color: theme.mute, marginBottom: 12 }]}>SESSION-RPE (1-10)</Text>
+ <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+ {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => {
+ const active = sessionRPE === n;
+ return (
+ <Touch key={n} onPress={() => setSessionRPE(n)} style={{ width: 48, height: 48, borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: active ? theme.selected : Clr.white5, borderColor: active ? theme.selected : Clr.white5 }}>
+ <Text style={{ fontSize: 14, fontWeight: Fw.display, color: active ? '#000' : theme.mute }}>{n}</Text>
  </Touch>
- ))}
- </div>
- </div>
+ );
+ })}
+ </View>
+ </View>
 
- <div className="mb-8">
- <span className="awan-label mb-3 block">NOTE LIBRE</span>
- <TextInput
- className="bg-white/5 border border-white/5 p-5 text-awan-tx font-bold text-sm min-h-[100px]"
- value={note}
- onChangeText={setNote}
- placeholder="Ressenti, observations..."
- placeholderTextColor="#3a3a3a"
- multiline
- />
- </div>
+ <View style={{ marginBottom: 32 }}>
+ <Text style={[ss.label, { color: theme.mute, marginBottom: 12 }]}>NOTE LIBRE</Text>
+ <TextInput style={{ backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white5, padding: 20, color: theme.title, fontWeight: Fw.value, fontSize: 14, minHeight: 100, textAlignVertical: 'top', fontFamily: FontSans }} value={note} onChangeText={setNote} placeholder="Ressenti, observations..." placeholderTextColor="#3a3a3a" multiline />
+ </View>
 
- <Touch
- onPress={() => onSave({ feeling, sessionRPE, note: note.trim() || undefined })}
- className="h-16 bg-awan-gold flex items-center justify-center shadow-xl shadow-awan-gold/20"
- >
- <div className="flex flex-row items-center gap-3">
+ <Touch onPress={() => onSave({ feeling, sessionRPE, note: note.trim() || undefined })} style={{ height: 64, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }}>
+ <View style={[ss.row, { gap: 12 }]}>
  <CheckCircle2 size={20} color="black" strokeWidth={3} />
- <span className="awan-label text-black font-black">ENREGISTRER LA SÉANCE</span>
- </div>
+ <Text style={[ss.label, { color: '#000' }]}>ENREGISTRER LA SÉANCE</Text>
+ </View>
  </Touch>
- <Touch
- onPress={() => onSave({ feeling, sessionRPE, note: note.trim() || undefined, exitedAt: Date.now() })}
- className="mt-3 h-14 bg-white/5 border border-white/10 flex items-center justify-center"
- >
- <span className="awan-label text-awan-tx-mute font-black">QUITTER VESTIAIRE →</span>
+ <Touch onPress={() => onSave({ feeling, sessionRPE, note: note.trim() || undefined, exitedAt: Date.now() })} style={{ marginTop: 12, height: 56, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white10, alignItems: 'center', justifyContent: 'center' }}>
+ <Text style={[ss.label, { color: theme.mute }]}>QUITTER VESTIAIRE →</Text>
  </Touch>
  </ScrollView>
- </motion.div>
+ </View>
  );
 }
 
 // ─── History ────────────────────────────────────────────────────────────────
 
 function WorkoutHistory({ logs, onBack }: { logs: WorkoutSessionLatest[]; onBack: () => void }) {
+ const theme = useTheme();
  return (
- <div className="flex-1 bg-awan-bg">
- <div className="px-6 pt-12 pb-6 border-b border-white/5 bg-white/5">
- <div className="flex flex-row items-center gap-4">
- <Touch onPress={onBack} className="w-10 h-10 bg-white/5 flex items-center justify-center">
- <ChevronLeft size={20} className="text-awan-tx-mute" />
+ <View style={{ flex: 1, backgroundColor: theme.bg }}>
+ <View style={[ss.topBar, { backgroundColor: Clr.white5 }]}>
+ <View style={[ss.row, { gap: 16 }]}>
+ <Touch onPress={onBack} style={ss.iconBtn}>
+ <ChevronLeft size={20} color={theme.mute} />
  </Touch>
- <Heading level={2} className="mb-0 flex-1" subtitle="Sessions archivées">HISTORIQUE</Heading>
- </div>
- </div>
+ <Heading level={2} style={{ marginBottom: 0, flex: 1 }} subtitle="Sessions archivées">HISTORIQUE</Heading>
+ </View>
+ </View>
  <ScrollView contentContainerStyle={{ paddingBottom: 120, padding: 24 }} style={{ flex: 1 }}>
  {logs.length === 0 && (
- <div className="py-20 items-center opacity-30">
- <History size={48} className="text-awan-tx-mute mb-4" />
- <Heading level={4} className="mb-0 text-center" subtitle="">Aucune séance enregistrée</Heading>
- </div>
+ <View style={{ paddingVertical: 80, alignItems: 'center', opacity: 0.3 }}>
+ <History size={48} color={theme.mute} style={{ marginBottom: 16 }} />
+ <Heading level={4} style={{ marginBottom: 0 }} subtitle="">Aucune séance enregistrée</Heading>
+ </View>
  )}
- <StaggerList>
  {logs.slice().sort((a, b) => b.startTime - a.startTime).map(log => {
- const workingCount = log.exercises.reduce(
- (acc, ex) => acc + ex.sets.filter(s => s.kind === 'working').length,
- 0,
- );
- const volume = log.exercises.reduce(
- (acc, ex) =>
- acc +
- ex.sets
- .filter(s => s.kind === 'working')
- .reduce((a, s) => a + (s.weightKg ?? 0) * (s.reps ?? 0), 0),
- 0,
- );
+ const workingCount = log.exercises.reduce((acc, ex) => acc + ex.sets.filter(s => s.kind === 'working').length, 0);
+ const volume = log.exercises.reduce((acc, ex) => acc + ex.sets.filter(s => s.kind === 'working').reduce((a, s) => a + (s.weightKg ?? 0) * (s.reps ?? 0), 0), 0);
  return (
- <StaggerItem key={log.id} className="mb-4">
- <Card className="p-5 bg-white/5 border-white/5">
- <div className="flex flex-row justify-between items-center mb-2">
- <span className="text-base font-bold text-awan-tx uppercase tracking-tight">{log.name}</span>
- <span className="text-awan-md font-mono font-bold text-awan-gold">{log.date}</span>
- </div>
- <div className="flex flex-row items-center gap-4 mb-2">
+ <View key={log.id} style={{ marginBottom: 16 }}>
+ <Card style={{ padding: 20, backgroundColor: Clr.white5, borderColor: Clr.white5 }}>
+ <View style={[ss.rowBetween, { marginBottom: 8 }]}>
+ <Text style={{ fontSize: 16, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', letterSpacing: -0.4, fontFamily: FontSans }}>{log.name}</Text>
+ <Text style={{ fontSize: Fs.md, fontFamily: FontMono, fontWeight: Fw.value, color: theme.selected }}>{log.date}</Text>
+ </View>
+ <View style={[ss.row, { gap: 16, marginBottom: 8 }]}>
  {log.cycleLetter && (
- <div className="bg-awan-gold/10 px-2 py-0.5 rounded">
- <span className="text-awan-sm font-black text-awan-gold tracking-widest">CYCLE {log.cycleLetter}</span>
- </div>
+ <View style={{ backgroundColor: Clr.gold10, paddingHorizontal: 8, paddingVertical: 2 }}>
+ <Text style={{ fontSize: Fs.sm, fontWeight: Fw.display, color: theme.selected, letterSpacing: Ls.sm_02, fontFamily: FontMono }}>CYCLE {log.cycleLetter}</Text>
+ </View>
  )}
  {log.isException && (
- <div className="bg-orange-400/10 px-2 py-0.5 rounded">
- <span className="text-awan-sm font-black text-orange-400 tracking-widest">EXCEPTION</span>
- </div>
+ <View style={{ backgroundColor: 'rgba(251,146,60,0.1)', paddingHorizontal: 8, paddingVertical: 2 }}>
+ <Text style={{ fontSize: Fs.sm, fontWeight: Fw.display, color: '#FB923C', letterSpacing: Ls.sm_02, fontFamily: FontMono }}>EXCEPTION</Text>
+ </View>
  )}
- </div>
- <div className="flex flex-row items-center gap-4 mt-1">
- <div className="flex flex-row items-center gap-1">
- <Target size={11} className="text-awan-tx-mute" />
- <span className="text-awan-md font-bold text-awan-tx-mute uppercase tracking-widest">{workingCount} SETS</span>
- </div>
- <div className="w-[1px] h-3 bg-white/10" />
- <div className="flex flex-row items-center gap-1">
- <Clock size={11} className="text-awan-tx-mute" />
- <span className="text-awan-md font-bold text-awan-tx-mute uppercase tracking-widest">{Math.floor(log.duration / 60)} MIN</span>
- </div>
- <div className="w-[1px] h-3 bg-white/10" />
- <span className="text-awan-md font-bold text-awan-tx-mute uppercase tracking-widest">{Math.round(volume)} KG</span>
- </div>
+ </View>
+ <View style={[ss.row, { gap: 16, marginTop: 4 }]}>
+ <View style={[ss.row, { gap: 4 }]}>
+ <Target size={11} color={theme.mute} />
+ <Text style={[ss.mdBlack, { color: theme.mute }]}>{workingCount} SETS</Text>
+ </View>
+ <View style={{ width: 1, height: 12, backgroundColor: Clr.white10 }} />
+ <View style={[ss.row, { gap: 4 }]}>
+ <Clock size={11} color={theme.mute} />
+ <Text style={[ss.mdBlack, { color: theme.mute }]}>{Math.floor(log.duration / 60)} MIN</Text>
+ </View>
+ <View style={{ width: 1, height: 12, backgroundColor: Clr.white10 }} />
+ <Text style={[ss.mdBlack, { color: theme.mute }]}>{Math.round(volume)} KG</Text>
+ </View>
  </Card>
- </StaggerItem>
+ </View>
  );
  })}
- </StaggerList>
  </ScrollView>
- </div>
+ </View>
  );
 }
+
+const ss = StyleSheet.create({
+ row: { flexDirection: 'row', alignItems: 'center' },
+ rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+ label: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.value, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
+ sm: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
+ smThin: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.value, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
+ md: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.value, textTransform: 'uppercase', letterSpacing: Ls.md_02 },
+ mdBlack: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.md_02 },
+ xs: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.xs_02 },
+ xxs: { fontFamily: FontMono, fontSize: Fs.xxs, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.xxs_02 },
+ iconBtn: { width: 40, height: 40, backgroundColor: Clr.white5, alignItems: 'center', justifyContent: 'center' },
+ topBar: { paddingHorizontal: 24, paddingTop: 48, paddingBottom: 24, borderBottomWidth: 1, borderBottomColor: Clr.white5 },
+ sheetOverlay: { flex: 1, justifyContent: 'flex-end' },
+ sheet: { width: '100%', maxWidth: 512, alignSelf: 'center', borderTopWidth: 1, borderTopColor: Clr.white10, overflow: 'hidden' },
+ grabberWrap: { alignItems: 'center', paddingTop: 12, paddingBottom: 4 },
+ grabber: { width: 40, height: 4, backgroundColor: Clr.white20 },
+ statHalf: { width: '47%', flexGrow: 1, padding: 16 },
+});
