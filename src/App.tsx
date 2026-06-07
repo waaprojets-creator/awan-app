@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAppStore } from '@/data/store/appStore';
 import { useTheme, useThemeSync } from '@/hooks/useTheme';
@@ -65,11 +66,13 @@ function Root() {
 
 export default function App() {
   return (
-    <ErrorBoundary>
-      <SafeAreaProvider>
-        <Root />
-      </SafeAreaProvider>
-    </ErrorBoundary>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ErrorBoundary>
+        <SafeAreaProvider>
+          <Root />
+        </SafeAreaProvider>
+      </ErrorBoundary>
+    </GestureHandlerRootView>
   );
 }
 

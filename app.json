@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "AWAN",
+    "slug": "awan-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "backgroundColor": "#0A0A0A",
+      "resizeMode": "contain"
+    },
+    "android": {
+      "package": "com.awan.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0A0A0A"
+      }
+    },
+    "plugins": ["expo-sqlite", "expo-notifications", "expo-secure-store"]
+  }
+}

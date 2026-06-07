@@ -1,53 +1,98 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { View, Text, Modal, Pressable, StyleSheet } from 'react-native';
+import { X } from 'lucide-react-native';
 import { Touch } from './Touch';
+import { useTheme } from '../../hooks/useTheme';
+import { FontMono, FontSans } from '../../constants/typography';
+import { Fs, Fw, Ls } from '../../theme/tokens';
 
 interface WidgetInfoProps {
-  id: string;       // ex: "W1", "WN3"
+  id: string;
   title: string;
   content: string;
 }
 
 export function WidgetInfo({ id, title, content }: WidgetInfoProps) {
+  const theme = useTheme();
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      {/* Badge ID + i button — inline flex row */}
-      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7, fontWeight: 700, letterSpacing: '0.2em', color: 'var(--color-awan-tx-mute)', textTransform: 'uppercase' }}>
-          {id}
-        </span>
-        <Touch onPress={() => setOpen(true)} style={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--color-awan-tx-mute)', lineHeight: 1 }}>ⓘ</span>
+      <View style={s.header}>
+        <Text style={[s.id, { color: theme.mute }]}>{id}</Text>
+        <Touch onPress={() => setOpen(true)} style={s.infoBtn}>
+          <Text style={[s.infoChar, { color: theme.mute }]}>ⓘ</Text>
         </Touch>
-      </div>
+      </View>
 
-      {/* Popup */}
-      {open && (
-        <>
-          <div style={{ position: 'fixed', inset: 0, zIndex: 1998, background: 'rgba(0,0,0,0.6)' }} onClick={() => setOpen(false)} />
-          <div style={{
-            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-            zIndex: 1999, width: 300, maxWidth: '90vw',
-            background: 'var(--color-awan-surface)', border: '1px solid var(--color-awan-border)',
-            padding: 20,
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-              <div>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 7, fontWeight: 700, letterSpacing: '0.2em', color: 'var(--color-awan-tx-mute)', textTransform: 'uppercase', display: 'block', marginBottom: 2 }}>{id}</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 800, letterSpacing: '0.15em', color: 'var(--color-awan-tx)', textTransform: 'uppercase' }}>{title}</span>
-              </div>
-              <Touch onPress={() => setOpen(false)} style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <X size={14} style={{ color: 'var(--color-awan-tx-mute)' }} />
-              </Touch>
-            </div>
-            <p style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--color-awan-tx)', lineHeight: 1.6, margin: 0 }}>
-              {content}
-            </p>
-          </div>
-        </>
-      )}
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <Pressable style={s.backdrop} onPress={() => setOpen(false)} />
+        <View style={[s.popup, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <View style={s.popupHeader}>
+            <View>
+              <Text style={[s.popupId, { color: theme.mute }]}>{id}</Text>
+              <Text style={[s.popupTitle, { color: theme.title }]}>{title}</Text>
+            </View>
+            <Touch onPress={() => setOpen(false)} style={s.closeBtn}>
+              <X size={14} color={theme.mute} />
+            </Touch>
+          </View>
+          <Text style={[s.content, { color: theme.title }]}>{content}</Text>
+        </View>
+      </Modal>
     </>
   );
 }
+
+const s = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  id: {
+    fontFamily: FontMono,
+    fontSize: Fs.xxs,
+    fontWeight: Fw.value,
+    letterSpacing: Ls.xxs_02,
+    textTransform: 'uppercase',
+  },
+  infoBtn: { width: 20, height: 20, alignItems: 'center', justifyContent: 'center' },
+  infoChar: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.value },
+
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)' },
+  popup: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginLeft: -150,
+    marginTop: -80,
+    width: 300,
+    borderWidth: 1,
+    padding: 20,
+  },
+  popupHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  popupId: {
+    fontFamily: FontMono,
+    fontSize: Fs.xxs,
+    fontWeight: Fw.value,
+    letterSpacing: Ls.xxs_02,
+    textTransform: 'uppercase',
+    marginBottom: 2,
+  },
+  popupTitle: {
+    fontFamily: FontMono,
+    fontSize: Fs.lg,
+    fontWeight: '800',
+    letterSpacing: Ls.sm_015,
+    textTransform: 'uppercase',
+  },
+  closeBtn: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
+  content: { fontFamily: FontSans, fontSize: 12, lineHeight: 19 },
+});

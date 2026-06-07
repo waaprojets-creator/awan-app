@@ -1,92 +1,106 @@
 import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { motion } from 'motion/react';
 import { HexagonLogo, ICON_SIZE } from '../constants/icons';
 import { L } from '../constants/labels';
 import { Touch } from './ui/Touch';
+import { useTheme } from '../hooks/useTheme';
+import { FontSans } from '../constants/typography';
+import { Fw, Ls, Clr } from '../theme/tokens';
 
 interface AppHeaderProps {
   currentRoute: string;
   onNavigate: (route: string) => void;
 }
 
-const LABEL_STYLE_BASE = {
-  fontFamily: 'var(--font-sans)',
-  fontWeight: 900,
-  letterSpacing: '0.33em',
-  textTransform: 'uppercase' as const,
-  transition: 'color 0.2s',
-} as const;
+function RotatingLogo({ size, active, color }: { size: number; active: boolean; color: string }) {
+  const rotation = useSharedValue(active ? 0 : -30);
+  React.useEffect(() => {
+    rotation.value = withSpring(active ? 0 : -30, { stiffness: 300, damping: 25 });
+  }, [active]);
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
+  return (
+    <Animated.View style={animStyle}>
+      <HexagonLogo size={size} variant="simple" color={color} />
+    </Animated.View>
+  );
+}
 
 export default function AppHeader({ currentRoute, onNavigate }: AppHeaderProps) {
+  const theme = useTheme();
   const insets = useSafeAreaInsets();
   const isOn = (name: string) => currentRoute === name;
 
   return (
-    <div
-      className="flex flex-row items-center justify-between px-6 pb-2 border-b border-white/5"
-      style={{
-        paddingTop: insets.top + 8,
-        backgroundColor: 'var(--color-awan-bg)',
-      }}
+    <View
+      style={[
+        s.header,
+        {
+          paddingTop: insets.top + 8,
+          backgroundColor: theme.bg,
+          borderBottomColor: Clr.white5,
+        },
+      ]}
     >
       {/* AWAN latin → Analyse */}
-      <div className="flex-1">
-        <Touch
-          onPress={() => onNavigate('Analyse')}
-          disabled={isOn('Analyse')}
-          className="flex flex-col items-start"
-        >
-          <span
-            style={{
-              ...LABEL_STYLE_BASE,
-              fontSize: '13px',
-              color: isOn('Analyse') ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)',
-            }}
-          >
+      <View style={s.side}>
+        <Touch onPress={() => onNavigate('Analyse')} disabled={isOn('Analyse')}>
+          <Text style={[s.label, { color: isOn('Analyse') ? theme.selected : theme.title }]}>
             {(L as { header: { latin: string } }).header.latin}
-          </span>
+          </Text>
         </Touch>
-      </div>
+      </View>
 
       {/* Logo hexagone → Dashboard */}
-      <div className="flex justify-center items-center px-4">
-        <Touch
-          onPress={() => onNavigate('Dashboard')}
-          scale={0.9}
-          disabled={isOn('Dashboard')}
-        >
-          <motion.div
-            animate={{ rotate: isOn('Dashboard') ? 0 : -30 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          >
-            <HexagonLogo
-              size={(ICON_SIZE as { header: number }).header}
-              variant="simple"
-              color={isOn('Dashboard') ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)'}
-            />
-          </motion.div>
+      <View style={s.center}>
+        <Touch onPress={() => onNavigate('Dashboard')} scale={0.9} disabled={isOn('Dashboard')}>
+          <RotatingLogo
+            size={(ICON_SIZE as { header: number }).header}
+            active={isOn('Dashboard')}
+            color={isOn('Dashboard') ? theme.selected : theme.mute}
+          />
         </Touch>
-      </div>
+      </View>
 
       {/* AWAN arabe → Islam */}
-      <div className="flex-1 flex justify-end">
-        <Touch
-          onPress={() => onNavigate('Islam')}
-          disabled={isOn('Islam')}
-          className="flex flex-col items-end"
-        >
-          <span
-            style={{
-              ...LABEL_STYLE_BASE,
-              fontSize: '14px',
-              color: isOn('Islam') ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)',
-            }}
-          >
+      <View style={[s.side, s.sideRight]}>
+        <Touch onPress={() => onNavigate('Islam')} disabled={isOn('Islam')}>
+          <Text style={[s.labelArabic, { color: isOn('Islam') ? theme.selected : theme.title }]}>
             {(L as { header: { arabic: string } }).header.arabic}
-          </span>
+          </Text>
         </Touch>
-      </div>
-    </div>
+      </View>
+    </View>
   );
 }
+
+const s = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+  },
+  side: { flex: 1 },
+  sideRight: { alignItems: 'flex-end' },
+  center: { paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center' },
+  label: {
+    fontFamily: FontSans,
+    fontSize: 13,
+    fontWeight: Fw.display,
+    letterSpacing: Ls.body_033,
+    textTransform: 'uppercase',
+  },
+  labelArabic: {
+    fontFamily: FontSans,
+    fontSize: 14,
+    fontWeight: Fw.display,
+    letterSpacing: Ls.body_033,
+    textTransform: 'uppercase',
+  },
+});

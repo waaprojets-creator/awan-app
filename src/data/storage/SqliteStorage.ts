@@ -1,71 +1,59 @@
-import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite';
+import { openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 import { DbFullError, MAX_DB_BYTES, type IStorage, type ITransaction, type ParseFn } from './IStorage';
-
-const DB_VERSION = 1;
-
-const CREATE_TABLES = `
-  CREATE TABLE IF NOT EXISTS kv (
-    key   TEXT PRIMARY KEY NOT NULL,
-    value TEXT NOT NULL
-  );
-`;
 
 export interface SqliteStorageConfig {
   dbName?: string;
-  encrypted?: boolean;
+  encrypted?: boolean; // kept for API compat — unused with expo-sqlite
 }
 
 export class SqliteStorage implements IStorage {
-  private db: SQLiteDBConnection | null = null;
-  private readonly conn = new SQLiteConnection(CapacitorSQLite);
+  private db: SQLiteDatabase | null = null;
   private readonly dbName: string;
-  private readonly encrypted: boolean;
 
   constructor(config: SqliteStorageConfig = {}) {
     this.dbName = config.dbName ?? 'awan';
-    this.encrypted = config.encrypted ?? false;
   }
 
   async open(): Promise<void> {
-    await this.conn.checkConnectionsConsistency();
-    const isConn = (await this.conn.isConnection(this.dbName, this.encrypted)).result ?? false;
-    const mode = this.encrypted ? 'secret' : 'no-encryption';
-
-    this.db = isConn
-      ? await this.conn.retrieveConnection(this.dbName, this.encrypted)
-      : await this.conn.createConnection(this.dbName, this.encrypted, mode, DB_VERSION, false);
-
-    await this.db.open();
-    await this.db.execute(CREATE_TABLES);
+    this.db = await openDatabaseAsync(this.dbName);
+    await this.db.execAsync(`
+      PRAGMA journal_mode = WAL;
+      PRAGMA synchronous = NORMAL;
+      PRAGMA foreign_keys = ON;
+      PRAGMA busy_timeout = 5000;
+      CREATE TABLE IF NOT EXISTS kv (
+        key   TEXT PRIMARY KEY NOT NULL,
+        value TEXT NOT NULL
+      );
+    `);
   }
 
   async close(): Promise<void> {
-    await this.conn.closeConnection(this.dbName, this.encrypted);
+    await this.db?.closeAsync();
     this.db = null;
   }
 
-  private get handle(): SQLiteDBConnection {
+  private get handle(): SQLiteDatabase {
     if (!this.db) throw new Error('SqliteStorage: call open() first');
     return this.db;
   }
 
   async get<T>(key: string, parse: ParseFn<T>): Promise<T | null> {
-    const res = await this.handle.query('SELECT value FROM kv WHERE key = ?', [key]);
-    const row = res.values?.[0] as { value: string } | undefined;
-    if (!row) return null;
-    return parse(JSON.parse(row.value));
+    const row = await this.handle.getFirstAsync<{ value: string }>(
+      'SELECT value FROM kv WHERE key = ?', [key],
+    );
+    return row ? parse(JSON.parse(row.value)) : null;
   }
 
   async set<T>(key: string, value: T): Promise<void> {
     const json = JSON.stringify(value);
-    // Check storage quota before writing (bloqueur 10 MB)
     const current = await this.getSizeBytes();
     if (current + json.length > MAX_DB_BYTES) {
       throw new DbFullError(current);
     }
     try {
-      await this.handle.run(
-        'INSERT INTO kv (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+      await this.handle.runAsync(
+        'INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)',
         [key, json],
       );
     } catch (err) {
@@ -79,7 +67,7 @@ export class SqliteStorage implements IStorage {
   }
 
   async delete(key: string): Promise<void> {
-    await this.handle.run('DELETE FROM kv WHERE key = ?', [key]);
+    await this.handle.runAsync('DELETE FROM kv WHERE key = ?', [key]);
     this.invalidateSizeCache();
   }
 
@@ -93,53 +81,58 @@ export class SqliteStorage implements IStorage {
   async getSizeBytes(): Promise<number> {
     const now = Date.now();
     if (this.cachedSize !== null && now - this.cachedSizeAt < 2000) return this.cachedSize;
-    const pages = await this.handle.query('PRAGMA page_count', []);
-    const pageSize = await this.handle.query('PRAGMA page_size', []);
-    const pc = (pages.values?.[0] as { page_count?: number } | undefined)?.page_count ?? 0;
-    const ps = (pageSize.values?.[0] as { page_size?: number } | undefined)?.page_size ?? 0;
+    const pages = await this.handle.getFirstAsync<{ page_count: number }>('PRAGMA page_count');
+    const pageSize = await this.handle.getFirstAsync<{ page_size: number }>('PRAGMA page_size');
+    const pc = pages?.page_count ?? 0;
+    const ps = pageSize?.page_size ?? 0;
     this.cachedSize = pc * ps;
     this.cachedSizeAt = now;
     return this.cachedSize;
   }
 
+  /** Lit le mode WAL effectif — utilisé par l'écran de diagnostic (preuve runtime J0.3). */
+  async getJournalMode(): Promise<string | null> {
+    const row = await this.handle.getFirstAsync<{ journal_mode: string }>('PRAGMA journal_mode');
+    return row?.journal_mode ?? null;
+  }
+
   async list(prefix: string): Promise<string[]> {
-    const res = await this.handle.query(
-      'SELECT key FROM kv WHERE key LIKE ?',
-      [prefix + '%'],
+    const rows = await this.handle.getAllAsync<{ key: string }>(
+      'SELECT key FROM kv WHERE key LIKE ?', [`${prefix}%`],
     );
-    return (res.values ?? []).map((r: { key: string }) => r.key);
+    return rows.map(r => r.key);
   }
 
   async listFiltered(prefix: string, where: Record<string, unknown>): Promise<string[]> {
     let sql = 'SELECT key FROM kv WHERE key LIKE ?';
-    const params: unknown[] = [`${prefix}%`];
+    const params: (string | number | null)[] = [`${prefix}%`];
     for (const [k, v] of Object.entries(where)) {
       sql += ` AND json_extract(value, '$.${k}') = ?`;
-      params.push(v);
+      params.push(v as string | number | null);
     }
-    const res = await this.handle.query(sql, params);
-    return (res.values ?? []).map((r: { key: string }) => r.key);
+    const rows = await this.handle.getAllAsync<{ key: string }>(sql, params);
+    return rows.map(r => r.key);
   }
 
   async listByPrefix(prefix: string, limit?: number, offset?: number): Promise<string[]> {
     let sql = 'SELECT key FROM kv WHERE key LIKE ? ORDER BY key';
-    const params: unknown[] = [`${prefix}%`];
+    const params: (string | number | null)[] = [`${prefix}%`];
     if (limit !== undefined) { sql += ' LIMIT ?'; params.push(limit); }
     if (offset !== undefined) { sql += ' OFFSET ?'; params.push(offset); }
-    const res = await this.handle.query(sql, params);
-    return (res.values ?? []).map((r: { key: string }) => r.key);
+    const rows = await this.handle.getAllAsync<{ key: string }>(sql, params);
+    return rows.map(r => r.key);
   }
 
   async aggregate(prefix: string, field: string, op: 'SUM' | 'AVG' | 'COUNT', where?: Record<string, unknown>): Promise<number> {
     const extract = op === 'COUNT' ? '1' : `CAST(json_extract(value, '$.${field}') AS REAL)`;
     let sql = `SELECT ${op}(${extract}) as result FROM kv WHERE key LIKE ?`;
-    const params: unknown[] = [`${prefix}%`];
+    const params: (string | number | null)[] = [`${prefix}%`];
     for (const [k, v] of Object.entries(where ?? {})) {
       sql += ` AND json_extract(value, '$.${k}') = ?`;
-      params.push(v);
+      params.push(v as string | number | null);
     }
-    const res = await this.handle.query(sql, params);
-    return (res.values?.[0] as { result?: number | null } | undefined)?.result ?? 0;
+    const row = await this.handle.getFirstAsync<{ result: number | null }>(sql, params);
+    return row?.result ?? 0;
   }
 
   async query<T>(table: string, where: Partial<T>, parse: ParseFn<T>): Promise<T[]> {
@@ -157,31 +150,27 @@ export class SqliteStorage implements IStorage {
   }
 
   async transaction<T>(fn: (tx: ITransaction) => Promise<T>): Promise<T> {
-    await this.handle.beginTransaction();
-    try {
+    let result!: T;
+    await this.handle.withTransactionAsync(async () => {
       const tx: ITransaction = {
         get: (k, p) => this.get(k, p),
         set: (k, v) => this.set(k, v),
         delete: (k) => this.delete(k),
       };
-      const result = await fn(tx);
-      await this.handle.commitTransaction();
-      return result;
-    } catch (err) {
-      await this.handle.rollbackTransaction();
-      throw err;
-    }
+      result = await fn(tx);
+    });
+    return result;
   }
 
   async clear(): Promise<void> {
-    await this.handle.run('DELETE FROM kv', []);
+    await this.handle.runAsync('DELETE FROM kv');
     this.invalidateSizeCache();
   }
 
   async exportAll(): Promise<string> {
-    const res = await this.handle.query('SELECT key, value FROM kv', []);
+    const rows = await this.handle.getAllAsync<{ key: string; value: string }>('SELECT key, value FROM kv');
     const data: Record<string, unknown> = {};
-    for (const row of (res.values ?? []) as Array<{ key: string; value: string }>) {
+    for (const row of rows) {
       try { data[row.key] = JSON.parse(row.value); } catch { data[row.key] = row.value; }
     }
     return JSON.stringify({ type: 'awan.backup', version: 1, exported: new Date().toISOString().slice(0, 10), data });

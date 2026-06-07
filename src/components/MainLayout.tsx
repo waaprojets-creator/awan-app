@@ -1,21 +1,20 @@
-import React, { Component, lazy, Suspense, useEffect, useState } from 'react';
-import { ActivityIndicator } from 'react-native';
-import { View, StyleSheet } from 'react-native';
-import { Switch, Route, useLocation } from 'wouter';
-import { AnimatePresence, motion } from 'motion/react';
-import { useTheme, useThemeSync } from '../hooks/useTheme';
+import React, { Component, lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, BackHandler, StyleSheet, Text, View } from 'react-native';
+import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useTheme } from '../hooks/useTheme';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useAppStore } from '../data/store/appStore';
+import { dbFullBus } from '../utils/dbFullBus';
 import { ToastProvider, useToast } from './ui/Toast';
 import AppHeader from './AppHeader';
 import BottomNav from './BottomNav';
-import { useAndroidBack } from '../hooks/useAndroidBack';
 
-// Niveau 1 — toujours chargés (Dashboard = écran d'accueil, SanteScreen = hub)
+// Level 1 — always loaded
 import DashboardScreen from '../screens/DashboardScreen';
 import SanteScreen     from '../screens/SanteScreen';
 
-// Niveau 2+ — chargés à la première navigation vers l'écran
+// Level 2+ — lazy-loaded on first navigation
 const PlanningScreen    = lazy(() => import('../screens/PlanningScreen'));
 const TrajetScreen      = lazy(() => import('../screens/TrajetScreen'));
 const SettingsScreen    = lazy(() => import('../screens/SettingsScreen'));
@@ -26,45 +25,42 @@ const SportScreen       = lazy(() => import('../screens/SportScreen'));
 const MensurationScreen = lazy(() => import('../screens/MensurationScreen'));
 const NutritionScreen   = lazy(() => import('../screens/NutritionScreen'));
 const JournalScreen     = lazy(() => import('../screens/JournalScreen'));
-const CoachScreen         = lazy(() => import('../screens/CoachScreen'));
-const SleepScreen         = lazy(() => import('../screens/SleepScreen'));
-const PhilosophieScreen   = lazy(() => import('../screens/PhilosophieScreen'));
+const CoachScreen       = lazy(() => import('../screens/CoachScreen'));
+const SleepScreen       = lazy(() => import('../screens/SleepScreen'));
+const PhilosophieScreen = lazy(() => import('../screens/PhilosophieScreen'));
+
+const Tab = createBottomTabNavigator();
+
+// ─── Error boundary ──────────────────────────────────────────────────────────
 
 type ErrorState = { error: Error | null };
 
 class ScreenErrorBoundary extends Component<{ children: React.ReactNode }, ErrorState> {
   override state: ErrorState = { error: null };
-
-  static getDerivedStateFromError(error: Error): ErrorState {
-    return { error };
-  }
-
+  static getDerivedStateFromError(e: Error): ErrorState { return { error: e }; }
   override render() {
     if (this.state.error) {
       return (
-        <div className="flex-1 p-6">
-          <div className="awan-card p-4 border-awan-status-error/50">
-            <div className="awan-label mb-2 text-awan-status-error">SYSTEM ERROR</div>
-            <div className="awan-value">{this.state.error.message}</div>
-          </div>
-        </div>
+        <View style={{ flex: 1, padding: 24 }}>
+          <View style={{ padding: 16, borderWidth: 1, borderColor: '#8A0C0C', backgroundColor: '#2A0A0A' }}>
+            <Text style={{ color: '#FF4B4B', fontWeight: '700', marginBottom: 8 }}>SYSTEM ERROR</Text>
+            <Text style={{ color: '#F8F5F2' }}>{this.state.error.message}</Text>
+          </View>
+        </View>
       );
     }
     return this.props.children;
   }
 }
 
-function PageTransition({ children, direction = 1 }: { children: React.ReactNode; direction?: number }) {
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function SuspenseFallback() {
+  const theme = useTheme();
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 28 * direction }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -28 * direction }}
-      transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="flex-1 flex flex-col h-full w-full min-h-0 overflow-hidden"
-    >
-      {children}
-    </motion.div>
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.bg }}>
+      <ActivityIndicator size="small" color={theme.selected} />
+    </View>
   );
 }
 
@@ -72,107 +68,121 @@ function DbFullBridge() {
   const { toast } = useToast();
   useEffect(() => {
     const handler = () => toast("Stockage plein — libère de l'espace dans Réglages → DB", 'error');
-    window.addEventListener('awan:db-full', handler);
-    return () => window.removeEventListener('awan:db-full', handler);
+    return dbFullBus.subscribe(handler);
   }, [toast]);
   return null;
 }
 
-function routeToName(location: string): string {
-  if (location.length <= 1) return 'Dashboard';
-  const segment = location.substring(1).split('/')[0] ?? '';
-  const name = segment.charAt(0).toUpperCase() + segment.slice(1);
-  return name === 'Reglages' ? 'Settings' : name;
+// Wraps each screen to pass navigate prop and handle Suspense + error boundary
+function wrap(Screen: React.ComponentType<{ navigate: (r: string) => void }>) {
+  return function ScreenWrapper({ navigation }: { navigation: any }) {
+    return (
+      <Suspense fallback={<SuspenseFallback />}>
+        <ScreenErrorBoundary>
+          <Screen navigate={(route: string) => navigation.navigate(route)} />
+        </ScreenErrorBoundary>
+      </Suspense>
+    );
+  };
 }
 
+// Stable component refs — defined outside MainLayout to prevent remounts on re-render
+const DashboardTab    = wrap(DashboardScreen);
+const SanteTab        = wrap(SanteScreen);
+const PlanningTab     = wrap(PlanningScreen    as React.ComponentType<{ navigate: (r: string) => void }>);
+const TrajetTab       = wrap(TrajetScreen      as React.ComponentType<{ navigate: (r: string) => void }>);
+const SettingsTab     = wrap(SettingsScreen    as React.ComponentType<{ navigate: (r: string) => void }>);
+const TasksTab        = wrap(TasksScreen       as React.ComponentType<{ navigate: (r: string) => void }>);
+const AnalyseTab      = wrap(AnalyseScreen     as React.ComponentType<{ navigate: (r: string) => void }>);
+const IslamTab        = wrap(IslamScreen       as React.ComponentType<{ navigate: (r: string) => void }>);
+const SportTab        = wrap(SportScreen       as React.ComponentType<{ navigate: (r: string) => void }>);
+const MensurationTab  = wrap(MensurationScreen as React.ComponentType<{ navigate: (r: string) => void }>);
+const NutritionTab    = wrap(NutritionScreen   as React.ComponentType<{ navigate: (r: string) => void }>);
+const JournalTab      = wrap(JournalScreen     as React.ComponentType<{ navigate: (r: string) => void }>);
+const CoachTab        = wrap(CoachScreen       as React.ComponentType<{ navigate: (r: string) => void }>);
+const SleepTab        = wrap(SleepScreen       as React.ComponentType<{ navigate: (r: string) => void }>);
+const PhilosophieTab  = wrap(PhilosophieScreen as React.ComponentType<{ navigate: (r: string) => void }>);
+
+// ─── Main layout ─────────────────────────────────────────────────────────────
+
 export default function MainLayout() {
-  const [location, setLocation] = useLocation();
-  const [navDirection, setNavDirection] = useState(1);
   const theme = useTheme();
-  useThemeSync();
   const { isOnline } = useNetworkStatus();
   const showNetworkBanner = useAppStore((s) => s.showNetworkBanner);
+  const [currentRoute, setCurrentRoute] = useState('Dashboard');
 
-  useAndroidBack(() => {
-    // Back from sub-screen → return to Dashboard with reverse animation
-    if (location !== '/' && location !== '/dashboard') {
-      setNavDirection(-1);
-      setLocation('/');
-    } else if (confirm('Quitter Awan ?')) {
-      import('@capacitor/app').then(({ App }) => App.exitApp()).catch(() => {});
+  const navigationRef = useNavigationContainerRef();
+
+  const navigate = useCallback((route: string) => {
+    if (navigationRef.isReady()) {
+      navigationRef.navigate(route as never);
     }
-  });
+  }, [navigationRef]);
 
-  const navigate = (route: string) => {
-    const path = route === 'Dashboard' ? '/' : `/${route.toLowerCase()}`;
-    // Returning to root = backward animation; entering a screen = forward
-    setNavDirection(path === '/' || path === '/dashboard' ? -1 : 1);
-    setLocation(path);
-  };
-
-  const currentRoute = routeToName(location);
-
-  const wrap = (Screen: React.ComponentType<{ navigate: (r: string) => void }>) => () => (
-    <PageTransition direction={navDirection}>
-      <Screen navigate={navigate} />
-    </PageTransition>
-  );
+  // Android hardware back button
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (currentRoute !== 'Dashboard') {
+        navigate('Dashboard');
+      } else {
+        Alert.alert(
+          'Quitter AWAN',
+          "Fermer l'application ?",
+          [
+            { text: 'Annuler', style: 'cancel' },
+            { text: 'Quitter', onPress: () => BackHandler.exitApp() },
+          ],
+        );
+      }
+      return true;
+    });
+    return () => subscription.remove();
+  }, [currentRoute, navigate]);
 
   return (
     <ToastProvider>
-    <DbFullBridge />
-    <View style={[s.root, { backgroundColor: theme.bg }]}>
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.03] z-0"
-        style={{
-          backgroundImage: 'radial-gradient(circle, var(--color-awan-gold) 1px, transparent 1px)',
-          backgroundSize: '32px 32px',
+      <DbFullBridge />
+      <NavigationContainer
+        ref={navigationRef}
+        onStateChange={() => {
+          const name = navigationRef.getCurrentRoute()?.name ?? 'Dashboard';
+          setCurrentRoute(name);
         }}
-      />
-      <div className="absolute inset-0 pointer-events-none z-50 opacity-[0.015] awan-scan-line" />
-
-      {showNetworkBanner && !isOnline && (
-        <div className="w-full py-1.5 flex items-center justify-center" style={{ backgroundColor: 'var(--color-awan-status-warn)', zIndex: 9999 }}>
-          <span className="text-xs font-black text-black uppercase tracking-widest">HORS LIGNE</span>
-        </div>
-      )}
-      <AppHeader currentRoute={currentRoute} onNavigate={navigate} />
-      <View style={s.body}>
-        <ScreenErrorBoundary key={location}>
-          <Suspense fallback={
-            <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: 'var(--color-awan-bg)' }}>
-              <ActivityIndicator size="small" color="var(--color-awan-gold)" />
-            </div>
-          }>
-          <AnimatePresence mode="wait">
-            <Switch key={location}>
-              <Route path="/">{wrap(DashboardScreen)}</Route>
-              <Route path="/dashboard">{wrap(DashboardScreen)}</Route>
-              <Route path="/planning">{wrap(PlanningScreen)}</Route>
-              <Route path="/trajet">{wrap(TrajetScreen)}</Route>
-              <Route path="/sante">{wrap(SanteScreen)}</Route>
-              <Route path="/settings">{wrap(SettingsScreen)}</Route>
-              <Route path="/reglages">{wrap(SettingsScreen)}</Route>
-              <Route path="/tasks">{wrap(TasksScreen)}</Route>
-              <Route path="/analyse">{wrap(AnalyseScreen)}</Route>
-              <Route path="/islam">{wrap(IslamScreen)}</Route>
-              <Route path="/sport">{wrap(SportScreen)}</Route>
-              <Route path="/mensuration">{wrap(MensurationScreen)}</Route>
-              <Route path="/nutrition">{wrap(NutritionScreen)}</Route>
-              <Route path="/journal">{wrap(JournalScreen)}</Route>
-              <Route path="/coach">{wrap(CoachScreen)}</Route>
-              <Route path="/sleep">{wrap(SleepScreen)}</Route>
-              <Route path="/philosophie">{wrap(PhilosophieScreen)}</Route>
-              <Route>{wrap(DashboardScreen)}</Route>
-            </Switch>
-          </AnimatePresence>
-          </Suspense>
-        </ScreenErrorBoundary>
-      </View>
-      <ScreenErrorBoundary>
-        <BottomNav currentRoute={currentRoute} onNavigate={navigate} />
-      </ScreenErrorBoundary>
-    </View>
+      >
+        <View style={[s.root, { backgroundColor: theme.bg }]}>
+          {showNetworkBanner && !isOnline && (
+            <View style={{ backgroundColor: theme.statusWarn, paddingVertical: 6, alignItems: 'center', zIndex: 9999 }}>
+              <Text style={{ fontSize: 11, fontWeight: '900', color: '#000', letterSpacing: 2, textTransform: 'uppercase' }}>
+                HORS LIGNE
+              </Text>
+            </View>
+          )}
+          <AppHeader currentRoute={currentRoute} onNavigate={navigate} />
+          <View style={s.body}>
+            <Tab.Navigator
+              screenOptions={{ headerShown: false }}
+              tabBar={() => null}
+            >
+              <Tab.Screen name="Dashboard"   component={DashboardTab} />
+              <Tab.Screen name="Planning"    component={PlanningTab} />
+              <Tab.Screen name="Trajet"      component={TrajetTab} />
+              <Tab.Screen name="Sante"       component={SanteTab} />
+              <Tab.Screen name="Reglages"    component={SettingsTab} />
+              <Tab.Screen name="Tasks"       component={TasksTab} />
+              <Tab.Screen name="Analyse"     component={AnalyseTab} />
+              <Tab.Screen name="Islam"       component={IslamTab} />
+              <Tab.Screen name="Sport"       component={SportTab} />
+              <Tab.Screen name="Mensuration" component={MensurationTab} />
+              <Tab.Screen name="Nutrition"   component={NutritionTab} />
+              <Tab.Screen name="Journal"     component={JournalTab} />
+              <Tab.Screen name="Coach"       component={CoachTab} />
+              <Tab.Screen name="Sleep"       component={SleepTab} />
+              <Tab.Screen name="Philosophie" component={PhilosophieTab} />
+            </Tab.Navigator>
+          </View>
+          <BottomNav currentRoute={currentRoute} onNavigate={navigate} />
+        </View>
+      </NavigationContainer>
     </ToastProvider>
   );
 }

@@ -1,8 +1,11 @@
 import React from 'react';
-import { Flame, Activity } from 'lucide-react';
+import { View, Text, StyleSheet } from 'react-native';
+import { Flame, Activity } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
+import { FontMono } from '../../constants/typography';
+import { Fs, Fw, Ls } from '../../theme/tokens';
 import { BarChart, EmptyState, LoadingState } from './shared';
 
 interface DayMeal { label: string; kcal: number; p: number }
@@ -16,14 +19,7 @@ interface NutritionTabProps {
   todayF: number;
 }
 
-export function NutritionTab({
-  mealsByDay,
-  mealsLoading,
-  todayKcal,
-  todayP,
-  todayC,
-  todayF,
-}: NutritionTabProps) {
+export function NutritionTab({ mealsByDay, mealsLoading, todayKcal, todayP, todayC, todayF }: NutritionTabProps) {
   const theme = useTheme();
 
   const { avgKcal, avgP, count } = React.useMemo(() => {
@@ -36,54 +32,57 @@ export function NutritionTab({
   if (count === 0 && mealsByDay.length > 0) return <EmptyState Icon={Flame} label="Aucun repas enregistré sur la période" />;
 
   return (
-    <div className="space-y-8">
-      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
-        <span className="awan-label text-awan-tx-mute mb-2 block">KCAL · AUJOURD'HUI</span>
-        <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-mono font-bold text-awan-gold tracking-tighter">
-            {todayKcal || '—'}
-          </span>
+    <View style={{ gap: 32 }}>
+      <Card variant="flat">
+        <Text style={[s.label, { color: theme.mute, marginBottom: 8 }]}>KCAL · AUJOURD'HUI</Text>
+        <View style={s.row}>
+          <Text style={[s.bigNum, { color: theme.selected }]}>{todayKcal || '—'}</Text>
           {todayKcal > 0 && (
-            <span className="text-awan-md font-mono text-awan-tx-mute">
-              · P {todayP}g · G {todayC}g · L {todayF}g
-            </span>
+            <Text style={[s.macroText, { color: theme.mute }]}>
+              {' '}· P {todayP}g · G {todayC}g · L {todayF}g
+            </Text>
           )}
-        </div>
+        </View>
       </Card>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Card className="p-6 bg-white/5 border-white/5" variant="flat">
-          <div className="flex flex-row items-center gap-2 mb-3">
-            <Flame size={12} className="text-awan-gold" />
-            <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase">Moy. Kcal</span>
-          </div>
-          <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">{avgKcal || '—'}</span>
-          {count > 0 && <span className="text-awan-xs text-awan-tx-mute font-mono mt-1 block">moy. sur {count} j</span>}
+      <View style={s.grid2}>
+        <Card variant="flat" style={{ flex: 1 }}>
+          <View style={[s.row, { marginBottom: 12 }]}>
+            <Flame size={12} color={theme.selected} />
+            <Text style={[s.label, { color: theme.selected, marginLeft: 8 }]}>Moy. Kcal</Text>
+          </View>
+          <Text style={[s.bigNum, { color: theme.title }]}>{avgKcal || '—'}</Text>
+          {count > 0 && <Text style={[s.labelXs, { color: theme.mute, marginTop: 4 }]}>moy. sur {count} j</Text>}
         </Card>
-        <Card className="p-6 bg-white/5 border-white/5" variant="flat">
-          <div className="flex flex-row items-center gap-2 mb-3">
-            <Activity size={12} className="text-awan-status-error" />
-            <span className="text-awan-sm font-black text-awan-status-error tracking-widest uppercase">Moy. Prot</span>
-          </div>
-          <span className="text-3xl font-black text-awan-tx font-mono tracking-tighter">
-            {avgP || '—'}{avgP > 0 && <span className="text-sm ml-1">G</span>}
-          </span>
-          {count > 0 && <span className="text-awan-xs text-awan-tx-mute font-mono mt-1 block">moy. sur {count} j</span>}
+        <Card variant="flat" style={{ flex: 1 }}>
+          <View style={[s.row, { marginBottom: 12 }]}>
+            <Activity size={12} color={theme.danger} />
+            <Text style={[s.label, { color: theme.danger, marginLeft: 8 }]}>Moy. Prot</Text>
+          </View>
+          <View style={s.row}>
+            <Text style={[s.bigNum, { color: theme.title }]}>{avgP || '—'}</Text>
+            {avgP > 0 && <Text style={[s.unit, { color: theme.mute }]}>G</Text>}
+          </View>
+          {count > 0 && <Text style={[s.labelXs, { color: theme.mute, marginTop: 4 }]}>moy. sur {count} j</Text>}
         </Card>
-      </div>
+      </View>
 
-      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+      <Card variant="flat">
         <Heading level={4} mono subtitle="Énergie">FLUX CALORIQUE</Heading>
-        <div className="h-[200px] mt-6">
-          <BarChart
-            data={mealsByDay}
-            dataKey="kcal"
-            color={theme.title}
-            yUnit="kcal"
-            xLabels={mealsByDay.map(d => d.label)}
-          />
-        </div>
+        <View style={{ height: 200, marginTop: 24 }}>
+          <BarChart data={mealsByDay} dataKey="kcal" color={theme.title} yUnit="kcal" xLabels={mealsByDay.map(d => d.label)} />
+        </View>
       </Card>
-    </div>
+    </View>
   );
 }
+
+const s = StyleSheet.create({
+  grid2: { flexDirection: 'row', gap: 16 },
+  row: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
+  bigNum: { fontFamily: FontMono, fontSize: 30, fontWeight: Fw.display, letterSpacing: Ls.tight },
+  unit: { fontFamily: FontMono, fontSize: Fs.sm },
+  macroText: { fontFamily: FontMono, fontSize: Fs.md },
+  label: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.body_033 },
+  labelXs: { fontFamily: FontMono, fontSize: Fs.xs },
+});

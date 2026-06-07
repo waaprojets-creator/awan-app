@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { ScrollView } from 'react-native';
-import { Compass, BookOpen, RefreshCcw, Clock, CheckCircle2, Plus, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { View, Text, ScrollView, TextInput as RNTextInput, StyleSheet } from 'react-native';
+import { Compass, BookOpen, RefreshCcw, Clock, CheckCircle2, Plus, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { SpiritualService } from '../utils/spiritualService';
 import arabicData from '../assets/data/1.json';
-import { PageWrapper } from '../components/Animated';
 import { ds } from '../utils/storage';
 import { safeStorage } from '../utils/safeStorage';
 import { useAppState } from '../context/AppStateContext';
@@ -12,10 +10,11 @@ import { usePrayerStore } from '../hooks/usePrayerStore';
 import { useQuranStore } from '../hooks/useQuranStore';
 import { useQuranSessionStore } from '../hooks/useQuranSessionStore';
 import type { PrayerName } from '../data/schemas/islam/prayerLog';
-import { StaggerList, StaggerItem } from '../components/Animated';
 import { InstrumentCard } from '../components/ui/InstrumentCard';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
+import { useTheme } from '../hooks/useTheme';
+import { FontSans, FontMono, FwMute, FwBody, FwLabel, FwValue, FwDisplay } from '../constants/typography';
 
 // ─── Hijri calendar utilities ──────────────────────────────────────────────────
 
@@ -71,18 +70,10 @@ const HIJRI_MONTHS = [
 ];
 
 const ISLAMIC_HOLIDAYS: [number, number, string][] = [
-  [1, 1,   'Nouvel An'],
-  [1, 10,  'Achoura'],
-  [3, 12,  'Mawlid'],
-  [7, 27,  'Isra Mi\'raj'],
-  [9, 1,   'Ramadan'],
-  [9, 27,  'Laylat al-Qadr'],
-  [10, 1,  'Aïd al-Fitr'],
-  [12, 9,  'Arafat'],
-  [12, 10, 'Aïd al-Adha'],
-  [12, 11, 'Tashriq'],
-  [12, 12, 'Tashriq'],
-  [12, 13, 'Tashriq'],
+  [1, 1,   'Nouvel An'], [1, 10, 'Achoura'], [3, 12, 'Mawlid'],
+  [7, 27,  'Isra Mi\'raj'], [9, 1, 'Ramadan'], [9, 27, 'Laylat al-Qadr'],
+  [10, 1,  'Aïd al-Fitr'], [12, 9, 'Arafat'], [12, 10, 'Aïd al-Adha'],
+  [12, 11, 'Tashriq'], [12, 12, 'Tashriq'], [12, 13, 'Tashriq'],
 ];
 
 function hijriHoliday(hm: number, hd: number): string | null {
@@ -92,15 +83,14 @@ function hijriHoliday(hm: number, hd: number): string | null {
 
 const WEEKDAYS_FR = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 
-function HijriCalendar({
-  hijriYear, hijriMonth, onSelect, selectedDate, todayStr,
-}: {
+function HijriCalendar({ hijriYear, hijriMonth, onSelect, selectedDate, todayStr }: {
   hijriYear: number; hijriMonth: number;
   onSelect: (dateStr: string) => void; selectedDate: string; todayStr: string;
 }) {
+  const theme = useTheme();
   const days = hijriDaysInMonth(hijriMonth);
   const firstJdn = hToJdn(hijriYear, hijriMonth, 1);
-  const firstDow = (firstJdn + 1) % 7; // 0=Sun
+  const firstDow = (firstJdn + 1) % 7;
 
   const cells: { hd: number; gStr: string; dow: number; jdn: number }[] = [];
   for (let hd = 1; hd <= days; hd++) {
@@ -111,18 +101,17 @@ function HijriCalendar({
   }
 
   return (
-    <div className="flex flex-col gap-1">
-      {/* Weekday headers */}
-      <div className="grid grid-cols-7 gap-1 mb-1">
+    <View style={{ gap: 4 }}>
+      <View style={{ flexDirection: 'row', gap: 4, marginBottom: 4 }}>
         {WEEKDAYS_FR.map((d, i) => (
-          <span key={i} className="text-center" style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.1em' }}>{d}</span>
+          <View key={i} style={{ width: '14.28%', alignItems: 'center' }}>
+            <Text style={{ fontFamily: FontMono, fontSize: 8, color: theme.mute, letterSpacing: 1.0 }}>{d}</Text>
+          </View>
         ))}
-      </div>
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-1">
-        {/* Empty cells before first day */}
+      </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
         {Array.from({ length: cells[0]?.dow ?? 0 }).map((_, i) => (
-          <div key={`e${i}`} />
+          <View key={`e${i}`} style={{ width: '14.28%' }} />
         ))}
         {cells.map(({ hd, gStr, jdn }) => {
           const [,, gd] = jdnToG(jdn);
@@ -130,39 +119,35 @@ function HijriCalendar({
           const isSelected = gStr === selectedDate;
           const holiday = hijriHoliday(hijriMonth, hd);
           return (
-            <Touch key={hd} onPress={() => onSelect(gStr)}>
-              <div
-                className="flex flex-col items-center py-1 border"
-                style={{
-                  backgroundColor: isSelected ? 'var(--color-awan-gold)' : isToday ? 'rgba(212,175,55,0.12)' : 'transparent',
-                  borderColor: isToday ? 'var(--color-awan-gold)' : holiday ? 'rgba(212,175,55,0.3)' : 'var(--color-awan-border-soft)',
-                  minHeight: 38,
-                }}
-              >
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 700, color: isSelected ? 'var(--color-awan-bg)' : isToday ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)', lineHeight: 1.2 }}>
+            <Touch key={hd} onPress={() => onSelect(gStr)} style={{ width: '14.28%' }}>
+              <View style={[s.calCell, {
+                backgroundColor: isSelected ? theme.selected : isToday ? 'rgba(212,175,55,0.12)' : 'transparent',
+                borderColor: isToday ? theme.selected : holiday ? 'rgba(212,175,55,0.3)' : theme.borderSoft,
+                minHeight: 38,
+              }]}>
+                <Text style={{ fontFamily: FontMono, fontSize: 12, fontWeight: FwValue, color: isSelected ? theme.bg : isToday ? theme.selected : theme.title, lineHeight: 14 }}>
                   {hd}
-                </span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: isSelected ? 'var(--color-awan-bg)' : 'var(--color-awan-tx-mute)', lineHeight: 1 }}>
+                </Text>
+                <Text style={{ fontFamily: FontMono, fontSize: 8, color: isSelected ? theme.bg : theme.mute, lineHeight: 9 }}>
                   {gd}
-                </span>
+                </Text>
                 {holiday && (
-                  <div style={{ width: 4, height: 4, backgroundColor: isSelected ? 'var(--color-awan-bg)' : 'var(--color-awan-gold)', borderRadius: 0, marginTop: 1 }} />
+                  <View style={{ width: 4, height: 4, backgroundColor: isSelected ? theme.bg : theme.selected, marginTop: 1 }} />
                 )}
-              </div>
+              </View>
             </Touch>
           );
         })}
-      </div>
-      {/* Holiday legend for this month */}
+      </View>
       {ISLAMIC_HOLIDAYS.filter(([m]) => m === hijriMonth).map(([, hd, name]) => (
-        <div key={`${hijriMonth}-${hd}`} className="flex flex-row items-center gap-2 mt-1">
-          <div style={{ width: 4, height: 4, backgroundColor: 'var(--color-awan-gold)', borderRadius: 0, flexShrink: 0 }} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-gold)', letterSpacing: '0.15em' }}>
+        <View key={`${hijriMonth}-${hd}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
+          <View style={{ width: 4, height: 4, backgroundColor: theme.selected }} />
+          <Text style={{ fontFamily: FontMono, fontSize: 8, color: theme.selected, letterSpacing: 1.5 }}>
             {hd} — {name}
-          </span>
-        </div>
+          </Text>
+        </View>
       ))}
-    </div>
+    </View>
   );
 }
 
@@ -170,61 +155,54 @@ function HijriCalendar({
 
 async function schedulePrayerNotifications(times: Record<string, unknown>): Promise<void> {
   try {
-    const { LocalNotifications } = await import('@capacitor/local-notifications');
-    const perm = await LocalNotifications.checkPermissions();
-    if (perm.display !== 'granted') {
-      const req = await LocalNotifications.requestPermissions();
-      if (req.display !== 'granted') return;
+    const Notifications = await import('expo-notifications');
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== 'granted') {
+      const { status: next } = await Notifications.requestPermissionsAsync();
+      if (next !== 'granted') return;
     }
-    await LocalNotifications.cancel({ notifications: [
-      { id: 1001 }, { id: 1002 }, { id: 1003 }, { id: 1004 }, { id: 1005 },
-    ]});
+    for (const id of ['1001', '1002', '1003', '1004', '1005']) {
+      await Notifications.cancelScheduledNotificationAsync(id).catch(() => {});
+    }
     const prayers = [
-      { id: 1001, name: 'Fajr',    time: times['fajr'] as Date },
-      { id: 1002, name: 'Dhuhr',   time: times['dhuhr'] as Date },
-      { id: 1003, name: 'Asr',     time: times['asr'] as Date },
-      { id: 1004, name: 'Maghrib', time: times['maghrib'] as Date },
-      { id: 1005, name: 'Isha',    time: times['isha'] as Date },
+      { id: '1001', name: 'Fajr',    time: times['fajr'] as Date },
+      { id: '1002', name: 'Dhuhr',   time: times['dhuhr'] as Date },
+      { id: '1003', name: 'Asr',     time: times['asr'] as Date },
+      { id: '1004', name: 'Maghrib', time: times['maghrib'] as Date },
+      { id: '1005', name: 'Isha',    time: times['isha'] as Date },
     ];
     const now = new Date();
-    const future = prayers.filter(p => p.time instanceof Date && p.time > now);
-    if (future.length === 0) return;
-    await LocalNotifications.schedule({
-      notifications: future.map(p => ({
-        id: p.id,
-        title: 'AWAN · ISLAM',
-        body: `${p.name} — heure de la prière`,
-        schedule: { at: p.time },
-      })),
-    });
-  } catch { /* notifications non supportées sur ce contexte */ }
+    for (const p of prayers.filter(p => p.time instanceof Date && p.time > now)) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: p.id,
+        content: { title: 'AWAN · ISLAM', body: `${p.name} — heure de la prière`, sound: true },
+        trigger: { date: p.time } as any,
+      });
+    }
+  } catch { /* notifications non supportées */ }
 }
 
 async function cancelPrayerNotifications(): Promise<void> {
   try {
-    const { LocalNotifications } = await import('@capacitor/local-notifications');
-    await LocalNotifications.cancel({ notifications: [
-      { id: 1001 }, { id: 1002 }, { id: 1003 }, { id: 1004 }, { id: 1005 },
-    ]});
+    const Notifications = await import('expo-notifications');
+    for (const id of ['1001', '1002', '1003', '1004', '1005']) {
+      await Notifications.cancelScheduledNotificationAsync(id).catch(() => {});
+    }
   } catch { /* ok */ }
 }
 
 // ─── Main component ─────────────────────────────────────────────────────────────
 
 export default function IslamScreen() {
+  const theme = useTheme();
   useAppState() as any;
 
   const todayStr = ds(new Date());
   const [selectedDate, setSelectedDate] = useState(todayStr);
-  const [editMode, setEditMode] = useState(false);
   const [prayerTimesForDate, setPrayerTimesForDate] = useState<any>(() => SpiritualService.getPrayerTimes());
   const [showQibla, setShowQibla] = useState(false);
   const [qiblaAngle, setQiblaAngle] = useState(0);
-  const [compassHeading, setCompassHeading] = useState<number | null>(null);
   const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'ok' | 'cached' | 'denied'>('idle');
-  // Accumulated (continuous) rotations — prevents 0°/360° spin artifact
-  const northAccum = useRef(0);
-  const qiblaAccum = useRef(0);
   const [northRot, setNorthRot] = useState(0);
   const [qiblaRot, setQiblaRot] = useState(0);
   const [currentWord, setCurrentWord] = useState<any>(null);
@@ -238,14 +216,12 @@ export default function IslamScreen() {
   const quranStore = useQuranStore();
   const quranSessionStore = useQuranSessionStore(selectedDate);
 
-  // Wird input state
   const [wirdAyahs, setWirdAyahs] = useState('');
   const [wirdTime, setWirdTime] = useState(() => {
     const d = new Date();
     return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   });
   const [wirdError, setWirdError] = useState<string | null>(null);
-
   const [sessionAyahs, setSessionAyahs] = useState('');
   const [sessionTime, setSessionTime] = useState(() => {
     const now = new Date();
@@ -255,7 +231,6 @@ export default function IslamScreen() {
   const isToday = selectedDate === todayStr;
   const isPast = selectedDate < todayStr;
 
-  // Hijri navigation state
   const todayH = useMemo(() => {
     const now = new Date();
     return gToH(now.getFullYear(), now.getMonth() + 1, now.getDate());
@@ -276,9 +251,14 @@ export default function IslamScreen() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => { pickNewWord(); }, []);
+
+  // J0: static qibla display — expo-sensors compass integrated in J0.4+
   useEffect(() => {
-    pickNewWord();
-  }, []);
+    if (!showQibla) return;
+    setNorthRot(0);
+    setQiblaRot(qiblaAngle);
+  }, [showQibla, qiblaAngle]);
 
   const pickNewWord = () => {
     setCurrentWord(arabicData[Math.floor(Math.random() * arabicData.length)]);
@@ -286,69 +266,23 @@ export default function IslamScreen() {
   };
 
   const activateQibla = () => {
-    if (!navigator.geolocation) {
-      setQiblaAngle(SpiritualService.getQiblaAngle());
-      setLocationStatus('cached');
-      setShowQibla(true);
-      return;
-    }
     setLocationStatus('loading');
     setShowQibla(true);
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        const { latitude: lat, longitude: lon } = coords;
-        safeStorage.set('awan.user.location', JSON.stringify({ lat, lon }));
+    const cached = safeStorage.get('awan.user.location');
+    if (cached) {
+      try {
+        const { lat, lon } = JSON.parse(cached);
         setQiblaAngle(SpiritualService.getQiblaAngle(lat, lon));
         setPrayerTimesForDate(SpiritualService.getPrayerTimes(lat, lon));
-        setLocationStatus('ok');
-      },
-      () => {
+      } catch {
         setQiblaAngle(SpiritualService.getQiblaAngle());
-        setLocationStatus(safeStorage.get('awan.user.location') ? 'cached' : 'denied');
-      },
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 3_600_000 },
-    );
-  };
-
-  useEffect(() => {
-    if (!showQibla) return;
-    const handler = (e: DeviceOrientationEvent) => {
-      const wch = (e as any).webkitCompassHeading;
-      const heading = wch != null ? wch : e.alpha != null ? (360 - e.alpha) % 360 : null;
-      if (heading != null) setCompassHeading(heading);
-    };
-    const attach = () => {
-      window.addEventListener('deviceorientationabsolute', handler as EventListener, true);
-      window.addEventListener('deviceorientation', handler as EventListener, true);
-    };
-    const DOE = DeviceOrientationEvent as any;
-    if (typeof DOE.requestPermission === 'function') {
-      DOE.requestPermission().then((s: string) => { if (s === 'granted') attach(); });
+      }
+      setLocationStatus('cached');
     } else {
-      attach();
+      setQiblaAngle(SpiritualService.getQiblaAngle());
+      setLocationStatus('denied');
     }
-    return () => {
-      window.removeEventListener('deviceorientationabsolute', handler as EventListener, true);
-      window.removeEventListener('deviceorientation', handler as EventListener, true);
-    };
-  }, [showQibla]);
-
-  // Shortest-path angle accumulator — prevents full spin on 0°/360° wrap
-  useEffect(() => {
-    if (compassHeading === null) return;
-    const snap = (from: number, to: number): number => {
-      let delta = (to - from) % 360;
-      if (delta > 180) delta -= 360;
-      if (delta < -180) delta += 360;
-      return from + delta;
-    };
-    const newNorth = snap(northAccum.current, -compassHeading);
-    northAccum.current = newNorth;
-    setNorthRot(newNorth);
-    const newQibla = snap(qiblaAccum.current, qiblaAngle - compassHeading);
-    qiblaAccum.current = newQibla;
-    setQiblaRot(newQibla);
-  }, [compassHeading, qiblaAngle]);
+  };
 
   const prevMonth = () => {
     if (hijriMonth === 1) { setHijriMonth(12); setHijriYear(y => y - 1); }
@@ -359,8 +293,6 @@ export default function IslamScreen() {
     else setHijriMonth(m => m + 1);
   };
 
-  // Nomenclature malékite tunisienne — 7 prières (+ Chourouk en info)
-  // timeSource = clé adhan utilisée pour afficher l'heure théorique
   type PrayerType = 'sunnah' | 'fard' | 'info';
   const PRAYER_ROWS: { key: string; timeSource: string; type: PrayerType }[] = [
     { key: 'fajr_sunnah', timeSource: 'fajr',    type: 'sunnah' },
@@ -374,7 +306,6 @@ export default function IslamScreen() {
   ];
   const canEdit = isPast || isToday;
 
-  // Heures personnalisées en cours de saisie par prière (avant validation)
   const [draftTimes, setDraftTimes] = useState<Record<string, string>>({});
   const setDraftTime = (key: string, value: string) =>
     setDraftTimes(prev => ({ ...prev, [key]: value }));
@@ -384,7 +315,7 @@ export default function IslamScreen() {
   };
 
   return (
-    <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
+    <View style={{ flex: 1 }}>
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
         style={{ flex: 1 }}
@@ -392,25 +323,30 @@ export default function IslamScreen() {
       >
         <ScreenHeader title="ISLAM" />
 
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <InstrumentCard
-            label="PRIÈRES"
-            value={prayerStore.doneCount}
-            unit={`/${prayerStore.total}`}
-            status={prayerStore.doneCount >= prayerStore.total ? 'ok' : prayerStore.doneCount > 0 ? 'warn' : 'mute'}
-            progress={prayerStore.total > 0 ? Math.round((prayerStore.doneCount / prayerStore.total) * 100) : 0}
-            index={1}
-          />
-          <InstrumentCard
-            label="QIBLA"
-            value={showQibla ? `${Math.round(qiblaAngle)}°` : '—'}
-            status={showQibla ? 'spirit' : 'mute'}
-            index={2}
-            onPress={activateQibla}
-          />
-        </div>
+        {/* Instruments */}
+        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
+          <View style={{ flex: 1 }}>
+            <InstrumentCard
+              label="PRIÈRES"
+              value={prayerStore.doneCount}
+              unit={`/${prayerStore.total}`}
+              status={prayerStore.doneCount >= prayerStore.total ? 'ok' : prayerStore.doneCount > 0 ? 'warn' : 'mute'}
+              progress={prayerStore.total > 0 ? Math.round((prayerStore.doneCount / prayerStore.total) * 100) : 0}
+              index={1}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <InstrumentCard
+              label="QIBLA"
+              value={showQibla ? `${Math.round(qiblaAngle)}°` : '—'}
+              status={showQibla ? 'spirit' : 'mute'}
+              index={2}
+              onPress={activateQibla}
+            />
+          </View>
+        </View>
 
-        {/* ── Toggle notifications ──────────────────────────────────────────── */}
+        {/* Notifications toggle */}
         <Touch onPress={() => {
           const next = !notifEnabled;
           setNotifEnabled(next);
@@ -418,64 +354,53 @@ export default function IslamScreen() {
           if (next) void schedulePrayerNotifications(prayerTimesForDate as Record<string, unknown>);
           else void cancelPrayerNotifications();
         }}>
-          <div className="flex flex-row items-center justify-between mb-3 px-4 py-3 border" style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)' }}>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>RAPPELS PRIÈRES</span>
-            <div style={{
-              width: 36, height: 20, borderRadius: 10, position: 'relative',
-              backgroundColor: notifEnabled ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.12)',
-              transition: 'background-color 0.2s',
-            }}>
-              <div style={{
-                position: 'absolute', top: 2, left: notifEnabled ? 18 : 2,
-                width: 16, height: 16, borderRadius: 8,
-                backgroundColor: 'var(--color-awan-bg)',
-                transition: 'left 0.2s',
-              }} />
-            </div>
-          </div>
+          <View style={[s.row, { justifyContent: 'space-between', marginBottom: 12, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface }]}>
+            <Text style={{ fontFamily: FontSans, fontSize: 10, fontWeight: FwValue, color: theme.title, letterSpacing: 2.0 }}>RAPPELS PRIÈRES</Text>
+            <View style={{ width: 36, height: 20, borderRadius: 10, backgroundColor: notifEnabled ? theme.selected : 'rgba(255,255,255,0.12)' }}>
+              <View style={{ position: 'absolute', top: 2, left: notifEnabled ? 18 : 2, width: 16, height: 16, borderRadius: 8, backgroundColor: theme.bg }} />
+            </View>
+          </View>
         </Touch>
 
-        {/* ── Sélecteur de date ──────────────────────────────────────────────── */}
-        <div className="flex flex-row items-center justify-between mb-3 p-3 border" style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)' }}>
+        {/* Sélecteur de date */}
+        <View style={[s.row, { justifyContent: 'space-between', marginBottom: 12, padding: 12, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface }]}>
           <Touch onPress={() => {
             const d = new Date(selectedDate);
             d.setDate(d.getDate() - 1);
             setSelectedDate(ds(d));
           }}>
-            <ChevronLeft size={18} color="var(--color-awan-gold)" />
+            <ChevronLeft size={18} color={theme.selected} />
           </Touch>
-          <div className="flex flex-col items-center">
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontFamily: FontMono, fontSize: 8, color: theme.mute, letterSpacing: 3.0 }}>
               {isToday ? 'AUJOURD\'HUI' : selectedDate}
-            </span>
+            </Text>
             {(() => {
               const [hy, hm, hd] = gToH(...(selectedDate.split('-').map(Number) as [number, number, number]));
               return (
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.05em' }}>
+                <Text style={{ fontFamily: FontSans, fontSize: 13, fontWeight: FwValue, color: theme.title, letterSpacing: 0.7 }}>
                   {hd} {HIJRI_MONTHS[hm - 1]} {hy}
-                </span>
+                </Text>
               );
             })()}
-          </div>
+          </View>
           <Touch onPress={() => {
             const d = new Date(selectedDate);
             d.setDate(d.getDate() + 1);
             if (ds(d) <= todayStr) setSelectedDate(ds(d));
           }} disabled={isToday}>
-            <ChevronRight size={18} color={isToday ? 'var(--color-awan-tx-mute)' : 'var(--color-awan-gold)'} />
+            <ChevronRight size={18} color={isToday ? theme.mute : theme.selected} />
           </Touch>
-        </div>
+        </View>
 
-        {/* ── Chrono prières ────────────────────────────────────────────────── */}
-        <div className="mb-4 border" style={{ borderColor: 'var(--color-awan-border)', overflow: 'hidden' }}>
-          <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>CHRONO PRIÈRES</span>
+        {/* Chrono prières */}
+        <View style={[s.section, { borderColor: theme.border, marginBottom: 16 }]}>
+          <View style={[s.row, { justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+            <Text style={{ fontFamily: FontSans, fontSize: 10, fontWeight: FwValue, color: theme.title, letterSpacing: 2.0 }}>CHRONO PRIÈRES</Text>
             {isPast && (
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-mute)' }}>
-                tap pour modifier
-              </span>
+              <Text style={{ fontFamily: FontSans, fontSize: 8, color: theme.mute }}>tap pour modifier</Text>
             )}
-          </div>
+          </View>
           {PRAYER_ROWS.map(({ key, timeSource, type }) => {
             const theoTime: Date | undefined = (prayerTimesForDate as Record<string, Date | undefined>)[timeSource];
             const isNext   = isToday && prayerTimesForDate.next === timeSource && type !== 'info';
@@ -487,231 +412,160 @@ export default function IslamScreen() {
               : '--:--';
             const canToggle = !isInfo && canEdit;
             const draftValue = draftTimes[key] ?? realTime ?? (isToday ? currentHHMM() : theoLabel);
-
             const badge = type === 'sunnah' ? 'SUNNAH' : type === 'fard' ? 'FARD' : null;
-            const badgeColor = type === 'sunnah' ? 'var(--color-awan-tx-mute)' : 'var(--color-awan-gold)';
+            const badgeColor = type === 'sunnah' ? theme.mute : theme.selected;
 
             return (
-              <div
+              <View
                 key={key}
-                className="flex flex-row justify-between items-center px-4 py-4 border-b"
-                style={{
-                  borderColor: 'var(--color-awan-border-soft)',
-                  backgroundColor: isNext
-                    ? 'color-mix(in srgb, var(--color-awan-gold) 6%, transparent)'
-                    : done
-                      ? 'color-mix(in srgb, var(--color-awan-status-ok) 4%, transparent)'
-                      : 'transparent',
-                }}
+                style={[s.row, { justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: theme.borderSoft,
+                  backgroundColor: isNext ? 'rgba(212,175,55,0.06)' : done ? 'rgba(78,205,196,0.04)' : 'transparent',
+                }]}
               >
-                <div className="flex flex-row items-center gap-3" style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    width: 3, height: 32,
-                    backgroundColor: done
-                      ? 'var(--color-awan-status-ok)'
-                      : isNext ? 'var(--color-awan-gold)'
-                      : 'color-mix(in srgb, var(--color-awan-tx) 12%, transparent)',
-                  }} />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                    <span style={{
-                      fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700,
-                      letterSpacing: '0.15em', textTransform: 'uppercase',
-                      color: done ? 'var(--color-awan-status-ok)' : isNext ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)',
-                    }}>
+                <View style={[s.row, { flex: 1, gap: 12 }]}>
+                  <View style={{ width: 3, height: 32, backgroundColor: done ? theme.statusOk : isNext ? theme.selected : 'rgba(237,232,226,0.12)' }} />
+                  <View style={{ gap: 2 }}>
+                    <Text style={{ fontFamily: FontSans, fontSize: 11, fontWeight: FwValue, letterSpacing: 1.65, textTransform: 'uppercase',
+                      color: done ? theme.statusOk : isNext ? theme.selected : theme.title }}>
                       {SpiritualService.translatePrayer(key)}
-                    </span>
-                    <div className="flex flex-row items-center gap-2">
+                    </Text>
+                    <View style={[s.row, { gap: 8 }]}>
                       {badge && (
-                        <span style={{
-                          fontFamily: 'var(--font-mono)', fontSize: '7px', fontWeight: 700,
-                          letterSpacing: '0.2em', color: badgeColor,
-                          padding: '1px 4px', border: `1px solid ${badgeColor}`,
-                        }}>
-                          {badge}
-                        </span>
+                        <View style={{ borderWidth: 1, borderColor: badgeColor, paddingHorizontal: 4, paddingVertical: 1 }}>
+                          <Text style={{ fontFamily: FontMono, fontSize: 7, fontWeight: FwValue, letterSpacing: 2.0, color: badgeColor }}>{badge}</Text>
+                        </View>
                       )}
-                      <span style={{
-                        fontFamily: 'var(--font-mono)', fontSize: '9px',
-                        color: 'var(--color-awan-tx-mute)', letterSpacing: '0.1em',
-                      }}>
+                      <Text style={{ fontFamily: FontMono, fontSize: 9, color: theme.mute, letterSpacing: 1.0 }}>
                         THÉO {theoLabel}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                      </Text>
+                    </View>
+                  </View>
+                </View>
 
-                <div className="flex flex-row items-center gap-3">
+                <View style={[s.row, { gap: 12 }]}>
                   {isInfo ? (
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', fontWeight: 700, color: 'var(--color-awan-tx-mute)' }}>
-                      {theoLabel}
-                    </span>
+                    <Text style={{ fontFamily: FontMono, fontSize: 18, fontWeight: FwValue, color: theme.mute }}>{theoLabel}</Text>
                   ) : done ? (
                     <>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '16px', fontWeight: 700, color: 'var(--color-awan-status-ok)' }}>
-                        {realTime ?? '--:--'}
-                      </span>
+                      <Text style={{ fontFamily: FontMono, fontSize: 16, fontWeight: FwValue, color: theme.statusOk }}>{realTime ?? '--:--'}</Text>
                       <Touch onPress={() => { void prayerStore.toggle(key as PrayerName); setDraftTime(key, ''); }} disabled={!canToggle}>
-                        <CheckCircle2 size={20} color="var(--color-awan-status-ok)" />
+                        <CheckCircle2 size={20} color={theme.statusOk} />
                       </Touch>
                     </>
                   ) : (
                     <>
-                      <input
-                        type="time"
+                      <RNTextInput
                         value={draftValue}
-                        onChange={e => setDraftTime(key, e.target.value)}
-                        disabled={!canToggle}
-                        style={{
-                          fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700,
-                          color: 'var(--color-awan-tx)', backgroundColor: 'transparent',
-                          border: '1px solid var(--color-awan-border-soft)', padding: '4px 6px',
-                          width: 72, textAlign: 'center',
-                        }}
+                        onChangeText={v => setDraftTime(key, v)}
+                        editable={canToggle}
+                        keyboardType="numbers-and-punctuation"
+                        placeholder="HH:MM"
+                        placeholderTextColor={theme.mute}
+                        style={{ fontFamily: FontMono, fontSize: 14, fontWeight: FwValue, color: theme.title, backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.borderSoft, paddingHorizontal: 6, paddingVertical: 4, width: 72, textAlign: 'center' }}
                       />
-                      <Touch
-                        onPress={() => { if (canToggle) void prayerStore.toggle(key as PrayerName, draftValue); }}
-                        disabled={!canToggle}
-                      >
+                      <Touch onPress={() => { if (canToggle) void prayerStore.toggle(key as PrayerName, draftValue); }} disabled={!canToggle}>
                         {isNext ? (
-                          <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
-                            <Clock size={20} color="var(--color-awan-gold)" />
-                          </motion.div>
+                          <Clock size={20} color={theme.selected} />
                         ) : (
-                          <div style={{ width: 20, height: 20, border: '1px solid var(--color-awan-border)' }} />
+                          <View style={{ width: 20, height: 20, borderWidth: 1, borderColor: theme.border }} />
                         )}
                       </Touch>
                     </>
                   )}
-                </div>
-              </div>
+                </View>
+              </View>
             );
           })}
-        </div>
+        </View>
 
-        {/* ── Qibla compass ─────────────────────────────────────────────────── */}
-        <Touch onPress={activateQibla} className="block mb-4">
-          <div className="flex flex-row items-center gap-4 p-4 border" style={{ borderColor: 'rgba(212,175,55,0.25)', backgroundColor: 'rgba(212,175,55,0.04)' }}>
-            <div className="p-3 border" style={{ borderColor: 'var(--color-awan-gold)', backgroundColor: 'rgba(212,175,55,0.1)' }}>
-              <Compass size={22} color="var(--color-awan-gold)" />
-            </div>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700, color: 'var(--color-awan-gold)', letterSpacing: '0.2em' }}>
-              INSTRUMENT DE QIBLA
-            </span>
-          </div>
+        {/* Qibla */}
+        <Touch onPress={activateQibla} style={{ marginBottom: 16 }}>
+          <View style={[s.row, { gap: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(212,175,55,0.25)', backgroundColor: 'rgba(212,175,55,0.04)' }]}>
+            <View style={{ padding: 12, borderWidth: 1, borderColor: theme.selected, backgroundColor: 'rgba(212,175,55,0.1)' }}>
+              <Compass size={22} color={theme.selected} />
+            </View>
+            <Text style={{ fontFamily: FontSans, fontSize: 11, fontWeight: FwValue, color: theme.selected, letterSpacing: 2.2 }}>INSTRUMENT DE QIBLA</Text>
+          </View>
         </Touch>
 
-        <AnimatePresence>
-          {showQibla && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="mb-4 border overflow-hidden flex flex-col items-center p-8"
-              style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)' }}
-            >
-              {locationStatus === 'loading' ? (
-                <div className="flex flex-col items-center gap-4 py-8">
-                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}>
-                    <Compass size={32} color="var(--color-awan-gold)" />
-                  </motion.div>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>ACQUISITION GPS...</span>
-                </div>
-              ) : (
-                <>
-                  {/* Two-needle compass */}
-                  <div style={{ width: 208, height: 208, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                    {/* Cardinal marks */}
-                    {(['N','E','S','O'] as const).map((dir, i) => {
-                      const angle = i * 90;
-                      const rad = (angle - 90) * Math.PI / 180;
-                      const r = 88;
-                      return (
-                        <span key={dir} style={{ position: 'absolute', left: `calc(50% + ${r * Math.cos(rad)}px - 5px)`, top: `calc(50% + ${r * Math.sin(rad)}px - 7px)`, fontFamily: 'var(--font-mono)', fontSize: '8px', fontWeight: 700, color: dir === 'N' ? 'var(--color-awan-tx)' : 'rgba(255,255,255,0.2)' }}>
-                          {dir}
-                        </span>
-                      );
-                    })}
-                    <div style={{ position: 'absolute', inset: 8, borderRadius: '50%', border: '1px dashed rgba(255,255,255,0.08)' }} />
+        {showQibla && (
+          <View style={[s.section, { borderColor: theme.border, backgroundColor: theme.surface, alignItems: 'center', padding: 32, marginBottom: 16, overflow: 'hidden' }]}>
+            {locationStatus === 'loading' ? (
+              <View style={{ alignItems: 'center', gap: 16, paddingVertical: 32 }}>
+                <Compass size={32} color={theme.selected} />
+                <Text style={{ fontFamily: FontMono, fontSize: 10, color: theme.mute, letterSpacing: 3.0 }}>ACQUISITION GPS...</Text>
+              </View>
+            ) : (
+              <>
+                <View style={{ width: 208, height: 208, borderRadius: 104, borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)', backgroundColor: 'rgba(255,255,255,0.02)', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ position: 'absolute', top: 8, fontFamily: FontMono, fontSize: 8, fontWeight: FwValue, color: theme.title }}>N</Text>
+                  <Text style={{ position: 'absolute', bottom: 8, fontFamily: FontMono, fontSize: 8, fontWeight: FwValue, color: 'rgba(255,255,255,0.2)' }}>S</Text>
+                  <Text style={{ position: 'absolute', right: 8, fontFamily: FontMono, fontSize: 8, fontWeight: FwValue, color: 'rgba(255,255,255,0.2)' }}>E</Text>
+                  <Text style={{ position: 'absolute', left: 8, fontFamily: FontMono, fontSize: 8, fontWeight: FwValue, color: 'rgba(255,255,255,0.2)' }}>O</Text>
+                  <View style={{ position: 'absolute', width: 4, height: 140, alignItems: 'center', transform: [{ rotate: `${northRot}deg` }] }}>
+                    <View style={{ width: 4, height: 70, backgroundColor: theme.title, opacity: 0.7 }} />
+                    <View style={{ width: 4, height: 70, backgroundColor: 'rgba(255,255,255,0.15)' }} />
+                  </View>
+                  <View style={{ position: 'absolute', width: 3, height: 140, alignItems: 'center', transform: [{ rotate: `${qiblaRot}deg` }] }}>
+                    <View style={{ width: 3, height: 70, backgroundColor: theme.selected }} />
+                    <View style={{ width: 3, height: 70, backgroundColor: 'rgba(212,175,55,0.2)' }} />
+                  </View>
+                  <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: theme.bg, borderWidth: 2, borderColor: theme.selected, alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
+                    <Text style={{ fontFamily: FontMono, fontSize: 11, fontWeight: FwValue, color: theme.selected }}>{Math.round(qiblaAngle)}°</Text>
+                  </View>
+                </View>
+                <View style={[s.row, { gap: 16, marginTop: 24 }]}>
+                  <View style={[s.row, { gap: 8 }]}>
+                    <View style={{ width: 12, height: 3, backgroundColor: theme.title, opacity: 0.7 }} />
+                    <Text style={{ fontFamily: FontMono, fontSize: 8, color: theme.mute, letterSpacing: 2.0 }}>NORD</Text>
+                  </View>
+                  <View style={[s.row, { gap: 8 }]}>
+                    <View style={{ width: 12, height: 3, backgroundColor: theme.selected }} />
+                    <Text style={{ fontFamily: FontMono, fontSize: 8, color: theme.selected, letterSpacing: 2.0 }}>QIBLA</Text>
+                  </View>
+                </View>
+                <View style={[s.row, { gap: 8, marginTop: 12 }]}>
+                  <View style={{ width: 6, height: 6, backgroundColor: locationStatus === 'ok' ? theme.statusOk : locationStatus === 'cached' ? theme.selected : theme.statusWarn }} />
+                  <Text style={{ fontFamily: FontMono, fontSize: 9, color: theme.mute, letterSpacing: 2.0 }}>
+                    {locationStatus === 'ok' ? 'GPS ACTIF' : locationStatus === 'cached' ? 'POSITION MÉMORISÉE' : 'DÉFAUT'}
+                  </Text>
+                </View>
+              </>
+            )}
+          </View>
+        )}
 
-                    {/* North needle — title color */}
-                    <motion.div
-                      animate={{ rotate: northRot }}
-                      style={{ position: 'absolute', width: 4, height: 140, display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 10 }}
-                      transition={{ type: 'spring', stiffness: 80, damping: 18 }}
-                    >
-                      <div style={{ width: 4, height: 70, backgroundColor: 'var(--color-awan-tx)', opacity: 0.7 }} />
-                      <div style={{ width: 4, height: 70, backgroundColor: 'rgba(255,255,255,0.15)' }} />
-                    </motion.div>
-
-                    {/* Qibla needle — gold */}
-                    <motion.div
-                      animate={{ rotate: qiblaRot }}
-                      style={{ position: 'absolute', width: 3, height: 140, display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 11 }}
-                      transition={{ type: 'spring', stiffness: 80, damping: 18 }}
-                    >
-                      <div style={{ width: 3, height: 70, backgroundColor: 'var(--color-awan-gold)', boxShadow: '0 0 12px var(--color-awan-gold)' }} />
-                      <div style={{ width: 3, height: 70, backgroundColor: 'rgba(212,175,55,0.2)' }} />
-                    </motion.div>
-
-                    {/* Center hub */}
-                    <div style={{ width: 52, height: 52, borderRadius: '50%', backgroundColor: 'var(--color-awan-bg)', border: '2px solid var(--color-awan-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, color: 'var(--color-awan-gold)' }}>{Math.round(qiblaAngle)}°</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-row items-center gap-4 mt-6">
-                    <div className="flex flex-row items-center gap-2">
-                      <div style={{ width: 12, height: 3, backgroundColor: 'var(--color-awan-tx)', opacity: 0.7 }} />
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>NORD</span>
-                    </div>
-                    <div className="flex flex-row items-center gap-2">
-                      <div style={{ width: 12, height: 3, backgroundColor: 'var(--color-awan-gold)' }} />
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-gold)', letterSpacing: '0.2em' }}>QIBLA</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-row items-center gap-2 mt-3">
-                    <div style={{ width: 6, height: 6, backgroundColor: locationStatus === 'ok' ? 'var(--color-awan-status-ok)' : locationStatus === 'cached' ? 'var(--color-awan-gold)' : 'var(--color-awan-status-warn)' }} />
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>
-                      {locationStatus === 'ok' ? 'GPS ACTIF' : locationStatus === 'cached' ? 'POSITION MÉMORISÉE' : 'DÉFAUT'}
-                    </span>
-                  </div>
-                </>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── Calendrier hégirien ───────────────────────────────────────────── */}
-        <div className="mb-4 border" style={{ borderColor: 'var(--color-awan-border)', overflow: 'hidden' }}>
-          {/* Tabs — même pattern que Planning */}
-          <div className="flex flex-row border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
+        {/* Calendrier hégirien */}
+        <View style={[s.section, { borderColor: theme.border, marginBottom: 16, overflow: 'hidden' }]}>
+          <View style={[s.row, { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
             {(['month', 'year'] as const).map(v => (
-              <Touch key={v} className={`flex-1 py-3 flex items-center justify-center border-b-2 transition-all ${calView === v ? 'border-awan-gold' : 'border-transparent opacity-40'}`} onPress={() => setCalView(v)}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', fontWeight: 700, color: calView === v ? 'var(--color-awan-tx)' : 'var(--color-awan-tx-mute)', letterSpacing: '0.25em' }}>
-                  {v === 'month' ? 'MOIS' : 'ANNÉE'}
-                </span>
+              <Touch key={v} onPress={() => setCalView(v)} style={{ flex: 1 }}>
+                <View style={[s.calTab, { borderBottomWidth: 2, borderBottomColor: calView === v ? theme.selected : 'transparent', opacity: calView === v ? 1 : 0.4 }]}>
+                  <Text style={{ fontFamily: FontMono, fontSize: 9, fontWeight: FwValue, color: calView === v ? theme.title : theme.mute, letterSpacing: 2.5 }}>
+                    {v === 'month' ? 'MOIS' : 'ANNÉE'}
+                  </Text>
+                </View>
               </Touch>
             ))}
-          </div>
-          {/* Navigation mois */}
-          <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
-            <Touch onPress={prevMonth} className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: 'var(--color-awan-surface-dim)', border: '1px solid var(--color-awan-border)' }}>
-              <ChevronLeft size={14} color="var(--color-awan-tx-mute)" />
+          </View>
+          <View style={[s.row, { justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+            <Touch onPress={prevMonth} style={[s.navBtn, { backgroundColor: theme.surfaceDim, borderColor: theme.border }]}>
+              <ChevronLeft size={14} color={theme.mute} />
             </Touch>
-            <div className="flex flex-col items-center">
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.25em' }}>
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ fontFamily: FontMono, fontSize: 10, fontWeight: FwValue, color: theme.title, letterSpacing: 2.5 }}>
                 {(HIJRI_MONTHS[hijriMonth - 1] ?? '').toUpperCase()}
-              </span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', fontWeight: 400, color: 'var(--color-awan-gold)', letterSpacing: '0.3em' }}>
+              </Text>
+              <Text style={{ fontFamily: FontMono, fontSize: 8, fontWeight: FwBody, color: theme.selected, letterSpacing: 3.0 }}>
                 {hijriYear}
-              </span>
-            </div>
-            <Touch onPress={nextMonth} className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: 'var(--color-awan-surface-dim)', border: '1px solid var(--color-awan-border)' }}>
-              <ChevronRight size={14} color="var(--color-awan-tx-mute)" />
+              </Text>
+            </View>
+            <Touch onPress={nextMonth} style={[s.navBtn, { backgroundColor: theme.surfaceDim, borderColor: theme.border }]}>
+              <ChevronRight size={14} color={theme.mute} />
             </Touch>
-          </div>
+          </View>
 
-          <div className="p-4">
+          <View style={{ padding: 16 }}>
             {calView === 'month' ? (
               <HijriCalendar
                 hijriYear={hijriYear}
@@ -721,8 +575,7 @@ export default function IslamScreen() {
                 todayStr={todayStr}
               />
             ) : (
-              /* Annual view — list of months */
-              <div className="flex flex-col gap-2">
+              <View style={{ gap: 8 }}>
                 {Array.from({ length: 12 }, (_, i) => {
                   const hm = i + 1;
                   const monthName = HIJRI_MONTHS[i];
@@ -732,86 +585,78 @@ export default function IslamScreen() {
                   const holidays = ISLAMIC_HOLIDAYS.filter(([m]) => m === hm);
                   return (
                     <Touch key={hm} onPress={() => { setHijriMonth(hm); setCalView('month'); }}>
-                      <div className="flex flex-row items-start justify-between p-3 border" style={{ borderColor: hm === hijriMonth ? 'var(--color-awan-gold)' : 'var(--color-awan-border)', backgroundColor: hm === hijriMonth ? 'rgba(212,175,55,0.06)' : 'transparent' }}>
-                        <div>
-                          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', fontWeight: 700, color: hm === hijriMonth ? 'var(--color-awan-gold)' : 'var(--color-awan-tx)', letterSpacing: '0.1em' }}>{monthName}</span>
-                          <span style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', marginTop: 2 }}>{gregLabel}</span>
-                        </div>
+                      <View style={[s.row, { justifyContent: 'space-between', alignItems: 'flex-start', padding: 12, borderWidth: 1,
+                        borderColor: hm === hijriMonth ? theme.selected : theme.border,
+                        backgroundColor: hm === hijriMonth ? 'rgba(212,175,55,0.06)' : 'transparent',
+                      }]}>
+                        <View>
+                          <Text style={{ fontFamily: FontSans, fontSize: 12, fontWeight: FwValue, color: hm === hijriMonth ? theme.selected : theme.title, letterSpacing: 1.2 }}>{monthName}</Text>
+                          <Text style={{ fontFamily: FontMono, fontSize: 8, color: theme.mute, marginTop: 2 }}>{gregLabel}</Text>
+                        </View>
                         {holidays.length > 0 && (
-                          <div className="flex flex-col items-end gap-1">
+                          <View style={{ alignItems: 'flex-end', gap: 4 }}>
                             {holidays.map(([, hd, name]) => (
-                              <span key={`${hm}-${hd}`} style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-gold)', letterSpacing: '0.1em' }}>{hd} {name}</span>
+                              <Text key={`${hm}-${hd}`} style={{ fontFamily: FontMono, fontSize: 8, color: theme.selected, letterSpacing: 1.0 }}>{hd} {name}</Text>
                             ))}
-                          </div>
+                          </View>
                         )}
-                      </div>
+                      </View>
                     </Touch>
                   );
                 })}
-              </div>
+              </View>
             )}
-          </div>
-        </div>
+          </View>
+        </View>
 
-        {/* ── Wird coranique ────────────────────────────────────────────────── */}
-        <div className="mb-4 border" style={{ borderColor: 'var(--color-awan-border)', overflow: 'hidden' }}>
-          <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
-            <div className="flex flex-row items-center justify-between">
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>WIRD CORANIQUE</span>
-              <div className="flex flex-row items-center gap-3">
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-awan-gold)', letterSpacing: '0.2em' }}>
-                  {quranSessionStore.totalAyahs} VERSETS
-                </span>
-                <TrendingUp size={14} color="var(--color-awan-gold)" />
-              </div>
-            </div>
-          </div>
+        {/* Wird coranique */}
+        <View style={[s.section, { borderColor: theme.border, marginBottom: 16, overflow: 'hidden' }]}>
+          <View style={[s.row, { justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+            <Text style={{ fontFamily: FontSans, fontSize: 10, fontWeight: FwValue, color: theme.title, letterSpacing: 2.0 }}>WIRD CORANIQUE</Text>
+            <View style={[s.row, { gap: 12 }]}>
+              <Text style={{ fontFamily: FontMono, fontSize: 9, color: theme.selected, letterSpacing: 2.0 }}>
+                {quranSessionStore.totalAyahs} VERSETS
+              </Text>
+              <TrendingUp size={14} color={theme.selected} />
+            </View>
+          </View>
 
-          {/* Résumé global */}
           {quranStore.progress && (
-            <div className="flex flex-row justify-between items-center px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
-              <div className="flex flex-col">
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', marginBottom: 2 }}>SOURATE · VERSET</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '16px', fontWeight: 700, color: 'var(--color-awan-tx)' }}>
+            <View style={[s.row, { justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+              <View>
+                <Text style={{ fontFamily: FontMono, fontSize: 7, color: theme.mute, letterSpacing: 2.0, marginBottom: 2 }}>SOURATE · VERSET</Text>
+                <Text style={{ fontFamily: FontMono, fontSize: 16, fontWeight: FwValue, color: theme.title }}>
                   S{quranStore.progress.currentSurah} · V{quranStore.progress.currentAyah}
-                </span>
-              </div>
-              <div className="flex flex-col items-end">
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '7px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', marginBottom: 2 }}>TOTAL GLOBAL</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '16px', fontWeight: 700, color: 'var(--color-awan-gold)' }}>
-                  {quranStore.progress.totalAyahsRead} <span style={{ fontSize: '9px', color: 'var(--color-awan-tx-mute)' }}>versets</span>
-                </span>
-              </div>
-            </div>
+                </Text>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={{ fontFamily: FontMono, fontSize: 7, color: theme.mute, letterSpacing: 2.0, marginBottom: 2 }}>TOTAL GLOBAL</Text>
+                <Text style={{ fontFamily: FontMono, fontSize: 16, fontWeight: FwValue, color: theme.selected }}>
+                  {quranStore.progress.totalAyahsRead}
+                  <Text style={{ fontSize: 9, color: theme.mute, fontWeight: FwBody }}> versets</Text>
+                </Text>
+              </View>
+            </View>
           )}
 
-          {/* Formulaire ajout session */}
           {canEdit && (
-            <div className="px-4 py-4 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
-              <div className="flex flex-row gap-2 items-center">
-                <input
-                  type="number"
-                  min="1"
+            <View style={{ paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: theme.border }}>
+              <View style={[s.row, { gap: 8, alignItems: 'center' }]}>
+                <RNTextInput
+                  keyboardType="numeric"
                   placeholder="versets"
                   value={wirdAyahs}
-                  onChange={e => { setWirdAyahs(e.target.value); if (wirdError) setWirdError(null); }}
-                  style={{
-                    flex: 1, fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700,
-                    color: 'var(--color-awan-tx)', backgroundColor: 'transparent',
-                    border: '1px solid var(--color-awan-border-soft)', padding: '8px 10px',
-                    textAlign: 'center',
-                  }}
+                  onChangeText={v => { setWirdAyahs(v); if (wirdError) setWirdError(null); }}
+                  placeholderTextColor={theme.mute}
+                  style={{ flex: 1, fontFamily: FontMono, fontSize: 14, fontWeight: FwValue, color: theme.title, backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.borderSoft, paddingHorizontal: 10, paddingVertical: 8, textAlign: 'center' }}
                 />
-                <input
-                  type="time"
+                <RNTextInput
+                  keyboardType="numbers-and-punctuation"
                   value={wirdTime}
-                  onChange={e => { setWirdTime(e.target.value); if (wirdError) setWirdError(null); }}
-                  style={{
-                    fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700,
-                    color: 'var(--color-awan-tx)', backgroundColor: 'transparent',
-                    border: '1px solid var(--color-awan-border-soft)', padding: '8px 8px',
-                    width: 84,
-                  }}
+                  onChangeText={v => { setWirdTime(v); if (wirdError) setWirdError(null); }}
+                  placeholder="HH:MM"
+                  placeholderTextColor={theme.mute}
+                  style={{ fontFamily: FontMono, fontSize: 14, fontWeight: FwValue, color: theme.title, backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.borderSoft, paddingHorizontal: 8, paddingVertical: 8, width: 84 }}
                 />
                 <Touch
                   onPress={async () => {
@@ -824,98 +669,99 @@ export default function IslamScreen() {
                     const now = new Date();
                     setWirdTime(`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`);
                   }}
-                  className="flex items-center justify-center p-3"
-                  style={{ backgroundColor: 'var(--color-awan-gold)', flexShrink: 0 }}
+                  style={{ padding: 12, backgroundColor: theme.selected, flexShrink: 0 }}
                 >
-                  <Plus size={18} color="var(--color-awan-bg)" />
+                  <Plus size={18} color={theme.bg} />
                 </Touch>
-              </div>
+              </View>
               {wirdError && (
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-awan-status-error)', letterSpacing: '0.1em', marginTop: 6, display: 'block' }}>
+                <Text style={{ fontFamily: FontMono, fontSize: 9, color: theme.danger, letterSpacing: 1.0, marginTop: 6 }}>
                   {wirdError}
-                </span>
+                </Text>
               )}
-            </div>
+            </View>
           )}
 
-          {/* Liste des sessions du jour */}
-          <div>
+          <View>
             {quranSessionStore.loading ? (
-              <div className="py-6 flex items-center justify-center">
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>CHARGEMENT...</span>
-              </div>
+              <View style={{ paddingVertical: 24, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontFamily: FontMono, fontSize: 9, color: theme.mute, letterSpacing: 2.0 }}>CHARGEMENT...</Text>
+              </View>
             ) : quranSessionStore.sessions.length === 0 ? (
-              <div className="py-6 flex flex-col items-center gap-2">
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>AUCUNE SESSION CE JOUR</span>
-              </div>
+              <View style={{ paddingVertical: 24, alignItems: 'center', gap: 8 }}>
+                <Text style={{ fontFamily: FontMono, fontSize: 9, color: theme.mute, letterSpacing: 2.0 }}>AUCUNE SESSION CE JOUR</Text>
+              </View>
             ) : (
-              <StaggerList>
-                {quranSessionStore.sessions.map((s, i) => (
-                  <StaggerItem key={`${s.timeHHMM}-${i}`}>
-                    <div
-                      className="flex flex-row items-center justify-between px-4 py-3 border-b"
-                      style={{ borderColor: 'var(--color-awan-border-soft)' }}
-                    >
-                      <div className="flex flex-row items-center gap-3">
-                        <div style={{ width: 3, height: 24, backgroundColor: 'var(--color-awan-gold)' }} />
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 700, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.15em' }}>
-                          {s.timeHHMM}
-                        </span>
-                      </div>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700, color: 'var(--color-awan-tx)' }}>
-                        {s.ayahsRead} <span style={{ fontSize: '9px', color: 'var(--color-awan-tx-mute)', fontWeight: 400 }}>versets</span>
-                      </span>
-                    </div>
-                  </StaggerItem>
-                ))}
-              </StaggerList>
+              quranSessionStore.sessions.map((session, i) => (
+                <View
+                  key={`${session.timeHHMM}-${i}`}
+                  style={[s.row, { justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.borderSoft }]}
+                >
+                  <View style={[s.row, { gap: 12 }]}>
+                    <View style={{ width: 3, height: 24, backgroundColor: theme.selected }} />
+                    <Text style={{ fontFamily: FontMono, fontSize: 12, fontWeight: FwValue, color: theme.mute, letterSpacing: 1.5 }}>
+                      {session.timeHHMM}
+                    </Text>
+                  </View>
+                  <Text style={{ fontFamily: FontMono, fontSize: 14, fontWeight: FwValue, color: theme.title }}>
+                    {session.ayahsRead}
+                    <Text style={{ fontSize: 9, color: theme.mute, fontWeight: FwBody }}> versets</Text>
+                  </Text>
+                </View>
+              ))
             )}
-          </div>
-        </div>
+          </View>
+        </View>
 
-        {/* ── Vocabulaire ───────────────────────────────────────────────────── */}
-        <div className="mb-8 border" style={{ borderColor: 'var(--color-awan-border)', overflow: 'hidden' }}>
-          <div className="flex flex-row items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--color-awan-border)' }}>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.2em' }}>VOCABULAIRE</span>
-            <div className="flex flex-row items-center gap-2">
-              <BookOpen size={13} color="var(--color-awan-tx-mute)" />
+        {/* Vocabulaire */}
+        <View style={[s.section, { borderColor: theme.border, marginBottom: 32, overflow: 'hidden' }]}>
+          <View style={[s.row, { justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+            <Text style={{ fontFamily: FontSans, fontSize: 10, fontWeight: FwValue, color: theme.title, letterSpacing: 2.0 }}>VOCABULAIRE</Text>
+            <View style={[s.row, { gap: 8 }]}>
+              <BookOpen size={13} color={theme.mute} />
               <Touch onPress={pickNewWord}>
-                <RefreshCcw size={13} color="var(--color-awan-tx-mute)" />
+                <RefreshCcw size={13} color={theme.mute} />
               </Touch>
-            </div>
-          </div>
-          <div className="p-6">
+            </View>
+          </View>
+          <View style={{ padding: 24 }}>
             {currentWord ? (
-              <div className="flex flex-col items-center">
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', color: 'var(--color-awan-gold)', letterSpacing: '0.4em', marginBottom: 16, opacity: 0.6 }}>
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ fontFamily: FontMono, fontSize: 8, color: theme.selected, letterSpacing: 3.2, marginBottom: 16, opacity: 0.6 }}>
                   {currentWord.category?.toUpperCase()}
-                </span>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '20px', fontWeight: 700, color: 'var(--color-awan-tx)', textAlign: 'center', marginBottom: 24, letterSpacing: '0.05em' }}>
+                </Text>
+                <Text style={{ fontFamily: FontSans, fontSize: 20, fontWeight: FwValue, color: theme.title, textAlign: 'center', marginBottom: 24, letterSpacing: 0.7 }}>
                   {currentWord.fr}
-                </span>
-                <AnimatePresence mode="wait">
-                  {!showAnswer ? (
-                    <Touch onPress={() => setShowAnswer(true)} className="w-full flex items-center justify-center py-3" style={{ backgroundColor: 'var(--color-awan-gold)' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color: 'var(--color-awan-bg)', letterSpacing: '0.3em' }}>RÉVÉLER</span>
-                    </Touch>
-                  ) : (
-                    <motion.div key="answer" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center w-full">
-                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: '52px', fontWeight: 700, color: 'var(--color-awan-gold)', marginBottom: 8 }}>{currentWord.ar}</span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
-                        [{currentWord.phonetic?.toUpperCase()}]
-                      </span>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                </Text>
+                {!showAnswer ? (
+                  <Touch onPress={() => setShowAnswer(true)} style={{ width: '100%', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, backgroundColor: theme.selected }}>
+                    <Text style={{ fontFamily: FontMono, fontSize: 10, fontWeight: FwValue, color: theme.bg, letterSpacing: 3.0 }}>RÉVÉLER</Text>
+                  </Touch>
+                ) : (
+                  <View style={{ alignItems: 'center', width: '100%' }}>
+                    <Text style={{ fontFamily: FontSans, fontSize: 52, fontWeight: FwValue, color: theme.selected, marginBottom: 8 }}>{currentWord.ar}</Text>
+                    <Text style={{ fontFamily: FontMono, fontSize: 10, color: theme.mute, letterSpacing: 3.0 }}>
+                      [{currentWord.phonetic?.toUpperCase()}]
+                    </Text>
+                  </View>
+                )}
+              </View>
             ) : (
-              <div className="py-12 flex items-center justify-center">
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em' }}>CHARGEMENT...</span>
-              </div>
+              <View style={{ paddingVertical: 48, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontFamily: FontMono, fontSize: 10, color: theme.mute, letterSpacing: 2.0 }}>CHARGEMENT...</Text>
+              </View>
             )}
-          </div>
-        </div>
+          </View>
+        </View>
       </ScrollView>
-    </PageWrapper>
+    </View>
   );
 }
+
+const s = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center' },
+  section: { borderWidth: 1 },
+  calCell: { alignItems: 'center', paddingVertical: 4, borderWidth: 1 },
+  calTab: { paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
+  navBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+});

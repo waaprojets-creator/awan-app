@@ -5,8 +5,9 @@ import type { PrayerLogLatest, PrayerName, PrayerNameV2 } from '@/data/schemas/i
 import { PRAYER_NAMES, PRAYER_NAMES_V2, computePrayerScores } from '@/data/schemas/islam/prayerLog';
 import { useAppStore } from '@/data/store/appStore';
 import { DbFullError } from '@/data/storage/IStorage';
+import { dbFullBus } from '@/utils/dbFullBus';
 
-function dispatchDbFull() { window.dispatchEvent(new CustomEvent('awan:db-full')); }
+function dispatchDbFull() { dbFullBus.emit(); }
 
 export function usePrayerStore(date: string) {
   const [log, setLog] = useState<PrayerLogLatest | null>(null);

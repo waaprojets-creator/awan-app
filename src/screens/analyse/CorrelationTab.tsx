@@ -1,9 +1,13 @@
 import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { useTheme } from '../../hooks/useTheme';
 import { ds } from '../../utils/storage';
 import type { WorkoutSessionLatest } from '../../data/schemas/sport/routine';
 import type { MeasurementLatest } from '../../data/schemas/anthropo/measurement';
 import type { WeightEntryLatest } from '../../data/schemas/body/weightEntry';
 import { Card } from '../../components/ui/Card';
+import { FontMono } from '../../constants/typography';
+import { Fs, Fw, Ls } from '../../theme/tokens';
 
 interface CorrelationTabProps {
   sessions: WorkoutSessionLatest[];
@@ -13,6 +17,7 @@ interface CorrelationTabProps {
 }
 
 export function CorrelationTab({ sessions, history, weightEntries, todayKcal }: CorrelationTabProps) {
+  const theme = useTheme();
   const last30 = React.useMemo(() => Array.from({ length: 30 }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (29 - i));
     const str = ds(d);
@@ -34,88 +39,109 @@ export function CorrelationTab({ sessions, history, weightEntries, todayKcal }: 
 
   const sessionsPerWeek = (workoutDays / 30) * 7;
 
-  return (
-    <div className="space-y-6">
-      <span className="text-awan-xs font-black text-awan-tx-mute tracking-[0.3em] uppercase block">
-        CORRÉLATIONS INTER-MODULES · 30 JOURS
-      </span>
+  const weightDeltaColor = weightDelta == null ? theme.mute
+    : weightDelta < 0 ? theme.statusOk
+    : weightDelta > 0 ? theme.statusWarn
+    : theme.title;
 
-      <Card className="p-5 bg-white/5 border-white/5" variant="flat">
-        <span className="awan-label text-awan-gold mb-4 block">SPORT × POIDS</span>
-        <div className="flex flex-row gap-0.5 h-16 items-end mb-2">
+  return (
+    <View style={{ gap: 24 }}>
+      <Text style={[s.headerLabel, { color: theme.mute }]}>
+        CORRÉLATIONS INTER-MODULES · 30 JOURS
+      </Text>
+
+      <Card variant="flat">
+        <Text style={[s.sectionLabel, { color: theme.selected, marginBottom: 16 }]}>SPORT × POIDS</Text>
+        <View style={s.barsContainer}>
           {last30.map((d, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+            <View key={i} style={s.barColumn}>
               {d.weight && avgWeight ? (
-                <div className="w-full" style={{
-                  height: `${Math.max(4, Math.min(48, (d.weight / avgWeight) * 32))}px`,
-                  backgroundColor: d.hasWorkout ? 'var(--color-awan-gold)' : 'rgba(255,255,255,0.12)',
+                <View style={{
+                  width: '100%',
+                  height: Math.max(4, Math.min(48, (d.weight / avgWeight) * 32)),
+                  backgroundColor: d.hasWorkout ? theme.selected : 'rgba(255,255,255,0.12)',
                 }} />
               ) : (
-                <div className="w-full h-1" style={{ backgroundColor: d.hasWorkout ? 'var(--color-awan-gold)' : 'transparent' }} />
+                <View style={{ width: '100%', height: 4, backgroundColor: d.hasWorkout ? theme.selected : 'transparent' }} />
               )}
-            </div>
+            </View>
           ))}
-        </div>
-        <div className="flex flex-row gap-4 mt-3">
-          <div className="flex flex-row items-center gap-1.5">
-            <div className="w-3 h-3" style={{ backgroundColor: 'var(--color-awan-gold)' }} />
-            <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">Séance</span>
-          </div>
-          <div className="flex flex-row items-center gap-1.5">
-            <div className="w-3 h-3 bg-white/12" />
-            <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest">Repos</span>
-          </div>
-        </div>
+        </View>
+        <View style={[s.row, { gap: 16, marginTop: 12 }]}>
+          <View style={s.row}>
+            <View style={[s.legendDot, { backgroundColor: theme.selected }]} />
+            <Text style={[s.labelXs, { color: theme.mute, marginLeft: 6 }]}>Séance</Text>
+          </View>
+          <View style={s.row}>
+            <View style={[s.legendDot, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
+            <Text style={[s.labelXs, { color: theme.mute, marginLeft: 6 }]}>Repos</Text>
+          </View>
+        </View>
       </Card>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Card className="p-5 bg-white/5 border-white/5" variant="flat">
-          <span className="awan-label text-awan-tx-mute mb-2 block">FRÉQUENCE</span>
-          <span className="text-3xl font-black text-awan-gold font-mono">{sessionsPerWeek.toFixed(1)}</span>
-          <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">séances/sem · 30j</span>
+      <View style={s.grid2}>
+        <Card variant="flat" style={{ flex: 1 }}>
+          <Text style={[s.sectionLabel, { color: theme.mute, marginBottom: 8 }]}>FRÉQUENCE</Text>
+          <Text style={[s.bigNum, { color: theme.selected }]}>{sessionsPerWeek.toFixed(1)}</Text>
+          <Text style={[s.labelXs, { color: theme.mute, marginTop: 4 }]}>séances/sem · 30j</Text>
         </Card>
-        <Card className="p-5 bg-white/5 border-white/5" variant="flat">
-          <span className="awan-label text-awan-tx-mute mb-2 block">POIDS · DELTA</span>
-          <span className={`text-3xl font-black font-mono ${weightDelta == null ? 'text-awan-tx-mute' : weightDelta < 0 ? 'text-awan-status-ok' : weightDelta > 0 ? 'text-awan-status-warn' : 'text-awan-tx'}`}>
+        <Card variant="flat" style={{ flex: 1 }}>
+          <Text style={[s.sectionLabel, { color: theme.mute, marginBottom: 8 }]}>POIDS · DELTA</Text>
+          <Text style={[s.bigNum, { color: weightDeltaColor }]}>
             {weightDelta != null ? `${weightDelta > 0 ? '+' : ''}${weightDelta.toFixed(1)}` : '—'}
-          </span>
-          <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">kg · total historique</span>
+          </Text>
+          <Text style={[s.labelXs, { color: theme.mute, marginTop: 4 }]}>kg · total historique</Text>
         </Card>
-        <Card className="p-5 bg-white/5 border-white/5" variant="flat">
-          <span className="awan-label text-awan-tx-mute mb-2 block">JOURS SPORT</span>
-          <span className="text-3xl font-black text-awan-tx font-mono">{workoutDays}<span className="text-sm ml-1 opacity-50">/30</span></span>
-          <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">jours actifs</span>
+        <Card variant="flat" style={{ flex: 1 }}>
+          <Text style={[s.sectionLabel, { color: theme.mute, marginBottom: 8 }]}>JOURS SPORT</Text>
+          <Text style={[s.bigNum, { color: theme.title }]}>
+            {workoutDays}<Text style={{ fontSize: Fs.sm, opacity: 0.5 }}>/30</Text>
+          </Text>
+          <Text style={[s.labelXs, { color: theme.mute, marginTop: 4 }]}>jours actifs</Text>
         </Card>
-        <Card className="p-5 bg-white/5 border-white/5" variant="flat">
-          <span className="awan-label text-awan-tx-mute mb-2 block">KCAL JOUR</span>
-          <span className="text-3xl font-black text-awan-tx font-mono">{todayKcal || '—'}</span>
-          <span className="text-awan-xs font-black text-awan-tx-mute uppercase tracking-widest mt-1 block">aujourd'hui</span>
+        <Card variant="flat" style={{ flex: 1 }}>
+          <Text style={[s.sectionLabel, { color: theme.mute, marginBottom: 8 }]}>KCAL JOUR</Text>
+          <Text style={[s.bigNum, { color: theme.title }]}>{todayKcal || '—'}</Text>
+          <Text style={[s.labelXs, { color: theme.mute, marginTop: 4 }]}>aujourd'hui</Text>
         </Card>
-      </div>
+      </View>
 
-      <Card className="p-5 bg-awan-gold/5 border-awan-gold/20" variant="flat">
-        <span className="awan-label text-awan-gold mb-3 block">INSIGHTS</span>
-        <div className="space-y-2">
+      <Card variant="flat" style={{ borderColor: `${theme.selected}33`, backgroundColor: `${theme.selected}0D` }}>
+        <Text style={[s.sectionLabel, { color: theme.selected, marginBottom: 12 }]}>INSIGHTS</Text>
+        <View style={{ gap: 8 }}>
           {sessionsPerWeek < 2 && (
-            <span className="text-awan-md text-awan-tx-dim block">· Fréquence en dessous des recommandations OMS (150 min/sem)</span>
+            <Text style={[s.bodyText, { color: theme.text }]}>· Fréquence en dessous des recommandations OMS (150 min/sem)</Text>
           )}
           {sessionsPerWeek >= 4 && (
-            <span className="text-awan-md text-awan-status-ok block">· Excellente fréquence d'entraînement</span>
+            <Text style={[s.bodyText, { color: theme.statusOk }]}>· Excellente fréquence d'entraînement</Text>
           )}
           {weightDelta != null && weightDelta < -2 && sessionsPerWeek > 2 && (
-            <span className="text-awan-md text-awan-status-warn block">· Perte de poids rapide avec entraînement intensif — vérifier l'apport protéique</span>
+            <Text style={[s.bodyText, { color: theme.statusWarn }]}>· Perte de poids rapide avec entraînement intensif — vérifier l'apport protéique</Text>
           )}
           {weightDelta != null && weightDelta > 2 && sessionsPerWeek < 2 && (
-            <span className="text-awan-md text-awan-status-warn block">· Prise de masse sans entraînement suffisant — augmenter la fréquence</span>
+            <Text style={[s.bodyText, { color: theme.statusWarn }]}>· Prise de masse sans entraînement suffisant — augmenter la fréquence</Text>
           )}
           {sessionsPerWeek >= 2 && weightDelta != null && Math.abs(weightDelta) <= 1 && (
-            <span className="text-awan-md text-awan-status-ok block">· Équilibre sport/poids stable — maintien de la composition corporelle</span>
+            <Text style={[s.bodyText, { color: theme.statusOk }]}>· Équilibre sport/poids stable — maintien de la composition corporelle</Text>
           )}
           {workoutDays === 0 && weightPoints.length === 0 && (
-            <span className="text-awan-md text-awan-tx-mute block">· Pas de données suffisantes — continuez à enregistrer vos séances et mesures</span>
+            <Text style={[s.bodyText, { color: theme.mute }]}>· Pas de données suffisantes — continuez à enregistrer vos séances et mesures</Text>
           )}
-        </div>
+        </View>
       </Card>
-    </div>
+    </View>
   );
 }
+
+const s = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center' },
+  grid2: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  barsContainer: { flexDirection: 'row', gap: 2, height: 64, alignItems: 'flex-end', marginBottom: 8 },
+  barColumn: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
+  legendDot: { width: 12, height: 12 },
+  headerLabel: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.display, letterSpacing: Ls.body_033, textTransform: 'uppercase' },
+  sectionLabel: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display, letterSpacing: Ls.body_033, textTransform: 'uppercase' },
+  labelXs: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
+  bigNum: { fontFamily: FontMono, fontSize: 30, fontWeight: Fw.display, letterSpacing: Ls.tight },
+  bodyText: { fontFamily: FontMono, fontSize: Fs.md },
+});

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Dimensions } from 'react-native';
+import { View, Text, Dimensions } from 'react-native';
 import Svg, { Rect, G, Line, Path, Circle, Text as SvgText } from 'react-native-svg';
 import {
   format,
@@ -20,7 +20,7 @@ import {
   addYears,
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 
 import { Card } from '@/components/ui/Card';
 import { Touch } from '@/components/ui/Touch';
@@ -37,6 +37,8 @@ import type { WorkoutSessionLatest } from '@/data/schemas/sport/routine';
 import { ds } from '@/utils/storage';
 import { Planner } from '@/modules/planning/api';
 import type { ScheduleTaskLatest } from '@/data/schemas/planning/scheduleTask';
+import { useTheme, type AwanTheme } from '@/hooks/useTheme';
+import { FontMono } from '@/constants/typography';
 
 // ─── SVG aliased wrappers (avoid implicit any on SVG elements) ────────────────
 const SvgRect = Rect as any;
@@ -76,15 +78,17 @@ interface AllData {
 }
 
 // ─── Layer definitions ────────────────────────────────────────────────────────
-const LAYERS: { key: LayerKey; label: string; color: string }[] = [
-  { key: 'sommeil',   label: 'SOMMEIL',       color: 'var(--color-awan-status-info)' },
-  { key: 'islam',     label: 'ISLAM',          color: 'var(--color-awan-status-spirit)' },
-  { key: 'nutrition', label: 'NUTRITION',      color: 'var(--color-awan-status-ok)' },
-  { key: 'travail',   label: 'TRAVAIL',        color: 'var(--color-awan-tx-dim)' },
-  { key: 'sport',     label: 'SPORT',          color: 'var(--color-awan-status-warn)' },
-  { key: 'trajet',    label: 'TRAJETS (V5)',   color: 'var(--color-awan-tx-mute)' },
-  { key: 'libre',     label: 'TEMPS LIBRE',    color: 'var(--color-awan-border)' },
-];
+function getLayers(t: Pick<AwanTheme, 'statusInfo' | 'statusSpirit' | 'statusOk' | 'text' | 'statusWarn' | 'mute' | 'border'>): { key: LayerKey; label: string; color: string }[] {
+  return [
+    { key: 'sommeil',   label: 'SOMMEIL',       color: t.statusInfo },
+    { key: 'islam',     label: 'ISLAM',          color: t.statusSpirit },
+    { key: 'nutrition', label: 'NUTRITION',      color: t.statusOk },
+    { key: 'travail',   label: 'TRAVAIL',        color: t.text },
+    { key: 'sport',     label: 'SPORT',          color: t.statusWarn },
+    { key: 'trajet',    label: 'TRAJETS (V5)',   color: t.mute },
+    { key: 'libre',     label: 'TEMPS LIBRE',    color: t.border },
+  ];
+}
 
 // ─── Canonical times (minutes from midnight) ─────────────────────────────────
 const PRAYER_TIMES: Record<string, number> = {
@@ -227,6 +231,8 @@ interface ClockPieProps {
 }
 
 function ClockPie({ slots, date }: ClockPieProps) {
+  const theme = useTheme();
+  const LAYERS = getLayers(theme);
   const screenW = Dimensions.get('window').width;
   const size = Math.min(screenW - 48, 300);
   const cx = size / 2;
@@ -267,14 +273,14 @@ function ClockPie({ slots, date }: ClockPieProps) {
             cx={cx}
             cy={cy}
             r={outerR}
-            fill="var(--color-awan-border-soft)"
+            fill={theme.borderSoft}
           />
           {/* Inner hole */}
           <SvgCircle
             cx={cx}
             cy={cy}
             r={innerR}
-            fill="var(--color-awan-bg)"
+            fill={theme.bg}
           />
 
           {/* Tick marks */}
@@ -295,7 +301,7 @@ function ClockPie({ slots, date }: ClockPieProps) {
                 y1={y1}
                 x2={x2}
                 y2={y2}
-                stroke="var(--color-awan-border)"
+                stroke={theme.border}
                 strokeWidth={isMajor ? 1.5 : 0.5}
               />
             );
@@ -314,8 +320,8 @@ function ClockPie({ slots, date }: ClockPieProps) {
                 y={ly + 4}
                 textAnchor="middle"
                 fontSize={9}
-                fontFamily="var(--font-mono)"
-                fill="var(--color-awan-tx-dim)"
+                fontFamily={FontMono}
+                fill={theme.text}
               >
                 {`${h}H`}
               </SvgTextEl>
@@ -346,29 +352,29 @@ function ClockPie({ slots, date }: ClockPieProps) {
           }}
           pointerEvents="none"
         >
-          <span
+          <Text
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: FontMono,
               fontSize: 11,
-              color: 'var(--color-awan-tx-mute)',
-              letterSpacing: '0.15em',
+              color: theme.mute,
+              letterSpacing: 1.65,
               textTransform: 'uppercase',
             }}
           >
             {format(parseISO(date), 'd MMM', { locale: fr }).toUpperCase()}
-          </span>
-          <span
+          </Text>
+          <Text
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: FontMono,
               fontSize: 16,
               fontWeight: 'bold',
-              color: 'var(--color-awan-tx)',
-              letterSpacing: '0.1em',
+              color: theme.title,
+              letterSpacing: 1.6,
               marginTop: 2,
             }}
           >
             {currentTimeStr}
-          </span>
+          </Text>
         </View>
       </View>
     </View>
@@ -385,6 +391,8 @@ interface StackedBarsProps {
 }
 
 function StackedBars({ days, dayLayersList, activeBar, onBarPress, view }: StackedBarsProps) {
+  const theme = useTheme();
+  const LAYERS = getLayers(theme);
   const screenW = Dimensions.get('window').width;
   const width = screenW - 48;
   const height = 220;
@@ -419,8 +427,8 @@ function StackedBars({ days, dayLayersList, activeBar, onBarPress, view }: Stack
               y={y + 4}
               textAnchor="end"
               fontSize={8}
-              fontFamily="var(--font-mono)"
-              fill="var(--color-awan-tx-mute)"
+              fontFamily={FontMono}
+              fill={theme.mute}
             >
               {label}
             </SvgTextEl>
@@ -437,7 +445,7 @@ function StackedBars({ days, dayLayersList, activeBar, onBarPress, view }: Stack
               y1={y}
               x2={width}
               y2={y}
-              stroke="var(--color-awan-border-soft)"
+              stroke={theme.borderSoft}
               strokeWidth={1}
             />
           );
@@ -494,8 +502,8 @@ function StackedBars({ days, dayLayersList, activeBar, onBarPress, view }: Stack
               y={height - 4}
               textAnchor="middle"
               fontSize={8}
-              fontFamily="var(--font-mono)"
-              fill="var(--color-awan-tx-mute)"
+              fontFamily={FontMono}
+              fill={theme.mute}
             >
               {label}
             </SvgTextEl>
@@ -533,6 +541,8 @@ interface StackedAreaProps {
 }
 
 function StackedArea({ days, dayLayersList }: StackedAreaProps) {
+  const theme = useTheme();
+  const LAYERS = getLayers(theme);
   const screenW = Dimensions.get('window').width;
   const width = screenW - 48;
   const height = 220;
@@ -642,8 +652,8 @@ function StackedArea({ days, dayLayersList }: StackedAreaProps) {
             y={y + 4}
             textAnchor="end"
             fontSize={8}
-            fontFamily="var(--font-mono)"
-            fill="var(--color-awan-tx-mute)"
+            fontFamily={FontMono}
+            fill={theme.mute}
           >
             {label}
           </SvgTextEl>
@@ -660,7 +670,7 @@ function StackedArea({ days, dayLayersList }: StackedAreaProps) {
             y1={y}
             x2={width}
             y2={y}
-            stroke="var(--color-awan-border-soft)"
+            stroke={theme.borderSoft}
             strokeWidth={1}
           />
         );
@@ -679,8 +689,8 @@ function StackedArea({ days, dayLayersList }: StackedAreaProps) {
           y={height - 4}
           textAnchor="middle"
           fontSize={8}
-          fontFamily="var(--font-mono)"
-          fill="var(--color-awan-tx-mute)"
+          fontFamily={FontMono}
+          fill={theme.mute}
         >
           {ml.label}
         </SvgTextEl>
@@ -697,6 +707,8 @@ interface LegendProps {
 }
 
 function Legend({ dayLayersList, activeBar, view }: LegendProps) {
+  const theme = useTheme();
+  const LAYERS = getLayers(theme);
   function getValue(key: LayerKey): number {
     if (view === 'annee') {
       // Always global
@@ -723,7 +735,7 @@ function Legend({ dayLayersList, activeBar, view }: LegendProps) {
               paddingTop: 6,
               paddingBottom: 6,
               borderBottomWidth: 1,
-              borderBottomColor: 'var(--color-awan-border-soft)',
+              borderBottomColor: theme.borderSoft,
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -734,29 +746,29 @@ function Legend({ dayLayersList, activeBar, view }: LegendProps) {
                   backgroundColor: layer.color,
                 }}
               />
-              <span
+              <Text
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: FontMono,
                   fontSize: 10,
-                  color: 'var(--color-awan-tx-dim)',
-                  letterSpacing: '0.15em',
+                  color: theme.text,
+                  letterSpacing: 1.5,
                   textTransform: 'uppercase',
                 }}
               >
                 {label}
-              </span>
+              </Text>
             </View>
-            <span
+            <Text
               style={{
-                fontFamily: 'var(--font-mono)',
+                fontFamily: FontMono,
                 fontSize: 12,
                 fontWeight: 'bold',
-                color: 'var(--color-awan-tx)',
-                letterSpacing: '0.05em',
+                color: theme.title,
+                letterSpacing: 0.6,
               }}
             >
               {val.toFixed(1)}H
-            </span>
+            </Text>
           </View>
         );
       })}
@@ -766,6 +778,7 @@ function Legend({ dayLayersList, activeBar, view }: LegendProps) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function TempsTab() {
+  const theme = useTheme();
   const [view, setView] = useState<TimeView>('semaine');
   const [offset, setOffset] = useState(0);
   const [allData, setAllData] = useState<AllData | null>(null);
@@ -900,24 +913,21 @@ export default function TempsTab() {
                 paddingBottom: 8,
                 alignItems: 'center',
                 justifyContent: 'center',
-                border: isActive
-                  ? '1px solid var(--color-awan-gold)'
-                  : '1px solid var(--color-awan-border)',
+                borderWidth: 1,
+              borderColor: isActive ? theme.selected : theme.border,
               }}
             >
-              <span
+              <Text
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: FontMono,
                   fontSize: 9,
                   fontWeight: 'bold',
-                  letterSpacing: '0.1em',
-                  color: isActive
-                    ? 'var(--color-awan-gold)'
-                    : 'var(--color-awan-tx-mute)',
+                  letterSpacing: 0.9,
+                  color: isActive ? theme.selected : theme.mute,
                 }}
               >
                 {VIEW_LABELS[v]}
-              </span>
+              </Text>
             </Touch>
           );
         })}
@@ -935,28 +945,28 @@ export default function TempsTab() {
         }}
       >
         <Touch onPress={handlePrev} style={{ padding: 8 }}>
-          <ChevronLeft size={18} color="var(--color-awan-tx-dim)" />
+          <ChevronLeft size={18} color={theme.text} />
         </Touch>
-        <span
+        <Text
           style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: FontMono,
             fontSize: 12,
             fontWeight: 'bold',
-            color: 'var(--color-awan-tx)',
-            letterSpacing: '0.1em',
+            color: theme.title,
+            letterSpacing: 1.2,
             textTransform: 'uppercase',
             flex: 1,
             textAlign: 'center',
           }}
         >
           {period.label}
-        </span>
+        </Text>
         <Touch
           onPress={handleNext}
           disabled={!canGoForward}
           style={{ padding: 8, opacity: canGoForward ? 1 : 0.3 }}
         >
-          <ChevronRight size={18} color="var(--color-awan-tx-dim)" />
+          <ChevronRight size={18} color={theme.text} />
         </Touch>
       </View>
 
@@ -977,17 +987,17 @@ export default function TempsTab() {
                 justifyContent: 'center',
               }}
             >
-              <span
+              <Text
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: FontMono,
                   fontSize: 11,
-                  color: 'var(--color-awan-tx-mute)',
-                  letterSpacing: '0.2em',
+                  color: theme.mute,
+                  letterSpacing: 2.2,
                   textTransform: 'uppercase',
                 }}
               >
                 CHARGEMENT...
-              </span>
+              </Text>
             </View>
           ) : (
             <>

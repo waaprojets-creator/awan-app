@@ -1,24 +1,25 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
-  View, Modal, TextInput as RNTextInput, ScrollView
+  View, Text, Modal, TextInput as RNTextInput, ScrollView, StyleSheet
 } from 'react-native';
 
 const TextInput = RNTextInput as React.ComponentType<any>;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { motion } from 'motion/react';
 import { CATS } from '../constants/theme';
+import { useTheme } from '../hooks/useTheme';
+import { FontSans, FontMono } from '../constants/typography';
 import { uid, ds } from '../utils/storage';
 import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
 import { NOTIF_INTERVALS } from '../utils/notifications';
-import { StopCircle, Trash2, ChevronLeft, Plus, Filter, CheckCircle, Circle, Zap, Target, Layers, Clock } from 'lucide-react';
+import { StopCircle, Trash2, Plus, Filter, CheckCircle, Circle, Zap, Target, Layers, Clock } from 'lucide-react-native';
 import { LocalDbService } from '../services/localDbService';
-import { PageWrapper, StaggerList, StaggerItem } from '../components/Animated';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
 
 export default function TasksScreen() {
+  const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { db, updateDb, navigate } = useAppState() as any;
   const { addEntry } = useDaily();
@@ -133,294 +134,296 @@ export default function TasksScreen() {
   };
 
   return (
-    <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <ScrollView
         contentContainerStyle={{ paddingBottom: 150 }}
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
       >
-        <div className="px-6 pt-4 pb-4">
-          <Heading level={1} className="mb-0" subtitle="Gestion des Objectifs">TÂCHES</Heading>
-        </div>
+        <View style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 16 }}>
+          <Heading level={1} subtitle="Gestion des Objectifs">TÂCHES</Heading>
+        </View>
 
-          <div className="flex flex-row gap-4 px-6">
-            <Card className="flex-1 p-5 border" variant="flat" style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)' }}>
-              <span className="text-awan-sm font-black text-awan-gold tracking-widest uppercase mb-1 block text-center">EN ATTENTE</span>
-              <span className="text-2xl font-black text-awan-tx tabular-nums text-center">{tasks.filter((t: any) => !t.done).length}</span>
-            </Card>
-            <Card className="flex-1 p-5 border" variant="flat" style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)' }}>
-              <span className="text-awan-sm font-black text-awan-tx-mute uppercase tracking-widest mb-1 block text-center">COMPLÉTÉES</span>
-              <span className="text-2xl font-black text-awan-tx-mute tabular-nums text-center">{tasks.filter((t: any) => t.done).length}</span>
-            </Card>
-          </div>
+        <View style={{ flexDirection: 'row', gap: 16, paddingHorizontal: 24 }}>
+          <Card style={{ flex: 1, padding: 20, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface }} variant="flat">
+            <Text style={{ fontFamily: FontMono, fontSize: 9, fontWeight: '900', color: theme.selected, letterSpacing: 1.8, textTransform: 'uppercase', marginBottom: 4, textAlign: 'center' }}>EN ATTENTE</Text>
+            <Text style={{ fontFamily: FontMono, fontSize: 24, fontWeight: '900', color: theme.title, textAlign: 'center' }}>{tasks.filter((t: any) => !t.done).length}</Text>
+          </Card>
+          <Card style={{ flex: 1, padding: 20, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface }} variant="flat">
+            <Text style={{ fontFamily: FontMono, fontSize: 9, fontWeight: '900', color: theme.mute, letterSpacing: 1.8, textTransform: 'uppercase', marginBottom: 4, textAlign: 'center' }}>COMPLÉTÉES</Text>
+            <Text style={{ fontFamily: FontMono, fontSize: 24, fontWeight: '900', color: theme.mute, textAlign: 'center' }}>{tasks.filter((t: any) => t.done).length}</Text>
+          </Card>
+        </View>
 
-        <div className="p-6">
-          <div className="border mb-10" style={{ borderColor: 'var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)' }}>
-            <div className="flex flex-row items-center px-5 h-14">
-              <Filter size={16} color="var(--color-awan-gold)" style={{ marginRight: 16 }} />
+        <View style={{ padding: 24 }}>
+          <View style={{ borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, marginBottom: 40 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, height: 56 }}>
+              <Filter size={16} color={theme.selected} style={{ marginRight: 16 }} />
               <TextInput
-                style={{ flex: 1, fontSize: 11, fontWeight: 700, color: 'var(--color-awan-tx)', backgroundColor: 'transparent', outline: 'none', fontFamily: 'var(--font-mono)', letterSpacing: '0.2em', textTransform: 'uppercase' }}
+                style={{ flex: 1, fontSize: 11, fontWeight: '700', color: theme.title, backgroundColor: 'transparent', fontFamily: FontMono, letterSpacing: 3.2, textTransform: 'uppercase' }}
                 placeholder="RECHERCHE..."
-                placeholderTextColor="var(--color-awan-tx-mute)"
+                placeholderTextColor={theme.mute}
                 value={search}
                 onChangeText={setSearch}
               />
-            </div>
-          </div>
+            </View>
+          </View>
 
-          <div className="mb-10">
-            <Heading level={4} mono subtitle="Filtres" className="mb-6">FILTRES</Heading>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', gap: 8 }}>
+          <View style={{ marginBottom: 40 }}>
+            <Heading level={4} mono subtitle="Filtres">FILTRES</Heading>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', gap: 8, marginTop: 24 }}>
               {['all', 'pending', 'done'].map(status => (
                 <Touch
                   key={status}
                   onPress={() => setFilterStatus(status)}
                   style={{
                     paddingHorizontal: 20, paddingVertical: 12,
-                    border: '1px solid',
-                    borderColor: filterStatus === status ? 'var(--color-awan-gold)' : 'var(--color-awan-border)',
-                    backgroundColor: filterStatus === status ? 'color-mix(in srgb, var(--color-awan-gold) 8%, transparent)' : 'var(--color-awan-surface)',
+                    borderWidth: 1,
+                    borderColor: filterStatus === status ? theme.selected : theme.border,
+                    backgroundColor: filterStatus === status ? 'rgba(212,175,55,0.08)' : theme.surface,
                   }}
                 >
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', color: filterStatus === status ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)', textTransform: 'uppercase' }}>
+                  <Text style={{ fontFamily: FontMono, fontSize: 11, fontWeight: '700', letterSpacing: 3.2, color: filterStatus === status ? theme.selected : theme.mute, textTransform: 'uppercase' }}>
                     {status === 'all' ? 'TOUTES' : status === 'pending' ? 'EN COURS' : 'TERMINÉES'}
-                  </span>
+                  </Text>
                 </Touch>
               ))}
-              <div style={{ width: 1, alignSelf: 'center', height: 24, backgroundColor: 'var(--color-awan-border)', marginLeft: 12, marginRight: 12 }} />
+              <View style={{ width: 1, alignSelf: 'center', height: 24, backgroundColor: theme.border, marginLeft: 12, marginRight: 12 }} />
               {Object.entries(categories).map(([k, c]: any) => (
                 <Touch
                   key={k}
                   onPress={() => setFilterCat(filterCat === k ? 'all' : k)}
                   style={{
                     paddingHorizontal: 20, paddingVertical: 12,
-                    border: '1px solid',
-                    borderColor: filterCat === k ? 'var(--color-awan-border)' : 'transparent',
-                    backgroundColor: filterCat === k ? 'var(--color-awan-surface)' : 'transparent',
+                    borderWidth: 1,
+                    borderColor: filterCat === k ? theme.border : 'transparent',
+                    backgroundColor: filterCat === k ? theme.surface : 'transparent',
                   }}
                 >
-                  <div className="flex flex-row items-center gap-2">
-                    <div style={{ width: 6, height: 6, backgroundColor: c.c }} />
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', color: filterCat === k ? 'var(--color-awan-tx)' : 'var(--color-awan-tx-mute)', textTransform: 'uppercase' }}>{c.l}</span>
-                  </div>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <View style={{ width: 6, height: 6, backgroundColor: c.c }} />
+                    <Text style={{ fontFamily: FontMono, fontSize: 11, fontWeight: '700', letterSpacing: 3.2, color: filterCat === k ? theme.title : theme.mute, textTransform: 'uppercase' }}>{c.l}</Text>
+                  </View>
                 </Touch>
               ))}
             </ScrollView>
-          </div>
+          </View>
 
-          <div className="mb-12">
-            <Heading level={4} mono subtitle="Saisie directe" className="mb-6">AJOUT RAPIDE</Heading>
-            <div className="flex flex-row gap-3 items-center">
-              <div style={{ flex: 1, border: '1px solid var(--color-awan-border)', backgroundColor: 'var(--color-awan-surface)', paddingLeft: 20, paddingRight: 20, paddingTop: 16, paddingBottom: 16 }}>
+          <View style={{ marginBottom: 48 }}>
+            <Heading level={4} mono subtitle="Saisie directe">AJOUT RAPIDE</Heading>
+            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', marginTop: 24 }}>
+              <View style={{ flex: 1, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, paddingLeft: 20, paddingRight: 20, paddingTop: 16, paddingBottom: 16 }}>
                 <TextInput
-                  style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-awan-tx)', backgroundColor: 'transparent', outline: 'none', textTransform: 'uppercase', fontFamily: 'var(--font-sans)' }}
+                  style={{ fontSize: 13, fontWeight: '700', color: theme.title, backgroundColor: 'transparent', textTransform: 'uppercase', fontFamily: FontSans }}
                   placeholder="NOUVELLE TÂCHE..."
-                  placeholderTextColor="var(--color-awan-tx-mute)"
+                  placeholderTextColor={theme.mute}
                   value={inputText}
                   onChangeText={setInputText}
                   onSubmitEditing={handleAddEntry}
                 />
-              </div>
+              </View>
               <Touch
                 onPress={handleAddEntry}
-                style={{ width: 56, height: 56, backgroundColor: 'var(--color-awan-gold)', alignItems: 'center', justifyContent: 'center' }}
+                style={{ width: 56, height: 56, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }}
               >
                 <Plus size={24} color="black" strokeWidth={3} />
               </Touch>
-            </div>
-          </div>
+            </View>
+          </View>
 
-          <StaggerList>
-            <Heading level={4} mono subtitle="Inventaire" className="mb-6">LISTE</Heading>
-            {filteredTasks.map((item: any) => {
-              const catColor = categories[item.category]?.c ?? 'var(--color-awan-tx-mute)';
-              return (
-                <StaggerItem key={item.id} className="mb-3">
-                  <div
-                    style={{
-                      display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 16,
-                      paddingTop: 20, paddingBottom: 20, paddingLeft: 20, paddingRight: 16,
-                      border: '1px solid var(--color-awan-border)',
-                      backgroundColor: item.done ? 'transparent' : 'var(--color-awan-surface)',
-                      opacity: item.done ? 0.35 : 1,
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => toggleDone(item.id)}
-                  >
-                    <div style={{ width: 3, alignSelf: 'stretch', backgroundColor: catColor, flexShrink: 0 }} />
+          <View>
+            <Heading level={4} mono subtitle="Inventaire">LISTE</Heading>
+            <View style={{ marginTop: 24 }}>
+              {filteredTasks.map((item: any) => {
+                const catColor = categories[item.category]?.c ?? theme.mute;
+                return (
+                  <View key={item.id} style={{ marginBottom: 12 }}>
+                    <Touch
+                      onPress={() => toggleDone(item.id)}
+                      style={{
+                        flexDirection: 'row', alignItems: 'center', gap: 16,
+                        paddingTop: 20, paddingBottom: 20, paddingLeft: 20, paddingRight: 16,
+                        borderWidth: 1,
+                        borderColor: theme.border,
+                        backgroundColor: item.done ? 'transparent' : theme.surface,
+                        opacity: item.done ? 0.35 : 1,
+                      }}
+                    >
+                      <View style={{ width: 3, alignSelf: 'stretch', backgroundColor: catColor, flexShrink: 0 }} />
 
-                    <div style={{ cursor: 'pointer', padding: 4 }} onClick={(e) => { e.stopPropagation(); toggleDone(item.id); }}>
-                      {item.done ? (
-                        <CheckCircle size={22} color="var(--color-awan-gold)" />
-                      ) : (
-                        <Circle size={22} color="var(--color-awan-border)" />
-                      )}
-                    </div>
-
-                    <div style={{ flex: 1 }}>
-                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 700, color: 'var(--color-awan-tx)', textTransform: 'uppercase', letterSpacing: '0.04em', textDecoration: item.done ? 'line-through' : 'none', display: 'block' }}>{item.title}</span>
-                      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6 }}>
-                        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                          <div style={{ width: 6, height: 6, backgroundColor: catColor }} />
-                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, letterSpacing: '0.25em', color: 'var(--color-awan-tx-mute)', textTransform: 'uppercase' }}>
-                            {categories[item.category]?.l || item.category}
-                          </span>
-                        </div>
-                        {item.time && (
-                          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            <Clock size={10} color="var(--color-awan-gold)" />
-                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, color: 'var(--color-awan-gold)', opacity: 0.6, textTransform: 'uppercase' }}>{item.time}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <Touch
-                        style={{
-                          display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8,
-                          paddingHorizontal: 14, paddingVertical: 10,
-                          border: '1px solid',
-                          borderColor: activeTaskId === item.id ? 'var(--color-awan-status-error)' : 'var(--color-awan-border)',
-                          backgroundColor: activeTaskId === item.id ? 'color-mix(in srgb, var(--color-awan-status-error) 8%, transparent)' : 'transparent',
-                        }}
-                        onPress={(e: any) => { e.stopPropagation(); toggleTimer(item.id); }}
-                      >
-                        {activeTaskId === item.id && (
-                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 900, color: 'var(--color-awan-status-error)', fontVariantNumeric: 'tabular-nums' }}>{formatTime(elapsed)}</span>
-                        )}
-                        {activeTaskId === item.id ? (
-                          <StopCircle size={18} color="var(--color-awan-status-error)" />
+                      <Touch onPress={() => toggleDone(item.id)} style={{ padding: 4 }}>
+                        {item.done ? (
+                          <CheckCircle size={22} color={theme.selected} />
                         ) : (
-                          <Zap size={16} color="var(--color-awan-tx-mute)" />
+                          <Circle size={22} color={theme.border} />
                         )}
                       </Touch>
 
-                      <Touch
-                        onPress={(e: any) => { e.stopPropagation(); deleteTask(item.id); }}
-                        style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center', border: '1px solid var(--color-awan-border)' }}
-                      >
-                        <Trash2 size={16} color="var(--color-awan-tx-mute)" />
-                      </Touch>
-                    </div>
-                  </div>
-                </StaggerItem>
-              );
-            })}
-          </StaggerList>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: FontSans, fontSize: 14, fontWeight: '700', color: theme.title, textTransform: 'uppercase', letterSpacing: 0.56, textDecorationLine: item.done ? 'line-through' : 'none' }}>{item.title}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <View style={{ width: 6, height: 6, backgroundColor: catColor }} />
+                            <Text style={{ fontFamily: FontMono, fontSize: 9, fontWeight: '700', letterSpacing: 4, color: theme.mute, textTransform: 'uppercase' }}>
+                              {categories[item.category]?.l || item.category}
+                            </Text>
+                          </View>
+                          {item.time && (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <Clock size={10} color={theme.selected} />
+                              <Text style={{ fontFamily: FontMono, fontSize: 9, fontWeight: '700', color: theme.selected, opacity: 0.6, textTransform: 'uppercase' }}>{item.time}</Text>
+                            </View>
+                          )}
+                        </View>
+                      </View>
+
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <Touch
+                          style={{
+                            flexDirection: 'row', alignItems: 'center', gap: 8,
+                            paddingHorizontal: 14, paddingVertical: 10,
+                            borderWidth: 1,
+                            borderColor: activeTaskId === item.id ? theme.danger : theme.border,
+                            backgroundColor: activeTaskId === item.id ? 'rgba(255,107,107,0.08)' : 'transparent',
+                          }}
+                          onPress={() => toggleTimer(item.id)}
+                        >
+                          {activeTaskId === item.id && (
+                            <Text style={{ fontFamily: FontMono, fontSize: 11, fontWeight: '900', color: theme.danger }}>{formatTime(elapsed)}</Text>
+                          )}
+                          {activeTaskId === item.id ? (
+                            <StopCircle size={18} color={theme.danger} />
+                          ) : (
+                            <Zap size={16} color={theme.mute} />
+                          )}
+                        </Touch>
+
+                        <Touch
+                          onPress={() => deleteTask(item.id)}
+                          style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.border }}
+                        >
+                          <Trash2 size={16} color={theme.mute} />
+                        </Touch>
+                      </View>
+                    </Touch>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
 
           {filteredTasks.length === 0 && (
-            <div style={{ paddingTop: 96, paddingBottom: 96, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ width: 80, height: 80, border: '1px solid var(--color-awan-border)', alignItems: 'center', justifyContent: 'center', marginBottom: 24, display: 'flex' }}>
-                <Target size={40} color="var(--color-awan-border)" />
-              </div>
-              <Heading level={4} className="mb-0 text-center uppercase tracking-widest" style={{ color: 'var(--color-awan-tx-mute)' }} subtitle="">Aucune tâche</Heading>
-            </div>
+            <View style={{ paddingTop: 96, paddingBottom: 96, alignItems: 'center' }}>
+              <View style={{ width: 80, height: 80, borderWidth: 1, borderColor: theme.border, alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
+                <Target size={40} color={theme.border} />
+              </View>
+              <Heading level={4} style={{ color: theme.mute }} subtitle="">Aucune tâche</Heading>
+            </View>
           )}
-        </div>
+        </View>
       </ScrollView>
 
-      {/* FAB — statique, pas d'animation */}
-      <div style={{ position: 'fixed', bottom: 128, right: 32, zIndex: 50 }}>
-        <Touch
-          style={{ width: 56, height: 56, backgroundColor: 'var(--color-awan-gold)', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--color-awan-border)' }}
-          onPress={() => setShowModal(true)}
-        >
-          <Plus size={28} color="black" strokeWidth={3} />
-        </Touch>
-      </div>
-
+      {/* FAB */}
       <Modal visible={showModal} transparent animationType="fade">
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', backgroundColor: 'var(--color-awan-overlay)', backdropFilter: 'blur(8px)' }}>
-          <div style={{ backgroundColor: 'var(--color-awan-surface)', padding: 40, borderTop: '1px solid var(--color-awan-border)', width: '100%', maxWidth: 512, margin: '0 auto' }}>
-            <Heading level={2} className="text-center mb-10" subtitle="Nouvelle tâche">AJOUTER</Heading>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: (theme as any).overlay ?? 'rgba(0,0,0,0.7)' }}>
+          <View style={{ backgroundColor: theme.surface, padding: 40, borderTopWidth: 1, borderTopColor: theme.border, width: '100%' }}>
+            <Heading level={2} subtitle="Nouvelle tâche">AJOUTER</Heading>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              <div>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'var(--color-awan-gold)', display: 'block', marginBottom: 12 }}>TITRE</span>
+            <View style={{ flexDirection: 'column', gap: 24, marginTop: 40 }}>
+              <View>
+                <Text style={{ fontFamily: FontMono, fontSize: 9, fontWeight: '700', letterSpacing: 6.4, textTransform: 'uppercase', color: theme.selected, marginBottom: 12 }}>TITRE</Text>
                 <TextInput
-                  style={{ border: '1px solid var(--color-awan-border)', backgroundColor: 'var(--color-awan-bg)', padding: 20, color: 'var(--color-awan-tx)', fontWeight: 700, fontSize: 16, textTransform: 'uppercase', letterSpacing: '0.04em', outline: 'none', width: '100%', fontFamily: 'var(--font-sans)' }}
+                  style={{ borderWidth: 1, borderColor: theme.border, backgroundColor: theme.bg, padding: 20, color: theme.title, fontWeight: '700', fontSize: 16, textTransform: 'uppercase', letterSpacing: 0.64, width: '100%', fontFamily: FontSans }}
                   value={title}
                   onChangeText={setTitle}
                   placeholder="NOM DE LA TÂCHE..."
-                  placeholderTextColor="var(--color-awan-tx-mute)"
+                  placeholderTextColor={theme.mute}
                   autoFocus
                 />
-              </div>
+              </View>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'var(--color-awan-tx-mute)', display: 'block', marginBottom: 12 }}>HEURE</span>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: FontMono, fontSize: 9, fontWeight: '700', letterSpacing: 6.4, textTransform: 'uppercase', color: theme.mute, marginBottom: 12 }}>HEURE</Text>
                   <TextInput
-                    style={{ border: '1px solid var(--color-awan-border)', backgroundColor: 'var(--color-awan-bg)', padding: 20, color: 'var(--color-awan-tx)', fontFamily: 'var(--font-mono)', textAlign: 'center', fontSize: 18, fontWeight: 900, outline: 'none', width: '100%' }}
+                    style={{ borderWidth: 1, borderColor: theme.border, backgroundColor: theme.bg, padding: 20, color: theme.title, fontFamily: FontMono, textAlign: 'center', fontSize: 18, fontWeight: '900', width: '100%' }}
                     value={time}
                     onChangeText={setTime}
                     placeholder="09:00"
                   />
-                </div>
-                <div>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'var(--color-awan-tx-mute)', display: 'block', marginBottom: 12 }}>RAPPEL</span>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: FontMono, fontSize: 9, fontWeight: '700', letterSpacing: 6.4, textTransform: 'uppercase', color: theme.mute, marginBottom: 12 }}>RAPPEL</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', gap: 8 }}>
                     {NOTIF_INTERVALS.map(ni => (
                       <Touch
                         key={ni.value}
                         style={{
                           paddingHorizontal: 16, paddingVertical: 14,
-                          border: '1px solid',
-                          borderColor: reminder === ni.value ? 'var(--color-awan-gold)' : 'var(--color-awan-border)',
-                          backgroundColor: reminder === ni.value ? 'color-mix(in srgb, var(--color-awan-gold) 8%, transparent)' : 'transparent',
+                          borderWidth: 1,
+                          borderColor: reminder === ni.value ? theme.selected : theme.border,
+                          backgroundColor: reminder === ni.value ? 'rgba(212,175,55,0.08)' : 'transparent',
                         }}
                         onPress={() => setReminder(ni.value)}
                       >
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: reminder === ni.value ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)' }}>{ni.label}</span>
+                        <Text style={{ fontFamily: FontMono, fontSize: 10, fontWeight: '700', letterSpacing: 3.2, textTransform: 'uppercase', color: reminder === ni.value ? theme.selected : theme.mute }}>{ni.label}</Text>
                       </Touch>
                     ))}
                   </ScrollView>
-                </div>
-              </div>
+                </View>
+              </View>
 
-              <div>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'var(--color-awan-tx-mute)', display: 'block', marginBottom: 12 }}>CATÉGORIE</span>
-                <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              <View>
+                <Text style={{ fontFamily: FontMono, fontSize: 9, fontWeight: '700', letterSpacing: 6.4, textTransform: 'uppercase', color: theme.mute, marginBottom: 12 }}>CATÉGORIE</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {Object.entries(categories).map(([k, c]: any) => (
                     <Touch
                       key={k}
                       style={{
                         paddingHorizontal: 16, paddingVertical: 14,
-                        border: '1px solid',
-                        borderColor: cat === k ? 'var(--color-awan-border)' : 'transparent',
-                        backgroundColor: cat === k ? 'var(--color-awan-surface)' : 'transparent',
+                        borderWidth: 1,
+                        borderColor: cat === k ? theme.border : 'transparent',
+                        backgroundColor: cat === k ? theme.surface : 'transparent',
                         opacity: cat === k ? 1 : 0.5,
                       }}
                       onPress={() => setCat(k)}
                     >
-                      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                        <div style={{ width: 6, height: 6, backgroundColor: c.c }} />
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: cat === k ? 'var(--color-awan-tx)' : c.c }}>{c.l}</span>
-                      </div>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <View style={{ width: 6, height: 6, backgroundColor: c.c }} />
+                        <Text style={{ fontFamily: FontMono, fontSize: 10, fontWeight: '700', letterSpacing: 3.2, textTransform: 'uppercase', color: cat === k ? theme.title : c.c }}>{c.l}</Text>
+                      </View>
                     </Touch>
                   ))}
-                </div>
-              </div>
+                </View>
+              </View>
 
-              <div style={{ display: 'flex', flexDirection: 'row', gap: 12, paddingTop: 16 }}>
+              <View style={{ flexDirection: 'row', gap: 12, paddingTop: 16 }}>
                 <Touch
-                  style={{ flex: 1, height: 64, border: '1px solid var(--color-awan-border)', backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ flex: 1, height: 64, borderWidth: 1, borderColor: theme.border, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}
                   onPress={() => { setShowModal(false); setTitle(''); setCat('perso'); setReminder(0); }}
                 >
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'var(--color-awan-tx-mute)' }}>ANNULER</span>
+                  <Text style={{ fontFamily: FontMono, fontSize: 10, fontWeight: '700', letterSpacing: 6.4, textTransform: 'uppercase', color: theme.mute }}>ANNULER</Text>
                 </Touch>
                 <Touch
-                  style={{ flex: 1, height: 64, backgroundColor: 'var(--color-awan-gold)', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ flex: 1, height: 64, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }}
                   onPress={addTask}
                 >
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'black' }}>VALIDER</span>
+                  <Text style={{ fontFamily: FontMono, fontSize: 10, fontWeight: '700', letterSpacing: 6.4, textTransform: 'uppercase', color: 'black' }}>VALIDER</Text>
                 </Touch>
-              </div>
-            </div>
-          </div>
-        </div>
+              </View>
+            </View>
+          </View>
+        </View>
       </Modal>
-    </PageWrapper>
+
+      <View style={{ position: 'absolute', bottom: 128, right: 32, zIndex: 50 }}>
+        <Touch
+          style={{ width: 56, height: 56, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.border }}
+          onPress={() => setShowModal(true)}
+        >
+          <Plus size={28} color="black" strokeWidth={3} />
+        </Touch>
+      </View>
+    </View>
   );
 }

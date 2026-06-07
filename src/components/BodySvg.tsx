@@ -1,4 +1,8 @@
 import React from 'react';
+import { View } from 'react-native';
+import Svg, { Ellipse, Path, G, Text as SvgTextEl } from 'react-native-svg';
+import { useTheme } from '../hooks/useTheme';
+import { FontMono } from '../constants/typography';
 import {
   BODY_MEASURES,
   BodyMeasureSvg,
@@ -6,6 +10,11 @@ import {
 } from './BodyMeasureSvg';
 
 export type { BodyMeasure };
+
+const SvgEllipse = Ellipse as any;
+const SvgPath = Path as any;
+const SvgG = G as any;
+const SvgText = SvgTextEl as any;
 
 // 17 standard muscle IDs (Free Exercise DB nomenclature level-1 + L/R sub-zones level-2)
 export type MuscleId =
@@ -88,48 +97,48 @@ function HeatmapSvg({
   onMusclePress?: ((muscleId: MuscleId) => void) | undefined;
   highlightedMuscle?: MuscleId | undefined;
 }) {
+  const theme = useTheme();
   const DIM = 'rgba(255,255,255,0.18)';
 
   return (
-    <svg
-      viewBox="0 0 350 530"
-      width="100%"
-      style={{ display: 'block', maxHeight: 520 }}
-      preserveAspectRatio="xMidYMid meet"
-    >
-      {/* Silhouette labels */}
-      <text x="95" y="510" textAnchor="middle" fontSize="8" fontWeight="900" fontFamily="monospace" fill={DIM} letterSpacing="2">FACE</text>
-      <text x="255" y="510" textAnchor="middle" fontSize="8" fontWeight="900" fontFamily="monospace" fill={DIM} letterSpacing="2">DOS</text>
+    <View style={{ width: '100%', aspectRatio: 350 / 530, maxHeight: 520 }}>
+      <Svg
+        width="100%"
+        height="100%"
+        viewBox="0 0 350 530"
+        preserveAspectRatio="xMidYMid meet"
+      >
+        {/* Silhouette labels */}
+        <SvgText x={95} y={510} textAnchor="middle" fontSize={8} fontWeight="900" fontFamily={FontMono} fill={DIM} letterSpacing={2}>FACE</SvgText>
+        <SvgText x={255} y={510} textAnchor="middle" fontSize={8} fontWeight="900" fontFamily={FontMono} fill={DIM} letterSpacing={2}>DOS</SvgText>
 
-      {/* Silhouette outline — front */}
-      <SilhouetteOutlines />
+        {/* Silhouette outline — front */}
+        <SilhouetteOutlines />
 
-      {/* Muscle overlays */}
-      {(Object.entries(MUSCLE_REGIONS) as [MuscleId, { cx: number; cy: number; rx: number; ry: number }][]).map(
-        ([id, reg]) => {
-          const val = muscleValues[id] ?? 0;
-          const opacity = valueToOpacity(val);
-          const isHighlighted = highlightedMuscle === id;
-          return (
-            <ellipse
-              key={id}
-              cx={reg.cx}
-              cy={reg.cy}
-              rx={reg.rx}
-              ry={reg.ry}
-              style={{
-                fill: 'var(--color-awan-gold)',
-                opacity,
-                cursor: onMusclePress ? 'pointer' : 'default',
-                stroke: isHighlighted ? 'var(--color-awan-gold)' : 'none',
-                strokeWidth: isHighlighted ? 1.5 : 0,
-              }}
-              onClick={() => onMusclePress?.(id)}
-            />
-          );
-        }
-      )}
-    </svg>
+        {/* Muscle overlays */}
+        {(Object.entries(MUSCLE_REGIONS) as [MuscleId, { cx: number; cy: number; rx: number; ry: number }][]).map(
+          ([id, reg]) => {
+            const val = muscleValues[id] ?? 0;
+            const opacity = valueToOpacity(val);
+            const isHighlighted = highlightedMuscle === id;
+            return (
+              <SvgEllipse
+                key={id}
+                cx={reg.cx}
+                cy={reg.cy}
+                rx={reg.rx}
+                ry={reg.ry}
+                fill={theme.selected}
+                opacity={opacity}
+                stroke={isHighlighted ? theme.selected : 'none'}
+                strokeWidth={isHighlighted ? 1.5 : 0}
+                onPress={onMusclePress ? () => onMusclePress(id) : undefined}
+              />
+            );
+          }
+        )}
+      </Svg>
+    </View>
   );
 }
 
@@ -233,12 +242,12 @@ function SilhouetteOutlines() {
         { cx: frontCx, isFront: true },
         { cx: backCx,  isFront: false },
       ].map(({ cx, isFront }) => (
-        <g key={cx}>
-          <ellipse cx={cx} cy={32} rx={20} ry={23} fill="none" stroke={DIM} strokeWidth={1.2} />
-          <path d={isFront ? buildFront(cx) : buildBack(cx)} fill="none" stroke={DIM} strokeWidth={1.2} strokeLinejoin="round" strokeLinecap="round" />
-          <path d={buildArms(cx, isFront)} fill="none" stroke={DIM} strokeWidth={1.2} strokeLinejoin="round" strokeLinecap="round" />
-          <path d={`M ${cx},56 L ${cx},266`} fill="none" stroke={DIM} strokeWidth={0.6} strokeDasharray="3,4" />
-        </g>
+        <SvgG key={cx}>
+          <SvgEllipse cx={cx} cy={32} rx={20} ry={23} fill="none" stroke={DIM} strokeWidth={1.2} />
+          <SvgPath d={isFront ? buildFront(cx) : buildBack(cx)} fill="none" stroke={DIM} strokeWidth={1.2} strokeLinejoin="round" strokeLinecap="round" />
+          <SvgPath d={buildArms(cx, isFront)} fill="none" stroke={DIM} strokeWidth={1.2} strokeLinejoin="round" strokeLinecap="round" />
+          <SvgPath d={`M ${cx},56 L ${cx},266`} fill="none" stroke={DIM} strokeWidth={0.6} strokeDasharray="3,4" />
+        </SvgG>
       ))}
     </>
   );

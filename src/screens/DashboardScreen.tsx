@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ScrollView, TextInput as RNTextInput } from 'react-native';
-import { Upload, X } from 'lucide-react';
+import { ScrollView, View, Text, TextInput as RNTextInput, Modal, TouchableWithoutFeedback } from 'react-native';
+import { Upload, X } from 'lucide-react-native';
 import { getAdviceText } from '../constants/coachAdvice';
 import { DEFAULT_KCAL_TARGET } from '../constants/app';
 import { safeStorage } from '../utils/safeStorage';
@@ -29,6 +29,8 @@ import type { Advice } from '../data/schemas/coach/assessment';
 import type { NavProps } from '../types/nav';
 import arabicData from '../assets/data/1.json';
 import { useToast } from '../components/ui/Toast';
+import { useTheme } from '../hooks/useTheme';
+import { FontSans, FontMono, FwMute, FwBody, FwLabel, FwValue } from '../constants/typography';
 
 const KCAL_TARGET_DEFAULT = DEFAULT_KCAL_TARGET;
 const TextInput = RNTextInput as React.ComponentType<any>;
@@ -39,6 +41,7 @@ const common = (L as any).common as any;
 interface PrayerInfo { next: string; timeForNext: Date | null; }
 
 export default function DashboardScreen({ navigate }: NavProps) {
+  const theme = useTheme();
   const today = ds(new Date());
   const [transportMode, setTransportMode] = useState<string>('car');
   const [importModal, setImportModal] = useState<boolean>(false);
@@ -69,7 +72,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
   }, [coachAssessments]);
   const coachAnalyzed = coachAssessments.length > 0;
   const COACH_COLOR: Record<Severity, string> = {
-    info:  'var(--color-awan-gold)',
+    info:  theme.selected,
     good:  'rgb(34,197,94)',
     warn:  'rgb(251,191,36)',
     alert: 'rgb(239,68,68)',
@@ -96,10 +99,10 @@ export default function DashboardScreen({ navigate }: NavProps) {
 
   const health = useHealthScore();
   const HEALTH_COLOR: Record<typeof health.scoreLabel, string> = {
-    CRITIQUE: 'var(--color-awan-status-error)',
-    MOYEN:    'var(--color-awan-status-warn)',
-    BON:      'var(--color-awan-status-ok)',
-    OPTIMAL:  'var(--color-awan-gold)',
+    CRITIQUE: theme.danger,
+    MOYEN:    theme.statusWarn,
+    BON:      theme.statusOk,
+    OPTIMAL:  theme.selected,
   };
 
   const prayerInfo = useMemo<PrayerInfo>(() => {
@@ -156,355 +159,343 @@ export default function DashboardScreen({ navigate }: NavProps) {
       showsVerticalScrollIndicator={false}
     >
       {/* Date — pas de titre de page */}
-      <div className="flex justify-between items-baseline mb-6">
-        <span
-          className="capitalize"
-          style={{ fontFamily: 'var(--font-sans)', fontSize: '14px', fontWeight: 'var(--fw-label)' as any, color: 'var(--color-awan-tx)', letterSpacing: '0.05em' }}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 24 }}>
+        <Text
+          style={{ fontFamily: FontSans, fontSize: 14, fontWeight: FwLabel as any, color: theme.title, letterSpacing: 0.7, textTransform: 'capitalize' }}
         >
           {dateLabel}
-        </span>
-      </div>
+        </Text>
+      </View>
 
       {/* Score AWAN — widget principal avec ⓘ intégré */}
-      <div className="mb-4">
+      <View style={{ marginBottom: 16 }}>
         <AwanScoreDisplay score={score} temporal={temporal} onInfo={() => setShowScoreInfo(v => !v)} />
         {showScoreInfo && (
-          <div
-            className="mt-2 p-3 border"
-            style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border)' }}
-          >
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--color-awan-tx-dim)', lineHeight: 1.5 }}>
+          <View style={{ marginTop: 8, padding: 12, borderWidth: 1, backgroundColor: theme.surface, borderColor: theme.border }}>
+            <Text style={{ fontFamily: FontSans, fontSize: 11, color: theme.text, lineHeight: 17 }}>
               {dash.widgets.scoreInfo}
-            </span>
-          </div>
+            </Text>
+          </View>
         )}
-      </div>
+      </View>
 
       {/* Transport — 2e widget */}
-      <div className="p-4 border mb-4" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border)' }}>
-        <span className="uppercase block mb-3" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+      <View style={{ padding: 16, borderWidth: 1, marginBottom: 16, backgroundColor: theme.surface, borderColor: theme.border }}>
+        <Text style={{ fontFamily: FontSans, fontSize: 7, fontWeight: FwMute as any, color: theme.mute, letterSpacing: 2.1, textTransform: 'uppercase', marginBottom: 12 }}>
           {dash.widgets.transport}
-        </span>
-        <div className="flex flex-row gap-2">
+        </Text>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
           {(TRANSPORT_OPTIONS as Array<{ key: string; label: string }>).map((opt) => {
             const icons = TRANSPORT_ICONS as Record<string, React.ComponentType<{ size: number; color: string }>>;
             const Icon  = icons[opt.key];
             const active = transportMode === opt.key;
             return (
-              <Touch key={opt.key} className="flex-1 flex items-center justify-center border transition-all"
-                style={{ height: 44, backgroundColor: active ? 'rgba(212,175,55,0.08)' : 'transparent', borderColor: active ? 'var(--color-awan-gold)' : 'var(--color-awan-border)' }}
+              <Touch key={opt.key} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', borderWidth: 1, height: 44, backgroundColor: active ? 'rgba(212,175,55,0.08)' : 'transparent', borderColor: active ? theme.selected : theme.border }}
                 onPress={() => setTransportMode(opt.key)}>
-                {Icon && <Icon size={18} color={active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)'} />}
+                {Icon && <Icon size={18} color={active ? theme.selected : theme.mute} />}
               </Touch>
             );
           })}
-        </div>
-      </div>
+        </View>
+      </View>
 
       {/* Health Score */}
-      <div className="p-4 border mb-4 flex flex-row items-center justify-between"
-        style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border)' }}>
+      <View style={{ padding: 16, borderWidth: 1, marginBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: theme.surface, borderColor: theme.border }}>
         {health.loading ? (
-          <div style={{ height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--color-awan-tx-dim)' }}>—</span>
-          </div>
+          <View style={{ height: 52, alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+            <Text style={{ fontFamily: FontMono, fontSize: 11, color: theme.text }}>—</Text>
+          </View>
         ) : (
           <>
-            <div className="flex flex-col">
-              <span className="uppercase block mb-1" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+            <View style={{ flexDirection: 'column' }}>
+              <Text style={{ fontFamily: FontSans, fontSize: 7, fontWeight: FwMute as any, color: theme.mute, letterSpacing: 2.1, textTransform: 'uppercase', marginBottom: 4 }}>
                 HEALTH SCORE
-              </span>
-              <span className="font-mono font-bold uppercase" style={{ fontSize: '10px', color: HEALTH_COLOR[health.scoreLabel], letterSpacing: '0.2em' }}>
+              </Text>
+              <Text style={{ fontFamily: FontMono, fontWeight: FwValue as any, fontSize: 10, color: HEALTH_COLOR[health.scoreLabel], letterSpacing: 2.0, textTransform: 'uppercase' }}>
                 {health.scoreLabel}
-              </span>
+              </Text>
               {health.scoreLabel === 'CRITIQUE' && isEarlyMorning && (
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-mute)', marginTop: 2 }}>
+                <Text style={{ fontFamily: FontSans, fontSize: 8, color: theme.mute, marginTop: 2 }}>
                   Normal en début de journée
-                </span>
+                </Text>
               )}
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="font-mono font-bold" style={{ fontSize: '32px', color: 'var(--color-awan-tx)', letterSpacing: '-0.02em', lineHeight: 1 }}>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+              <Text style={{ fontFamily: FontMono, fontWeight: FwValue as any, fontSize: 32, color: theme.title, letterSpacing: -0.64, lineHeight: 32 }}>
                 {health.score}
-              </span>
-              <span className="font-mono" style={{ fontSize: '10px', color: 'var(--color-awan-tx-mute)' }}>/100</span>
-            </div>
+              </Text>
+              <Text style={{ fontFamily: FontMono, fontSize: 10, color: theme.mute }}>/100</Text>
+            </View>
           </>
         )}
-      </div>
+      </View>
 
       {/* Rétrospective semaine + Objectifs jour */}
-      <div className="p-4 border mb-4" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border)' }}>
-        <div className="flex flex-row justify-between items-baseline mb-3">
-          <span className="uppercase" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+      <View style={{ padding: 16, borderWidth: 1, marginBottom: 16, backgroundColor: theme.surface, borderColor: theme.border }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+          <Text style={{ fontFamily: FontSans, fontSize: 7, fontWeight: FwMute as any, color: theme.mute, letterSpacing: 2.1, textTransform: 'uppercase' }}>
             SEMAINE EN COURS
-          </span>
+          </Text>
           {isEarlyMorning && (
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-mute)' }}>
+            <Text style={{ fontFamily: FontSans, fontSize: 8, color: theme.mute }}>
               données d'hier
-            </span>
+            </Text>
           )}
-        </div>
-        <div className="grid grid-cols-3 gap-3">
+        </View>
+        <View style={{ flexDirection: 'row', gap: 16 }}>
           {/* Sport */}
-          <div className="flex flex-col">
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>SPORT</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '20px', fontWeight: 700, color: sessionsCount >= 3 ? 'var(--color-awan-status-ok)' : sessionsCount >= 1 ? 'var(--color-awan-gold)' : 'var(--color-awan-status-error)', letterSpacing: '-0.02em' }}>
-              {sessionsCount}<span style={{ fontSize: '10px', opacity: 0.5, marginLeft: 2 }}>/4</span>
-            </span>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-mute)' }}>séances</span>
-          </div>
+          <View style={{ flex: 1, flexDirection: 'column' }}>
+            <Text style={{ fontFamily: FontSans, fontSize: 7, color: theme.mute, letterSpacing: 1.6, textTransform: 'uppercase' }}>SPORT</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+              <Text style={{ fontFamily: FontMono, fontSize: 20, fontWeight: 700, color: sessionsCount >= 3 ? theme.statusOk : sessionsCount >= 1 ? theme.selected : theme.danger, letterSpacing: -0.4 }}>
+                {sessionsCount}
+              </Text>
+              <Text style={{ fontFamily: FontMono, fontSize: 10, opacity: 0.5, marginLeft: 2 }}>/4</Text>
+            </View>
+            <Text style={{ fontFamily: FontSans, fontSize: 8, color: theme.mute }}>séances</Text>
+          </View>
           {/* Poids */}
-          <div className="flex flex-col">
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>POIDS</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '20px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '-0.02em' }}>
-              {weeklyWeightDelta != null
-                ? `${weeklyWeightDelta >= 0 ? '+' : ''}${weeklyWeightDelta.toFixed(1)}`
-                : weightStore.avg7d?.toFixed(1) ?? '—'}
-              <span style={{ fontSize: '10px', opacity: 0.5, marginLeft: 2 }}>{weeklyWeightDelta != null ? 'kg' : 'kg'}</span>
-            </span>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-mute)' }}>
+          <View style={{ flex: 1, flexDirection: 'column' }}>
+            <Text style={{ fontFamily: FontSans, fontSize: 7, color: theme.mute, letterSpacing: 1.6, textTransform: 'uppercase' }}>POIDS</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+              <Text style={{ fontFamily: FontMono, fontSize: 20, fontWeight: 700, color: theme.title, letterSpacing: -0.4 }}>
+                {weeklyWeightDelta != null
+                  ? `${weeklyWeightDelta >= 0 ? '+' : ''}${weeklyWeightDelta.toFixed(1)}`
+                  : weightStore.avg7d?.toFixed(1) ?? '—'}
+              </Text>
+              <Text style={{ fontFamily: FontMono, fontSize: 10, opacity: 0.5, marginLeft: 2 }}>{weeklyWeightDelta != null ? 'kg' : 'kg'}</Text>
+            </View>
+            <Text style={{ fontFamily: FontSans, fontSize: 8, color: theme.mute }}>
               {weeklyWeightDelta != null ? '7 derniers j.' : 'dernière mesure'}
-            </span>
-          </div>
+            </Text>
+          </View>
           {/* Nutrition objectif */}
-          <div className="flex flex-col">
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>KCAL</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '20px', fontWeight: 700, color: mealStore.totals.kcal > 0 ? 'var(--color-awan-tx)' : 'var(--color-awan-tx-mute)', letterSpacing: '-0.02em' }}>
+          <View style={{ flex: 1, flexDirection: 'column' }}>
+            <Text style={{ fontFamily: FontSans, fontSize: 7, color: theme.mute, letterSpacing: 1.6, textTransform: 'uppercase' }}>KCAL</Text>
+            <Text style={{ fontFamily: FontMono, fontSize: 20, fontWeight: 700, color: mealStore.totals.kcal > 0 ? theme.title : theme.mute, letterSpacing: -0.4 }}>
               {mealStore.totals.kcal > 0 ? mealStore.totals.kcal : '—'}
-            </span>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-mute)' }}>
+            </Text>
+            <Text style={{ fontFamily: FontSans, fontSize: 8, color: theme.mute }}>
               objectif {kcalTarget}
-            </span>
-          </div>
-        </div>
+            </Text>
+          </View>
+        </View>
         {/* Objectifs jour */}
-        <div className="mt-3 pt-3 border-t flex flex-row gap-4" style={{ borderColor: 'var(--color-awan-border-soft)' }}>
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em', textTransform: 'uppercase', marginRight: 4 }}>OBJECTIFS JOUR ·</span>
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', color: 'var(--color-awan-tx-dim)' }}>
+        <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, flexDirection: 'row', gap: 16, borderColor: theme.borderSoft }}>
+          <Text style={{ fontFamily: FontSans, fontSize: 7, color: theme.mute, letterSpacing: 2.1, textTransform: 'uppercase', marginRight: 4 }}>OBJECTIFS JOUR ·</Text>
+          <Text style={{ fontFamily: FontSans, fontSize: 8, color: theme.text }}>
             {prayerStore.doneCount}/{prayerStore.total} prières · {kcalTarget} kcal · séance {sessionsCount < 4 ? 'conseillée' : 'facultative'}
-          </span>
-        </div>
-      </div>
+          </Text>
+        </View>
+      </View>
 
       {/* Grille 2×2 — 4 cadrans */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <InstrumentCard
-          label="ISLAM"
-          value={prayerStore.doneCount}
-          unit={`/${prayerStore.total}`}
-          status={score.spirit.status}
-          progress={score.spirit.value}
-          index={1}
-          onPress={() => navigate('Islam')}
-        />
-        <InstrumentCard
-          label="SANTÉ"
-          value={mealStore.totals.kcal}
-          unit="kcal"
-          status={score.body.status}
-          progress={score.body.value}
-          index={2}
-          onPress={() => navigate('Sante')}
-        />
-        <InstrumentCard
-          label="PLANNING"
-          value={`${prayerH}h${String(prayerM).padStart(2, '0')}`}
-          unit={`→ ${nextPrayerName}`}
-          status={score.time.status}
-          index={3}
-          onPress={() => navigate('Planning')}
-        />
-        <InstrumentCard
-          label="TRAJET"
-          value={trajetEntries.length > 0 ? trajetEntries.length : '—'}
-          unit={trajetEntries.length > 0 ? 'points' : ''}
-          status={trajetEntries.length > 0 ? 'ok' : 'mute'}
-          index={4}
-          onPress={() => navigate('Trajet')}
-        />
-      </div>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
+        <View style={{ width: '47%' }}>
+          <InstrumentCard
+            label="ISLAM"
+            value={prayerStore.doneCount}
+            unit={`/${prayerStore.total}`}
+            status={score.spirit.status}
+            progress={score.spirit.value}
+            index={1}
+            onPress={() => navigate('Islam')}
+          />
+        </View>
+        <View style={{ width: '47%' }}>
+          <InstrumentCard
+            label="SANTÉ"
+            value={mealStore.totals.kcal}
+            unit="kcal"
+            status={score.body.status}
+            progress={score.body.value}
+            index={2}
+            onPress={() => navigate('Sante')}
+          />
+        </View>
+        <View style={{ width: '47%' }}>
+          <InstrumentCard
+            label="PLANNING"
+            value={`${prayerH}h${String(prayerM).padStart(2, '0')}`}
+            unit={`→ ${nextPrayerName}`}
+            status={score.time.status}
+            index={3}
+            onPress={() => navigate('Planning')}
+          />
+        </View>
+        <View style={{ width: '47%' }}>
+          <InstrumentCard
+            label="TRAJET"
+            value={trajetEntries.length > 0 ? trajetEntries.length : '—'}
+            unit={trajetEntries.length > 0 ? 'points' : ''}
+            status={trajetEntries.length > 0 ? 'ok' : 'mute'}
+            index={4}
+            onPress={() => navigate('Trajet')}
+          />
+        </View>
+      </View>
 
       {/* Mot arabe du jour */}
-      <Touch onPress={() => navigate('Islam')} className="block w-full text-left mb-4">
-        <div className="p-4 border flex flex-row items-center gap-4"
-          style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border)' }}>
-          <div className="flex-1">
-            <span className="uppercase block mb-1" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+      <Touch onPress={() => navigate('Islam')} style={{ width: '100%', marginBottom: 16 }}>
+        <View style={{ padding: 16, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 16, backgroundColor: theme.surface, borderColor: theme.border }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: FontSans, fontSize: 7, fontWeight: FwMute as any, color: theme.mute, letterSpacing: 2.1, textTransform: 'uppercase', marginBottom: 4 }}>
               {dash.widgets.islam}
-            </span>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 'var(--fw-body)' as any, color: 'var(--color-awan-tx-dim)' }}>
+            </Text>
+            <Text style={{ fontFamily: FontSans, fontSize: 11, fontWeight: FwBody as any, color: theme.text }}>
               {word.fr}
-            </span>
-          </div>
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '32px', fontWeight: 'var(--fw-value)' as any, color: 'var(--color-awan-gold)', lineHeight: 1 }}>
+            </Text>
+          </View>
+          <Text style={{ fontFamily: FontSans, fontSize: 32, fontWeight: FwValue as any, color: theme.selected, lineHeight: 32 }}>
             {word.ar}
-          </span>
-        </div>
+          </Text>
+        </View>
       </Touch>
 
       {/* Mesures + Séance */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <InstrumentCard label={dash.biometrics ?? 'POIDS'} value={weightStore.todayEntry?.weightKg ?? weightStore.avg7d?.toFixed(1) ?? '—'} unit={weightStore.entries.length ? 'kg' : ''} status={weightStore.entries.length ? 'ok' : 'mute'} index={5} onPress={() => navigate('Mensuration')} />
-        <InstrumentCard label={dash.sport?.last ?? 'SÉANCE'} value={lastSession?.name ? lastSession.name.slice(0, 8).toUpperCase() : '—'} status={lastSession ? 'spirit' : 'mute'} index={6} onPress={() => navigate('Sport')} />
-      </div>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+        <View style={{ width: '47%' }}>
+          <InstrumentCard label={dash.biometrics ?? 'POIDS'} value={weightStore.todayEntry?.weightKg ?? weightStore.avg7d?.toFixed(1) ?? '—'} unit={weightStore.entries.length ? 'kg' : ''} status={weightStore.entries.length ? 'ok' : 'mute'} index={5} onPress={() => navigate('Mensuration')} />
+        </View>
+        <View style={{ width: '47%' }}>
+          <InstrumentCard label={dash.sport?.last ?? 'SÉANCE'} value={lastSession?.name ? lastSession.name.slice(0, 8).toUpperCase() : '—'} status={lastSession ? 'spirit' : 'mute'} index={6} onPress={() => navigate('Sport')} />
+        </View>
+      </View>
 
       {/* Prochaine séance enregistrée — Niveau 2.b */}
       {nextRoutine && (
-        <Touch onPress={() => navigate('Sport')} className="block w-full text-left mb-4">
-          <div className="p-4 border flex flex-row items-center justify-between"
-            style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'rgba(212,175,55,0.15)' }}>
-            <div className="flex flex-col gap-0.5">
-              <span className="uppercase" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+        <Touch onPress={() => navigate('Sport')} style={{ width: '100%', marginBottom: 16 }}>
+          <View style={{ padding: 16, borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: theme.surface, borderColor: 'rgba(212,175,55,0.15)' }}>
+            <View style={{ flexDirection: 'column', gap: 2 }}>
+              <Text style={{ fontFamily: FontSans, fontSize: 7, fontWeight: FwMute as any, color: theme.mute, letterSpacing: 2.1, textTransform: 'uppercase' }}>
                 PROCHAIN{nextRoutine.cycleLetter ? ` · ${nextRoutine.cycleLetter}` : ''}
-              </span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '0.05em' }}>
+              </Text>
+              <Text style={{ fontFamily: FontMono, fontSize: 14, fontWeight: 700, color: theme.title, letterSpacing: 0.7 }}>
                 {nextRoutine.name.toUpperCase()}
-              </span>
-            </div>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', color: 'var(--color-awan-gold)' }}>▶</span>
-          </div>
+              </Text>
+            </View>
+            <Text style={{ fontFamily: FontMono, fontSize: 18, color: theme.selected }}>▶</Text>
+          </View>
         </Touch>
       )}
 
       {/* Macros */}
       {mealStore.totals.kcal > 0 && (
-        <div className="p-4 border mb-4" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border)' }}>
-          <span className="uppercase block mb-3" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+        <View style={{ padding: 16, borderWidth: 1, marginBottom: 16, backgroundColor: theme.surface, borderColor: theme.border }}>
+          <Text style={{ fontFamily: FontSans, fontSize: 7, fontWeight: FwMute as any, color: theme.mute, letterSpacing: 2.1, textTransform: 'uppercase', marginBottom: 12 }}>
             {dash.widgets.macros}
-          </span>
-          <div className="grid grid-cols-3 gap-4">
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 16 }}>
             {([['P', mealStore.totals.p], ['G', mealStore.totals.c], ['L', mealStore.totals.f]] as const).map(([k, v]) => (
-              <div key={k} className="flex flex-col">
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em', textTransform: 'uppercase' }}>{k}</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '20px', fontWeight: 700, color: 'var(--color-awan-tx)', letterSpacing: '-0.02em' }}>
-                  {v}<span style={{ fontSize: '10px', opacity: 0.5, marginLeft: 2 }}>g</span>
-                </span>
-              </div>
+              <View key={k} style={{ flex: 1, flexDirection: 'column' }}>
+                <Text style={{ fontFamily: FontSans, fontSize: 7, fontWeight: FwMute as any, color: theme.mute, letterSpacing: 2.1, textTransform: 'uppercase' }}>{k}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+                  <Text style={{ fontFamily: FontMono, fontSize: 20, fontWeight: 700, color: theme.title, letterSpacing: -0.4 }}>
+                    {v}
+                  </Text>
+                  <Text style={{ fontFamily: FontMono, fontSize: 10, opacity: 0.5, marginLeft: 2 }}>g</Text>
+                </View>
+              </View>
             ))}
-          </div>
-        </div>
+          </View>
+        </View>
       )}
 
       {/* Coach */}
-      <Touch onPress={() => navigate('Coach')} className="block w-full text-left mb-4">
-        <div className="p-4 border flex flex-col gap-2"
-          style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: topAdvice ? `${COACH_COLOR[topAdvice.severity]}33` : 'var(--color-awan-border)' }}>
-          <div className="flex flex-row justify-between items-baseline">
-            <span className="uppercase block" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+      <Touch onPress={() => navigate('Coach')} style={{ width: '100%', marginBottom: 16 }}>
+        <View style={{ padding: 16, borderWidth: 1, flexDirection: 'column', gap: 8, backgroundColor: theme.surface, borderColor: topAdvice ? `${COACH_COLOR[topAdvice.severity]}33` : theme.border }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <Text style={{ fontFamily: FontSans, fontSize: 7, fontWeight: FwMute as any, color: theme.mute, letterSpacing: 2.1, textTransform: 'uppercase' }}>
               COACH
-            </span>
+            </Text>
             {topAdvice && (
-              <span className="font-mono font-bold uppercase" style={{ fontSize: '8px', color: COACH_COLOR[topAdvice.severity], letterSpacing: '0.2em' }}>
+              <Text style={{ fontFamily: FontMono, fontWeight: FwValue as any, fontSize: 8, color: COACH_COLOR[topAdvice.severity], letterSpacing: 1.6, textTransform: 'uppercase' }}>
                 {topAdvice.severity}
-              </span>
+              </Text>
             )}
-          </div>
+          </View>
           {topAdvice ? (
             <>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', fontWeight: 700, color: 'var(--color-awan-tx)' }}>
+              <Text style={{ fontFamily: FontSans, fontSize: 12, fontWeight: 700, color: theme.title }}>
                 {getAdviceText(topAdvice.key).title}
-              </span>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--color-awan-tx-dim)', marginTop: 2, lineHeight: 1.4 }}>
+              </Text>
+              <Text style={{ fontFamily: FontSans, fontSize: 10, color: theme.text, marginTop: 2, lineHeight: 14 }}>
                 {getAdviceText(topAdvice.key).advice}
-              </span>
+              </Text>
             </>
           ) : (
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', fontWeight: 'var(--fw-body)' as any, color: 'var(--color-awan-tx)' }}>
+            <Text style={{ fontFamily: FontSans, fontSize: 12, fontWeight: FwBody as any, color: theme.title }}>
               {coachAnalyzed ? 'Aucune anomalie détectée.' : 'Analyse non effectuée'}
-            </span>
+            </Text>
           )}
-        </div>
+        </View>
       </Touch>
 
       {/* Import JSON */}
-      <Touch onPress={() => { setImportResult(null); setImportText(''); setImportModal(true); }} className="block w-full text-left mb-4">
-        <div className="p-4 border flex flex-row items-center gap-3"
-          style={{ backgroundColor: 'var(--color-awan-border-soft)', borderColor: 'var(--color-awan-border-soft)' }}>
-          <Upload size={16} color="var(--color-awan-tx-mute)" />
-          <div className="flex flex-col flex-1">
-            <span className="uppercase block" style={{ fontFamily: 'var(--font-sans)', fontSize: '7px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.3em' }}>
+      <Touch onPress={() => { setImportResult(null); setImportText(''); setImportModal(true); }} style={{ width: '100%', marginBottom: 16 }}>
+        <View style={{ padding: 16, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: theme.borderSoft, borderColor: theme.borderSoft }}>
+          <Upload size={16} color={theme.mute} />
+          <View style={{ flexDirection: 'column', flex: 1 }}>
+            <Text style={{ fontFamily: FontSans, fontSize: 7, fontWeight: FwMute as any, color: theme.mute, letterSpacing: 2.1, textTransform: 'uppercase' }}>
               {common.import_json}
-            </span>
-            <span className="font-mono font-bold uppercase" style={{ fontSize: '11px', color: 'var(--color-awan-tx)', letterSpacing: '0.1em' }}>
+            </Text>
+            <Text style={{ fontFamily: FontMono, fontWeight: FwValue as any, fontSize: 11, color: theme.title, letterSpacing: 1.1, textTransform: 'uppercase' }}>
               {common.import}
-            </span>
-          </div>
-        </div>
+            </Text>
+          </View>
+        </View>
       </Touch>
 
       {/* Modal IMPORT */}
-      {importModal && (
-        <div className="fixed inset-0 z-[200] flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }} onClick={() => setImportModal(false)}>
-          <div className="w-full max-w-xl border rounded-awan-xl flex flex-col" style={{ backgroundColor: 'var(--color-awan-surface)', borderColor: 'var(--color-awan-border-soft)', maxHeight: '88vh' }} onClick={(e) => e.stopPropagation()}>
-            <div className="flex flex-row items-center justify-between p-4 border-b" style={{ borderColor: 'var(--color-awan-border-soft)' }}>
-              <span className="uppercase" style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', fontWeight: 'var(--fw-mute)' as any, color: 'var(--color-awan-tx-mute)', letterSpacing: '0.4em' }}>
-                {common.import_json}
-              </span>
-              <Touch onPress={() => setImportModal(false)} className="p-1">
-                <X size={18} color="var(--color-awan-tx-mute)" />
-              </Touch>
-            </div>
-            <div className="p-4 flex flex-col gap-3">
-              {/* File upload */}
-              <label className="flex flex-row items-center gap-3 p-3 border cursor-pointer hover:bg-white/5 transition-all"
-                style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)', borderRadius: 8 }}>
-                <Upload size={16} color="var(--color-awan-gold)" />
-                <span className="font-mono font-bold uppercase flex-1" style={{ fontSize: '11px', color: 'var(--color-awan-gold)', letterSpacing: '0.2em' }}>
-                  CHARGER UN FICHIER .JSON
-                </span>
-                <input type="file" accept=".json,application/json" className="hidden"
-                  onChange={async (e: any) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = async (ev) => {
-                      const text = ev.target?.result as string;
-                      if (!text) return;
-                      setImportText(text);
-                      const res = await importFromJson(text);
-                      setImportResult(res);
-                      if (res.success) {
-                        toast('Importation réussie', 'success');
-                        setTimeout(() => setImportModal(false), 800);
-                      } else {
-                        toast(res.message || 'Échec importation', 'error');
-                      }
-                    };
-                    reader.readAsText(file);
-                  }} />
-              </label>
-              <TextInput value={importText} onChangeText={(v: string) => setImportText(v)} multiline numberOfLines={6}
-                placeholder={'{ "type": "sport.routine", "data": { ... } }'}
-                placeholderTextColor="rgba(255,255,255,0.25)"
-                style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-awan-tx)', backgroundColor: 'var(--color-awan-border-soft)', borderWidth: 1, borderColor: 'var(--color-awan-border-soft)', borderRadius: 8, padding: 12, minHeight: 140, textAlignVertical: 'top' }} />
-              {importResult && (
-                <div className="p-3 border" style={{ backgroundColor: 'var(--color-awan-border-soft)', borderColor: 'var(--color-awan-border-soft)' }}>
-                  <span className="font-mono" style={{ fontSize: '11px', color: importResult.success ? 'var(--color-awan-status-ok)' : 'var(--color-awan-status-error)' }}>
-                    {importResult.message}
-                  </span>
-                </div>
-              )}
-              <Touch onPress={async () => {
-                const res = await importFromJson(importText);
-                setImportResult(res);
-                if (res.success) {
-                  toast('Importation réussie', 'success');
-                  setTimeout(() => setImportModal(false), 800);
-                } else {
-                  toast(res.message || 'Échec importation', 'error');
-                }
-              }} className="block w-full">
-                <div className="p-3 border flex items-center justify-center" style={{ backgroundColor: 'rgba(212,175,55,0.08)', borderColor: 'var(--color-awan-gold)' }}>
-                  <span className="font-mono font-bold uppercase" style={{ fontSize: '11px', color: 'var(--color-awan-gold)', letterSpacing: '0.3em' }}>
-                    {common.import}
-                  </span>
-                </div>
-              </Touch>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal visible={importModal} transparent animationType="slide" onRequestClose={() => setImportModal(false)}>
+        <TouchableWithoutFeedback onPress={() => setImportModal(false)}>
+          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.7)' }}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={{ borderWidth: 1, borderColor: theme.borderSoft, backgroundColor: theme.surface, maxHeight: '88%' }}>
+                {/* header */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderColor: theme.borderSoft }}>
+                  <Text style={{ fontFamily: FontSans, fontSize: 8, fontWeight: FwMute as any, color: theme.mute, letterSpacing: 3.2, textTransform: 'uppercase' }}>
+                    {common.import_json}
+                  </Text>
+                  <Touch onPress={() => setImportModal(false)} style={{ padding: 4 }}>
+                    <X size={18} color={theme.mute} />
+                  </Touch>
+                </View>
+                {/* content */}
+                <View style={{ padding: 16, flexDirection: 'column', gap: 12 }}>
+                  <TextInput value={importText} onChangeText={(v: string) => setImportText(v)} multiline numberOfLines={6}
+                    placeholder={'{ "type": "sport.routine", "data": { ... } }'}
+                    placeholderTextColor="rgba(255,255,255,0.25)"
+                    style={{ fontFamily: FontMono, fontSize: 12, color: theme.title, backgroundColor: theme.borderSoft, borderWidth: 1, borderColor: theme.borderSoft, borderRadius: 8, padding: 12, minHeight: 140, textAlignVertical: 'top' }} />
+                  {importResult && (
+                    <View style={{ padding: 12, borderWidth: 1, backgroundColor: theme.borderSoft, borderColor: theme.borderSoft }}>
+                      <Text style={{ fontFamily: FontMono, fontSize: 11, color: importResult.success ? theme.statusOk : theme.danger }}>
+                        {importResult.message}
+                      </Text>
+                    </View>
+                  )}
+                  <Touch onPress={async () => {
+                    const res = await importFromJson(importText);
+                    setImportResult(res);
+                    if (res.success) {
+                      toast('Importation réussie', 'success');
+                      setTimeout(() => setImportModal(false), 800);
+                    } else {
+                      toast(res.message || 'Échec importation', 'error');
+                    }
+                  }} style={{ width: '100%' }}>
+                    <View style={{ padding: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(212,175,55,0.08)', borderColor: theme.selected }}>
+                      <Text style={{ fontFamily: FontMono, fontWeight: FwValue as any, fontSize: 11, color: theme.selected, letterSpacing: 2.1, textTransform: 'uppercase' }}>
+                        {common.import}
+                      </Text>
+                    </View>
+                  </Touch>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </ScrollView>
   );
 }

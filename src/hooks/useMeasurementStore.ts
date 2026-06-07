@@ -3,9 +3,10 @@ import { MeasurementService } from '@/services/measurementService';
 import type { MeasurementLatest } from '@/data/schemas/anthropo/measurement';
 import { useAppStore } from '@/data/store/appStore';
 import { DbFullError } from '@/data/storage/IStorage';
+import { dbFullBus } from '@/utils/dbFullBus';
 import { eventBus } from '@/data/events/bus';
 
-function dispatchDbFull() { window.dispatchEvent(new CustomEvent('awan:db-full')); }
+function dispatchDbFull() { dbFullBus.emit(); }
 
 export function useMeasurementStore() {
   const [history, setHistory] = useState<MeasurementLatest[]>([]);

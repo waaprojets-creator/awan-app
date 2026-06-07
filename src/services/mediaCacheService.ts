@@ -1,9 +1,10 @@
-import { Capacitor } from '@capacitor/core';
+import { Platform } from 'react-native';
 import { MEDIA_CACHE_MAX_BYTES } from '@/constants/app';
+import { safeStorage } from '@/utils/safeStorage';
 
 // Media cache — 3-level structure: CDN-base / exercise-folder / {0|1}.jpg
-// Native filesystem caching (requires @capacitor/filesystem) is stubbed until the package
-// is installed — all platforms fall back to the CDN URL transparently.
+// Native filesystem caching (expo-file-system) is stubbed until wired —
+// all platforms fall back to the CDN URL transparently.
 
 const LRU_KEY = 'awan.media.lru';
 
@@ -12,7 +13,7 @@ interface LruEntry { size: number; lastAccess: number; }
 const _mem = new Map<string, string>();
 
 function isNative(): boolean {
-  return Capacitor.isNativePlatform();
+  return Platform.OS !== 'web';
 }
 
 function lruKey(exerciseId: string, imgIndex: 0 | 1): string {
@@ -21,19 +22,19 @@ function lruKey(exerciseId: string, imgIndex: 0 | 1): string {
 
 function loadLru(): Record<string, LruEntry> {
   try {
-    const raw = localStorage.getItem(LRU_KEY);
+    const raw = safeStorage.get(LRU_KEY);
     return raw ? (JSON.parse(raw) as Record<string, LruEntry>) : {};
   } catch { return {}; }
 }
 
 function saveLru(lru: Record<string, LruEntry>): void {
-  try { localStorage.setItem(LRU_KEY, JSON.stringify(lru)); } catch { /* storage quota */ }
+  try { safeStorage.set(LRU_KEY, JSON.stringify(lru)); } catch { /* storage quota */ }
 }
 
-// LRU eviction — only meaningful on native once @capacitor/filesystem is enabled.
+// LRU eviction — only meaningful on native once filesystem caching is enabled.
 // On web this is a no-op because we never write local files.
 async function evictIfNeeded(_required: number): Promise<void> {
-  if (isNative()) return; // TODO: implement when @capacitor/filesystem is installed
+  if (isNative()) return; // TODO: implement when expo-file-system caching is wired
   const lru = loadLru();
   const entries = Object.entries(lru).sort((a, b) => a[1].lastAccess - b[1].lastAccess);
   let total = entries.reduce((s, [, e]) => s + e.size, 0);

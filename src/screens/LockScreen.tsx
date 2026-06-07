@@ -1,95 +1,120 @@
-import React, { useState } from 'react';
-import { TouchableOpacity } from 'react-native';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import Animated, {
+  useSharedValue, useAnimatedStyle,
+  withTiming, withRepeat, withSequence, withSpring,
+} from 'react-native-reanimated';
 import { HexagonLogo, ICON_SIZE } from '../constants/icons';
 import { useAppStore } from '@/data/store/appStore';
-import { initStorageEncryption } from '@/data/storage/storageService';
 import { L } from '../constants/labels';
-
-const MotionDiv = motion.div as React.ComponentType<any>;
-
-const TEXT_STYLE = {
-  fontFamily: 'var(--font-sans)',
-  fontSize: '28px',
-  fontWeight: 900,
-  letterSpacing: '0.25em',
-  color: 'var(--color-awan-tx)',
-} as const;
+import { useTheme } from '../hooks/useTheme';
+import { FontSans } from '../constants/typography';
+import { Fw, Ls } from '../theme/tokens';
 
 export default function LockScreen() {
+  const theme = useTheme();
   const unlock = useAppStore((s) => s.unlock);
   const [isUnlocking, setIsUnlocking] = useState(false);
 
-  const letters = ['A', 'W', 'A', 'N'];
+  const containerOpacity = useSharedValue(0);
+  const containerScale = useSharedValue(0.9);
+  const logoScale = useSharedValue(1);
+  const arabicOpacity = useSharedValue(1);
+  const latinOpacity = useSharedValue(0);
+
+  const letterOpacities = [
+    useSharedValue(0), useSharedValue(0),
+    useSharedValue(0), useSharedValue(0),
+  ];
+  const letterOffsets = [
+    useSharedValue(30), useSharedValue(30),
+    useSharedValue(30), useSharedValue(30),
+  ];
+
+  useEffect(() => {
+    containerOpacity.value = withTiming(1, { duration: 1740 });
+    containerScale.value = withTiming(1, { duration: 1740 });
+    logoScale.value = withRepeat(
+      withSequence(
+        withTiming(0.85, { duration: 2320 }),
+        withTiming(1, { duration: 2320 }),
+      ),
+      -1,
+    );
+  }, []);
+
+  const containerStyle = useAnimatedStyle(() => ({
+    opacity: containerOpacity.value,
+    transform: [{ scale: containerScale.value }],
+  }));
+  const logoStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: logoScale.value }],
+  }));
+  const arabicStyle = useAnimatedStyle(() => ({ opacity: arabicOpacity.value }));
+  const latinStyle = useAnimatedStyle(() => ({ opacity: latinOpacity.value }));
+
+  const letterStyles = letterOpacities.map((op, i) =>
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useAnimatedStyle(() => ({
+      opacity: op.value,
+      transform: [{ translateY: letterOffsets[i]!.value }],
+    }))
+  );
 
   const handleUnlockSequence = () => {
     if (isUnlocking) return;
     setIsUnlocking(true);
-    setTimeout(async () => {
-      await initStorageEncryption();
-      unlock();
-    }, 1800);
+    logoScale.value = withSpring(1.1);
+    arabicOpacity.value = withTiming(0, { duration: 640 });
+    latinOpacity.value = withTiming(1, { duration: 400 });
+    ['A', 'W', 'A', 'N'].forEach((_, i) => {
+      letterOpacities[i]!.value = withTiming(1, { duration: 400 });
+      letterOffsets[i]!.value = withSpring(0);
+    });
+    setTimeout(() => { unlock(); }, 1800);
   };
 
-  return (
-    <div
-      style={{ backgroundColor: 'var(--color-awan-bg)' }}
-      className="flex-1 flex items-center justify-center min-h-screen"
-    >
-      <MotionDiv
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1.74, ease: 'easeOut' }}
-        className="flex flex-col items-center"
-      >
-        <TouchableOpacity activeOpacity={0.6} onPress={handleUnlockSequence} style={{ padding: 20 }}>
-          <MotionDiv
-            animate={isUnlocking ? { scale: 1.1 } : { scale: [1, 0.85, 1] }}
-            transition={
-              isUnlocking
-                ? undefined
-                : { duration: 4.64, repeat: Infinity, ease: 'easeInOut' }
-            }
-          >
-            <HexagonLogo size={(ICON_SIZE as { hero: number }).hero} variant="rich" />
-          </MotionDiv>
-        </TouchableOpacity>
+  const letters = ['A', 'W', 'A', 'N'];
 
-        <div className="h-16 w-56 flex items-center justify-center mt-2">
-          <AnimatePresence mode="wait">
-            {!isUnlocking ? (
-              <motion.span
-                key="arabic"
-                initial={{ opacity: 1 }}
-                exit={{ opacity: 0, y: -30 }}
-                transition={{ duration: 0.64 }}
-                style={TEXT_STYLE}
-              >
-                {(L as { header: { arabic: string } }).header.arabic}
-              </motion.span>
-            ) : (
-              <motion.div
-                key="latin"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex flex-row"
-              >
-                {letters.map((char, i) => (
-                  <motion.span
-                    key={i}
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.16, type: 'spring', stiffness: 100, damping: 10 }}
-                    style={{ ...TEXT_STYLE, marginInline: '2px' }}
-                  >
-                    {char}
-                  </motion.span>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </MotionDiv>
-    </div>
+  return (
+    <View style={[s.root, { backgroundColor: theme.bg }]}>
+      <Animated.View style={[s.center, containerStyle]}>
+        <Pressable onPress={handleUnlockSequence} style={s.logoPress}>
+          <Animated.View style={logoStyle}>
+            <HexagonLogo size={(ICON_SIZE as { hero: number }).hero} variant="rich" />
+          </Animated.View>
+        </Pressable>
+
+        <View style={s.textContainer}>
+          <Animated.View style={[StyleSheet.absoluteFill, s.centered, arabicStyle]}>
+            <Text style={[s.text, { color: theme.title }]}>
+              {(L as { header: { arabic: string } }).header.arabic}
+            </Text>
+          </Animated.View>
+          <Animated.View style={[StyleSheet.absoluteFill, s.row, latinStyle]}>
+            {letters.map((char, i) => (
+              <Animated.Text key={i} style={[s.text, { color: theme.title, marginHorizontal: 2 }, letterStyles[i]]}>
+                {char}
+              </Animated.Text>
+            ))}
+          </Animated.View>
+        </View>
+      </Animated.View>
+    </View>
   );
 }
+
+const s = StyleSheet.create({
+  root: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  center: { alignItems: 'center' },
+  logoPress: { padding: 20 },
+  textContainer: { height: 64, width: 224, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
+  centered: { alignItems: 'center', justifyContent: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  text: {
+    fontFamily: FontSans,
+    fontSize: 28,
+    fontWeight: Fw.display,
+    letterSpacing: 7,
+  },
+});

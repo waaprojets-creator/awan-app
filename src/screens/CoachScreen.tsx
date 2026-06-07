@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView } from 'react-native';
-import { AlertOctagon, AlertTriangle, CalendarClock, CheckCircle2, Info, Zap } from 'lucide-react';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { useTheme, type AwanTheme } from '../hooks/useTheme';
+import { AlertOctagon, AlertTriangle, CalendarClock, CheckCircle2, Info, Zap } from 'lucide-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 import { useCoach } from '../hooks/useCoach';
@@ -10,14 +11,12 @@ import type { AssessmentLatest, Advice, RuleResult } from '../data/schemas/coach
 import type { ForecastLatest } from '../data/schemas/coach/forecast';
 import type { Domain, Severity } from '../data/schemas/coach/rule';
 import type { NavProps } from '../types/nav';
+import { FontSans, FontMono } from '../constants/typography';
+import { Fs, Fw, T } from '../theme/tokens';
 
 type TabKey = 'sport' | 'nutrition' | 'anthropo' | 'cross';
 
-interface TabDef {
-  key: TabKey;
-  label: string;
-  domain: Domain;
-}
+interface TabDef { key: TabKey; label: string; domain: Domain; }
 
 const TABS: TabDef[] = [
   { key: 'sport',     label: 'SPORT',     domain: 'sport' },
@@ -27,44 +26,38 @@ const TABS: TabDef[] = [
 ];
 
 interface SeverityStyle {
-  className: string;
-  Icon: React.ComponentType<{ size?: number; color?: string; className?: string }>;
+  Icon: React.ComponentType<{ size?: number; color?: string }>;
   color: string;
 }
 
-const SEVERITY_STYLES: Record<Severity, SeverityStyle> = {
-  info:  { className: 'border-awan-gold/20 bg-awan-gold/5',   Icon: Info,          color: 'var(--color-awan-gold)' },
-  good:  { className: 'border-green-500/20 bg-green-500/5',   Icon: CheckCircle2,  color: 'rgb(34,197,94)' },
-  warn:  { className: 'border-amber-400/20 bg-amber-400/5',   Icon: AlertTriangle, color: 'rgb(251,191,36)' },
-  alert: { className: 'border-red-500/20 bg-red-500/5',       Icon: AlertOctagon,  color: 'rgb(239,68,68)' },
-};
+function getSeverityStyles(t: Pick<AwanTheme, 'selected'>): Record<Severity, SeverityStyle> {
+  return {
+    info:  { Icon: Info,          color: t.selected },
+    good:  { Icon: CheckCircle2,  color: '#22C55E' },
+    warn:  { Icon: AlertTriangle, color: '#FBBF24' },
+    alert: { Icon: AlertOctagon,  color: '#EF4444' },
+  };
+}
 
 function AdviceCard({ advice, ruleResult }: { advice: Advice; ruleResult: RuleResult | undefined }) {
-  const style = SEVERITY_STYLES[advice.severity];
-  const { Icon } = style;
+  const theme = useTheme();
+  const sev = getSeverityStyles(theme)[advice.severity];
+  const { Icon } = sev;
   const text = getAdviceText(advice.key);
   return (
-    <div className={`border p-4 flex flex-row gap-3 ${style.className}`}>
-      <div className="flex-shrink-0 pt-0.5">
-        <Icon size={20} color={style.color} />
-      </div>
-      <div className="flex-1 flex flex-col gap-1 min-w-0">
-        <span className="awan-label" style={{ color: style.color }}>
-          {advice.severity.toUpperCase()}
-        </span>
-        <span className="text-awan-tx font-bold text-sm leading-snug break-words">
-          {text.title}
-        </span>
-        <span className="text-awan-tx-dim text-xs leading-relaxed break-words">
-          {text.advice}
-        </span>
+    <View style={[s.card, { borderColor: `${sev.color}33`, backgroundColor: `${sev.color}0D` }]}>
+      <View style={{ paddingTop: 2 }}><Icon size={20} color={sev.color} /></View>
+      <View style={{ flex: 1, gap: 4 }}>
+        <Text style={[T.label, { color: sev.color }]}>{advice.severity.toUpperCase()}</Text>
+        <Text style={{ fontFamily: FontSans, fontSize: Fs.body, fontWeight: Fw.value, color: theme.title, lineHeight: Math.round(Fs.body * 1.35) }}>{text.title}</Text>
+        <Text style={{ fontFamily: FontSans, fontSize: Fs.sm, fontWeight: Fw.body, color: theme.text, lineHeight: Math.round(Fs.sm * 1.6) }}>{text.advice}</Text>
         {ruleResult !== undefined && Number.isFinite(ruleResult.signalValue) && ruleResult.signalValue !== 0 && (
-          <span className="font-mono text-awan-md text-awan-tx-mute mt-1">
-            VALEUR MESURÉE · {Number.isInteger(ruleResult.signalValue) ? ruleResult.signalValue : ruleResult.signalValue.toFixed(2)}
-          </span>
+          <Text style={[s.mono, { color: theme.mute, marginTop: 4 }]}>
+            {'VALEUR MESURÉE · '}{Number.isInteger(ruleResult.signalValue) ? ruleResult.signalValue : ruleResult.signalValue.toFixed(2)}
+          </Text>
         )}
-      </div>
-    </div>
+      </View>
+    </View>
   );
 }
 
@@ -84,47 +77,40 @@ function horizonLabel(days: number): string {
 }
 
 function ForecastCard({ forecast }: { forecast: ForecastLatest }) {
-  const style = SEVERITY_STYLES[forecast.severity];
+  const theme = useTheme();
+  const sev = getSeverityStyles(theme)[forecast.severity];
   const text = getAdviceText(forecast.detailKey);
   const titleText = getAdviceText(forecast.titleKey);
   const interpolated = interpolate(text.advice, { ...forecast.params, targetDate: forecast.targetDate });
   return (
-    <div className={`border p-4 flex flex-row gap-3 ${style.className}`}>
-      <div className="flex-shrink-0 pt-0.5">
-        <CalendarClock size={20} color={style.color} />
-      </div>
-      <div className="flex-1 flex flex-col gap-1 min-w-0">
-        <div className="flex flex-row items-center gap-2">
-          <span className="awan-label" style={{ color: style.color }}>
-            {horizonLabel(forecast.horizonDays)}
-          </span>
-          <span className="awan-label text-awan-tx-mute">·</span>
-          <span className="awan-label text-awan-tx-mute font-mono">{forecast.targetDate}</span>
-        </div>
-        <span className="text-awan-tx font-bold text-sm leading-snug break-words">
-          {titleText.title}
-        </span>
-        <span className="text-awan-tx-dim text-xs leading-relaxed break-words">
-          {interpolated}
-        </span>
-        <span className="font-mono text-awan-md text-awan-tx-mute mt-1">
-          CONFIANCE · {Math.round(forecast.confidence * 100)}%
-        </span>
-      </div>
-    </div>
+    <View style={[s.card, { borderColor: `${sev.color}33`, backgroundColor: `${sev.color}0D` }]}>
+      <View style={{ paddingTop: 2 }}><CalendarClock size={20} color={sev.color} /></View>
+      <View style={{ flex: 1, gap: 4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Text style={[T.label, { color: sev.color }]}>{horizonLabel(forecast.horizonDays)}</Text>
+          <Text style={[T.label, { color: theme.mute }]}>·</Text>
+          <Text style={[s.mono, { color: theme.mute }]}>{forecast.targetDate}</Text>
+        </View>
+        <Text style={{ fontFamily: FontSans, fontSize: Fs.body, fontWeight: Fw.value, color: theme.title, lineHeight: Math.round(Fs.body * 1.35) }}>{titleText.title}</Text>
+        <Text style={{ fontFamily: FontSans, fontSize: Fs.sm, fontWeight: Fw.body, color: theme.text, lineHeight: Math.round(Fs.sm * 1.6) }}>{interpolated}</Text>
+        <Text style={[s.mono, { color: theme.mute, marginTop: 4 }]}>{'CONFIANCE · '}{Math.round(forecast.confidence * 100)}%</Text>
+      </View>
+    </View>
   );
 }
 
 function EmptyState({ message }: { message: string }) {
+  const theme = useTheme();
   return (
-    <div className="rounded-awan-xl border border-white/5 bg-awan-surface p-6 flex flex-col items-center gap-2">
-      <Info size={24} color="var(--color-awan-tx-mute)" />
-      <span className="awan-label text-awan-tx-mute text-center">{message}</span>
-    </div>
+    <View style={[s.emptyState, { borderColor: theme.borderSoft, backgroundColor: theme.surface }]}>
+      <Info size={24} color={theme.mute} />
+      <Text style={[T.label, { color: theme.mute, textAlign: 'center' }]}>{message}</Text>
+    </View>
   );
 }
 
 export default function CoachScreen(_props: NavProps): React.ReactElement {
+  const theme = useTheme();
   const today = ds(new Date());
   const { assessments, loading, runAll } = useCoach(today);
   const [activeTab, setActiveTab] = useState<TabKey>('sport');
@@ -136,85 +122,53 @@ export default function CoachScreen(_props: NavProps): React.ReactElement {
 
   const hasAny = assessments.length > 0;
 
-  const handleAnalyze = (): void => {
-    void runAll(today);
-  };
-
   return (
     <ScrollView
-      style={{ flex: 1, width: '100%', maxWidth: '100%' }}
-      contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100, width: '100%', maxWidth: '100%' }}
+      style={{ flex: 1, width: '100%' }}
+      contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}
       showsVerticalScrollIndicator={false}
     >
       <ScreenHeader tag="SYSTÈME · COACH" title="CONSEILLER IA" />
 
-      {/* ── Action principale ──────────────────────────────────────────────── */}
-      <Touch
-        onPress={handleAnalyze}
-        disabled={loading}
-        className="block w-full mb-6"
-      >
-        <div
-          className="rounded-awan-xl border border-awan-gold/30 bg-awan-gold/5 p-4 flex flex-row items-center justify-center gap-2"
-          style={{ opacity: loading ? 0.5 : 1 }}
-        >
-          <Zap size={16} color="var(--color-awan-gold)" />
-          <span className="awan-label text-awan-gold font-mono font-bold">
-            {loading ? 'ANALYSE EN COURS…' : 'ANALYSER'}
-          </span>
-        </div>
+      <Touch onPress={() => void runAll(today)} disabled={loading} style={{ marginBottom: 24 }}>
+        <View style={[s.analyzeBtn, { borderColor: `${theme.selected}4D`, backgroundColor: `${theme.selected}0D`, opacity: loading ? 0.5 : 1 }]}>
+          <Zap size={16} color={theme.selected} />
+          <Text style={[s.mono, { color: theme.selected }]}>{loading ? 'ANALYSE EN COURS…' : 'ANALYSER'}</Text>
+        </View>
       </Touch>
 
-      {/* ── Tabs ──────────────────────────────────────────────────────────── */}
-      <div className="flex flex-row gap-2 mb-4">
-        {TABS.map((tab) => {
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+        {TABS.map(tab => {
           const active = tab.key === activeTab;
           return (
-            <Touch
-              key={tab.key}
-              onPress={() => setActiveTab(tab.key)}
-              className="flex-1"
-            >
-              <div
-                className={`rounded-awan-xl border p-2 text-center ${
-                  active
-                    ? 'border-awan-gold/40 bg-awan-gold/10'
-                    : 'border-white/5 bg-white/5'
-                }`}
-              >
-                <span
-                  className="awan-label font-mono font-bold"
-                  style={{ color: active ? 'var(--color-awan-gold)' : 'var(--color-awan-tx-mute)' }}
-                >
-                  {tab.label}
-                </span>
-              </div>
+            <Touch key={tab.key} onPress={() => setActiveTab(tab.key)} style={{ flex: 1 }}>
+              <View style={[s.tab, { borderColor: active ? `${theme.selected}66` : theme.borderSoft, backgroundColor: active ? `${theme.selected}1A` : theme.surfaceDim }]}>
+                <Text style={[T.label, { color: active ? theme.selected : theme.mute }]}>{tab.label}</Text>
+              </View>
             </Touch>
           );
         })}
-      </div>
+      </View>
 
-      {/* ── À VENIR (forecasts) ─────────────────────────────────────────── */}
       {hasAny && filtered.length > 0 && (() => {
         const allForecasts = filtered.flatMap(a => a.forecasts ?? []);
         if (allForecasts.length === 0) return null;
         const sorted = allForecasts.slice().sort((a, b) => a.horizonDays - b.horizonDays);
         return (
-          <div className="mb-6">
-            <span className="awan-label text-awan-tx-mute mb-3 block">À VENIR — PROJECTIONS COACH</span>
-            <div className="flex flex-col gap-3">
+          <View style={{ marginBottom: 24 }}>
+            <Text style={[T.label, { color: theme.mute, marginBottom: 12 }]}>À VENIR — PROJECTIONS COACH</Text>
+            <View style={{ gap: 12 }}>
               {sorted.map(f => <ForecastCard key={f.id} forecast={f} />)}
-            </div>
-          </div>
+            </View>
+          </View>
         );
       })()}
 
-      {/* ── Cartes assessment (reactive advices) ─────────────────────────── */}
-      <div className="flex flex-col gap-3">
+      <View style={{ gap: 12 }}>
         {hasAny && filtered.length > 0 && (() => {
           const anyAdvice = filtered.some(a => a.advices.length > 0);
           return anyAdvice ? (
-            <span className="awan-label text-awan-tx-mute mb-1 block">AUJOURD'HUI</span>
+            <Text style={[T.label, { color: theme.mute, marginBottom: 4 }]}>{"AUJOURD'HUI"}</Text>
           ) : null;
         })()}
         {!hasAny ? (
@@ -226,20 +180,13 @@ export default function CoachScreen(_props: NavProps): React.ReactElement {
             const triggeredAdvices = assessment.advices;
             if (triggeredAdvices.length === 0) {
               return (
-                <div
-                  key={assessment.id}
-                  className="rounded-awan-xl border border-green-500/20 bg-green-500/5 p-4 flex flex-row gap-3"
-                >
-                  <CheckCircle2 size={20} color="rgb(34,197,94)" />
-                  <div className="flex-1">
-                    <span className="awan-label" style={{ color: 'rgb(34,197,94)' }}>
-                      RAS · {assessment.domain.toUpperCase()}
-                    </span>
-                    <p className="text-awan-tx text-sm mt-1">
-                      Aucune anomalie détectée.
-                    </p>
-                  </div>
-                </div>
+                <View key={assessment.id} style={[s.card, { borderColor: '#22C55E33', backgroundColor: '#22C55E0D' }]}>
+                  <CheckCircle2 size={20} color="#22C55E" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[T.label, { color: '#22C55E' }]}>{'RAS · '}{assessment.domain.toUpperCase()}</Text>
+                    <Text style={{ fontFamily: FontSans, fontSize: Fs.body, color: theme.title, marginTop: 4 }}>Aucune anomalie détectée.</Text>
+                  </View>
+                </View>
               );
             }
             return triggeredAdvices.map((advice) => {
@@ -254,7 +201,15 @@ export default function CoachScreen(_props: NavProps): React.ReactElement {
             });
           })
         )}
-      </div>
+      </View>
     </ScrollView>
   );
 }
+
+const s = StyleSheet.create({
+  card: { flexDirection: 'row', gap: 12, padding: 16, borderWidth: 1 },
+  analyzeBtn: { borderWidth: 1, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  tab: { borderWidth: 1, padding: 8, alignItems: 'center' },
+  emptyState: { borderWidth: 1, padding: 24, alignItems: 'center', gap: 8 },
+  mono: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display },
+});

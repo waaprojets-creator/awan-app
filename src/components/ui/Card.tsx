@@ -1,5 +1,8 @@
 import React from 'react';
+import { View, StyleSheet } from 'react-native';
 import { Touch } from './Touch';
+import { useTheme } from '../../hooks/useTheme';
+import { Clr } from '../../theme/tokens';
 
 interface CardProps {
   title?: string;
@@ -8,90 +11,82 @@ interface CardProps {
   onPress?: () => void;
   onLongPress?: () => void;
   children?: React.ReactNode;
-  className?: string;
-  innerClassName?: string;
   highlight?: boolean;
   variant?: 'default' | 'outline' | 'flat';
+  style?: object;
   [x: string]: any;
 }
 
-export function Card({ 
-  title, 
-  value, 
-  subtitle, 
-  onPress, 
+export function Card({
+  title,
+  value,
+  subtitle,
+  onPress,
   onLongPress,
-  children, 
-  className = '',
-  innerClassName = '',
+  children,
   highlight = false,
   variant = 'default',
+  style,
+  // absorb web-only props to avoid RN warnings
+  className: _className,
+  innerClassName: _innerClassName,
   ...props
 }: CardProps) {
-  const CardBase = (
-    <div 
+  const theme = useTheme();
+
+  const borderColor = highlight
+    ? 'rgba(212,175,55,0.30)'
+    : variant === 'outline'
+    ? Clr.white10
+    : theme.border;
+
+  const bgColor = highlight
+    ? 'rgba(212,175,55,0.04)'
+    : variant === 'flat'
+    ? 'rgba(0,0,0,0)'
+    : theme.surface;
+
+  const inner = (
+    <View
       {...props}
-      className={`
-      awan-card p-5 flex flex-col gap-3 relative overflow-hidden group
-      ${highlight ? 'border-awan-gold/30 bg-awan-surface shadow-[0_0_30px_rgba(212,175,55,0.08)]' : ''}
-      ${variant === 'outline' ? 'bg-transparent border-white/10' : ''}
-      ${variant === 'flat' ? 'border-none shadow-none bg-awan-bg/50' : ''}
-      ${className}
-    `}>
-{(title || value) && (
-        <div className="flex justify-between items-start">
-          <div className="flex flex-col">
-            {title && <span className="awan-label mb-1">{title}</span>}
-            {subtitle && <span className="awan-value text-xs text-awan-tx-mute font-medium opacity-80">{subtitle}</span>}
-          </div>
-          {value && (
-            <div className="flex flex-col items-end">
-              <span className="awan-value text-awan-gold font-bold text-lg tracking-tighter">{value}</span>
-              {highlight && <div className="w-1 h-1 rounded-full bg-awan-gold mt-1 shadow-[0_0_8px_rgba(212,175,55,1)]" />}
-            </div>
-          )}
-        </div>
-      )}
-      <div className={`flex-1 ${innerClassName}`}>
-        {children}
-      </div>
-    </div>
+      style={[
+        s.card,
+        { borderColor, backgroundColor: bgColor },
+        variant === 'flat' && s.flat,
+        style,
+      ]}
+    >
+      {children}
+    </View>
   );
 
-  // Card cliquable : on rend un <div role="button"> plutôt qu'un <Touch>
-  // (= <button>) pour éviter les <button> imbriqués HTML-invalides quand la Card
-  // contient des <Touch> enfants (icônes d'action info/edit/delete).
   if (onPress !== undefined || onLongPress !== undefined) {
-    const handleKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (onPress && (e.key === 'Enter' || e.key === ' ')) {
-        e.preventDefault();
-        onPress();
-      }
-    };
-    const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-      // Si le clic vient d'un enfant interactif (button), on laisse passer
-      if ((e.target as HTMLElement).closest('button')) return;
-      onPress?.();
-    };
-    const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
-      if (onLongPress) {
-        e.preventDefault();
-        onLongPress();
-      }
-    };
     return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={handleClick}
-        onKeyDown={handleKey}
-        onContextMenu={handleContextMenu}
-        className="cursor-pointer w-full text-left"
+      <Touch
+        {...(onPress !== undefined ? { onPress } : {})}
+        {...(onLongPress !== undefined ? { onLongPress } : {})}
+        style={s.touchWrapper}
       >
-        {CardBase}
-      </div>
+        {inner}
+      </Touch>
     );
   }
 
-  return CardBase;
+  return inner;
 }
+
+const s = StyleSheet.create({
+  card: {
+    padding: 20,
+    borderWidth: 1,
+    borderRadius: 0,
+    overflow: 'hidden',
+  },
+  flat: {
+    borderWidth: 0,
+    elevation: 0,
+  },
+  touchWrapper: {
+    width: '100%',
+  },
+});

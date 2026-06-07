@@ -1,42 +1,31 @@
 import React, { useMemo } from 'react';
-import { Ruler } from 'lucide-react';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { useTheme } from '../../hooks/useTheme';
+import { Ruler } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
+import { FontMono } from '../../constants/typography';
+import { Fs, Fw, Ls, Clr } from '../../theme/tokens';
 import type { MeasurementLatest } from '../../data/schemas/anthropo/measurement';
 import { analyzeSymmetry, asymmetryToHeatmapValue } from '../../services/symmetryService';
 import { BodySvg } from '../../components/BodySvg';
 import type { MuscleId } from '../../components/BodySvg';
 import { EmptyState, GuardCard } from './shared';
 
-// Mapping symmetryService keys → BodySvg MuscleId
 const MUSCLE_KEY_MAP: Partial<Record<string, MuscleId>> = {
-  arm_left: 'biceps_left',
-  arm_right: 'biceps_right',
-  forearm_left: 'forearms_left',
-  forearm_right: 'forearms_right',
-  thigh_left: 'quads_left',
-  thigh_right: 'quads_right',
-  calf_left: 'calves_left',
-  calf_right: 'calves_right',
+  arm_left: 'biceps_left', arm_right: 'biceps_right',
+  forearm_left: 'forearms_left', forearm_right: 'forearms_right',
+  thigh_left: 'quads_left', thigh_right: 'quads_right',
+  calf_left: 'calves_left', calf_right: 'calves_right',
   chest: 'chest',
 };
 
-interface OrthometryTabProps {
-  history: MeasurementLatest[];
-  loading: boolean;
-}
+interface OrthometryTabProps { history: MeasurementLatest[]; loading: boolean }
 
 export function OrthometryTab({ history, loading }: OrthometryTabProps) {
-  const latest = useMemo(
-    () => history.slice().sort((a, b) => b.date.localeCompare(a.date))[0] ?? null,
-    [history],
-  );
-
-  const results = useMemo(
-    () => latest ? analyzeSymmetry(latest.measurements) : [],
-    [latest],
-  );
-
+  const theme = useTheme();
+  const latest = useMemo(() => history.slice().sort((a, b) => b.date.localeCompare(a.date))[0] ?? null, [history]);
+  const results = useMemo(() => latest ? analyzeSymmetry(latest.measurements) : [], [latest]);
   const heatmapValues = useMemo((): Partial<Record<MuscleId, number>> => {
     const map: Partial<Record<MuscleId, number>> = {};
     for (const r of results) {
@@ -48,10 +37,10 @@ export function OrthometryTab({ history, loading }: OrthometryTabProps) {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center py-20 opacity-30">
-        <div className="w-8 h-8 rounded-full border-2 border-awan-gold border-t-transparent animate-spin mb-4" />
-        <span className="text-awan-md font-black uppercase tracking-widest text-awan-tx-mute">Chargement...</span>
-      </div>
+      <View style={s.loadingWrap}>
+        <ActivityIndicator size="small" color="rgba(212,175,55,0.5)" style={{ marginBottom: 16 }} />
+        <Text style={[s.label, { color: theme.mute, opacity: 0.5 }]}>Chargement...</Text>
+      </View>
     );
   }
 
@@ -59,7 +48,7 @@ export function OrthometryTab({ history, loading }: OrthometryTabProps) {
 
   if (results.length === 0) {
     return (
-      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+      <Card variant="flat">
         <Heading level={4} mono subtitle="Symétrie bilatérale">ORTHOMÉTRIE</Heading>
         <GuardCard message="Aucune mesure bilatérale — saisir les valeurs Gauche/Droite dans Mensurations" />
       </Card>
@@ -67,43 +56,51 @@ export function OrthometryTab({ history, loading }: OrthometryTabProps) {
   }
 
   return (
-    <div className="space-y-8">
-      <Card className="p-6 bg-white/5 border-white/5" variant="flat">
+    <View style={{ gap: 32 }}>
+      <Card variant="flat">
         <Heading level={4} mono subtitle={`Dernière mesure · ${latest?.date ?? ''}`}>SYMÉTRIE CORPORELLE</Heading>
-        <div className="flex flex-row gap-6 mt-4">
+        <View style={s.bodyRow}>
           <BodySvg mode="heatmap" muscleValues={heatmapValues} />
-          <div className="flex-1 space-y-2">
+          <View style={{ flex: 1, gap: 8 }}>
             {results.map(r => (
-              <div key={r.muscleKey} className="flex flex-row items-center justify-between border-b border-white/5 pb-2">
-                <span className="text-awan-sm font-black text-awan-tx uppercase tracking-wide capitalize">{r.muscleKey}</span>
-                <div className="flex flex-row items-center gap-3">
-                  <span className="text-awan-xs font-mono text-awan-tx-mute">{r.leftCm}↔{r.rightCm}</span>
-                  <span
-                    className="text-awan-sm font-black font-mono"
-                    style={{ color: r.asymmetric ? 'var(--color-awan-status-error)' : 'var(--color-awan-status-ok)' }}
-                  >
+              <View key={r.muscleKey} style={[s.muscleRow, { borderBottomColor: Clr.white5 }]}>
+                <Text style={[s.label, { color: theme.title }]}>{r.muscleKey}</Text>
+                <View style={s.row}>
+                  <Text style={[s.mono, { color: theme.mute }]}>{r.leftCm}↔{r.rightCm}</Text>
+                  <Text style={[s.label, { color: r.asymmetric ? theme.danger : theme.statusOk }]}>
                     Δ{r.diffPct.toFixed(1)}%
-                  </span>
-                </div>
-              </div>
+                  </Text>
+                </View>
+              </View>
             ))}
-          </div>
-        </div>
+          </View>
+        </View>
       </Card>
 
       {results.some(r => r.asymmetric) && (
-        <Card className="p-5 bg-awan-status-error/5 border-awan-status-error/20" variant="flat">
-          <span className="awan-label mb-3 block" style={{ color: 'var(--color-awan-status-error)' }}>ASYMÉTRIES DÉTECTÉES</span>
-          <div className="space-y-1">
+        <Card variant="flat" style={{ borderColor: `${theme.danger}33`, backgroundColor: `${theme.danger}0D` }}>
+          <Text style={[s.labelTitle, { color: theme.danger, marginBottom: 12 }]}>ASYMÉTRIES DÉTECTÉES</Text>
+          <View style={{ gap: 4 }}>
             {results.filter(r => r.asymmetric).map(r => (
-              <span key={r.muscleKey} className="block text-awan-md text-awan-tx">
+              <Text key={r.muscleKey} style={[s.bodyText, { color: theme.title }]}>
                 · {r.muscleKey.charAt(0).toUpperCase() + r.muscleKey.slice(1)} — écart {r.diffPct.toFixed(1)}%
-                &nbsp;(G: {r.leftCm}cm / D: {r.rightCm}cm)
-              </span>
+                {' '}(G: {r.leftCm}cm / D: {r.rightCm}cm)
+              </Text>
             ))}
-          </div>
+          </View>
         </Card>
       )}
-    </div>
+    </View>
   );
 }
+
+const s = StyleSheet.create({
+  loadingWrap: { alignItems: 'center', paddingVertical: 80, opacity: 0.3 },
+  bodyRow: { flexDirection: 'row', gap: 24, marginTop: 16 },
+  muscleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, paddingBottom: 8 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  label: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
+  labelTitle: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.value, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
+  mono: { fontFamily: FontMono, fontSize: Fs.xs },
+  bodyText: { fontFamily: FontMono, fontSize: Fs.md },
+});
