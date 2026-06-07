@@ -146,13 +146,16 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
   }
   function onDragMove(mx: number, my: number) {
     if (!draggingId || !dragStart.current) return;
-    const dx = ((mx - dragStart.current.mx) / W) * 100;
-    const dy = ((my - dragStart.current.my) / CH) * 100;
+    // Capture en local — dragStart.current peut devenir null avant l'exécution
+    // de l'updater ci-dessous (onDragEnd peut s'intercaler entre deux events tactiles).
+    const { mx: startMx, my: startMy, nx: startNx, ny: startNy } = dragStart.current;
+    const dx = ((mx - startMx) / W) * 100;
+    const dy = ((my - startMy) / CH) * 100;
     setNodePositions(prev => ({
       ...prev,
       [draggingId]: {
-        x: Math.max(4, Math.min(96, dragStart.current!.nx + dx)),
-        y: Math.max(4, Math.min(96, dragStart.current!.ny + dy)),
+        x: Math.max(4, Math.min(96, startNx + dx)),
+        y: Math.max(4, Math.min(96, startNy + dy)),
       },
     }));
   }
