@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemeMode } from '../hooks/useTheme';
 import { useAppStore } from '../store/appStore';
 import { useAppState } from '../context/AppStateContext';
-import { Shield, Database, Key, Trash2, Navigation, Brain, BookOpen, Check, X } from 'lucide-react-native';
+import { Shield, Database, Key, Trash2, Navigation, Brain, BookOpen, Check, X, Activity } from 'lucide-react-native';
 import { HexagonLogo } from '../constants/icons';
 import { Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -93,6 +93,45 @@ async function purgeAllData() {
   AWAN_LS_KEYS.forEach(k => safeStorage.remove(k));
 }
 
+type DiagEntry = { label: string; value: string; ok?: boolean };
+
+/** Constats runtime (preuves J0 : plateforme, backend de stockage, mode WAL, permissions). */
+async function loadDiagnostics(): Promise<DiagEntry[]> {
+  const entries: DiagEntry[] = [
+    { label: 'PLATEFORME', value: `${Platform.OS.toUpperCase()} ${String(Platform.Version ?? '')}`.trim() },
+  ];
+
+  if (Platform.OS !== 'web') {
+    try {
+      const [{ SqliteStorage }, storage] = await Promise.all([
+        import('../data/storage/SqliteStorage'),
+        getStorage(),
+      ]);
+      if (storage instanceof SqliteStorage) {
+        entries.push({ label: 'STOCKAGE', value: 'SQLITE (NATIF)' });
+        const mode = await storage.getJournalMode();
+        entries.push({ label: 'MODE JOURNAL', value: mode ? mode.toUpperCase() : 'INCONNU', ok: mode === 'wal' });
+      } else {
+        entries.push({ label: 'STOCKAGE', value: 'MÉMOIRE (SECOURS)', ok: false });
+      }
+    } catch {
+      entries.push({ label: 'STOCKAGE', value: 'ERREUR DE LECTURE', ok: false });
+    }
+
+    try {
+      const Notifications = await import('expo-notifications');
+      const { status } = await Notifications.getPermissionsAsync();
+      entries.push({ label: 'NOTIFICATIONS', value: status.toUpperCase(), ok: status === 'granted' });
+    } catch {
+      entries.push({ label: 'NOTIFICATIONS', value: 'INDISPONIBLE', ok: false });
+    }
+  } else {
+    entries.push({ label: 'STOCKAGE', value: typeof indexedDB !== 'undefined' ? 'INDEXEDDB' : 'MÉMOIRE' });
+  }
+
+  return entries;
+}
+
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -106,6 +145,9 @@ export default function SettingsScreen() {
   const setJitFactor = useAppStore((s: any) => s.setJitFactor);
   const [purgeModal, setPurgeModal] = useState(false);
   const [purging, setPurging] = useState(false);
+  const [diagModal, setDiagModal] = useState(false);
+  const [diagLoading, setDiagLoading] = useState(false);
+  const [diagEntries, setDiagEntries] = useState<DiagEntry[]>([]);
   const [pendingAction, setPendingAction] = useState<'cache' | 'export' | 'lock' | null>(null);
   const [cacheState, setCacheState] = useState<'idle' | 'loading' | 'ok'>('idle');
   const [exportState, setExportState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
@@ -143,6 +185,15 @@ export default function SettingsScreen() {
     setPurging(false);
     setPurgeModal(false);
     navigation.navigate('Dashboard' as never);
+  };
+
+  const openDiagnostics = () => {
+    setDiagModal(true);
+    setDiagLoading(true);
+    loadDiagnostics().then(entries => {
+      setDiagEntries(entries);
+      setDiagLoading(false);
+    });
   };
 
   const THEME_LABELS: Record<string, string> = { light: 'LIGHT', dark: 'DARK', black: 'BLACK' };
@@ -329,6 +380,23 @@ export default function SettingsScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={[s.labelTitle, { color: theme.title }]}>PHILOSOPHIE AWAN</Text>
                 <Text style={[s.labelDesc, { color: theme.mute }]}>La devise · Les trois temps · Les 8 principes</Text>
+              </View>
+            </Touch>
+          </View>
+
+          {/* DIAGNOSTIC */}
+          <View style={s.section}>
+            <Heading level={4} mono subtitle="Vérification Runtime" style={s.sectionHeading}>DIAGNOSTIC SYSTÈME</Heading>
+            <Touch
+              onPress={openDiagnostics}
+              style={[s.row88, { backgroundColor: 'rgba(255,255,255,0.03)', borderColor: Clr.white5 }]}
+            >
+              <View style={[s.iconBox, { backgroundColor: Clr.white5 }]}>
+                <Activity size={18} color={theme.mute} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.labelTitle, { color: theme.title }]}>DIAGNOSTIC SYSTÈME</Text>
+                <Text style={[s.labelDesc, { color: theme.mute }]}>Plateforme · Stockage · Mode journal · Notifications</Text>
               </View>
             </Touch>
           </View>
@@ -525,6 +593,39 @@ export default function SettingsScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Modal diagnostic */}
+      <Modal visible={diagModal} transparent statusBarTranslucent animationType="fade" onRequestClose={() => setDiagModal(false)}>
+        <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: theme.overlayDeep }]} onPress={() => setDiagModal(false)} />
+        <View style={s.modalOuter}>
+          <View style={[s.modalInner, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Text style={[s.labelXs, { color: theme.selected, marginBottom: 8 }]}>— ÉTAT RUNTIME —</Text>
+            <Text style={[s.purgeTitle, { color: theme.title }]}>Diagnostic système</Text>
+            {diagLoading ? (
+              <View style={{ paddingVertical: 32, alignItems: 'center' }}>
+                <ActivityIndicator size="small" color={theme.selected} />
+              </View>
+            ) : (
+              <View style={{ marginBottom: 24 }}>
+                {diagEntries.map((entry, idx) => (
+                  <View key={entry.label} style={[s.diagRow, idx > 0 && { borderTopWidth: 1, borderTopColor: Clr.white5 }]}>
+                    <Text style={[s.labelDesc, { color: theme.mute }]}>{entry.label}</Text>
+                    <Text style={[s.labelTitle, {
+                      marginBottom: 0,
+                      color: entry.ok === true ? theme.statusOk : entry.ok === false ? theme.danger : theme.title,
+                    }]}>
+                      {entry.value}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            <Touch onPress={() => setDiagModal(false)} style={[s.purgeCancelBtn, { borderColor: Clr.white10 }]}>
+              <Text style={[s.labelMd, { color: theme.mute }]}>Fermer</Text>
+            </Touch>
+          </View>
+        </View>
+      </Modal>
     </PageWrapper>
   );
 }
@@ -559,6 +660,7 @@ const s = StyleSheet.create({
   confirmNo: { paddingHorizontal: 20, paddingVertical: 8, backgroundColor: Clr.white5, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   modalOuter: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   modalInner: { width: '100%', maxWidth: 360, padding: 32, borderWidth: 1 },
+  diagRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12 },
   purgeTitle: { fontFamily: FontMono, fontSize: 18, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.body_005, marginBottom: 12 },
   purgeBody: { fontFamily: FontMono, fontSize: Fs.body, fontWeight: Fw.value, lineHeight: 22, marginBottom: 24 },
   purgeConfirmBtn: { height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },

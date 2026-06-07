@@ -90,6 +90,12 @@ export class SqliteStorage implements IStorage {
     return this.cachedSize;
   }
 
+  /** Lit le mode WAL effectif — utilisé par l'écran de diagnostic (preuve runtime J0.3). */
+  async getJournalMode(): Promise<string | null> {
+    const row = await this.handle.getFirstAsync<{ journal_mode: string }>('PRAGMA journal_mode');
+    return row?.journal_mode ?? null;
+  }
+
   async list(prefix: string): Promise<string[]> {
     const rows = await this.handle.getAllAsync<{ key: string }>(
       'SELECT key FROM kv WHERE key LIKE ?', [`${prefix}%`],
