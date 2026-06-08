@@ -23,6 +23,8 @@ design.config.js
 design.source.json
 docs/phases/
 android/
+ios/
+.expo/
 public/exercise-media/
 
 # Playwright transient artifacts
