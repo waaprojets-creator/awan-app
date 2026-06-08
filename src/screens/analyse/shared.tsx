@@ -3,6 +3,7 @@ import { View, Text, ActivityIndicator, Dimensions, StyleSheet } from 'react-nat
 import { FontMono } from '../../constants/typography';
 import { Fs, Fw, Ls } from '../../theme/tokens';
 import Svg, { Line, Rect, G, Text as SvgTextEl } from 'react-native-svg';
+import type { LucideIcon } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { safeStorage } from '../../utils/safeStorage';
 
@@ -173,7 +174,7 @@ export function StackedBarChart({ data, lineA, lineB, height = 200 }: StackedBar
 
 // ─── Shared UI states ─────────────────────────────────────────────────────────
 
-export function EmptyState({ Icon, label }: { Icon: React.ComponentType<{ size: number; color?: string }>; label: string }) {
+export function EmptyState({ Icon, label }: { Icon: LucideIcon; label: string }) {
   const theme = useTheme();
   return (
     <View style={sh.emptyContainer}>

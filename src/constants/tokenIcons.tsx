@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  type LucideIcon,
   Dumbbell, Utensils, Scale, Repeat, Clock, Hash, Star,
   Map, Moon, Ruler, Flag, Plus, Brain, Flame, Radio,
   FileText, Zap, Clipboard, Dna, Activity, Droplets,
@@ -7,7 +8,7 @@ import {
 import { useTheme } from '../hooks/useTheme';
 
 // Token icon keys (strings stored in entry.tokens[].icon)
-export const TOKEN_ICON_MAP: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
+export const TOKEN_ICON_MAP: Record<string, LucideIcon> = {
   dumbbell:  Dumbbell,
   utensils:  Utensils,
   scale:     Scale,

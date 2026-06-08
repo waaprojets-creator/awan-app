@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useTheme, type AwanTheme } from '../hooks/useTheme';
-import { AlertOctagon, AlertTriangle, CalendarClock, CheckCircle2, Info, Zap } from 'lucide-react-native';
+import { AlertOctagon, AlertTriangle, CalendarClock, CheckCircle2, Info, Zap, type LucideIcon } from 'lucide-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 import { useCoach } from '../hooks/useCoach';
@@ -26,7 +26,7 @@ const TABS: TabDef[] = [
 ];
 
 interface SeverityStyle {
-  Icon: React.ComponentType<{ size?: number; color?: string }>;
+  Icon: LucideIcon;
   color: string;
 }
 
