@@ -12,6 +12,7 @@
     "android": {
       "package": "com.awan.app",
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0A0A0A"
       }
     },
