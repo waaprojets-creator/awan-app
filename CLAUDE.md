@@ -18,23 +18,23 @@ Cette devise est la raison d'être d'AWAN. Toute décision produit/design/code d
 
 Quand l'utilisateur demande de builder l'APK (toute formulation : "build AWAN", "fais le build", "lance le build", etc.) :
 
-1. **Régénérer le seed** avec `npx ts-node scripts/generate-seed.ts` — `TODAY` est automatiquement le jour du build
-2. Merger la branche feature courante dans `main`
+1. **Régénérer le seed** avec `npx tsx scripts/generate-seed.ts` — `TODAY` est automatiquement le jour du build
+2. Merger la branche feature courante dans `main` (si des changements non encore intégrés existent)
 3. Pusher `main` vers le remote
-4. Exécuter `npm run build && npx cap sync android`
-5. Informer l'utilisateur de lancer `./gradlew assembleDebug` en local (Android SDK non disponible dans cet environnement)
+4. Exécuter `npx expo prebuild --platform android` (régénère le dossier natif `android/` à partir d'`app.json` — remplace `cap sync`)
+5. Informer l'utilisateur de lancer `cd android && ./gradlew assembleDebug` en local (Android SDK non disponible dans cet environnement)
 
 ```bash
-npx ts-node scripts/generate-seed.ts          # seed calé sur aujourd'hui
+npx tsx scripts/generate-seed.ts                # seed calé sur aujourd'hui
 git add public/data/seed-demo.json && git commit -m "chore(seed): régénération au $(date +%Y-%m-%d)"
 git checkout main
 git merge <feature-branch> --no-edit
 git push https://waaprojets-creator:<PAT>@github.com/waaprojets-creator/awan-app.git main
-npm run build && npx cap sync android
+npx expo prebuild --platform android
 # → Dire à l'user : cd android && ./gradlew assembleDebug
 ```
 
-> Note : Le dossier `android/` est gitignored. L'utilisateur doit d'abord exécuter `npx cap add android` s'il n'existe pas, puis `npx cap sync android`, puis `./gradlew assembleDebug`.
+> Note : Stack **Expo bare** depuis le cutover du 2026-06-08 — Capacitor a disparu du projet (`cap add`/`cap sync` n'existent plus ; ne jamais les invoquer). Les dossiers `android/`/`ios/` sont gitignorés et entièrement régénérés à chaque `prebuild` depuis `app.json` (source de vérité de la config native : package, icônes, plugins). Alternative cloud : `eas build --platform android --profile preview` — nécessite `eas-cli` (absent de `package.json`) et un compte EAS configuré (`eas.json` absent du repo) ; non disponible tel quel dans cet environnement.
 
 ## Branche de développement
 
