@@ -37,14 +37,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build web assets
-        run: npm run build
-
-      - name: Add Android platform
-        run: npx cap add android
-
-      - name: Capacitor sync
-        run: npx cap sync android
+      - name: Prebuild native Android project (Expo bare)
+        run: npx expo prebuild --platform android --non-interactive
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew
