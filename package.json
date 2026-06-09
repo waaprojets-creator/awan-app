@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "expo": "~52.0.0",
+    "expo-asset": "~11.0.5",
     "expo-sqlite": "~15.1.4",
     "expo-notifications": "~0.29.14",
     "expo-file-system": "~18.0.12",
