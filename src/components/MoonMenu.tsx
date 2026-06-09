@@ -71,6 +71,8 @@ function loadLayout(): NodePositions {
 }
 
 const MARGIN = 14;
+// Diamètre (px) des cibles tactiles natives superposées au SVG.
+const HIT = 56;
 
 interface MoonMenuProps { onNavigate: (route: string) => void; currentRoute: string; }
 
@@ -106,6 +108,11 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
     setIsOpen(false);
     setTimeout(() => onNavigate(route), 200);
   }, [onNavigate, editMode]);
+
+  const closeMenu = useCallback(() => {
+    if (editMode) { setNodePositions(loadLayout()); setEditMode(false); }
+    else setIsOpen(false);
+  }, [editMode]);
 
   const CH = H * 0.86;
   const orbitCX = W * 0.5;
@@ -190,30 +197,7 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
           style={[s.overlay, { backgroundColor: editMode ? theme.overlayDeep : 'rgba(0,0,0,0.88)' }]}
           {...webDragHandlers}
         >
-          {editMode && (
-            <View style={s.editHeader}>
-              <Pressable
-                onPress={saveLayout}
-                style={[s.editBtn, { backgroundColor: theme.selected }]}
-              >
-                <Text style={[s.editBtnText, { color: '#000' }]}>SAUVEGARDER</Text>
-              </Pressable>
-              <Pressable
-                onPress={cancelEdit}
-                style={[s.editBtn, s.editBtnOutline, { borderColor: 'rgba(255,255,255,0.15)' }]}
-              >
-                <Text style={[s.editBtnText, { color: theme.text }]}>ANNULER</Text>
-              </Pressable>
-            </View>
-          )}
-          {editMode && (
-            <View style={s.editHint}>
-              <Text style={[s.editHintText, { color: theme.text }]}>
-                GLISSER LES NŒUDS POUR REPOSITIONNER
-              </Text>
-            </View>
-          )}
-
+          {/* Fond cliquable — ferme le menu (sous le SVG + les cibles tactiles) */}
           <Pressable
             style={StyleSheet.absoluteFillObject}
             onPress={() => { if (editMode) cancelEdit(); else setIsOpen(false); }}
@@ -223,7 +207,8 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
             width={W}
             height={H}
             style={StyleSheet.absoluteFillObject as any}
-            onPress={(e: any) => e.stopPropagation?.()}
+            pointerEvents={Platform.OS === 'web' ? 'auto' : 'none'}
+            onPress={Platform.OS === 'web' ? (e: any) => e.stopPropagation?.() : undefined}
           >
             {/* Anneaux orbitaux */}
             {!editMode && (
@@ -251,7 +236,7 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
               );
             })}
 
-            {/* Nœuds */}
+            {/* Nœuds (visuel ; sur web le <G> reste interactif pour clic + drag) */}
             {resolvedNodes.map((node, i) => {
               const cx = (node.x/100)*W;
               const cy = (node.y/100)*CH;
@@ -266,8 +251,8 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
 
               return (
                 <G key={node.id}
-                  onPress={() => handleNavigate(node.id)}
                   {...(Platform.OS === 'web' ? {
+                    onPress: () => handleNavigate(node.id),
                     onMouseDown: (e: any) => { e.stopPropagation?.(); onDragStart(node.id, e.clientX, e.clientY); },
                     onTouchStart: (e: any) => { e.stopPropagation?.(); const t = e.touches?.[0]; if (t) onDragStart(node.id, t.clientX, t.clientY); },
                   } : {})}
@@ -302,10 +287,62 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
               );
             })}
           </Svg>
+
+          {/* Cibles tactiles natives — onPress fiable sur Android (le onPress des
+              éléments react-native-svg ne déclenche pas sur Android). Superposées
+              au SVG, centrées sur chaque nœud. Web utilise le <G> ci-dessus. */}
+          {Platform.OS !== 'web' && !editMode && resolvedNodes.map(node => {
+            const cx = (node.x / 100) * W;
+            const cy = (node.y / 100) * CH;
+            return (
+              <Pressable
+                key={`hit-${node.id}`}
+                onPress={() => handleNavigate(node.id)}
+                accessibilityLabel={node.label}
+                style={{ position: 'absolute', left: cx - HIT / 2, top: cy - HIT / 2, width: HIT, height: HIT }}
+              />
+            );
+          })}
+
+          {editMode && (
+            <View style={s.editHeader}>
+              <Pressable
+                onPress={saveLayout}
+                style={[s.editBtn, { backgroundColor: theme.selected }]}
+              >
+                <Text style={[s.editBtnText, { color: '#000' }]}>SAUVEGARDER</Text>
+              </Pressable>
+              <Pressable
+                onPress={cancelEdit}
+                style={[s.editBtn, s.editBtnOutline, { borderColor: 'rgba(255,255,255,0.15)' }]}
+              >
+                <Text style={[s.editBtnText, { color: theme.text }]}>ANNULER</Text>
+              </Pressable>
+            </View>
+          )}
+          {editMode && (
+            <View style={s.editHint}>
+              <Text style={[s.editHintText, { color: theme.text }]}>
+                GLISSER LES NŒUDS POUR REPOSITIONNER
+              </Text>
+            </View>
+          )}
+
+          {/* Croissant (fermer) — DANS le Modal pour rester visible/cliquable
+              au-dessus de l'overlay (le trigger externe est masqué par le Modal). */}
+          <Pressable
+            onPress={closeMenu}
+            style={s.trigger}
+            accessibilityLabel="Fermer le menu"
+          >
+            <View style={s.triggerInner}>
+              <CrescentMoon color={theme.selected} />
+            </View>
+          </Pressable>
         </View>
       </Modal>
 
-      {/* Bouton trigger — absolu dans le wrapper MainLayout */}
+      {/* Bouton trigger — absolu dans le wrapper MainLayout (visible menu fermé) */}
       <Pressable
         onPress={toggle}
         style={s.trigger}
