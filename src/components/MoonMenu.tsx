@@ -13,20 +13,23 @@ const n = (k: string): string => nav[k] ?? k;
 
 interface Node { id: string; label: string; x: number; y: number; tier: 0 | 1 | 2; }
 
+// Réglage disposition (2026-06) :
+//  - Planning↔Trajet : écart horizontal réduit de 30% (±19,1 → ±13,4 autour de x=50).
+//  - Enfants de Santé : éventail élargi de 70% (offsets ×1,7, symétriques autour de x=50).
 const NODES: Node[] = [
   { id: 'Dashboard',   label: n('hub'),         x: 50.0, y: 52.0, tier: 0 },
   { id: 'Islam',       label: n('spirit'),       x: 50.0, y: 30.0, tier: 1 },
   { id: 'Reglages',   label: n('reglages'),     x: 69.1, y: 41.0, tier: 1 },
-  { id: 'Planning',    label: n('planning'),     x: 69.1, y: 63.0, tier: 1 },
+  { id: 'Planning',    label: n('planning'),     x: 63.4, y: 63.0, tier: 1 },
   { id: 'Sante',       label: n('sante'),        x: 50.0, y: 74.0, tier: 1 },
-  { id: 'Trajet',      label: n('trajet'),       x: 30.9, y: 63.0, tier: 1 },
+  { id: 'Trajet',      label: n('trajet'),       x: 36.6, y: 63.0, tier: 1 },
   { id: 'Analyse',     label: n('analyse'),      x: 30.9, y: 41.0, tier: 1 },
   { id: 'Journal',     label: n('journal'),      x: 73.5, y: 75.0, tier: 2 },
   { id: 'Tasks',       label: n('tasks'),        x: 79.0, y: 59.5, tier: 2 },
-  { id: 'Sleep',       label: 'SOMMEIL',         x: 59.5, y: 83.5, tier: 2 },
-  { id: 'Mensuration', label: n('mensuration'),  x: 53.5, y: 85.5, tier: 2 },
-  { id: 'Nutrition',   label: n('nutrition'),    x: 46.5, y: 85.5, tier: 2 },
-  { id: 'Sport',       label: n('sport'),        x: 40.5, y: 83.5, tier: 2 },
+  { id: 'Sleep',       label: 'SOMMEIL',         x: 66.2, y: 83.5, tier: 2 },
+  { id: 'Mensuration', label: n('mensuration'),  x: 56.0, y: 85.5, tier: 2 },
+  { id: 'Nutrition',   label: n('nutrition'),    x: 44.0, y: 85.5, tier: 2 },
+  { id: 'Sport',       label: n('sport'),        x: 33.8, y: 83.5, tier: 2 },
   { id: 'Coach',       label: n('coach'),        x: 22.0, y: 34.5, tier: 2 },
 ];
 
