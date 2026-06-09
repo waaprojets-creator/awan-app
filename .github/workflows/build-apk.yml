@@ -47,9 +47,29 @@ jobs:
         if: ${{ inputs.build_type == 'debug' }}
         run: cd android && ./gradlew assembleDebug --no-daemon
 
-      - name: Build release APK (unsigned)
+      - name: Build release APK
         if: ${{ inputs.build_type == 'release' }}
         run: cd android && ./gradlew assembleRelease --no-daemon
+
+      - name: Sign release APK with debug keystore (installable)
+        if: ${{ inputs.build_type == 'release' }}
+        run: |
+          set -e
+          if [ ! -f android/app/debug.keystore ]; then
+            keytool -genkeypair -v -keystore android/app/debug.keystore \
+              -storepass android -keypass android -alias androiddebugkey \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+          BT=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)
+          SRC=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
+          echo "build-tools=$BT  source=$SRC"
+          "$ANDROID_HOME/build-tools/$BT/apksigner" sign \
+            --ks android/app/debug.keystore \
+            --ks-pass pass:android --key-pass pass:android \
+            --ks-key-alias androiddebugkey \
+            --out android/app/build/outputs/apk/release/awan-release.apk "$SRC"
+          "$ANDROID_HOME/build-tools/$BT/apksigner" verify --verbose android/app/build/outputs/apk/release/awan-release.apk
 
       - name: Upload debug APK
         if: ${{ inputs.build_type == 'debug' }}
@@ -63,6 +83,6 @@ jobs:
         if: ${{ inputs.build_type == 'release' }}
         uses: actions/upload-artifact@v4
         with:
-          name: awan-release-unsigned
-          path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+          name: awan-release
+          path: android/app/build/outputs/apk/release/awan-release.apk
           retention-days: 14
