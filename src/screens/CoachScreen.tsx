@@ -124,7 +124,7 @@ export default function CoachScreen(_props: NavProps): React.ReactElement {
 
   return (
     <ScrollView
-      style={{ flex: 1, width: '100%' }}
+      style={{ flex: 1, width: '100%', backgroundColor: theme.bg }}
       contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}
       showsVerticalScrollIndicator={false}
     >

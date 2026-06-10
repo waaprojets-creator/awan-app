@@ -711,7 +711,7 @@ export default function SportScreen() {
  </View>
  </Modal>
  )}
- <ScrollView contentContainerStyle={{ paddingBottom: 120 }} style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+ <ScrollView contentContainerStyle={{ paddingBottom: 120 }} style={{ flex: 1, backgroundColor: theme.bg }} showsVerticalScrollIndicator={false}>
  <View style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24 }}>
  <ScreenHeader tag="BODY · SPORT" title="SPORT" />
  {(() => {

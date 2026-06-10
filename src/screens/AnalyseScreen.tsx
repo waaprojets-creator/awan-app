@@ -353,7 +353,7 @@ export default function AnalyseScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: 'transparent' }}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }}>
+      <ScrollView style={{ flex: 1, backgroundColor: theme.bg }} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Header */}
         <View style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 16 }}>
           <View>

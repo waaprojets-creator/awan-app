@@ -111,7 +111,7 @@ export default function JournalScreen() {
         </View>
       </View>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }}>
+      <ScrollView style={{ flex: 1, backgroundColor: theme.bg }} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Module Injector */}
         <View style={{ padding: Sp[6] }}>
           {/* INPUT TERMINAL */}

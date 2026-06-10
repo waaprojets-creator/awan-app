@@ -154,7 +154,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
 
   return (
     <ScrollView
-      style={{ flex: 1, width: '100%', maxWidth: '100%' }}
+      style={{ flex: 1, width: '100%', maxWidth: '100%', backgroundColor: theme.bg }}
       contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100, width: '100%', maxWidth: '100%' }}
       showsVerticalScrollIndicator={false}
     >

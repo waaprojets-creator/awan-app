@@ -128,7 +128,7 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
 
   return (
     <ScrollView
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: theme.bg }}
       contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}
       showsVerticalScrollIndicator={false}
     >

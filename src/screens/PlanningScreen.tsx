@@ -263,7 +263,7 @@ export default function PlanningScreen() {
 
   function renderMonthly() {
     return (
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1, backgroundColor: theme.bg }} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
         <View style={[sp.rowBetween, { paddingHorizontal: 24, marginBottom: 32 }]}>
           <Touch onPress={() => setCalDate(new Date(calDate.getFullYear(), calDate.getMonth()-1, 1))} style={[sp.navBtn, { borderColor: theme.border }]}>
             <ChevronLeft size={20} color={theme.mute} />
@@ -332,7 +332,7 @@ export default function PlanningScreen() {
             );
           })}
         </View>
-        <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: 100 }} style={{ flex: 1 }}>
+        <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: 100 }} style={{ flex: 1, backgroundColor: theme.bg }}>
           <View style={{ flexDirection: 'row' }}>
             <View style={{ width: 48, borderRightWidth: 1, borderRightColor: Clr.white5 }}>
               {hours.map((h, i) => <View key={i} style={{ height: 80, alignItems: 'center' }}><Text style={{ fontSize: Fs.sm, fontFamily: FontMono, color: theme.mute, fontWeight: Fw.display, marginTop: 8, opacity: 0.4 }}>{h}</Text></View>)}
@@ -404,7 +404,7 @@ export default function PlanningScreen() {
           <View style={{ flex: 1, alignItems: 'center' }}><Text style={{ fontSize: 12, fontWeight: Fw.display, color: theme.title, textTransform: 'uppercase', letterSpacing: 4.8, fontFamily: FontMono }}>{lbl.toUpperCase()}</Text></View>
           <Touch onPress={() => setShowEvModal(true)} style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.selected }}><Plus size={18} color={theme.bg} strokeWidth={3} /></Touch>
         </View>
-        <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: 100 }} scrollEnabled={!creatingEv} style={{ flex: 1 }}>
+        <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: 100 }} scrollEnabled={!creatingEv} style={{ flex: 1, backgroundColor: theme.bg }}>
           <View style={{ flexDirection: 'row' }}>
             <View style={{ width: 48, borderRightWidth: 1, borderRightColor: Clr.white5 }}>
               {hours.map((h, i) => <View key={i} style={{ height: 80, alignItems: 'center', paddingTop: 8 }}><Text style={{ fontSize: Fs.md, fontFamily: FontMono, fontWeight: Fw.display, color: theme.mute, opacity: 0.4 }}>{h}</Text></View>)}
@@ -447,7 +447,7 @@ export default function PlanningScreen() {
     };
 
     return (
-      <ScrollView contentContainerStyle={{ paddingBottom: 120 }} style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 120 }} style={{ flex: 1, backgroundColor: theme.bg }} showsVerticalScrollIndicator={false}>
         <View style={{ paddingHorizontal: 24, paddingTop: 8, gap: 32 }}>
           {/* Add task form */}
           <View>
@@ -649,7 +649,7 @@ export default function PlanningScreen() {
       }));
 
     return (
-      <ScrollView contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 24, paddingTop: 8 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 24, paddingTop: 8 }} style={{ backgroundColor: theme.bg }} showsVerticalScrollIndicator={false}>
         {groups.length === 0 && (
           <View style={{ paddingVertical: 80, alignItems: 'center' }}>
             <Text style={{ fontSize: Fs.md, fontWeight: Fw.display, color: theme.mute, textTransform: 'uppercase', letterSpacing: 2 }}>AUCUNE DONNÉE</Text>
@@ -712,7 +712,7 @@ export default function PlanningScreen() {
     const minToHH = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 
     return (
-      <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 120 }} style={{ backgroundColor: theme.bg }} showsVerticalScrollIndicator={false}>
         <View style={{ paddingHorizontal: 24, paddingTop: 16, gap: 24 }}>
           {/* Summary cards */}
           <Card variant="flat" style={{ padding: 24, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white5 }}>

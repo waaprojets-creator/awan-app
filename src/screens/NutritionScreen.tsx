@@ -904,7 +904,7 @@ export default function NutritionScreen() {
 
  return (
  <View style={{ flex: 1, backgroundColor: 'transparent' }}>
- <ScrollView contentContainerStyle={{ paddingBottom: 120 }} style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+ <ScrollView contentContainerStyle={{ paddingBottom: 120 }} style={{ flex: 1, backgroundColor: theme.bg }} showsVerticalScrollIndicator={false}>
  <View style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 16 }}>
  <ScreenHeader tag="BODY · NUTRITION" title="NUTRITION" />
  <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
