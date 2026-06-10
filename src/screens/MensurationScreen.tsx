@@ -440,7 +440,7 @@ export default function MensurationScreen() {
         </View>
       </View>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }}>
+      <ScrollView style={{ flex: 1, backgroundColor: theme.bg }} contentContainerStyle={{ paddingBottom: 120 }}>
         <View style={{ padding: 24 }}>
           {/* S2.1 — Évolution du poids (SVG inline) */}
           <View style={{ marginBottom: 40 }}>

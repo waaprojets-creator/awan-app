@@ -105,7 +105,7 @@ export default function TrajetScreen() {
   return (
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
       <ScrollView
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: theme.bg }}
         contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >

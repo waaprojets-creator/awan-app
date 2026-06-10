@@ -318,7 +318,7 @@ export default function IslamScreen() {
     <View style={{ flex: 1 }}>
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: theme.bg }}
         showsVerticalScrollIndicator={false}
       >
         <ScreenHeader title="ISLAM" />

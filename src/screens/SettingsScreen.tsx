@@ -202,7 +202,7 @@ export default function SettingsScreen() {
     <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
       <ScrollView
         contentContainerStyle={{ paddingBottom: 150 }}
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: theme.bg }}
         showsVerticalScrollIndicator={false}
       >
         <View style={[s.sectionBorder, { borderBottomColor: theme.border }]}>
