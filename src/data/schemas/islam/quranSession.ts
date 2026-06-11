@@ -14,7 +14,7 @@ export type QuranWirdSlot = z.infer<typeof QuranWirdSlotSchema>;
 // ─── V1 — Sessions Coran ─────────────────────────────────────────────────────
 // Chaque session de lecture — date top-level pour listFiltered() et aggregate() SQL
 // ayahsRead top-level pour SUM hebdomadaire sans charger les JSON
-// Clé : islam.quran.session.{YYYY-MM-DD}.{uuid}
+// Clé : islam.quran.session.{YYYY-MM-DD}.{ms}  (id = "{date}.{ms}")
 // sessions[] conservé pour compatibilité avec useQuranSessionStore (Wird slots)
 
 export const QuranSessionV1Schema = z.object({

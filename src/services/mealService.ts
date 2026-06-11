@@ -4,8 +4,9 @@ import type { MealEntryLatest } from '@/data/schemas/nutrition/mealEntry';
 
 const MEAL_PREFIX = 'nutrition.meal';
 
-function mealKey(id: string): string {
-  return `${MEAL_PREFIX}.${id}`;
+// Clé : nutrition.meal.{YYYY-MM-DD}.{ms}  (id = dateId)
+function mealKey(entry: MealEntryLatest): string {
+  return `${MEAL_PREFIX}.${entry.id}`;
 }
 
 export const MealService = {
@@ -25,12 +26,12 @@ export const MealService = {
 
   async save(entry: MealEntryLatest): Promise<void> {
     const storage = await getStorage();
-    await storage.set(mealKey(entry.id), entry);
+    await storage.set(mealKey(entry), entry);
   },
 
   async delete(id: string): Promise<void> {
     const storage = await getStorage();
-    await storage.delete(mealKey(id));
+    await storage.delete(`${MEAL_PREFIX}.${id}`);
   },
 
   totals(entries: MealEntryLatest[]): { kcal: number; p: number; c: number; f: number; fiberG: number } {
