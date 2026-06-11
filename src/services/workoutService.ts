@@ -30,11 +30,13 @@ export const WorkoutService = {
   async saveRoutine(routine: RoutineLatest): Promise<void> {
     const storage = await getStorage();
     await storage.set(`${ROUTINE_PREFIX}.${routine.id}`, routine);
+    eventBus.emit('sport.routine.modified', { routineId: routine.id });
   },
 
   async deleteRoutine(id: string): Promise<void> {
     const storage = await getStorage();
     await storage.delete(`${ROUTINE_PREFIX}.${id}`);
+    eventBus.emit('sport.routine.modified', { routineId: id });
   },
 
   async getAllSessions(): Promise<WorkoutSessionLatest[]> {
