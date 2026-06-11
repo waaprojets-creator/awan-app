@@ -1,10 +1,10 @@
 import type { IStorage } from '@/data/storage';
 import { eventBus } from '@/data/events/bus';
-import type { ScheduleTaskLatest, TaskDomain } from '@/data/schemas/planning/scheduleTask';
+import type { ScheduleTaskLatest } from '@/data/schemas/planning/scheduleTask';
 import { migrateDaySchedule, type DayScheduleLatest } from '@/data/schemas/planning/daySchedule';
 import { migrateScheduleTask } from '@/data/schemas/planning/scheduleTask';
 import { buildSchedule, type SchedulerConfig } from './engine/greedy';
-import { uuid } from '@/utils/id';
+import { dateId } from '@/utils/id';
 
 const TASKS_PREFIX = 'planning.task';
 const SCHEDULE_PREFIX = 'planning.schedule';
@@ -13,23 +13,26 @@ function scheduleKey(date: string): string {
   return `${SCHEDULE_PREFIX}.${date}`;
 }
 
+function taskKey(task: ScheduleTaskLatest): string {
+  return `${TASKS_PREFIX}.${task.id}`;
+}
+
 export class Planner {
   constructor(
     private readonly storage: IStorage,
     private readonly config: Partial<SchedulerConfig> = {},
   ) {}
 
-  /** Add or replace a task in storage. */
   async saveTask(task: ScheduleTaskLatest): Promise<void> {
-    await this.storage.set(`${TASKS_PREFIX}.${task.id}`, task);
+    await this.storage.set(taskKey(task), task);
   }
 
   async deleteTask(id: string): Promise<void> {
     await this.storage.delete(`${TASKS_PREFIX}.${id}`);
   }
 
-  async getTasks(): Promise<ScheduleTaskLatest[]> {
-    const keys = await this.storage.list(TASKS_PREFIX);
+  async getTasksByDate(date: string): Promise<ScheduleTaskLatest[]> {
+    const keys = await this.storage.list(`${TASKS_PREFIX}.${date}`);
     const tasks: ScheduleTaskLatest[] = [];
     for (const k of keys) {
       const t = await this.storage.get(k, migrateScheduleTask);
@@ -38,12 +41,18 @@ export class Planner {
     return tasks;
   }
 
-  /**
-   * Build and persist a daily schedule for `date`.
-   * Emits 'planning.optimized' on the EventBus.
-   */
+  async getActiveTasks(): Promise<ScheduleTaskLatest[]> {
+    const keys = await this.storage.listFiltered(TASKS_PREFIX, { status: 'active' });
+    const tasks: ScheduleTaskLatest[] = [];
+    for (const k of keys) {
+      const t = await this.storage.get(k, migrateScheduleTask);
+      if (t) tasks.push(t);
+    }
+    return tasks;
+  }
+
   async optimize(date: string): Promise<DayScheduleLatest> {
-    const tasks = await this.getTasks();
+    const tasks = await this.getActiveTasks();
     const schedule = buildSchedule(date, tasks, this.config);
     await this.storage.set(scheduleKey(date), schedule);
     eventBus.emit('planning.optimized', { date });
@@ -54,45 +63,37 @@ export class Planner {
     return this.storage.get(scheduleKey(date), migrateDaySchedule);
   }
 
-  /**
-   * Convenience: optimize given a custom task list (bypasses storage).
-   * Useful for previewing a schedule without persisting tasks.
-   */
   async preview(date: string, tasks: ScheduleTaskLatest[]): Promise<DayScheduleLatest> {
     return buildSchedule(date, tasks, this.config);
   }
 
-  /**
-   * Create a recurring system task (idempotent by id).
-   * If the id already exists, the call is a no-op (no duplicate).
-   * Tags: ['system', 'recurring', 'every:<recurringDays>'] are added automatically.
-   */
-  async createSystemTask(params: {
-    id: string;
+  async createTask(params: {
     title: string;
-    domain: TaskDomain;
+    domain: string;
     durationMin: number;
-    recurringDays?: number;
-    priority?: 1 | 2 | 3 | 4 | 5;
-  }): Promise<void> {
-    const existing = await this.storage.get(`${TASKS_PREFIX}.${params.id}`, migrateScheduleTask);
-    if (existing) return;
-
-    const tags = ['system', 'recurring'];
-    if (params.recurringDays) tags.push(`every:${params.recurringDays}`);
-
+    priority?: 1 | 2 | 3;
+    scheduledDate?: string;
+    timeHHMM?: string;
+    tags?: string[];
+    dependsOn?: string[];
+  }): Promise<ScheduleTaskLatest> {
+    const today = new Date().toISOString().slice(0, 10);
     const task: ScheduleTaskLatest = {
-      v: 3,
-      id: params.id,
+      v: 4,
+      id: dateId(today),
+      date: today,
+      scheduledDate: params.scheduledDate,
       title: params.title,
       domain: params.domain,
       durationMin: params.durationMin,
-      priority: params.priority ?? 1,
-      tags,
-      dependsOn: [],
-      enabled: true,
+      priority: params.priority ?? 3,
+      tags: params.tags ?? [],
+      timeHHMM: params.timeHHMM,
+      dependsOn: params.dependsOn ?? [],
+      status: params.scheduledDate ? 'active' : null,
+      timeCategory: null,
     };
-
     await this.saveTask(task);
+    return task;
   }
 }

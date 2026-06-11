@@ -53,9 +53,9 @@ export async function buildWeekTimeFrame(weekOffset = 0): Promise<WeekTimeFrame>
   // db.events (AppStateContext) is a stub — tasks in IStorage are the source.
   const storage = await getStorage();
   const planner = new Planner(storage);
-  const tasks = await planner.getTasks();
+  const tasks = await planner.getActiveTasks();
 
-  const enabledTasks = tasks.filter(t => t.enabled);
+  const enabledTasks = tasks.filter(t => t.status === 'active');
 
   const T_production = enabledTasks
     .filter(t => t.timeCategory === 'production')

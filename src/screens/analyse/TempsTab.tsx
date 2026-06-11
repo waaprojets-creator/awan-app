@@ -798,9 +798,9 @@ export default function TempsTab() {
           getStorage(),
         ]);
         const planner = new Planner(storage);
-        const allTasks = await planner.getTasks();
+        const allTasks = await planner.getActiveTasks();
         const weeklyProductionH = allTasks
-          .filter(t => t.enabled && (t as ScheduleTaskLatest).timeCategory === 'production')
+          .filter(t => t.status === 'active' && t.timeCategory === 'production')
           .reduce((sum, t) => sum + (t.durationMin ?? 0) / 60, 0);
 
         const sleepByDate: Record<string, SleepEntryLatest> = {};

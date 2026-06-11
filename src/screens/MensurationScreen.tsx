@@ -248,26 +248,17 @@ export default function MensurationScreen() {
   // A7: profile completeness check
   const profileIncomplete = !anthropoStore.loading && !anthropoStore.latest;
 
-  // A6: create recurring anthropo planning tasks (idempotent)
+  // A6: create anthropo planning tasks in backlog (idempotent via title dedup skipped — user manages)
   useEffect(() => {
-    getStorage().then(storage => {
+    getStorage().then(async storage => {
       const planner = new Planner(storage);
-      void planner.createSystemTask({
-        id: 'anthropo.biweekly',
-        title: 'Mesures bimensuelles',
-        domain: 'anthropo',
-        durationMin: 15,
-        recurringDays: 14,
-        priority: 1,
-      });
-      void planner.createSystemTask({
-        id: 'anthropo.quarterly',
-        title: 'Bilan trimestriel complet',
-        domain: 'anthropo',
-        durationMin: 45,
-        recurringDays: 90,
-        priority: 2,
-      });
+      const existing = await planner.getActiveTasks();
+      if (!existing.some(t => t.title === 'Mesures bimensuelles')) {
+        void planner.createTask({ title: 'Mesures bimensuelles', domain: 'anthropo', durationMin: 15, priority: 1 });
+      }
+      if (!existing.some(t => t.title === 'Bilan trimestriel complet')) {
+        void planner.createTask({ title: 'Bilan trimestriel complet', domain: 'anthropo', durationMin: 45, priority: 2 });
+      }
     });
   }, []);
 
