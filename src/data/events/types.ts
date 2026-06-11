@@ -10,4 +10,5 @@ export type EventMap = {
   'steps.updated':           { date: string; steps: number };
   'sport.routine.modified':     { routineId: string };
   'habit.definition.modified':  { habitId: string };
+  'sleep.alarm.modified':       { date: string };
 };
