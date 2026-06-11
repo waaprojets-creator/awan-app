@@ -20,14 +20,19 @@ const makeMeal = (id: string, date: string, kcal = 400): MealEntryLatest => ({
 });
 
 const makeMeasure = (date: string): MeasurementLatest => ({
-  v: 1,
-  id: '880e8400-e29b-41d4-a716-446655440000',
+  v: 3,
   date,
-  weight: 82.5,
-  bpm_rest: 62,
+  timezone: 'UTC',
   body_fat_pct: 14.5,
-  measurements: { waist: 82, hips: 95 },
-  skinfolds: { chest: 10, abdomen: 18, thigh: 14 },
+  circumferences: {
+    waist: [82, 82, 82],
+    hips: [95, 95, 95],
+  },
+  skinfolds: {},
+  s13_sum: null,
+  bf_pct_jp7: null,
+  bf_pct_dw4: null,
+  ffmi: null,
   savedAt: Date.now(),
 });
 
@@ -80,8 +85,9 @@ describe('MeasurementService', () => {
   it('sauvegarde et récupère par date', async () => {
     await MeasurementService.save(makeMeasure('2026-05-10'));
     const entry = await MeasurementService.getByDate('2026-05-10');
-    // weight est retiré en V2 (stocké dans WeightEntry séparément)
+    // weight et bpm_rest sont dans WeightEntry (V3)
     expect((entry as any)?.weight).toBeUndefined();
+    expect((entry as any)?.bpm_rest).toBeUndefined();
     expect(entry?.body_fat_pct).toBe(14.5);
   });
 
@@ -92,26 +98,30 @@ describe('MeasurementService', () => {
 
   it('écrase l\'entrée du même jour (un enregistrement par jour)', async () => {
     await MeasurementService.save(makeMeasure('2026-05-10'));
-    await MeasurementService.save({ ...makeMeasure('2026-05-10'), bpm_rest: 65 });
+    await MeasurementService.save({ ...makeMeasure('2026-05-10'), body_fat_pct: 15.0 });
     const all = await MeasurementService.getAll();
     expect(all).toHaveLength(1);
-    // bpm_rest mis à jour, weight absent (V2)
-    expect(all[0].bpm_rest).toBe(65);
+    // body_fat_pct mis à jour, weight et bpm_rest absents (V3)
+    expect(all[0].body_fat_pct).toBe(15.0);
   });
 
   it('getAll retourne l\'historique trié par date', async () => {
-    await MeasurementService.save({ ...makeMeasure('2026-05-10'), weight: 82.5 });
-    await MeasurementService.save({ ...makeMeasure('2026-04-01'), weight: 83.0 });
-    await MeasurementService.save({ ...makeMeasure('2026-03-15'), weight: 84.0 });
+    await MeasurementService.save(makeMeasure('2026-05-10'));
+    await MeasurementService.save(makeMeasure('2026-04-01'));
+    await MeasurementService.save(makeMeasure('2026-03-15'));
     const all = await MeasurementService.getAll();
     expect(all[0].date).toBe('2026-03-15');
     expect(all[2].date).toBe('2026-05-10');
   });
 
   it('stocke et récupère les plis cutanés', async () => {
-    await MeasurementService.save(makeMeasure('2026-05-10'));
+    const measure = {
+      ...makeMeasure('2026-05-10'),
+      skinfolds: { triceps: [10, 10, 10] as [number, number, number], subscapular: [18, 18, 18] as [number, number, number] },
+    };
+    await MeasurementService.save(measure);
     const entry = await MeasurementService.getByDate('2026-05-10');
-    expect(entry?.skinfolds['chest']).toBe(10);
-    expect(entry?.skinfolds['abdomen']).toBe(18);
+    expect(entry?.skinfolds?.['triceps']).toEqual([10, 10, 10]);
+    expect(entry?.skinfolds?.['subscapular']).toEqual([18, 18, 18]);
   });
 });

@@ -613,7 +613,7 @@ export default function PlanningScreen() {
     for (const m of measureStore.history) {
       const parts: string[] = [];
       const mw = weightStore.entries.find(e => e.date === (m as any).date);
-      if (mw && mw.weight > 0) parts.push(`${mw.weight}kg`);
+      if (mw && (mw.weight ?? 0) > 0) parts.push(`${mw.weight}kg`);
       if ((m as any).body_fat_pct > 0) parts.push(`${(m as any).body_fat_pct}% MG`);
       addItem((m as any).date, {
         key: `meas-${(m as any).date}`,

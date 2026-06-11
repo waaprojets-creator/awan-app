@@ -25,7 +25,14 @@ interface OrthometryTabProps { history: MeasurementLatest[]; loading: boolean }
 export function OrthometryTab({ history, loading }: OrthometryTabProps) {
   const theme = useTheme();
   const latest = useMemo(() => history.slice().sort((a, b) => b.date.localeCompare(a.date))[0] ?? null, [history]);
-  const results = useMemo(() => latest ? analyzeSymmetry(latest.measurements) : [], [latest]);
+  const results = useMemo(() => {
+    if (!latest) return [];
+    const circumFlat: Record<string, number> = {};
+    for (const [k, v] of Object.entries(latest.circumferences ?? {})) {
+      if (v) circumFlat[k] = (v[0] + v[1] + v[2]) / 3;
+    }
+    return analyzeSymmetry(circumFlat);
+  }, [latest]);
   const heatmapValues = useMemo((): Partial<Record<MuscleId, number>> => {
     const map: Partial<Record<MuscleId, number>> = {};
     for (const r of results) {

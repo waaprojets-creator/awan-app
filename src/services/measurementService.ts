@@ -5,11 +5,15 @@ import { BiometricsService } from './biometricsService';
 
 const MEASURE_PREFIX = 'anthropo.measurement';
 
-// Noms de plis attendus par les formules biometricsService (ordre imposé)
-const JP7_KEYS = ['pectoral', 'axillaire', 'triceps', 'subscapulaire', 'abdominal', 'suprailiac', 'cuisse_ant'] as const;
-const DW4_KEYS = ['biceps', 'triceps', 'subscapulaire', 'suprailiac'] as const;
-const S13_KEYS = ['pectoral','axillaire','triceps','subscapulaire','abdominal','suprailiac',
-  'cuisse_ant','biceps','mollet_med','supraspinale','abdominal_lat','cuisse_lat','avant_bras'] as const;
+function median([a, b, c]: [number, number, number]): number {
+  return [a, b, c].sort((x, y) => x - y)[1]!;
+}
+
+// Noms de plis attendus par les formules biometricsService (clés V3)
+const JP7_KEYS = ['pectoral', 'axillaire', 'triceps', 'subscapular', 'abdominal', 'suprailiac', 'thigh_anterior'] as const;
+const DW4_KEYS = ['biceps', 'triceps', 'subscapular', 'suprailiac'] as const;
+const S13_KEYS = ['pectoral', 'axillaire', 'triceps', 'subscapular', 'abdominal', 'suprailiac',
+  'thigh_anterior', 'biceps', 'calf_medial', 'supraspinal', 'abdominal_lateral', 'thigh_lateral', 'forearm'] as const;
 
 export interface MeasurementProfile {
   age: number;
@@ -38,23 +42,23 @@ export const MeasurementService = {
     let enriched: MeasurementLatest = entry;
 
     if (profile) {
-      const sf = entry.skinfolds;
+      const sf = entry.skinfolds ?? {};
 
       const s13_sum = S13_KEYS.every(k => sf[k] != null)
-        ? S13_KEYS.reduce((s, k) => s + (sf[k] ?? 0), 0)
+        ? S13_KEYS.reduce((s, k) => s + median(sf[k]!), 0)
         : null;
 
       const bf_pct_jp7 = JP7_KEYS.every(k => sf[k] != null)
         ? BiometricsService.jacksonPollock7(
-            sf.pectoral!, sf.axillaire!, sf.triceps!, sf.subscapulaire!,
-            sf.abdominal!, sf.suprailiac!, sf.cuisse_ant!,
+            median(sf.pectoral!), median(sf.axillaire!), median(sf.triceps!), median(sf.subscapular!),
+            median(sf.abdominal!), median(sf.suprailiac!), median(sf.thigh_anterior!),
             profile.age, profile.sex,
           )
         : null;
 
       const bf_pct_dw4 = DW4_KEYS.every(k => sf[k] != null)
         ? BiometricsService.durninWomersley4(
-            sf.biceps!, sf.triceps!, sf.subscapulaire!, sf.suprailiac!,
+            median(sf.biceps!), median(sf.triceps!), median(sf.subscapular!), median(sf.suprailiac!),
             profile.age, profile.sex,
           )
         : null;

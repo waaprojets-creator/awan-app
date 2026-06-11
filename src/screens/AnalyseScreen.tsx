@@ -294,7 +294,7 @@ export default function AnalyseScreen() {
     const latest = sorted.at(-1) ?? null;
     const prev = sorted.at(-2) ?? null;
     const wt = latest && prev
-      ? latest.weight > prev.weight ? 'up' : latest.weight < prev.weight ? 'down' : 'stable'
+      ? (latest.weight ?? 0) > (prev.weight ?? 0) ? 'up' : (latest.weight ?? 0) < (prev.weight ?? 0) ? 'down' : 'stable'
       : null;
     setAiLoading(true);
     LocalAIService.generateZenSummary({

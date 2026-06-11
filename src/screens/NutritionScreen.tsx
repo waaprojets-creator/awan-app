@@ -719,8 +719,8 @@ export default function NutritionScreen() {
      import('@/services/weightService').then(({ WeightService }) =>
        WeightService.getAll().then(allWeights => {
          const weightHistory = allWeights
-           .filter(w => w.date && w.weight > 0)
-           .map(w => ({ date: w.date, weightKg: w.weight }));
+           .filter(w => w.date && (w.weight ?? 0) > 0)
+           .map(w => ({ date: w.date, weightKg: w.weight! }));
          const intakeHistory = report.days
            .filter(d => d.kcal > 0)
            .map(d => ({ date: d.date, kcal: d.kcal }));

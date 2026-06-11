@@ -101,7 +101,7 @@ export default function SanteScreen({ navigate }: any) {
     const sevenDaysAgo = new Date(last.date); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const sevenStr = sevenDaysAgo.toISOString().slice(0, 10);
     const baseline = [...sorted].reverse().find(e => e.date <= sevenStr);
-    if (!baseline) return null;
+    if (!baseline || last.weight == null || baseline.weight == null) return null;
     return last.weight - baseline.weight;
   }, [weightStore.entries]);
 
@@ -235,18 +235,18 @@ export default function SanteScreen({ navigate }: any) {
                         )}
                       </View>
                     </View>
-                    {latestMeasure.body_fat_pct > 0 && (
+                    {(latestMeasure.body_fat_pct ?? 0) > 0 && (
                       <View>
                         <Text style={[styles.smallLabel, { color: theme.mute }]}>MASSE GRASSE</Text>
                         <Text style={[styles.medNumber, { color: theme.title }]}>
-                          {latestMeasure.body_fat_pct.toFixed(1)}<Text style={{ fontSize: Fs.xs, marginLeft: 4, color: theme.selected }}>%</Text>
+                          {latestMeasure.body_fat_pct!.toFixed(1)}<Text style={{ fontSize: Fs.xs, marginLeft: 4, color: theme.selected }}>%</Text>
                         </Text>
                       </View>
                     )}
-                    {latestMeasure.bpm_rest > 0 && (
+                    {(weightStore.entries.find(e => e.bpm_rest != null)?.bpm_rest ?? 0) > 0 && (
                       <View>
                         <Text style={[styles.smallLabel, { color: theme.mute }]}>BPM REPOS</Text>
-                        <Text style={[styles.medNumber, { color: theme.title }]}>{latestMeasure.bpm_rest}</Text>
+                        <Text style={[styles.medNumber, { color: theme.title }]}>{weightStore.entries.find(e => e.bpm_rest != null)?.bpm_rest}</Text>
                       </View>
                     )}
                   </>

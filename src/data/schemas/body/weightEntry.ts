@@ -20,14 +20,24 @@ export const WeightEntryV2Schema = z.object({
   savedAt: TimestampSchema,
 });
 
+export const WeightEntryV3Schema = z.object({
+  v:        z.literal(3),
+  date:     DateStringSchema,
+  timezone: z.string().default('UTC'),
+  weight:   z.number().positive().optional(),   // optionnel : peut avoir bpm sans pesée
+  bpm_rest: z.number().nonnegative().optional(), // FC au repos, déplacé depuis Measurement
+  savedAt:  TimestampSchema,
+});
+
 export type WeightEntryV1 = z.infer<typeof WeightEntryV1Schema>;
 export type WeightEntryV2 = z.infer<typeof WeightEntryV2Schema>;
-export type WeightEntryLatest = WeightEntryV2;
+export type WeightEntryV3 = z.infer<typeof WeightEntryV3Schema>;
+export type WeightEntryLatest = WeightEntryV3;
 
-export const WeightEntrySchema = z.discriminatedUnion('v', [WeightEntryV1Schema, WeightEntryV2Schema]);
+export const WeightEntrySchema = z.discriminatedUnion('v', [WeightEntryV1Schema, WeightEntryV2Schema, WeightEntryV3Schema]);
 export type WeightEntry = z.infer<typeof WeightEntrySchema>;
 
-export const WEIGHT_ENTRY_LATEST_VERSION = 2;
+export const WEIGHT_ENTRY_LATEST_VERSION = 3;
 
 export const migrateWeightEntry = createMigrator<WeightEntry, WeightEntryLatest>(
   WeightEntrySchema,
@@ -38,6 +48,14 @@ export const migrateWeightEntry = createMigrator<WeightEntry, WeightEntryLatest>
       timezone: 'UTC',
       weight: data.weightKg,
       savedAt: data.timestamp,
+    }),
+    2: (data: WeightEntryV2): WeightEntryV3 => ({
+      v: 3,
+      date: data.date,
+      timezone: data.timezone,
+      weight: data.weight,
+      savedAt: data.savedAt,
+      // bpm_rest absent en V2 — undefined par défaut
     }),
   },
   WEIGHT_ENTRY_LATEST_VERSION,

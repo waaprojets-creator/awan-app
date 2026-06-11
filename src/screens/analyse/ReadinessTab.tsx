@@ -7,7 +7,7 @@ import { Heading } from '../../components/ui/Heading';
 import { InstrumentCard } from '../../components/ui/InstrumentCard';
 import type { StatusVariant } from '../../components/ui/InstrumentCard';
 import { SleepService } from '../../services/sleepService';
-import { MeasurementService } from '../../services/measurementService';
+import { WeightService } from '../../services/weightService';
 import { JournalService } from '../../services/journalService';
 import { EmptyState, LoadingState } from './shared';
 import { FontMono } from '../../constants/typography';
@@ -61,15 +61,15 @@ export function ReadinessTab() {
     let active = true;
     Promise.all([
       SleepService.getAll(),
-      MeasurementService.getAll(),
+      WeightService.getAll(),
       JournalService.getAll(),
-    ]).then(([sleepEntries, measurements, journals]) => {
+    ]).then(([sleepEntries, allWeights, journals]) => {
       if (!active) return;
       const lastSleep = sleepEntries[0] ?? null;
-      const lastMeasure = measurements[0] ?? null;
+      const latestWeight = allWeights[0] ?? null;
       const lastJournal = journals[0] ?? null;
       setData({
-        bpmRest: lastMeasure?.bpm_rest ?? null,
+        bpmRest: latestWeight?.bpm_rest ?? null,
         sleepH: lastSleep?.durationH ?? null,
         sleepQuality: lastSleep?.quality ?? null,
         mood: lastJournal?.mood ?? null,
