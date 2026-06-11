@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MeasurementService } from '@/services/measurementService';
+import type { MeasurementProfile } from '@/services/measurementService';
 import type { MeasurementLatest } from '@/data/schemas/anthropo/measurement';
 import { useAppStore } from '@/data/store/appStore';
 import { DbFullError } from '@/data/storage/IStorage';
@@ -21,18 +22,18 @@ export function useMeasurementStore() {
     return () => { active = false; };
   }, [dataVersion]);
 
-  const save = useCallback(async (entry: MeasurementLatest): Promise<void> => {
+  const save = useCallback(async (entry: MeasurementLatest, profile?: MeasurementProfile): Promise<void> => {
     try {
-      await MeasurementService.save(entry);
+      const saved = await MeasurementService.save(entry, profile);
       eventBus.emit('measurement.recorded', { measurementId: entry.date, date: entry.date });
       setHistory(prev => {
         const idx = prev.findIndex(e => e.date === entry.date);
         if (idx >= 0) {
           const next = [...prev];
-          next[idx] = entry;
+          next[idx] = saved;
           return next;
         }
-        return [...prev, entry].sort((a, b) => a.date.localeCompare(b.date));
+        return [...prev, saved].sort((a, b) => a.date.localeCompare(b.date));
       });
     } catch (err) {
       if (err instanceof DbFullError) { dispatchDbFull(); return; }

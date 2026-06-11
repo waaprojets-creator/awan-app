@@ -2,10 +2,11 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { subDays } from 'date-fns';
-import { safeStorage } from '../../utils/safeStorage';
 import { BiometricsService } from '../../services/biometricsService';
 import { useMeasurementStore } from '../../hooks/useMeasurementStore';
 import { useWeightStore } from '../../hooks/useWeightStore';
+import { useAnthropoProfileStore } from '../../hooks/useAnthropoProfileStore';
+import { computeAge } from '../../data/schemas/anthropo/userProfile';
 import { Card } from '../../components/ui/Card';
 import { Touch } from '../../components/ui/Touch';
 import { Heading } from '../../components/ui/Heading';
@@ -195,25 +196,17 @@ export default function ScanTab() {
   const theme = useTheme();
   const measureStore = useMeasurementStore();
   const weightStore = useWeightStore();
+  const anthropoStore = useAnthropoProfileStore();
   const [scanRange, setScanRange] = useState<ScanRange>(90);
 
-  const profile = useMemo(() => {
-    const raw = safeStorage.get('awan.nutrition.profile');
-    if (!raw) return { age: 30, sex: 'male' as const };
-    try {
-      const p = JSON.parse(raw) as Record<string, unknown>;
-      return {
-        age: typeof p.age === 'number' ? p.age : 30,
-        sex: p.gender === 'woman' ? 'female' as const : 'male' as const,
-      };
-    } catch { return { age: 30, sex: 'male' as const }; }
-  }, []);
+  const profileAge = anthropoStore.latest ? computeAge(anthropoStore.latest.birthDate) : 30;
+  const profileSex: 'male' | 'female' = anthropoStore.latest?.sex ?? 'male';
 
   const cutoff = useMemo(() => subDays(new Date(), scanRange), [scanRange]);
 
   const bfSeries = useMemo(
-    () => computeBfSeries(measureStore.history, profile.age, profile.sex, cutoff),
-    [measureStore.history, profile, cutoff],
+    () => computeBfSeries(measureStore.history, profileAge, profileSex, cutoff),
+    [measureStore.history, profileAge, profileSex, cutoff],
   );
 
   const series13 = useMemo(() => bfSeries.map(p => ({ date: p.date, v: p.bf13 })), [bfSeries]);
@@ -381,7 +374,7 @@ export default function ScanTab() {
           {history.slice(0, 10).map((m, i) => {
             const w = weightStore.entries.filter(e => e.date <= m.date).sort((a, b) => b.date.localeCompare(a.date))[0];
             const sk = m.skinfolds ?? {};
-            const { age, sex } = profile;
+            const age = profileAge; const sex = profileSex;
             const s13Total = ALL13_SITES.every(k => sk[k as SkinfoldKey] != null)
               ? ALL13_SITES.reduce((sum, k) => sum + median(sk[k as SkinfoldKey]!), 0) : 0;
             const bf13 = s13Total > 0 ? BiometricsService.skinfolds13(s13Total, age, sex) : null;

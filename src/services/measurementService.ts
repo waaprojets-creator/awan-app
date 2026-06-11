@@ -37,7 +37,7 @@ export const MeasurementService = {
     return storage.get(`${MEASURE_PREFIX}.${date}`, migrateMeasurement);
   },
 
-  async save(entry: MeasurementLatest, profile?: MeasurementProfile): Promise<void> {
+  async save(entry: MeasurementLatest, profile?: MeasurementProfile): Promise<MeasurementLatest> {
     const storage = await getStorage();
     let enriched: MeasurementLatest = entry;
 
@@ -72,6 +72,7 @@ export const MeasurementService = {
 
     // clé = date pour un seul enregistrement par jour
     await storage.set(`${MEASURE_PREFIX}.${entry.date}`, enriched);
+    return enriched;
   },
 
   async delete(date: string): Promise<void> {
