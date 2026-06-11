@@ -24,7 +24,7 @@ export function useMeasurementStore() {
   const save = useCallback(async (entry: MeasurementLatest): Promise<void> => {
     try {
       await MeasurementService.save(entry);
-      eventBus.emit('measurement.recorded', { measurementId: entry.id, date: entry.date });
+      eventBus.emit('measurement.recorded', { measurementId: entry.date, date: entry.date });
       setHistory(prev => {
         const idx = prev.findIndex(e => e.date === entry.date);
         if (idx >= 0) {

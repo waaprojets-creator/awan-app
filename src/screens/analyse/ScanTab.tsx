@@ -10,6 +10,11 @@ import { Card } from '../../components/ui/Card';
 import { Touch } from '../../components/ui/Touch';
 import { Heading } from '../../components/ui/Heading';
 import { ds } from '../../utils/storage';
+import type { SkinfoldKey } from '../../data/schemas/anthropo/measurement';
+
+function median([a, b, c]: [number, number, number]): number {
+  return [a, b, c].sort((x, y) => x - y)[1]!;
+}
 import { useTheme } from '../../hooks/useTheme';
 import { FontMono } from '../../constants/typography';
 import { Fs, Fw, Ls, Clr } from '../../theme/tokens';
@@ -45,18 +50,18 @@ function computeBfSeries(
     .sort((a, b) => a.date.localeCompare(b.date))
     .map(e => {
       const sk = e.skinfolds ?? {};
-      const s13Total = ALL13_SITES.every(k => (sk[k] ?? 0) > 0)
-        ? ALL13_SITES.reduce((sum, k) => sum + (sk[k] ?? 0), 0) : 0;
+      const s13Total = ALL13_SITES.every(k => sk[k as SkinfoldKey] != null)
+        ? ALL13_SITES.reduce((sum, k) => sum + median(sk[k as SkinfoldKey]!), 0) : 0;
       const bf13 = s13Total > 0 ? BiometricsService.skinfolds13(s13Total, age, sex) : null;
-      const bfJP7 = JP7_SITES.every(k => (sk[k] ?? 0) > 0)
+      const bfJP7 = JP7_SITES.every(k => sk[k as SkinfoldKey] != null)
         ? BiometricsService.jacksonPollock7(
-            sk['pectoral'] ?? 0, sk['axillaire'] ?? 0, sk['triceps'] ?? 0,
-            sk['subscapular'] ?? 0, sk['abdominal'] ?? 0, sk['suprailiac'] ?? 0,
-            sk['thigh_anterior'] ?? 0, age, sex)
+            median(sk['pectoral']!), median(sk['axillaire']!), median(sk['triceps']!),
+            median(sk['subscapular']!), median(sk['abdominal']!), median(sk['suprailiac']!),
+            median(sk['thigh_anterior']!), age, sex)
         : null;
-      const bfDW4 = DW4_SITES.every(k => (sk[k] ?? 0) > 0)
+      const bfDW4 = DW4_SITES.every(k => sk[k as SkinfoldKey] != null)
         ? BiometricsService.durninWomersley4(
-            sk['biceps'] ?? 0, sk['triceps'] ?? 0, sk['subscapular'] ?? 0, sk['suprailiac'] ?? 0, age, sex)
+            median(sk['biceps']!), median(sk['triceps']!), median(sk['subscapular']!), median(sk['suprailiac']!), age, sex)
         : null;
       return { date: e.date, bf13, bfJP7, bfDW4 };
     });
@@ -377,14 +382,14 @@ export default function ScanTab() {
             const w = weightStore.entries.filter(e => e.date <= m.date).sort((a, b) => b.date.localeCompare(a.date))[0];
             const sk = m.skinfolds ?? {};
             const { age, sex } = profile;
-            const s13Total = ALL13_SITES.every(k => (sk[k] ?? 0) > 0)
-              ? ALL13_SITES.reduce((sum, k) => sum + (sk[k] ?? 0), 0) : 0;
+            const s13Total = ALL13_SITES.every(k => sk[k as SkinfoldKey] != null)
+              ? ALL13_SITES.reduce((sum, k) => sum + median(sk[k as SkinfoldKey]!), 0) : 0;
             const bf13 = s13Total > 0 ? BiometricsService.skinfolds13(s13Total, age, sex) : null;
-            const bfJP7 = JP7_SITES.every(k => (sk[k] ?? 0) > 0)
-              ? BiometricsService.jacksonPollock7(sk['pectoral'] ?? 0, sk['axillaire'] ?? 0, sk['triceps'] ?? 0, sk['subscapular'] ?? 0, sk['abdominal'] ?? 0, sk['suprailiac'] ?? 0, sk['thigh_anterior'] ?? 0, age, sex)
+            const bfJP7 = JP7_SITES.every(k => sk[k as SkinfoldKey] != null)
+              ? BiometricsService.jacksonPollock7(median(sk['pectoral']!), median(sk['axillaire']!), median(sk['triceps']!), median(sk['subscapular']!), median(sk['abdominal']!), median(sk['suprailiac']!), median(sk['thigh_anterior']!), age, sex)
               : null;
-            const bfDW4 = DW4_SITES.every(k => (sk[k] ?? 0) > 0)
-              ? BiometricsService.durninWomersley4(sk['biceps'] ?? 0, sk['triceps'] ?? 0, sk['subscapular'] ?? 0, sk['suprailiac'] ?? 0, age, sex)
+            const bfDW4 = DW4_SITES.every(k => sk[k as SkinfoldKey] != null)
+              ? BiometricsService.durninWomersley4(median(sk['biceps']!), median(sk['triceps']!), median(sk['subscapular']!), median(sk['suprailiac']!), age, sex)
               : null;
             return (
               <Card key={i} variant="flat" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
@@ -392,7 +397,7 @@ export default function ScanTab() {
                   <Text style={[s.historyDate, { color: theme.selected }]}>
                     {m.date.slice(5).replace('-', '/')}
                   </Text>
-                  {w && <Text style={[s.historyWeight, { color: theme.mute }]}>{w.weight} KG</Text>}
+                  {w?.weight != null && <Text style={[s.historyWeight, { color: theme.mute }]}>{w.weight} KG</Text>}
                 </View>
                 <View style={s.historyValues}>
                   {bf13 !== null && (
@@ -413,7 +418,7 @@ export default function ScanTab() {
                       <Text style={[s.historyVal, { color: theme.mute }]}>{bfDW4}%</Text>
                     </View>
                   )}
-                  {bf13 === null && bfJP7 === null && bfDW4 === null && m.body_fat_pct > 0 && (
+                  {bf13 === null && bfJP7 === null && bfDW4 === null && (m.body_fat_pct ?? 0) > 0 && (
                     <View>
                       <Text style={[s.statLabel, { color: theme.mute }]}>MG</Text>
                       <Text style={[s.historyVal, { color: theme.mute }]}>{m.body_fat_pct}%</Text>

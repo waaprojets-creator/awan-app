@@ -34,7 +34,7 @@ export function CorrelationTab({ sessions, history, weightEntries, todayKcal }: 
 
   const sortedW = [...weightEntries].sort((a, b) => b.date.localeCompare(a.date));
   const latestW = sortedW[0]; const oldestW = sortedW.at(-1);
-  const weightDelta = (latestW && oldestW && latestW !== oldestW)
+  const weightDelta = (latestW && oldestW && latestW !== oldestW && latestW.weight != null && oldestW.weight != null)
     ? latestW.weight - oldestW.weight : null;
 
   const sessionsPerWeek = (workoutDays / 30) * 7;

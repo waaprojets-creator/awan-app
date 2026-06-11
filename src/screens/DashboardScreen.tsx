@@ -146,7 +146,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const sevenStr = sevenDaysAgo.toISOString().slice(0, 10);
     const baseline = [...sorted].reverse().find(e => e.date <= sevenStr);
-    if (!baseline) return null;
+    if (!baseline || last.weight == null || baseline.weight == null) return null;
     return last.weight - baseline.weight;
   }, [weightStore.entries]);
 

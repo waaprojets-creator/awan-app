@@ -5,6 +5,7 @@ import { useTheme } from '../hooks/useTheme';
 import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
 import { ds, uid } from '../utils/storage';
+import type { CircumferenceKey, SkinfoldKey, TrialTuple } from '../data/schemas/anthropo/measurement';
 import { BiometricsService } from '../services/biometricsService';
 import { analyzeSymmetry, asymmetryToHeatmapValue } from '../services/symmetryService';
 import { safeStorage } from '../utils/safeStorage';
@@ -24,6 +25,10 @@ import { FontMono } from '../constants/typography';
 import { Fs, Fw, Ls, Clr } from '../theme/tokens';
 
 const TextInput = RNTextInput as React.ComponentType<any>;
+
+function median([a, b, c]: [number, number, number]): number {
+  return [a, b, c].sort((x, y) => x - y)[1]!;
+}
 const SvgPolyline = Polyline as any;
 const SvgCircle = Circle as any;
 
@@ -120,8 +125,10 @@ export default function MensurationScreen() {
   const [inputText, setInputText] = useState('');
 
   const blankEntry = {
-    date: selectedDate, bpm_rest: 0, body_fat_pct: 0,
-    measurements: {} as Record<string, number>, skinfolds: {} as Record<string, number>,
+    date: selectedDate,
+    body_fat_pct: 0,
+    circumferences: {} as Partial<Record<CircumferenceKey, TrialTuple>>,
+    skinfolds: {} as Partial<Record<SkinfoldKey, TrialTuple>>,
   };
 
   const [currentEntry, setCurrentEntry] = useState(blankEntry);
@@ -161,7 +168,7 @@ export default function MensurationScreen() {
 
   // Helper : poids le plus récent ≤ date (depuis weightStore)
   const getWeightKg = useMemo(() => (date: string): number => {
-    const sorted = weightStore.entries.filter(e => e.date <= date).sort((a, b) => b.date.localeCompare(a.date));
+    const sorted = weightStore.entries.filter(e => e.date <= date && e.weight != null).sort((a, b) => b.date.localeCompare(a.date));
     return sorted[0]?.weight ?? 0;
   }, [weightStore.entries]);
 
@@ -187,6 +194,7 @@ export default function MensurationScreen() {
       if (new Date(e.date).getTime() <= sevenDaysAgo) baseline = e;
     }
     if (!baseline || baseline.date === last.date) return null;
+    if (last.weight == null || baseline.weight == null) return null;
     return { delta: last.weight - baseline.weight, current: last.weight };
   }, [weightStore.entries]);
 
@@ -216,11 +224,11 @@ export default function MensurationScreen() {
     const ageYears: number = typeof profile.age === 'number' ? profile.age : 30;
     const sex: 'male' | 'female' = profile.gender === 'woman' ? 'female' : 'male';
     const hm = heightCm / 100;
-    const waist: number | undefined = last.measurements?.['waist'] ?? last.measurements?.['taille'];
-    const hip: number | undefined = last.measurements?.['hip'] ?? last.measurements?.['hanches'];
-    const neck: number | undefined = last.measurements?.['neck'] ?? last.measurements?.['cou'];
+    const waist: number | undefined = last.circumferences?.waist ? median(last.circumferences.waist) : undefined;
+    const hip: number | undefined = last.circumferences?.hips ? median(last.circumferences.hips) : undefined;
+    const neck: number | undefined = last.circumferences?.neck ? median(last.circumferences.neck) : undefined;
     const weight: number = getWeightKg(last.date);
-    const bfPct: number = last.body_fat_pct;
+    const bfPct: number = last.body_fat_pct ?? 0;
     const lbm = (weight > 0 && bfPct > 0) ? weight * (1 - bfPct / 100) : null;
     const ffmi = lbm ? parseFloat((lbm / (hm * hm)).toFixed(1)) : null;
     const whr = (waist && hip) ? parseFloat((waist / hip).toFixed(2)) : null;
@@ -236,27 +244,27 @@ export default function MensurationScreen() {
     if (navyBF !== null) bfMethods.push({ method: 'Navy', value: navyBF });
     const sk = last.skinfolds ?? {};
     // 13-plis (highest priority if all sites present)
-    const s13Total = ALL13_SITES.every(k => (sk[k] ?? 0) > 0)
-      ? ALL13_SITES.reduce((sum, k) => sum + (sk[k] ?? 0), 0) : 0;
+    const s13Total = ALL13_SITES.every(k => sk[k as SkinfoldKey] != null)
+      ? ALL13_SITES.reduce((sum, k) => sum + median(sk[k as SkinfoldKey]!), 0) : 0;
     if (s13Total > 0) {
       bfMethods.push({ method: '13 Plis', value: BiometricsService.skinfolds13(s13Total, ageYears, sex) });
     }
-    if (JP7_SITES.every(k => (sk[k] ?? 0) > 0)) {
-      const jp7 = BiometricsService.jacksonPollock7(sk['pectoral']!, sk['axillaire']!, sk['triceps']!, sk['subscapular']!, sk['abdominal']!, sk['suprailiac']!, sk['thigh_anterior']!, ageYears, sex);
+    if (JP7_SITES.every(k => sk[k as SkinfoldKey] != null)) {
+      const jp7 = BiometricsService.jacksonPollock7(median(sk['pectoral']!), median(sk['axillaire']!), median(sk['triceps']!), median(sk['subscapular']!), median(sk['abdominal']!), median(sk['suprailiac']!), median(sk['thigh_anterior']!), ageYears, sex);
       bfMethods.push({ method: 'JP7', value: jp7 });
     }
-    if (DW4_SITES.every(k => (sk[k] ?? 0) > 0)) {
-      const dw = BiometricsService.durninWomersley4(sk['biceps']!, sk['triceps']!, sk['subscapular']!, sk['suprailiac']!, ageYears, sex);
+    if (DW4_SITES.every(k => sk[k as SkinfoldKey] != null)) {
+      const dw = BiometricsService.durninWomersley4(median(sk['biceps']!), median(sk['triceps']!), median(sk['subscapular']!), median(sk['suprailiac']!), ageYears, sex);
       bfMethods.push({ method: 'DW4', value: dw });
     }
     if (bfPct > 0 && bfMethods.length === 0) bfMethods.push({ method: 'Auto', value: bfPct });
     const bfRange = bfMethods.length > 1 ? BiometricsService.bfPctRange(bfMethods) : null;
     // Skinfold matrix values for display
     const bf13 = s13Total > 0 ? BiometricsService.skinfolds13(s13Total, ageYears, sex) : null;
-    const bfJP7 = JP7_SITES.every(k => (sk[k] ?? 0) > 0)
-      ? BiometricsService.jacksonPollock7(sk['pectoral']!, sk['axillaire']!, sk['triceps']!, sk['subscapular']!, sk['abdominal']!, sk['suprailiac']!, sk['thigh_anterior']!, ageYears, sex) : null;
-    const bfDW4 = DW4_SITES.every(k => (sk[k] ?? 0) > 0)
-      ? BiometricsService.durninWomersley4(sk['biceps']!, sk['triceps']!, sk['subscapular']!, sk['suprailiac']!, ageYears, sex) : null;
+    const bfJP7 = JP7_SITES.every(k => sk[k as SkinfoldKey] != null)
+      ? BiometricsService.jacksonPollock7(median(sk['pectoral']!), median(sk['axillaire']!), median(sk['triceps']!), median(sk['subscapular']!), median(sk['abdominal']!), median(sk['suprailiac']!), median(sk['thigh_anterior']!), ageYears, sex) : null;
+    const bfDW4 = DW4_SITES.every(k => sk[k as SkinfoldKey] != null)
+      ? BiometricsService.durninWomersley4(median(sk['biceps']!), median(sk['triceps']!), median(sk['subscapular']!), median(sk['suprailiac']!), ageYears, sex) : null;
     const ecartMax = (() => {
       const vals = [bf13, bfJP7, bfDW4].filter((v): v is number => v !== null);
       if (vals.length < 2) return null;
@@ -267,16 +275,16 @@ export default function MensurationScreen() {
 
   // Dernière pesée connue (quand pas d'entrée WeightEntry pour la date sélectionnée)
   const lastKnownWeight = useMemo(() => {
-    const todayWeight = weightStore.entries.find(e => e.date === selectedDate);
+    const todayWeight = weightStore.entries.find(e => e.date === selectedDate && e.weight != null);
     if (todayWeight) return null;
     const sorted = weightStore.entries
-      .filter(e => e.date < selectedDate)
+      .filter(e => e.date < selectedDate && e.weight != null)
       .sort((a, b) => b.date.localeCompare(a.date));
     if (!sorted.length || !sorted[0]) return null;
     const last = sorted[0];
     const diffMs = new Date(selectedDate).getTime() - new Date(last.date).getTime();
     const diffDays = Math.round(diffMs / (24 * 60 * 60 * 1000));
-    return { weight: last.weight, daysAgo: diffDays };
+    return { weight: last.weight!, daysAgo: diffDays };
   }, [weightStore.entries, selectedDate]);
 
   // S2.4 — Suppression mesure
@@ -291,19 +299,33 @@ export default function MensurationScreen() {
   useEffect(() => {
     if (!measureStore.loading) {
       const entry = measureStore.getByDate(selectedDate);
-      setCurrentEntry(entry ?? { ...blankEntry, date: selectedDate });
+      if (entry) {
+        setCurrentEntry({
+          ...blankEntry,
+          date: entry.date,
+          body_fat_pct: entry.body_fat_pct ?? 0,
+          circumferences: (entry.circumferences ?? {}) as Partial<Record<CircumferenceKey, TrialTuple>>,
+          skinfolds: (entry.skinfolds ?? {}) as Partial<Record<SkinfoldKey, TrialTuple>>,
+        });
+      } else {
+        setCurrentEntry({ ...blankEntry, date: selectedDate });
+      }
     }
   }, [measureStore.loading, selectedDate]);
 
   const persistEntry = (entry: typeof blankEntry) => {
     const profileRaw = safeStorage.get('awan.nutrition.profile');
     const profileHeight = profileRaw ? (() => { try { return (JSON.parse(profileRaw) as any)?.heightCm as number | undefined; } catch { return undefined; } })() : undefined;
-    const waist = entry.measurements?.['waist'];
-    const hip = entry.measurements?.['hip'];
+    const waist = entry.circumferences?.waist ? median(entry.circumferences.waist) : undefined;
+    const hip = entry.circumferences?.hips ? median(entry.circumferences.hips) : undefined;
     const whtr = waist && profileHeight ? waist / profileHeight : undefined;
     const whr = waist && hip ? waist / hip : undefined;
     measureStore.save({
-      v: 2 as const, id: uid(), savedAt: Date.now(), ...entry, date: selectedDate,
+      v: 3 as const,
+      savedAt: Date.now(),
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      ...entry,
+      date: selectedDate,
       s13_sum: null, bf_pct_jp7: null, bf_pct_dw4: null, ffmi: null,
       ...(whtr !== undefined ? { whtr } : {}),
       ...(whr !== undefined ? { whr } : {}),
@@ -325,7 +347,8 @@ export default function MensurationScreen() {
   const handlePartPress = (partId: string) => {
     if (selectedPart === partId) { setSelectedPart(null); return; }
     setSelectedPart(partId);
-    setInputValue(currentEntry.measurements[partId]?.toString() || '');
+    const triple = currentEntry.circumferences?.[partId as CircumferenceKey];
+    setInputValue(triple ? String(triple[0]) : '');
   };
 
   const saveMeasurement = () => {
@@ -333,7 +356,7 @@ export default function MensurationScreen() {
     const val = parseFloat(inputValue.replace(',', '.'));
     if (isNaN(val) || val <= 0) { setSelectedPart(null); return; }
     const newEntry = { ...currentEntry };
-    newEntry.measurements = { ...newEntry.measurements, [selectedPart]: val };
+    newEntry.circumferences = { ...newEntry.circumferences, [selectedPart as CircumferenceKey]: [val, val, val] as TrialTuple };
     setCurrentEntry(newEntry);
     persistEntry(newEntry);
     setSelectedPart(null);
@@ -347,33 +370,45 @@ export default function MensurationScreen() {
     if (existing) {
       void weightStore.update({ ...existing, weight: w });
     } else {
-      void weightStore.add({ v: 2 as const, date: selectedDate, savedAt: Date.now(), weight: w, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+      void weightStore.add({ v: 3 as const, date: selectedDate, savedAt: Date.now(), weight: w, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
     }
   };
 
   const updateBpm = (val: string) => {
     const b = parseInt(val);
-    const newEntry = { ...currentEntry, bpm_rest: isNaN(b) ? 0 : b };
-    setCurrentEntry(newEntry);
-    persistEntry(newEntry);
+    if (isNaN(b) || b <= 0) return;
+    const existing = weightStore.entries.find(e => e.date === selectedDate);
+    if (existing) {
+      void weightStore.update({ ...existing, bpm_rest: b });
+    } else {
+      void weightStore.add({
+        v: 3 as const,
+        date: selectedDate,
+        savedAt: Date.now(),
+        bpm_rest: b,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      });
+    }
   };
 
   const updateSkinfold = (site: string, val: string) => {
-    const v = parseFloat(val);
+    const v = parseFloat(val.replace(',', '.'));
     const newEntry = { ...currentEntry };
-    newEntry.skinfolds = { ...newEntry.skinfolds, [site]: isNaN(v) ? 0 : v };
-    const sk = newEntry.skinfolds;
+    if (!isNaN(v) && v > 0) {
+      newEntry.skinfolds = { ...newEntry.skinfolds, [site as SkinfoldKey]: [v, v, v] as TrialTuple };
+    }
+    const sk = newEntry.skinfolds ?? {};
     const a = parseInt(age);
     const sex = gender === 'man' ? 'male' as const : 'female' as const;
 
     // Each formula computed independently from its own sites only — no cascade, no coefficient correction
-    const s13Total = ALL13_SITES.every(k => (sk[k] ?? 0) > 0)
-      ? ALL13_SITES.reduce((sum, k) => sum + (sk[k] ?? 0), 0) : 0;
+    const s13Total = ALL13_SITES.every(k => sk[k as SkinfoldKey] != null)
+      ? ALL13_SITES.reduce((sum, k) => sum + median(sk[k as SkinfoldKey]!), 0) : 0;
     const bf13 = s13Total > 0 ? BiometricsService.skinfolds13(s13Total, a, sex) : null;
-    const bfJP7 = JP7_SITES.every(k => (sk[k] ?? 0) > 0)
-      ? BiometricsService.jacksonPollock7(sk['pectoral'] ?? 0, sk['axillaire'] ?? 0, sk['triceps'] ?? 0, sk['subscapular'] ?? 0, sk['abdominal'] ?? 0, sk['suprailiac'] ?? 0, sk['thigh_anterior'] ?? 0, a, sex) : null;
-    const bfDW4 = DW4_SITES.every(k => (sk[k] ?? 0) > 0)
-      ? BiometricsService.durninWomersley4(sk['biceps'] ?? 0, sk['triceps'] ?? 0, sk['subscapular'] ?? 0, sk['suprailiac'] ?? 0, a, sex) : null;
+    const bfJP7 = JP7_SITES.every(k => sk[k as SkinfoldKey] != null)
+      ? BiometricsService.jacksonPollock7(median(sk['pectoral']!), median(sk['axillaire']!), median(sk['triceps']!), median(sk['subscapular']!), median(sk['abdominal']!), median(sk['suprailiac']!), median(sk['thigh_anterior']!), a, sex) : null;
+    const bfDW4 = DW4_SITES.every(k => sk[k as SkinfoldKey] != null)
+      ? BiometricsService.durninWomersley4(median(sk['biceps']!), median(sk['triceps']!), median(sk['subscapular']!), median(sk['suprailiac']!), a, sex) : null;
     // body_fat_pct stores best available: 13-plis > JP7 > DW4 (no fallback beyond)
     const bf = bf13 ?? bfJP7 ?? bfDW4;
     newEntry.body_fat_pct = bf !== null ? parseFloat(bf.toFixed(2)) : 0;
@@ -382,6 +417,7 @@ export default function MensurationScreen() {
   };
 
   const currentWeightEntry = weightStore.entries.find(e => e.date === selectedDate);
+  const currentBpmRest = currentWeightEntry?.bpm_rest ?? 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: 'transparent' }}>
@@ -423,7 +459,7 @@ export default function MensurationScreen() {
             <TextInput
               style={[s.bigInput, { color: theme.title, width: 64, textAlign: 'center' }]}
               keyboardType="numeric"
-              value={currentEntry.bpm_rest?.toString()}
+              value={currentBpmRest > 0 ? currentBpmRest.toString() : ''}
               onChangeText={updateBpm}
               placeholder="00"
               placeholderTextColor="rgba(128,128,128,0.5)"
@@ -462,7 +498,7 @@ export default function MensurationScreen() {
               ) : (() => {
                 const ws = weightSeries;
                 const xs = ws.map(e => new Date(e.date).getTime());
-                const ys = ws.map(e => e.weight);
+                const ys = ws.map(e => e.weight ?? 0);
                 const minX = Math.min(...xs);
                 const maxX = Math.max(...xs);
                 const minY = Math.min(...ys);
@@ -560,7 +596,7 @@ export default function MensurationScreen() {
                     const existing = weightStore.todayEntry;
                     const entry = existing
                       ? { ...existing, weight: w, savedAt: Date.now() }
-                      : { v: 2 as const, date: today, savedAt: Date.now(), weight: w, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone };
+                      : { v: 3 as const, date: today, savedAt: Date.now(), weight: w, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone };
                     await weightStore.add(entry);
                     setWeightInput('');
                   }}
@@ -665,7 +701,11 @@ export default function MensurationScreen() {
                 muscleValues={(() => {
                   const last = measureStore.history.slice().sort((a, b) => b.date.localeCompare(a.date))[0];
                   if (!last?.skinfolds) return {};
-                  const sym = analyzeSymmetry(last.measurements ?? {});
+                  const circumFlat: Record<string, number> = {};
+                  for (const [k, v] of Object.entries(last.circumferences ?? {})) {
+                    if (v) circumFlat[k] = median(v);
+                  }
+                  const sym = analyzeSymmetry(circumFlat);
                   const result: Partial<Record<MuscleId, number>> = {};
                   for (const sm of sym) {
                     const val = asymmetryToHeatmapValue(sm.diffPct);
@@ -699,7 +739,9 @@ export default function MensurationScreen() {
             {/* SVG body + inline input panel */}
             <View style={{ backgroundColor: theme.surface, borderWidth: 1, borderColor: Clr.white8, padding: 16, marginBottom: 16 }}>
               <BodyMeasureSvg
-                measurements={currentEntry.measurements}
+                measurements={Object.fromEntries(
+                  Object.entries(currentEntry.circumferences ?? {}).map(([k, v]) => [k, v ? median(v) : 0])
+                )}
                 selectedKey={selectedPart}
                 onSelect={handlePartPress}
               />
@@ -743,7 +785,8 @@ export default function MensurationScreen() {
             {/* Measurement chips — quick overview */}
             <View style={s.grid3}>
               {BODY_MEASURES.map(({ key, label }) => {
-                const val = currentEntry.measurements[key];
+                const triple = currentEntry.circumferences?.[key as CircumferenceKey];
+                const val = triple ? median(triple) : undefined;
                 const active = selectedPart === key;
                 const hasVal = val !== undefined && val > 0;
                 return (
@@ -766,7 +809,11 @@ export default function MensurationScreen() {
           <View style={{ marginBottom: 40 }}>
             <Heading level={4} mono subtitle="Symétrie musculaire G/D" style={{ marginBottom: 24 }}>MESURES BILATÉRALES</Heading>
             {(() => {
-              const symmetryResults = analyzeSymmetry(currentEntry.measurements);
+              const circumFlat: Record<string, number> = {};
+              for (const [k, v] of Object.entries(currentEntry.circumferences ?? {})) {
+                if (v) circumFlat[k] = median(v);
+              }
+              const symmetryResults = analyzeSymmetry(circumFlat);
               const heatmapValues: Partial<Record<MuscleId, number>> = {};
               for (const r of symmetryResults) {
                 const id = r.muscleKey as MuscleId;
@@ -783,8 +830,8 @@ export default function MensurationScreen() {
                   )}
                   <View style={[s.grid2, { marginBottom: 16 }]}>
                     {BILATERAL_MEASURES.map(({ base, label, leftKey, rightKey }) => {
-                      const lVal = currentEntry.measurements[leftKey] ?? 0;
-                      const rVal = currentEntry.measurements[rightKey] ?? 0;
+                      const lVal = currentEntry.circumferences?.[leftKey as CircumferenceKey]?.[0] ?? 0;
+                      const rVal = currentEntry.circumferences?.[rightKey as CircumferenceKey]?.[0] ?? 0;
                       const result = symmetryResults.find(r => r.muscleKey === base);
                       const warn = result?.asymmetric;
                       return (
@@ -802,7 +849,9 @@ export default function MensurationScreen() {
                                 onChangeText={(v: string) => {
                                   const n = parseFloat(v);
                                   const newEntry = { ...currentEntry };
-                                  newEntry.measurements = { ...newEntry.measurements, [leftKey]: isNaN(n) ? 0 : n };
+                                  if (!isNaN(n) && n > 0) {
+                                    newEntry.circumferences = { ...newEntry.circumferences, [leftKey as CircumferenceKey]: [n, n, n] as TrialTuple };
+                                  }
                                   setCurrentEntry(newEntry);
                                   persistEntry(newEntry);
                                 }}
@@ -820,7 +869,9 @@ export default function MensurationScreen() {
                                 onChangeText={(v: string) => {
                                   const n = parseFloat(v);
                                   const newEntry = { ...currentEntry };
-                                  newEntry.measurements = { ...newEntry.measurements, [rightKey]: isNaN(n) ? 0 : n };
+                                  if (!isNaN(n) && n > 0) {
+                                    newEntry.circumferences = { ...newEntry.circumferences, [rightKey as CircumferenceKey]: [n, n, n] as TrialTuple };
+                                  }
                                   setCurrentEntry(newEntry);
                                   persistEntry(newEntry);
                                 }}
@@ -856,7 +907,7 @@ export default function MensurationScreen() {
             </View>
             <View style={[s.grid2, { marginBottom: 24 }]}>
               {SKINFOLD_SITES.map(({ key, label, note }) => {
-                const val = currentEntry.skinfolds[key] ?? 0;
+                const val = currentEntry.skinfolds?.[key as SkinfoldKey]?.[0] ?? 0;
                 const isInJP7 = (JP7_SITES as readonly string[]).includes(key);
                 const isInDW4 = (DW4_SITES as readonly string[]).includes(key);
                 return (
@@ -887,16 +938,16 @@ export default function MensurationScreen() {
 
             {/* Matrice de suivi 3 formules */}
             {(() => {
-              const sk = currentEntry.skinfolds;
+              const sk = currentEntry.skinfolds ?? {};
               const a = parseInt(age);
               const sex = gender === 'man' ? 'male' as const : 'female' as const;
-              const s13Total = ALL13_SITES.every(k => (sk[k] ?? 0) > 0)
-                ? ALL13_SITES.reduce((sum, k) => sum + (sk[k] ?? 0), 0) : 0;
+              const s13Total = ALL13_SITES.every(k => sk[k as SkinfoldKey] != null)
+                ? ALL13_SITES.reduce((sum, k) => sum + median(sk[k as SkinfoldKey]!), 0) : 0;
               const bf13 = s13Total > 0 ? BiometricsService.skinfolds13(s13Total, a, sex) : null;
-              const bfJP7 = JP7_SITES.every(k => (sk[k] ?? 0) > 0)
-                ? BiometricsService.jacksonPollock7(sk['pectoral'] ?? 0, sk['axillaire'] ?? 0, sk['triceps'] ?? 0, sk['subscapular'] ?? 0, sk['abdominal'] ?? 0, sk['suprailiac'] ?? 0, sk['thigh_anterior'] ?? 0, a, sex) : null;
-              const bfDW4 = DW4_SITES.every(k => (sk[k] ?? 0) > 0)
-                ? BiometricsService.durninWomersley4(sk['biceps'] ?? 0, sk['triceps'] ?? 0, sk['subscapular'] ?? 0, sk['suprailiac'] ?? 0, a, sex) : null;
+              const bfJP7 = JP7_SITES.every(k => sk[k as SkinfoldKey] != null)
+                ? BiometricsService.jacksonPollock7(median(sk['pectoral']!), median(sk['axillaire']!), median(sk['triceps']!), median(sk['subscapular']!), median(sk['abdominal']!), median(sk['suprailiac']!), median(sk['thigh_anterior']!), a, sex) : null;
+              const bfDW4 = DW4_SITES.every(k => sk[k as SkinfoldKey] != null)
+                ? BiometricsService.durninWomersley4(median(sk['biceps']!), median(sk['triceps']!), median(sk['subscapular']!), median(sk['suprailiac']!), a, sex) : null;
               const vals = [bf13, bfJP7, bfDW4].filter((v): v is number => v !== null);
               const ecartMax = vals.length >= 2 ? parseFloat((Math.max(...vals) - Math.min(...vals)).toFixed(1)) : null;
               const hasAny = vals.length > 0;

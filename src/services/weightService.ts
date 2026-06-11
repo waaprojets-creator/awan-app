@@ -38,8 +38,8 @@ export const WeightService = {
     const cutoff = new Date(ref);
     cutoff.setDate(cutoff.getDate() - 7);
     const cutoffStr = cutoff.toISOString().slice(0, 10);
-    const recent = entries.filter(e => e.date >= cutoffStr);
+    const recent = entries.filter(e => e.date >= cutoffStr && e.weight != null);
     if (recent.length === 0) return 0;
-    return recent.reduce((acc, e) => acc + e.weight, 0) / recent.length;
+    return recent.reduce((acc, e) => acc + e.weight!, 0) / recent.length;
   },
 };
