@@ -5,6 +5,7 @@ import { Activity } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import { InstrumentCard } from '../../components/ui/InstrumentCard';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import type { StatusVariant } from '../../components/ui/InstrumentCard';
 import { SleepService } from '../../services/sleepService';
 import { WeightService } from '../../services/weightService';
@@ -88,6 +89,11 @@ export function ReadinessTab() {
 
   return (
     <View style={{ gap: 32 }}>
+      <WidgetInfo
+        id="W3"
+        title="PHYSIOLOGIE / RÉCUPÉRATION"
+        content="État du système nerveux central : RMSSD (VFC), qualité de sommeil, humeur subjective. Corrélation avec la charge mécanique W2 pour évaluer la readiness. Tendance VFC hebdomadaire = adaptation nerveuse à long terme."
+      />
       <Card variant="flat">
         <Heading level={4} mono subtitle="État du système nerveux autonome · Signaux composite">
           ÉTAT DE FORME

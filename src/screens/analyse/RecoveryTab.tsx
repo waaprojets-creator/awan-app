@@ -4,6 +4,7 @@ import Svg, { Path, Circle, Line, Text as SvgText } from 'react-native-svg';
 import { Heart } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import type { WorkoutSessionLatest } from '../../data/schemas/sport/routine';
 import { computeACWR, computeACWRSeries } from '../../services/analyticsService';
 import { useCoach } from '../../hooks/useCoach';
@@ -173,6 +174,11 @@ export function RecoveryTab({ sessions }: RecoveryTabProps) {
 
   return (
     <View style={{ gap: 32 }}>
+      <WidgetInfo
+        id="W4"
+        title="SÉCURITÉ BIOMÉCANIQUE"
+        content="ACWR = charge aiguë (7j) / charge chronique (28j). Seuils Gabbett 2016 : <0.8 sous-entraînement · 0.8–1.3 zone fitness · 1.3–1.5 alerte · >1.5 risque de blessure critique. Protection de l'intégrité tissulaire (os, tendons, ligaments)."
+      />
       {hasDeloadForecast && (
         <Card variant="flat" style={{ borderColor: theme.statusWarn, backgroundColor: `${theme.statusWarn}1A` }}>
           <Text style={[s.warnText, { color: theme.statusWarn }]}>

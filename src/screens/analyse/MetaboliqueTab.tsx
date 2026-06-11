@@ -6,6 +6,7 @@ import { Zap } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import { Touch } from '../../components/ui/Touch';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import { getStorage } from '../../data/storage/storageService';
 import { GuardCard, LoadingState, loadNutritionProfile } from './shared';
 import { FontMono } from '../../constants/typography';
@@ -91,6 +92,11 @@ export function MetaboliqueTab() {
 
   return (
     <View style={{ gap: 32 }}>
+      <WidgetInfo
+        id="W5"
+        title="ANALYSE MÉTABOLIQUE"
+        content="Régression linéaire calories vs vélocité pondérale (Trexler 2014). Détection de l'adaptation métabolique : si la pente s'aplatit à calories constantes, le TDEE a chuté (baisse du NEAT). Recommandation : refeed ou pause diète."
+      />
       <View style={s.toggleRow}>
         {(['31j', '12s'] as ViewMode[]).map(m => (
           <Touch

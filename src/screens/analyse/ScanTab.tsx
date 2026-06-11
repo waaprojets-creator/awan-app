@@ -10,6 +10,7 @@ import { computeAge } from '../../data/schemas/anthropo/userProfile';
 import { Card } from '../../components/ui/Card';
 import { Touch } from '../../components/ui/Touch';
 import { Heading } from '../../components/ui/Heading';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import { ds } from '../../utils/storage';
 import type { SkinfoldKey } from '../../data/schemas/anthropo/measurement';
 
@@ -232,6 +233,11 @@ export default function ScanTab() {
 
   return (
     <View style={{ gap: 32 }}>
+      <WidgetInfo
+        id="W1"
+        title="COMPOSITION CORPORELLE"
+        content="Poids journalier + moyenne mobile 7j. Plis cutanés mesurés hebdomadairement (protocole ISAK). Calcul BF% via 3 formules indépendantes : 13 plis, JP7 (athlètes), DW4 (population générale). Vélocité de lipolyse = régression linéaire sur Σplis."
+      />
       {/* Range selector */}
       <View style={s.rangeRow}>
         {SCAN_RANGES.map(r => (
