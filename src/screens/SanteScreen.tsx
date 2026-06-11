@@ -102,7 +102,7 @@ export default function SanteScreen({ navigate }: any) {
     const sevenStr = sevenDaysAgo.toISOString().slice(0, 10);
     const baseline = [...sorted].reverse().find(e => e.date <= sevenStr);
     if (!baseline) return null;
-    return last.weightKg - baseline.weightKg;
+    return last.weight - baseline.weight;
   }, [weightStore.entries]);
 
   const topAdvice = useMemo<Advice | null>(() => {
@@ -225,7 +225,7 @@ export default function SanteScreen({ navigate }: any) {
                       <Text style={[styles.smallLabel, { color: theme.mute }]}>POIDS</Text>
                       <View style={styles.valueWithDelta}>
                         <Text style={[styles.medNumber, { color: theme.title }]}>
-                          {weightStore.entries.filter(e => e.date <= (latestMeasure?.date ?? '')).sort((a,b)=>b.date.localeCompare(a.date))[0]?.weightKg ?? '—'}
+                          {weightStore.entries.filter(e => e.date <= (latestMeasure?.date ?? '')).sort((a,b)=>b.date.localeCompare(a.date))[0]?.weight ?? '—'}
                           <Text style={{ fontSize: Fs.xs, marginLeft: 4, color: theme.selected }}>kg</Text>
                         </Text>
                         {weightDelta !== null && (
