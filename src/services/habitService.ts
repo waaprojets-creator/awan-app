@@ -1,15 +1,13 @@
 import { getStorage } from '@/data/storage/storageService';
 import { migrateHabitDefinition, isHabitScheduled } from '@/data/schemas/habits/habitDefinition';
-import { migrateHabitHistory } from '@/data/schemas/habits/habitHistory';
 import type { HabitDefinitionLatest } from '@/data/schemas/habits/habitDefinition';
-import type { HabitHistoryLatest } from '@/data/schemas/habits/habitHistory';
+import { HabitOccurrenceService } from './habitOccurrenceService';
 import { eventBus } from '@/data/events/bus';
 
-const DEF_PREFIX  = 'habit.definition';
-const HIST_PREFIX = 'habit.history';
+const DEF_PREFIX = 'habit.definition';
 
 export const HabitService = {
-  // ── Definitions ─────────────────────────────────────────────────────────────
+  // ── Definitions ───────────────────────────────────────────────────────────
 
   async getDefinitions(): Promise<HabitDefinitionLatest[]> {
     const storage = await getStorage();
@@ -32,40 +30,18 @@ export const HabitService = {
     eventBus.emit('habit.definition.modified', { habitId: id });
   },
 
-  // ── History ─────────────────────────────────────────────────────────────────
-
-  async getHistory(date: string): Promise<HabitHistoryLatest | null> {
-    const storage = await getStorage();
-    return storage.get(`${HIST_PREFIX}.${date}`, migrateHabitHistory);
-  },
-
-  async getHistoryRange(from: string, to: string): Promise<HabitHistoryLatest[]> {
-    const storage = await getStorage();
-    const keys = await storage.list(HIST_PREFIX);
-    const inRange = keys.filter(k => {
-      const date = k.replace(`${HIST_PREFIX}.`, '');
-      return date >= from && date <= to;
-    });
-    const all = await Promise.all(inRange.map(k => storage.get(k, migrateHabitHistory)));
-    return all
-      .filter((e): e is HabitHistoryLatest => e !== null)
-      .sort((a, b) => a.date.localeCompare(b.date));
-  },
-
-  /** Bascule l'état d'une habitude pour une date. Retourne l'historique mis à jour. */
-  async toggle(date: string, habitId: string): Promise<HabitHistoryLatest> {
-    const storage = await getStorage();
-    const existing = await HabitService.getHistory(date);
-    const current = existing?.validations[habitId] ?? false;
-    const updated: HabitHistoryLatest = {
-      v: 1 as const,
-      date,
-      timezone: existing?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
-      validations: { ...(existing?.validations ?? {}), [habitId]: !current },
-      savedAt: Date.now(),
-    };
-    await storage.set(`${HIST_PREFIX}.${date}`, updated);
-    return updated;
+  /** Bascule la validation d'une habitude : crée ou supprime une occurrence. */
+  async toggle(date: string, habitId: string, habitName: string): Promise<boolean> {
+    const existing = await HabitOccurrenceService.getByDate(date);
+    const occ = existing.find(o => o.habitId === habitId);
+    if (occ) {
+      await HabitOccurrenceService.delete(occ.id);
+      return false;
+    }
+    await HabitOccurrenceService.save(
+      HabitOccurrenceService.build({ habitId, habitName, date }),
+    );
+    return true;
   },
 
   /** Habitudes actives prévues pour une date donnée. */

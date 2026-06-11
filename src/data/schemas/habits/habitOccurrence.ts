@@ -5,7 +5,7 @@ import { createMigrator } from '../../migrations/runner';
 // ─── V1 ───────────────────────────────────────────────────────────────────────
 // Clé : habit.occurrence.{YYYY-MM-DD}.{ms}
 // Une occurrence = un habit validé à un moment précis.
-// habit.history reste le silo léger pour le score de complétion du dashboard.
+// Remplace habit.history (supprimé).
 
 export const HabitOccurrenceV1Schema = z.object({
   v:           z.literal(1),
