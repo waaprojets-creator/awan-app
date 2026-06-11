@@ -3,6 +3,7 @@ import { migrateHabitDefinition, isHabitScheduled } from '@/data/schemas/habits/
 import { migrateHabitHistory } from '@/data/schemas/habits/habitHistory';
 import type { HabitDefinitionLatest } from '@/data/schemas/habits/habitDefinition';
 import type { HabitHistoryLatest } from '@/data/schemas/habits/habitHistory';
+import { eventBus } from '@/data/events/bus';
 
 const DEF_PREFIX  = 'habit.definition';
 const HIST_PREFIX = 'habit.history';
@@ -22,11 +23,13 @@ export const HabitService = {
   async saveDefinition(def: HabitDefinitionLatest): Promise<void> {
     const storage = await getStorage();
     await storage.set(`${DEF_PREFIX}.${def.id}`, def);
+    eventBus.emit('habit.definition.modified', { habitId: def.id });
   },
 
   async deleteDefinition(id: string): Promise<void> {
     const storage = await getStorage();
     await storage.delete(`${DEF_PREFIX}.${id}`);
+    eventBus.emit('habit.definition.modified', { habitId: id });
   },
 
   // ── History ─────────────────────────────────────────────────────────────────
