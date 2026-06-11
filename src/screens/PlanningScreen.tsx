@@ -15,7 +15,7 @@ import { CATS, MONTHS, DAYS_S } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
 import { FontSans, FontMono } from '../constants/typography';
 import { L } from '../constants/labels';
-import { ds, parseDate, uid } from '../utils/storage';
+import { ds, parseDate, uid, dateId } from '../utils/storage';
 import { eventsForDate, daysWithEvents } from '../utils/recurrence';
 import { useAppState } from '../context/AppStateContext';
 
@@ -151,7 +151,7 @@ export default function PlanningScreen() {
   const weightStore = useWeightStore();
   const [aiTitle, setAiTitle] = useState('');
   const [aiDuration, setAiDuration] = useState('30');
-  const [aiPriority, setAiPriority] = useState(3);
+  const [aiPriority, setAiPriority] = useState<1 | 2 | 3>(3);
   const [aiTimeCategory, setAiTimeCategory] = useState<'production' | 'friction' | 'slack' | 'somatique' | null>(null);
 
   const categories = useMemo(() => {
@@ -429,16 +429,19 @@ export default function PlanningScreen() {
     const addAiTask = async () => {
       const dur = parseInt(aiDuration, 10);
       if (!aiTitle.trim() || isNaN(dur) || dur < 5) return;
+      const today = dsDate(new Date());
       await planner.saveTask({
-        v: 3,
-        id: uid(),
+        v: 4,
+        id: dateId(today),
+        date: today,
+        scheduledDate: today,
         title: aiTitle.trim(),
         durationMin: dur,
         priority: aiPriority,
         domain: 'general',
         tags: [],
         dependsOn: [],
-        enabled: true,
+        status: 'active',
         timeCategory: aiTimeCategory,
       });
       setAiTitle('');
@@ -475,7 +478,7 @@ export default function PlanningScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={[sp.label, { color: theme.mute, marginBottom: 8 }]}>PRIORITÉ</Text>
                   <View style={[sp.row, { gap: 4 }]}>
-                    {[1, 2, 3, 4, 5].map(p => {
+                    {([1, 2, 3] as const).map(p => {
                       const active = aiPriority === p;
                       return (
                         <Touch key={p} onPress={() => setAiPriority(p)} style={{ flex: 1, height: 56, alignItems: 'center', justifyContent: 'center', borderWidth: 1, backgroundColor: active ? Clr.gold20 : Clr.white5, borderColor: active ? theme.selected : Clr.white5 }}>
@@ -705,7 +708,7 @@ export default function PlanningScreen() {
       if (gap > 0) totalSlackMin += gap;
     }
 
-    const highPrioSlots = slots.filter(s => (taskMap.get(s.taskId)?.priority ?? 0) >= 4);
+    const highPrioSlots = slots.filter(s => (taskMap.get(s.taskId)?.priority ?? 99) === 1);
     const alignedSlots = highPrioSlots.filter(s => dominantEnergy(s.startMin, s.endMin - s.startMin) === 'high');
     const alignPct = highPrioSlots.length > 0 ? Math.round((alignedSlots.length / highPrioSlots.length) * 100) : null;
 
@@ -760,7 +763,7 @@ export default function PlanningScreen() {
                     <Text style={{ fontSize: Fs.xs, fontFamily: FontMono, color: theme.mute, width: 80 }}>{minToHH(slot.startMin)}–{minToHH(slot.endMin)}</Text>
                     <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: energyColor }} />
                     <Text numberOfLines={1} style={{ fontSize: Fs.sm, fontWeight: Fw.display, color: theme.title, flex: 1, textTransform: 'uppercase', letterSpacing: 0.5 }}>{task?.title ?? slot.taskId}</Text>
-                    {task && task.priority >= 4 && (
+                    {task && task.priority === 1 && (
                       <Text style={{ fontSize: Fs.xs, fontFamily: FontMono, color: theme.selected }}>P{task.priority}</Text>
                     )}
                   </View>
