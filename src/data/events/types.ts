@@ -8,4 +8,5 @@ export type EventMap = {
   'coach.assessment.ready':  { domain: string; date: string };
   'planning.optimized':      { date: string };
   'steps.updated':           { date: string; steps: number };
+  'sport.routine.modified':  { routineId: string };
 };
