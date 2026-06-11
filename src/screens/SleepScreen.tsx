@@ -1,14 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Alert, StyleSheet, TextInput as RNTextInput } from 'react-native';
 import Svg, { Line, Text as SvgText, Polyline, Circle } from 'react-native-svg';
-import { Moon, Trash2 } from 'lucide-react-native';
+import { Moon, Trash2, AlarmClock, AlarmClockOff } from 'lucide-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 import { Card } from '../components/ui/Card';
 import { useSleepStore } from '../hooks/useSleepStore';
+import { useSleepAlarmStore } from '../hooks/useSleepAlarmStore';
 import { ds, dateId } from '../utils/storage';
 import type { NavProps } from '../types/nav';
 import type { SleepEntryLatest } from '../data/schemas/sleep/sleepEntry';
+import type { SleepAlarmLatest } from '../data/schemas/sleep/sleepAlarm';
 import { useTheme, type AwanTheme } from '../hooks/useTheme';
 import { FontMono, FontSans } from '../constants/typography';
 import { Fs, Fw, T, Clr } from '../theme/tokens';
@@ -69,10 +71,18 @@ function WeekChart({ entries }: { entries: SleepEntryLatest[] }) {
   );
 }
 
+function tomorrowDate(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
 export default function SleepScreen(_props: NavProps): React.ReactElement {
   const theme = useTheme();
   const today = ds(new Date());
+  const tomorrow = tomorrowDate();
   const store = useSleepStore();
+  const alarmStore = useSleepAlarmStore(tomorrow);
 
   const todayEntry = useMemo(
     () => store.entries.find(e => e.date === today) ?? null,
@@ -85,6 +95,32 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
   const [bedtime, setBedtime]   = useState<string>(todayEntry?.bedtime ?? '');
   const [wakeTime, setWakeTime] = useState<string>(todayEntry?.wakeTime ?? '');
   const [saving, setSaving]     = useState(false);
+
+  // Alarm state
+  const [alarmTime, setAlarmTime] = useState('06:30');
+  const [alarmLabel, setAlarmLabel] = useState('');
+
+  const handleAddAlarm = async () => {
+    if (!/^\d{2}:\d{2}$/.test(alarmTime)) return;
+    const alarm: SleepAlarmLatest = {
+      v: 1,
+      id: dateId(tomorrow),
+      date: tomorrow,
+      timeHHMM: alarmTime,
+      label: alarmLabel.trim() || undefined,
+      enabled: true,
+      timestamp: Date.now(),
+    };
+    await alarmStore.save(alarm);
+    setAlarmLabel('');
+  };
+
+  const handleDeleteAlarm = (alarm: SleepAlarmLatest) => {
+    Alert.alert('Supprimer le réveil ?', `${alarm.timeHHMM}${alarm.label ? ` — ${alarm.label}` : ''}`, [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Supprimer', style: 'destructive', onPress: () => void alarmStore.remove(alarm) },
+    ]);
+  };
 
   const durationH = hours + mins / 60;
 
@@ -238,6 +274,66 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
         </View>
       )}
 
+      {/* Réveil — demain */}
+      <View style={[s.section, { backgroundColor: theme.surface, borderColor: theme.border, marginBottom: 16 }]}>
+        <Text style={[T.label, { marginBottom: 12 }]}>RÉVEIL — {tomorrow}</Text>
+
+        {/* Alarmes existantes */}
+        {alarmStore.alarms.length > 0 && (
+          <View style={{ gap: 8, marginBottom: 12 }}>
+            {alarmStore.alarms.map(alarm => (
+              <View key={alarm.id} style={[s.alarmRow, { borderColor: alarm.enabled ? theme.selected : Clr.white10, backgroundColor: alarm.enabled ? `${theme.selected}0D` : Clr.white5 }]}>
+                <Touch onPress={() => void alarmStore.toggle(alarm)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                  {alarm.enabled
+                    ? <AlarmClock size={16} color={theme.selected} />
+                    : <AlarmClockOff size={16} color={theme.mute} />
+                  }
+                  <Text style={{ fontFamily: FontMono, fontWeight: Fw.value, fontSize: Fs.body, color: alarm.enabled ? theme.title : theme.mute }}>
+                    {alarm.timeHHMM}
+                  </Text>
+                  {alarm.label ? (
+                    <Text style={{ fontFamily: FontSans, fontSize: Fs.sm, color: theme.mute, flex: 1 }} numberOfLines={1}>
+                      {alarm.label}
+                    </Text>
+                  ) : null}
+                </Touch>
+                <Touch onPress={() => handleDeleteAlarm(alarm)} style={{ padding: 4 }}>
+                  <Trash2 size={14} color={theme.mute} />
+                </Touch>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Formulaire ajout */}
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
+          <View style={{ width: 80 }}>
+            <Text style={[T.label, { color: theme.mute, marginBottom: 4 }]}>HEURE</Text>
+            <RNTextInput
+              value={alarmTime}
+              onChangeText={setAlarmTime}
+              placeholder="HH:MM"
+              placeholderTextColor={Clr.white15}
+              keyboardType="numbers-and-punctuation"
+              style={[s.timeInput, { color: theme.title, borderColor: Clr.white10, backgroundColor: Clr.white5 }]}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[T.label, { color: theme.mute, marginBottom: 4 }]}>ÉTIQUETTE</Text>
+            <RNTextInput
+              value={alarmLabel}
+              onChangeText={setAlarmLabel}
+              placeholder="Fajr, Travail…"
+              placeholderTextColor={Clr.white15}
+              style={[s.timeInput, { color: theme.title, borderColor: Clr.white10, backgroundColor: Clr.white5 }]}
+            />
+          </View>
+          <Touch onPress={() => void handleAddAlarm()} style={[s.alarmAddBtn, { backgroundColor: theme.selected }]}>
+            <AlarmClock size={16} color="#000" />
+          </Touch>
+        </View>
+      </View>
+
       {/* Historique */}
       {store.entries.length > 0 && (
         <View style={{ gap: 8 }}>
@@ -283,4 +379,6 @@ const s = StyleSheet.create({
   timeInput: { fontFamily: FontMono, fontSize: Fs.body, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8 },
   saveBtn: { height: 48, alignItems: 'center', justifyContent: 'center' },
   empty: { padding: 24, alignItems: 'center', gap: 8, borderWidth: 1 },
+  alarmRow: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
+  alarmAddBtn: { width: 40, height: 38, alignItems: 'center', justifyContent: 'center' },
 });
