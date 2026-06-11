@@ -19,8 +19,9 @@ function prayerKey(date: string): string {
   return `${PRAYER_LOG_PREFIX}.${date}`;
 }
 
-function quranSessionKey(date: string, ms: number): string {
-  return `${QURAN_SESSION_PREFIX}.${date}.${ms}`;
+// Clé : islam.quran.session.{YYYY-MM-DD}.{ms}  (id = dateId)
+function quranSessionKey(session: QuranSessionLatest): string {
+  return `${QURAN_SESSION_PREFIX}.${session.id}`;
 }
 
 export const IslamService = {
@@ -111,7 +112,7 @@ export const IslamService = {
 
   async addQuranSession(session: QuranSessionLatest): Promise<void> {
     const storage = await getStorage();
-    await storage.set(quranSessionKey(session.date, session.timestamp), session);
+    await storage.set(quranSessionKey(session), session);
     // Mettre à jour le progress singleton
     const progress = await this.getQuranProgress();
     if (progress) {
@@ -126,8 +127,7 @@ export const IslamService = {
 
   async getQuranSessionsByDate(date: string): Promise<QuranSessionLatest[]> {
     const storage = await getStorage();
-    let keys = await storage.list(`${QURAN_SESSION_PREFIX}.${date}`);
-    if (keys.length === 0) keys = await storage.listFiltered(QURAN_SESSION_PREFIX, { date });
+    const keys = await storage.list(`${QURAN_SESSION_PREFIX}.${date}`);
     const all = await Promise.all(keys.map(k => storage.get(k, migrateQuranSession)));
     return all
       .filter((s): s is QuranSessionLatest => s !== null)

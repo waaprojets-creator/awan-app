@@ -4,8 +4,9 @@ import type { SleepEntryLatest } from '@/data/schemas/sleep/sleepEntry';
 
 const SLEEP_PREFIX = 'sleep.entry';
 
-function sleepKey(id: string): string {
-  return `${SLEEP_PREFIX}.${id}`;
+// Clé : sleep.entry.{YYYY-MM-DD}.{ms}  (id = dateId)
+function sleepKey(entry: SleepEntryLatest): string {
+  return `${SLEEP_PREFIX}.${entry.id}`;
 }
 
 export const SleepService = {
@@ -37,12 +38,12 @@ export const SleepService = {
 
   async save(entry: SleepEntryLatest): Promise<void> {
     const storage = await getStorage();
-    await storage.set(sleepKey(entry.id), entry);
+    await storage.set(sleepKey(entry), entry);
   },
 
   async delete(id: string): Promise<void> {
     const storage = await getStorage();
-    await storage.delete(sleepKey(id));
+    await storage.delete(`${SLEEP_PREFIX}.${id}`);
   },
 
   avgDurationH(entries: SleepEntryLatest[]): number {

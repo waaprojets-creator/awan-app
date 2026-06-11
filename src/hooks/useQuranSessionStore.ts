@@ -18,14 +18,15 @@ export function useQuranSessionStore(date: string) {
   }, [date]);
 
   const add = useCallback(async (slot: WirdSlot): Promise<void> => {
+    const now = Date.now();
     const session: QuranSessionLatest = {
       v: 1,
-      id: dateId(date),
+      id: `${date}.${now}`,
       date,
       ayahsRead: slot.ayahsRead,
       surahStart: 1,
       ayahStart: 1,
-      timestamp: Date.now(),
+      timestamp: now,
       sessions: [{ timeHHMM: slot.timeHHMM, ayahsRead: slot.ayahsRead }],
     };
     await IslamService.addQuranSession(session);
