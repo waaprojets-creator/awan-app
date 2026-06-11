@@ -6,7 +6,7 @@ import { useDaily } from '../context/DailyContext';
 import { DailyCanvas } from '../components/DailyCanvas';
 import { useAppState } from '../context/AppStateContext';
 import { useJournalStore } from '../hooks/useJournalStore';
-import { ds, uid } from '../utils/storage';
+import { ds, dateId } from '../utils/storage';
 import { ModuleType } from '../types/daily';
 import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
@@ -47,7 +47,7 @@ export default function JournalScreen() {
   const handleAddEntry = () => {
     if (!inputText.trim()) return;
 
-    const entryId = uid();
+    const entryId = dateId(selectedDate);
 
     journalStore.save({
       v: 1,

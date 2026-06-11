@@ -24,7 +24,7 @@ import {
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { useAppState } from '../context/AppStateContext';
 import { useDaily } from '../context/DailyContext';
-import { ds, uid } from '../utils/storage';
+import { ds, uid, dateId } from '../utils/storage';
 import { useMealStore } from '../hooks/useMealStore';
 import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
@@ -813,7 +813,7 @@ export default function NutritionScreen() {
  const handleAdd = (food: FoodEntry, grams: number, timeHHMM: string | undefined) => {
  const macros = calcMacros(food, grams);
  const now = Date.now();
- const entryId = uid();
+ const entryId = dateId(selectedDate);
  const baseEntry: MealEntryLatest = {
  v: 2,
  id: entryId,

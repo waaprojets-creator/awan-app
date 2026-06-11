@@ -9,7 +9,7 @@ import {
  loadExerciseCatalog,
  type ExerciseEntry,
 } from '../utils/sportData';
-import { uid, ds } from '../utils/storage';
+import { uid, ds, dateId } from '../utils/storage';
 import {
  Play,
  Plus,
@@ -393,7 +393,7 @@ export default function SportScreen() {
  };
  });
  setActiveSession({
- id: uid(),
+ id: dateId(today),
  routineId: routine.id,
  routineName: routine.name,
  cycleLetter: routine.cycleLetter ?? null,
@@ -952,7 +952,7 @@ function RoutineEditor({
  setSaveError('');
  const routine: RoutineLatest = {
  v: 1,
- id: existing?.id ?? uid(),
+ id: existing?.id ?? Date.now().toString(),
  name: trimmed,
  cycleLetter,
  exercises,

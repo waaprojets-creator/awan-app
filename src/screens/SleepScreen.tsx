@@ -102,7 +102,7 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
     setSaving(true);
     const entry: SleepEntryLatest = {
       v: 2,
-      id: todayEntry?.id ?? uid(),
+      id: today,
       date: today,
       timestamp: Date.now(),
       durationH,
