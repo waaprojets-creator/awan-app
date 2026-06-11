@@ -39,9 +39,9 @@ export const IslamService = {
   async togglePrayer(
     date: string,
     prayer: PrayerNameV2,
-    id: string,
     timeHHMM?: string,
   ): Promise<PrayerLogLatest> {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const existing = await this.getPrayerLog(date);
     const currentPrayers = existing?.prayers ?? {};
 
@@ -60,7 +60,7 @@ export const IslamService = {
 
     const updated: PrayerLogLatest = {
       v: 2,
-      id: existing?.id ?? id,
+      timezone: existing?.timezone ?? timezone,
       date,
       prayers,
       savedAt: Date.now(),
