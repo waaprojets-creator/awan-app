@@ -18,9 +18,13 @@ export const SleepService = {
       .sort((a, b) => b.date.localeCompare(a.date));
   },
 
-  async getByDate(date: string): Promise<SleepEntryLatest | null> {
+  async getByDate(date: string): Promise<SleepEntryLatest[]> {
     const storage = await getStorage();
-    return storage.get(`${SLEEP_PREFIX}.${date}`, migrateSleepEntry);
+    const keys = await storage.list(`${SLEEP_PREFIX}.${date}`);
+    const all = await Promise.all(keys.map(k => storage.get(k, migrateSleepEntry)));
+    return all
+      .filter((e): e is SleepEntryLatest => e !== null)
+      .sort((a, b) => a.timestamp - b.timestamp);
   },
 
   async getLast7Days(): Promise<SleepEntryLatest[]> {

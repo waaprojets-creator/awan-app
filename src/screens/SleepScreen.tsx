@@ -6,7 +6,7 @@ import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 import { Card } from '../components/ui/Card';
 import { useSleepStore } from '../hooks/useSleepStore';
-import { ds, uid } from '../utils/storage';
+import { ds, dateId } from '../utils/storage';
 import type { NavProps } from '../types/nav';
 import type { SleepEntryLatest } from '../data/schemas/sleep/sleepEntry';
 import { useTheme, type AwanTheme } from '../hooks/useTheme';
@@ -102,7 +102,7 @@ export default function SleepScreen(_props: NavProps): React.ReactElement {
     setSaving(true);
     const entry: SleepEntryLatest = {
       v: 2,
-      id: today,
+      id: todayEntry?.id ?? dateId(today),
       date: today,
       timestamp: Date.now(),
       durationH,
