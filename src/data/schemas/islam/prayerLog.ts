@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { IdSchema } from '../common/id';
 import { DateStringSchema, TimestampSchema } from '../common/date';
+// IdSchema est conservé pour V1 (legacy) uniquement — retiré de V2.
 import { createMigrator } from '../../migrations/runner';
 
 // ─── V1 (legacy, 5 prières obligatoires) ─────────────────────────────────────
@@ -44,8 +45,10 @@ const TimeHHMMSchema = z.string().regex(/^\d{2}:\d{2}$/);
 
 export const PrayerLogV2Schema = z.object({
   v: z.literal(2),
-  id: IdSchema,
   date: DateStringSchema,
+  // Contexte géographique pour l'analyse temporelle (assiduité vs heures réelles de prière).
+  // .default('UTC') assure la compatibilité ascendante avec les données V2 stockées sans timezone.
+  timezone: z.string().default('UTC'),
   prayers: z.record(z.enum(PRAYER_NAMES), z.boolean()),
   /** Heure réelle (HH:MM) saisie par l'utilisateur. null/undefined = pas saisi. */
   prayerTimes: z.record(z.enum(PRAYER_NAMES), TimeHHMMSchema.nullable()).optional(),
@@ -96,8 +99,8 @@ const prayerMigrations = {
     };
     return {
       v: 2 as const,
-      id: data.id,
       date: data.date,
+      timezone: 'UTC',
       savedAt: data.savedAt,
       prayers,
       ...computePrayerScores(prayers),

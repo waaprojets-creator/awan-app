@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { IslamService } from '@/services/islamService';
-import { uid } from '@/utils/storage';
 import type { PrayerLogLatest, PrayerName, PrayerNameV2 } from '@/data/schemas/islam/prayerLog';
 import { PRAYER_NAMES, PRAYER_NAMES_V2, computePrayerScores } from '@/data/schemas/islam/prayerLog';
 import { useAppStore } from '@/data/store/appStore';
@@ -25,7 +24,7 @@ export function usePrayerStore(date: string) {
   /** Toggle une prière. `timeHHMM` = heure réelle saisie (sinon non enregistrée). */
   const toggle = useCallback(async (prayer: PrayerName, timeHHMM?: string | null): Promise<void> => {
     try {
-      const updated = await IslamService.togglePrayer(date, prayer, uid(), timeHHMM ?? undefined);
+      const updated = await IslamService.togglePrayer(date, prayer, timeHHMM ?? undefined);
       setLog(updated);
     } catch (err) {
       if (err instanceof DbFullError) { dispatchDbFull(); return; }
@@ -44,7 +43,7 @@ export function usePrayerStore(date: string) {
       const prayerTimes = { ...(existing?.prayerTimes ?? {}), [prayer]: timeHHMM };
       const updated: PrayerLogLatest = {
         v: 2,
-        id: existing?.id ?? uid(),
+        timezone: existing?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
         date,
         prayers,
         savedAt: Date.now(),
