@@ -6,6 +6,7 @@ import { useTheme, type AwanTheme } from '../../hooks/useTheme';
 import { FontMono } from '../../constants/typography';
 import { Fs, Fw, Ls } from '../../theme/tokens';
 import { Card } from '../../components/ui/Card';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import { Heading } from '../../components/ui/Heading';
 import type { MeasurementLatest } from '../../data/schemas/anthropo/measurement';
 import { BarChart, EmptyState, LoadingState } from './shared';
@@ -97,6 +98,7 @@ export function BiometrieTab({ weightTrend, history, loading }: BiometrieTabProp
 
   return (
     <View style={{ gap: 16 }}>
+      <WidgetInfo id="W5" title="BIOMÉTRIE LONGITUDINALE" content="Évolution du poids et des circonférences dans le temps — suivi de la trajectoire biométrique globale et des séries de mesures par segment corporel." />
       {weightTrend.length > 1 && (
         <Card variant="flat">
           <Heading level={4} mono subtitle="Trajectoire biométrique">COURBE POIDS</Heading>

@@ -4,6 +4,7 @@ import { Dumbbell } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import { BarChart, EmptyState, LoadingState } from './shared';
 
 interface MuscuStat { label: string; weight: number; sets: number }
@@ -17,6 +18,7 @@ export function MuscuTab({ stats, loading }: MuscuTabProps) {
 
   return (
     <View style={{ gap: 32 }}>
+      <WidgetInfo id="W6" title="VOLUME MUSCULAIRE" content="Charge déplacée (kg) et séries complétées par groupe musculaire — indicateur de Force de Projection et de Densité Opérative." />
       <Card variant="flat">
         <Heading level={4} mono subtitle="Force de Projection">VOLUME TOTAL (KG)</Heading>
         <View style={{ height: 200, marginTop: 24 }}>

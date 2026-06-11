@@ -5,6 +5,7 @@ import { Clock } from 'lucide-react-native';
 import { startOfWeek, differenceInCalendarWeeks } from 'date-fns';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import { InstrumentCard } from '../../components/ui/InstrumentCard';
 import { DateSelectPopup } from '../../components/ui/DateSelectPopup';
 import type { StatusVariant } from '../../components/ui/InstrumentCard';
@@ -140,6 +141,7 @@ export function BudgetTab() {
 
   return (
     <View style={{ gap: 32 }}>
+      <WidgetInfo id="Wt1" title="BUDGET TEMPOREL" content="Coefficient d'Efficience Temporel (Cet) = (T_production + T_slack) / T_éveil. Cible > 86.6%. T_friction cible < 15h/sem — toute tâche sans valeur ajoutée directe." />
       <View style={{ paddingHorizontal: 8 }}>
         <DateSelectPopup value={selectedDate} onChange={setSelectedDate} max={localToday()} label="SEMAINE DU" />
       </View>

@@ -23,6 +23,7 @@ import { fr } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 
 import { Card } from '@/components/ui/Card';
+import { WidgetInfo } from '@/components/ui/WidgetInfo';
 import { Touch } from '@/components/ui/Touch';
 import { Heading } from '@/components/ui/Heading';
 import { SleepService } from '@/services/sleepService';
@@ -891,6 +892,7 @@ export default function TempsTab() {
 
   return (
     <View style={{ flex: 1 }}>
+      <WidgetInfo id="Wt2" title="CALENDRIER TEMPOREL" content="Visualisation jour/semaine/mois/année des activités classifiées — Production, Friction, Slack, Somatique, Islam. Base de calcul du Cet hebdomadaire." />
       {/* Sub-view selector */}
       <View
         style={{

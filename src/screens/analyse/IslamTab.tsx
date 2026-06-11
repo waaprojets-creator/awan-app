@@ -4,6 +4,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { FontMono } from '../../constants/typography';
 import { Fs, Fw, Ls } from '../../theme/tokens';
 import { Moon } from 'lucide-react-native';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import { IslamService } from '../../services/islamService';
@@ -76,6 +77,7 @@ export function IslamTab() {
 
   return (
     <View style={{ gap: 24 }}>
+      <WidgetInfo id="Wt3" title="OBSERVANCE ISLAMIQUE" content="Adhérence aux prières fard (score 0-1 par jour), séquence de jours consécutifs complets, et volume de lecture Coran (versets/semaine sur 8 semaines)." />
       <Card>
         <View style={s.rowBetween}>
           <Heading level={4} mono style={{ marginBottom: 0 }}>ADHÉRENCE PRIÈRES 30J</Heading>

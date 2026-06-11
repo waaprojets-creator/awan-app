@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { ds } from '../../utils/storage';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import type { WorkoutSessionLatest } from '../../data/schemas/sport/routine';
 import type { MeasurementLatest } from '../../data/schemas/anthropo/measurement';
 import type { WeightEntryLatest } from '../../data/schemas/body/weightEntry';
@@ -46,6 +47,7 @@ export function CorrelationTab({ sessions, history, weightEntries, todayKcal }: 
 
   return (
     <View style={{ gap: 24 }}>
+      <WidgetInfo id="Wx1" title="CORRÉLATIONS INTER-MODULES" content="Croisement Sport × Poids sur 30 jours — fréquence d'entraînement, delta pondéral total, KCAL du jour. Insights automatiques basés sur les seuils OMS (150 min/sem)." />
       <Text style={[s.headerLabel, { color: theme.mute }]}>
         CORRÉLATIONS INTER-MODULES · 30 JOURS
       </Text>

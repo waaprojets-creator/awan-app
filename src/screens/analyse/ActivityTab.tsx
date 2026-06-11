@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useTheme } from '../../hooks/useTheme';
 import { Card } from '../../components/ui/Card';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import { FontMono } from '../../constants/typography';
 import { Fs, Fw, Ls, Clr } from '../../theme/tokens';
 
@@ -21,6 +22,7 @@ export function ActivityTab({ data }: ActivityTabProps) {
 
   return (
     <View style={{ gap: 32 }}>
+      <WidgetInfo id="W8" title="RÉPARTITION TEMPORELLE" content="Distribution des activités en minutes — Flux Actif (catégories productives) vs Veille Système (temps libre non structuré)." />
       <Card style={{ alignItems: 'center', paddingVertical: 40 }}>
         <PieChart data={data} size={220} />
         <View style={{ marginTop: 40, width: '100%' }}>

@@ -4,6 +4,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { Ruler } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import { FontMono } from '../../constants/typography';
 import { Fs, Fw, Ls, Clr } from '../../theme/tokens';
 import type { MeasurementLatest } from '../../data/schemas/anthropo/measurement';
@@ -64,6 +65,7 @@ export function OrthometryTab({ history, loading }: OrthometryTabProps) {
 
   return (
     <View style={{ gap: 32 }}>
+      <WidgetInfo id="W7" title="ORTHOMÉTRIE" content="Analyse de la symétrie bilatérale à partir des circonférences gauche/droite — détection des asymétries musculaires (seuil > 5% = alert)." />
       <Card variant="flat">
         <Heading level={4} mono subtitle={`Dernière mesure · ${latest?.date ?? ''}`}>SYMÉTRIE CORPORELLE</Heading>
         <View style={s.bodyRow}>
