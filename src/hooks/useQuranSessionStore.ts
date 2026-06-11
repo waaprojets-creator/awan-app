@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { IslamService } from '@/services/islamService';
-import { uid } from '@/utils/storage';
+import { dateId } from '@/utils/storage';
 import type { QuranSessionLatest } from '@/data/schemas/islam/quranSession';
 
 interface WirdSlot { timeHHMM: string; ayahsRead: number }
@@ -20,7 +20,7 @@ export function useQuranSessionStore(date: string) {
   const add = useCallback(async (slot: WirdSlot): Promise<void> => {
     const session: QuranSessionLatest = {
       v: 1,
-      id: uid(),
+      id: dateId(date),
       date,
       ayahsRead: slot.ayahsRead,
       surahStart: 1,

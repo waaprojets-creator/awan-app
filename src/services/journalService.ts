@@ -7,11 +7,10 @@ const JOURNAL_PREFIX = 'journal.entry';
 export const JournalService = {
   async getByDate(date: string): Promise<JournalEntryLatest[]> {
     const storage = await getStorage();
-    let keys = await storage.list(`${JOURNAL_PREFIX}.${date}`);
-    if (keys.length === 0) keys = await storage.list(JOURNAL_PREFIX);
+    const keys = await storage.list(`${JOURNAL_PREFIX}.${date}`);
     const all = await Promise.all(keys.map(k => storage.get(k, migrateJournalEntry)));
     return all
-      .filter((e): e is JournalEntryLatest => e !== null && e.date === date)
+      .filter((e): e is JournalEntryLatest => e !== null)
       .sort((a, b) => a.timestamp - b.timestamp);
   },
 

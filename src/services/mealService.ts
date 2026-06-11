@@ -11,8 +11,7 @@ function mealKey(id: string): string {
 export const MealService = {
   async getByDate(date: string): Promise<MealEntryLatest[]> {
     const storage = await getStorage();
-    let keys = await storage.list(`${MEAL_PREFIX}.${date}`);
-    if (keys.length === 0) keys = await storage.listFiltered(MEAL_PREFIX, { date });
+    const keys = await storage.list(`${MEAL_PREFIX}.${date}`);
     const all = await Promise.all(keys.map(k => storage.get(k, migrateMealEntry)));
     return all
       .filter((e): e is MealEntryLatest => e !== null)
