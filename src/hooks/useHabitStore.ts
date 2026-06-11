@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { HabitService } from '@/services/habitService';
+import { HabitOccurrenceService } from '@/services/habitOccurrenceService';
 import { isHabitScheduled, slugify } from '@/data/schemas/habits/habitDefinition';
-import { habitCompletionScore } from '@/data/schemas/habits/habitHistory';
 import type { HabitDefinitionLatest } from '@/data/schemas/habits/habitDefinition';
-import type { HabitHistoryLatest } from '@/data/schemas/habits/habitHistory';
+import type { HabitOccurrenceLatest } from '@/data/schemas/habits/habitOccurrence';
 import { useAppStore } from '@/data/store/appStore';
 import { DbFullError } from '@/data/storage/IStorage';
 import { dbFullBus } from '@/utils/dbFullBus';
@@ -12,7 +12,7 @@ function dispatchDbFull() { dbFullBus.emit(); }
 
 export function useHabitStore(date: string) {
   const [definitions, setDefinitions] = useState<HabitDefinitionLatest[]>([]);
-  const [history, setHistory]         = useState<HabitHistoryLatest | null>(null);
+  const [occurrences, setOccurrences] = useState<HabitOccurrenceLatest[]>([]);
   const [loading, setLoading]         = useState(true);
 
   const dataVersion = useAppStore((s) => s.dataVersion);
@@ -21,11 +21,11 @@ export function useHabitStore(date: string) {
     let active = true;
     Promise.all([
       HabitService.getDefinitions(),
-      HabitService.getHistory(date),
-    ]).then(([defs, hist]) => {
+      HabitOccurrenceService.getByDate(date),
+    ]).then(([defs, occs]) => {
       if (!active) return;
       setDefinitions(defs);
-      setHistory(hist);
+      setOccurrences(occs);
       setLoading(false);
     });
     return () => { active = false; };
@@ -33,23 +33,29 @@ export function useHabitStore(date: string) {
 
   const scheduled = definitions.filter(d => isHabitScheduled(d, date));
 
-  const completionScore = history
-    ? habitCompletionScore(history, scheduled.map(d => d.id))
-    : 0;
+  const completionScore = scheduled.length === 0
+    ? 1
+    : occurrences.filter(o => scheduled.some(d => d.id === o.habitId)).length / scheduled.length;
 
   const toggle = useCallback(async (habitId: string): Promise<void> => {
     try {
-      const updated = await HabitService.toggle(date, habitId);
-      setHistory(updated);
+      const def = definitions.find(d => d.id === habitId);
+      const done = await HabitService.toggle(date, habitId, def?.name ?? habitId);
+      if (done) {
+        const occ = HabitOccurrenceService.build({ habitId, habitName: def?.name ?? habitId, date });
+        setOccurrences(prev => [...prev, occ]);
+      } else {
+        setOccurrences(prev => prev.filter(o => o.habitId !== habitId));
+      }
     } catch (err) {
       if (err instanceof DbFullError) { dispatchDbFull(); return; }
       throw err;
     }
-  }, [date]);
+  }, [date, definitions]);
 
   const isDone = useCallback(
-    (habitId: string): boolean => history?.validations[habitId] === true,
-    [history],
+    (habitId: string): boolean => occurrences.some(o => o.habitId === habitId),
+    [occurrences],
   );
 
   const saveDefinition = useCallback(async (
@@ -86,7 +92,7 @@ export function useHabitStore(date: string) {
   return {
     definitions,
     scheduled,
-    history,
+    occurrences,
     loading,
     completionScore,
     toggle,
