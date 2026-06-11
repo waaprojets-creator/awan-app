@@ -147,7 +147,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
     const sevenStr = sevenDaysAgo.toISOString().slice(0, 10);
     const baseline = [...sorted].reverse().find(e => e.date <= sevenStr);
     if (!baseline) return null;
-    return last.weightKg - baseline.weightKg;
+    return last.weight - baseline.weight;
   }, [weightStore.entries]);
 
   const isEarlyMorning = useMemo(() => new Date().getHours() < 10, []);
@@ -355,7 +355,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
       {/* Mesures + Séance */}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
         <View style={{ width: '47%' }}>
-          <InstrumentCard label={dash.biometrics ?? 'POIDS'} value={weightStore.todayEntry?.weightKg ?? weightStore.avg7d?.toFixed(1) ?? '—'} unit={weightStore.entries.length ? 'kg' : ''} status={weightStore.entries.length ? 'ok' : 'mute'} index={5} onPress={() => navigate('Mensuration')} />
+          <InstrumentCard label={dash.biometrics ?? 'POIDS'} value={weightStore.todayEntry?.weight ?? weightStore.avg7d?.toFixed(1) ?? '—'} unit={weightStore.entries.length ? 'kg' : ''} status={weightStore.entries.length ? 'ok' : 'mute'} index={5} onPress={() => navigate('Mensuration')} />
         </View>
         <View style={{ width: '47%' }}>
           <InstrumentCard label={dash.sport?.last ?? 'SÉANCE'} value={lastSession?.name ? lastSession.name.slice(0, 8).toUpperCase() : '—'} status={lastSession ? 'spirit' : 'mute'} index={6} onPress={() => navigate('Sport')} />

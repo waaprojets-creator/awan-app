@@ -23,7 +23,7 @@ export function CorrelationTab({ sessions, history, weightEntries, todayKcal }: 
     const str = ds(d);
     const hasWorkout = sessions.some(s => (s.date ?? ds(new Date(s.startTime ?? 0))) === str);
     const wEntry = weightEntries.find(w => w.date === str);
-    return { str, hasWorkout, weight: wEntry?.weightKg ?? null };
+    return { str, hasWorkout, weight: wEntry?.weight ?? null };
   }), [sessions, weightEntries]);
 
   const weightPoints = last30.filter(d => d.weight !== null);
@@ -35,7 +35,7 @@ export function CorrelationTab({ sessions, history, weightEntries, todayKcal }: 
   const sortedW = [...weightEntries].sort((a, b) => b.date.localeCompare(a.date));
   const latestW = sortedW[0]; const oldestW = sortedW.at(-1);
   const weightDelta = (latestW && oldestW && latestW !== oldestW)
-    ? latestW.weightKg - oldestW.weightKg : null;
+    ? latestW.weight - oldestW.weight : null;
 
   const sessionsPerWeek = (workoutDays / 30) * 7;
 
