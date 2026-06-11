@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, TextInput as RNTextInput, Alert, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TextInput as RNTextInput, Modal, Alert, StyleSheet } from 'react-native';
 import Svg, { Polyline, Circle } from 'react-native-svg';
 import { useTheme } from '../hooks/useTheme';
 import { useAppState } from '../context/AppStateContext';
@@ -11,6 +11,9 @@ import { analyzeSymmetry, asymmetryToHeatmapValue } from '../services/symmetrySe
 import { safeStorage } from '../utils/safeStorage';
 import { useWeightStore } from '../hooks/useWeightStore';
 import { useMeasurementStore } from '../hooks/useMeasurementStore';
+import { useAnthropoProfileStore } from '../hooks/useAnthropoProfileStore';
+import { computeAge } from '../data/schemas/anthropo/userProfile';
+import type { AnthropoProfileLatest } from '../data/schemas/anthropo/userProfile';
 import { BodyMeasureSvg, BODY_MEASURES } from '../components/BodyMeasureSvg';
 import { BodySvg } from '../components/BodySvg';
 import type { MuscleId } from '../components/BodySvg';
@@ -64,6 +67,166 @@ const BILATERAL_MEASURES = [
   { base: 'calf',    label: 'MOLLET',    leftKey: 'calf_left',    rightKey: 'calf_right' },
 ] as const;
 
+// ─── ProfileEditorModal ───────────────────────────────────────────────────────
+
+interface ProfileEditorModalProps {
+  visible: boolean;
+  existing: AnthropoProfileLatest | null;
+  onClose: () => void;
+  onSave: (entry: AnthropoProfileLatest) => void;
+}
+
+function ProfileEditorModal({ visible, existing, onClose, onSave }: ProfileEditorModalProps) {
+  const theme = useTheme();
+  const [sex, setSex] = useState<'male' | 'female'>(existing?.sex ?? 'male');
+  const [birthDate, setBirthDate] = useState(existing?.birthDate ?? '1990-01-01');
+  const [heightCm, setHeightCm] = useState(existing?.heightCm ? String(existing.heightCm) : '');
+  const [boneStructure, setBoneStructure] = useState<'small' | 'medium' | 'large' | undefined>(existing?.boneStructure);
+  const [armLeft, setArmLeft] = useState(existing?.armLengthCm?.left ? String(existing.armLengthCm.left) : '');
+  const [armRight, setArmRight] = useState(existing?.armLengthCm?.right ? String(existing.armLengthCm.right) : '');
+  const [legLeft, setLegLeft] = useState(existing?.legLengthCm?.left ? String(existing.legLengthCm.left) : '');
+  const [legRight, setLegRight] = useState(existing?.legLengthCm?.right ? String(existing.legLengthCm.right) : '');
+
+  useEffect(() => {
+    if (visible) {
+      setSex(existing?.sex ?? 'male');
+      setBirthDate(existing?.birthDate ?? '1990-01-01');
+      setHeightCm(existing?.heightCm ? String(existing.heightCm) : '');
+      setBoneStructure(existing?.boneStructure);
+      setArmLeft(existing?.armLengthCm?.left ? String(existing.armLengthCm.left) : '');
+      setArmRight(existing?.armLengthCm?.right ? String(existing.armLengthCm.right) : '');
+      setLegLeft(existing?.legLengthCm?.left ? String(existing.legLengthCm.left) : '');
+      setLegRight(existing?.legLengthCm?.right ? String(existing.legLengthCm.right) : '');
+    }
+  }, [visible, existing]);
+
+  const handleSave = () => {
+    const h = parseFloat(heightCm.replace(',', '.'));
+    if (!birthDate || !/^\d{4}-\d{2}-\d{2}$/.test(birthDate) || isNaN(h) || h <= 0) {
+      Alert.alert('Erreur', 'Date de naissance (AAAA-MM-JJ) et taille requises');
+      return;
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    const aL = parseFloat(armLeft.replace(',', '.'));
+    const aR = parseFloat(armRight.replace(',', '.'));
+    const lL = parseFloat(legLeft.replace(',', '.'));
+    const lR = parseFloat(legRight.replace(',', '.'));
+    const entry: AnthropoProfileLatest = {
+      v: 1 as const,
+      date: existing?.date ?? today,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      sex,
+      birthDate,
+      heightCm: h,
+      savedAt: Date.now(),
+      ...(boneStructure ? { boneStructure } : {}),
+      ...((!isNaN(aL) && aL > 0) || (!isNaN(aR) && aR > 0) ? {
+        armLengthCm: {
+          ...(!isNaN(aL) && aL > 0 ? { left: aL } : {}),
+          ...(!isNaN(aR) && aR > 0 ? { right: aR } : {}),
+        },
+      } : {}),
+      ...((!isNaN(lL) && lL > 0) || (!isNaN(lR) && lR > 0) ? {
+        legLengthCm: {
+          ...(!isNaN(lL) && lL > 0 ? { left: lL } : {}),
+          ...(!isNaN(lR) && lR > 0 ? { right: lR } : {}),
+        },
+      } : {}),
+    };
+    onSave(entry);
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide">
+      <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' }}>
+        <View style={{ backgroundColor: theme.surface, maxHeight: '88%' }}>
+          <View style={{ height: 4, width: 40, backgroundColor: Clr.white10, borderRadius: 2, alignSelf: 'center', marginTop: 12, marginBottom: 16 }} />
+          <View style={{ paddingHorizontal: 24, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: Clr.white5 }}>
+            <Text style={{ fontSize: Fs.xs, color: theme.selected, letterSpacing: 1.5, marginBottom: 4 }}>ANTHROPOMÉTRIE</Text>
+            <Text style={{ fontSize: 20, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', letterSpacing: -0.4 }}>PROFIL PHYSIQUE</Text>
+          </View>
+          <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 32, gap: 20 }}>
+            {/* Sexe */}
+            <View>
+              <Text style={{ fontSize: Fs.xs, color: theme.mute, letterSpacing: 1.5, marginBottom: 8 }}>SEXE</Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {([{ k: 'male', l: 'HOMME' }, { k: 'female', l: 'FEMME' }] as Array<{ k: 'male' | 'female'; l: string }>).map(opt => {
+                  const active = sex === opt.k;
+                  return (
+                    <Touch key={opt.k} onPress={() => setSex(opt.k)} style={{ flex: 1, height: 44, borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: active ? Clr.gold12 : Clr.white5, borderColor: active ? `${theme.selected}66` : Clr.white5 }}>
+                      <Text style={{ fontSize: Fs.sm, fontWeight: Fw.value, color: active ? theme.selected : theme.mute }}>{opt.l}</Text>
+                    </Touch>
+                  );
+                })}
+              </View>
+            </View>
+            {/* Date de naissance */}
+            <View>
+              <Text style={{ fontSize: Fs.xs, color: theme.mute, letterSpacing: 1.5, marginBottom: 8 }}>DATE DE NAISSANCE (AAAA-MM-JJ)</Text>
+              <TextInput style={{ height: 48, paddingHorizontal: 16, backgroundColor: theme.bg, color: theme.title, fontSize: Fs.md, borderWidth: 1, borderColor: Clr.white10 }} value={birthDate} onChangeText={setBirthDate} placeholder="1990-01-01" placeholderTextColor="rgba(128,128,128,0.5)" keyboardType="numeric" />
+            </View>
+            {/* Taille */}
+            <View>
+              <Text style={{ fontSize: Fs.xs, color: theme.mute, letterSpacing: 1.5, marginBottom: 8 }}>TAILLE (CM)</Text>
+              <TextInput style={{ height: 48, paddingHorizontal: 16, backgroundColor: theme.bg, color: theme.title, fontSize: Fs.md, borderWidth: 1, borderColor: Clr.white10 }} value={heightCm} onChangeText={setHeightCm} placeholder="175" placeholderTextColor="rgba(128,128,128,0.5)" keyboardType="decimal-pad" />
+            </View>
+            {/* Ossature */}
+            <View>
+              <Text style={{ fontSize: Fs.xs, color: theme.mute, letterSpacing: 1.5, marginBottom: 8 }}>OSSATURE</Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {([{ k: 'small', l: 'FINE' }, { k: 'medium', l: 'MOYENNE' }, { k: 'large', l: 'LARGE' }] as Array<{ k: 'small' | 'medium' | 'large'; l: string }>).map(opt => {
+                  const active = boneStructure === opt.k;
+                  return (
+                    <Touch key={opt.k} onPress={() => setBoneStructure(active ? undefined : opt.k)} style={{ flex: 1, height: 40, borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: active ? Clr.gold12 : Clr.white5, borderColor: active ? `${theme.selected}66` : Clr.white5 }}>
+                      <Text style={{ fontSize: Fs.xs, fontWeight: Fw.value, color: active ? theme.selected : theme.mute }}>{opt.l}</Text>
+                    </Touch>
+                  );
+                })}
+              </View>
+            </View>
+            {/* Longueur bras */}
+            <View>
+              <Text style={{ fontSize: Fs.xs, color: theme.mute, letterSpacing: 1.5, marginBottom: 8 }}>LONGUEUR BRAS (CM)</Text>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: Fs.xs, color: theme.mute, marginBottom: 6 }}>GAUCHE</Text>
+                  <TextInput style={{ height: 44, paddingHorizontal: 12, backgroundColor: theme.bg, color: theme.title, fontSize: Fs.md, borderWidth: 1, borderColor: Clr.white10 }} value={armLeft} onChangeText={setArmLeft} placeholder="--" placeholderTextColor="rgba(128,128,128,0.4)" keyboardType="decimal-pad" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: Fs.xs, color: theme.mute, marginBottom: 6 }}>DROITE</Text>
+                  <TextInput style={{ height: 44, paddingHorizontal: 12, backgroundColor: theme.bg, color: theme.title, fontSize: Fs.md, borderWidth: 1, borderColor: Clr.white10 }} value={armRight} onChangeText={setArmRight} placeholder="--" placeholderTextColor="rgba(128,128,128,0.4)" keyboardType="decimal-pad" />
+                </View>
+              </View>
+            </View>
+            {/* Longueur jambe */}
+            <View>
+              <Text style={{ fontSize: Fs.xs, color: theme.mute, letterSpacing: 1.5, marginBottom: 8 }}>LONGUEUR JAMBE (CM)</Text>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: Fs.xs, color: theme.mute, marginBottom: 6 }}>GAUCHE</Text>
+                  <TextInput style={{ height: 44, paddingHorizontal: 12, backgroundColor: theme.bg, color: theme.title, fontSize: Fs.md, borderWidth: 1, borderColor: Clr.white10 }} value={legLeft} onChangeText={setLegLeft} placeholder="--" placeholderTextColor="rgba(128,128,128,0.4)" keyboardType="decimal-pad" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: Fs.xs, color: theme.mute, marginBottom: 6 }}>DROITE</Text>
+                  <TextInput style={{ height: 44, paddingHorizontal: 12, backgroundColor: theme.bg, color: theme.title, fontSize: Fs.md, borderWidth: 1, borderColor: Clr.white10 }} value={legRight} onChangeText={setLegRight} placeholder="--" placeholderTextColor="rgba(128,128,128,0.4)" keyboardType="decimal-pad" />
+                </View>
+              </View>
+            </View>
+          </ScrollView>
+          <View style={{ paddingHorizontal: 24, paddingVertical: 16, borderTopWidth: 1, borderTopColor: Clr.white5, flexDirection: 'row', gap: 12 }}>
+            <Touch onPress={onClose} style={{ flex: 1, height: 48, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white10, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: Fs.sm, fontWeight: Fw.value, color: theme.mute }}>ANNULER</Text>
+            </Touch>
+            <Touch onPress={handleSave} style={{ flex: 1, height: 48, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: Fs.sm, fontWeight: Fw.value, color: '#000' }}>ENREGISTRER</Text>
+            </Touch>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function MensurationScreen() {
   const theme = useTheme();
   const { navigate } = useAppState() as any;
@@ -71,22 +234,19 @@ export default function MensurationScreen() {
 
   const measureStore = useMeasurementStore();
   const weightStore = useWeightStore();
+  const anthropoStore = useAnthropoProfileStore();
   const [weightInput, setWeightInput] = useState('');
 
   const [selectedPart, setSelectedPart] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');
-  const [gender] = useState('man');
-  const [age] = useState('30');
+  const [showProfileEditor, setShowProfileEditor] = useState(false);
+
+  // Derive sex/age from anthropo profile (fallback to safe defaults)
+  const profileSex: 'male' | 'female' = anthropoStore.latest?.sex ?? 'male';
+  const profileAge: number = anthropoStore.latest ? computeAge(anthropoStore.latest.birthDate) : 30;
 
   // A7: profile completeness check
-  const profileIncomplete = useMemo(() => {
-    try {
-      const raw = safeStorage.get('awan.nutrition.profile');
-      if (!raw) return true;
-      const p = JSON.parse(raw) as Record<string, unknown>;
-      return !p.heightCm || !p.age || !p.gender;
-    } catch { return true; }
-  }, []);
+  const profileIncomplete = !anthropoStore.loading && !anthropoStore.latest;
 
   // A6: create recurring anthropo planning tasks (idempotent)
   useEffect(() => {
@@ -217,12 +377,10 @@ export default function MensurationScreen() {
     const sorted = measureStore.history.slice().sort((a, b) => b.date.localeCompare(a.date));
     const last = sorted[0];
     if (!last) return null;
-    const profileRaw = safeStorage.get('awan.nutrition.profile');
-    const profile = profileRaw ? (() => { try { return JSON.parse(profileRaw); } catch { return {}; } })() : {};
-    const heightCm: number = typeof profile.heightCm === 'number' ? profile.heightCm : 0;
+    const heightCm: number = anthropoStore.latest?.heightCm ?? 0;
     if (!heightCm) return null;
-    const ageYears: number = typeof profile.age === 'number' ? profile.age : 30;
-    const sex: 'male' | 'female' = profile.gender === 'woman' ? 'female' : 'male';
+    const ageYears: number = profileAge;
+    const sex: 'male' | 'female' = profileSex;
     const hm = heightCm / 100;
     const waist: number | undefined = last.circumferences?.waist ? median(last.circumferences.waist) : undefined;
     const hip: number | undefined = last.circumferences?.hips ? median(last.circumferences.hips) : undefined;
@@ -271,7 +429,7 @@ export default function MensurationScreen() {
       return parseFloat((Math.max(...vals) - Math.min(...vals)).toFixed(1));
     })();
     return { ffmi, whr, whtr, navyBF, lbm, imcVal, ffmiNorm, bfRange, s13Total, bf13, bfJP7, bfDW4, ecartMax };
-  }, [measureStore.history]);
+  }, [measureStore.history, anthropoStore.latest, profileAge, profileSex]);
 
   // Dernière pesée connue (quand pas d'entrée WeightEntry pour la date sélectionnée)
   const lastKnownWeight = useMemo(() => {
@@ -314,8 +472,7 @@ export default function MensurationScreen() {
   }, [measureStore.loading, selectedDate]);
 
   const persistEntry = (entry: typeof blankEntry) => {
-    const profileRaw = safeStorage.get('awan.nutrition.profile');
-    const profileHeight = profileRaw ? (() => { try { return (JSON.parse(profileRaw) as any)?.heightCm as number | undefined; } catch { return undefined; } })() : undefined;
+    const profileHeight = anthropoStore.latest?.heightCm;
     const waist = entry.circumferences?.waist ? median(entry.circumferences.waist) : undefined;
     const hip = entry.circumferences?.hips ? median(entry.circumferences.hips) : undefined;
     const whtr = waist && profileHeight ? waist / profileHeight : undefined;
@@ -398,8 +555,8 @@ export default function MensurationScreen() {
       newEntry.skinfolds = { ...newEntry.skinfolds, [site as SkinfoldKey]: [v, v, v] as TrialTuple };
     }
     const sk = newEntry.skinfolds ?? {};
-    const a = parseInt(age);
-    const sex = gender === 'man' ? 'male' as const : 'female' as const;
+    const a = profileAge;
+    const sex = profileSex;
 
     // Each formula computed independently from its own sites only — no cascade, no coefficient correction
     const s13Total = ALL13_SITES.every(k => sk[k as SkinfoldKey] != null)
@@ -426,11 +583,11 @@ export default function MensurationScreen() {
         {/* A7: Non-blocking profile alert */}
         {profileIncomplete && (
           <Touch
-            onPress={() => navigate?.('settings')}
+            onPress={() => setShowProfileEditor(true)}
             style={[s.profileAlert, { borderColor: theme.statusWarn, backgroundColor: `${theme.statusWarn}14` }]}
           >
             <AlertTriangle size={14} color={theme.statusWarn} />
-            <Text style={[s.xsLabel, { color: theme.statusWarn, flex: 1 }]}>PROFIL INITIAL À COMPLÉTER →</Text>
+            <Text style={[s.xsLabel, { color: theme.statusWarn, flex: 1 }]}>PROFIL ANTHROPOMÉTRIQUE À COMPLÉTER →</Text>
           </Touch>
         )}
       </View>
@@ -476,8 +633,51 @@ export default function MensurationScreen() {
         </View>
       </View>
 
+      <ProfileEditorModal
+        visible={showProfileEditor}
+        existing={anthropoStore.latest}
+        onClose={() => setShowProfileEditor(false)}
+        onSave={(entry) => { void anthropoStore.save(entry); setShowProfileEditor(false); }}
+      />
+
       <ScrollView style={{ flex: 1, backgroundColor: theme.bg }} contentContainerStyle={{ paddingBottom: 120 }}>
         <View style={{ padding: 24 }}>
+          {/* Profil anthropométrique — raccourci édition */}
+          <View style={{ marginBottom: 32 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <Heading level={4} mono subtitle="Données fixes" style={{ marginBottom: 0 }}>PROFIL</Heading>
+              <Touch onPress={() => setShowProfileEditor(true)} style={{ paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: theme.selected, backgroundColor: Clr.gold12 }}>
+                <Text style={{ fontSize: Fs.xs, fontWeight: Fw.value, color: theme.selected, letterSpacing: 1 }}>ÉDITER</Text>
+              </Touch>
+            </View>
+            {anthropoStore.latest ? (
+              <Card variant="flat" style={{ padding: 16, flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+                <View style={{ minWidth: 80 }}>
+                  <Text style={{ fontSize: Fs.xs, color: theme.mute, letterSpacing: 1 }}>SEXE</Text>
+                  <Text style={{ fontSize: Fs.md, fontWeight: Fw.value, color: theme.title }}>{anthropoStore.latest.sex === 'male' ? 'HOMME' : 'FEMME'}</Text>
+                </View>
+                <View style={{ minWidth: 80 }}>
+                  <Text style={{ fontSize: Fs.xs, color: theme.mute, letterSpacing: 1 }}>ÂGE</Text>
+                  <Text style={{ fontSize: Fs.md, fontWeight: Fw.value, color: theme.title }}>{profileAge} ans</Text>
+                </View>
+                <View style={{ minWidth: 80 }}>
+                  <Text style={{ fontSize: Fs.xs, color: theme.mute, letterSpacing: 1 }}>TAILLE</Text>
+                  <Text style={{ fontSize: Fs.md, fontWeight: Fw.value, color: theme.title }}>{anthropoStore.latest.heightCm} cm</Text>
+                </View>
+                {anthropoStore.latest.boneStructure && (
+                  <View style={{ minWidth: 80 }}>
+                    <Text style={{ fontSize: Fs.xs, color: theme.mute, letterSpacing: 1 }}>OSSATURE</Text>
+                    <Text style={{ fontSize: Fs.md, fontWeight: Fw.value, color: theme.title }}>{anthropoStore.latest.boneStructure === 'small' ? 'FINE' : anthropoStore.latest.boneStructure === 'medium' ? 'MOYENNE' : 'LARGE'}</Text>
+                  </View>
+                )}
+              </Card>
+            ) : (
+              <Touch onPress={() => setShowProfileEditor(true)} style={{ padding: 16, borderWidth: 1, borderColor: Clr.white10, backgroundColor: Clr.white5, alignItems: 'center' }}>
+                <Text style={{ fontSize: Fs.sm, color: theme.mute }}>Aucun profil — Appuyer pour créer</Text>
+              </Touch>
+            )}
+          </View>
+
           {/* S2.1 — Évolution du poids (SVG inline) */}
           <View style={{ marginBottom: 40 }}>
             <View style={[s.rowBetween, { alignItems: 'flex-end', marginBottom: 16, paddingHorizontal: 4 }]}>
@@ -939,8 +1139,8 @@ export default function MensurationScreen() {
             {/* Matrice de suivi 3 formules */}
             {(() => {
               const sk = currentEntry.skinfolds ?? {};
-              const a = parseInt(age);
-              const sex = gender === 'man' ? 'male' as const : 'female' as const;
+              const a = profileAge;
+              const sex = profileSex;
               const s13Total = ALL13_SITES.every(k => sk[k as SkinfoldKey] != null)
                 ? ALL13_SITES.reduce((sum, k) => sum + median(sk[k as SkinfoldKey]!), 0) : 0;
               const bf13 = s13Total > 0 ? BiometricsService.skinfolds13(s13Total, a, sex) : null;

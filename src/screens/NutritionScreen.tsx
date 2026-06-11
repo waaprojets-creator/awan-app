@@ -95,8 +95,10 @@ function computeProfile(
  age: number,
  activity: Activity,
  goal: Goal,
+ sex: 'male' | 'female' = 'male',
 ): NutritionProfile {
- const bmr = 10 * weightKg + 6.25 * heightCm - 5 * age + 5;
+ // Mifflin-St Jeor: +5 for male, −161 for female
+ const bmr = 10 * weightKg + 6.25 * heightCm - 5 * age + (sex === 'male' ? 5 : -161);
  const tdee = bmr * ACTIVITY_FACTORS[activity];
  const goalDelta = goal === 'gain' ? 300 : goal === 'lose' ? -300 : 0;
  const targetKcal = Math.round(tdee + goalDelta);
@@ -215,6 +217,7 @@ function OnboardingModal({ onComplete }: OnboardingProps) {
  const [weight, setWeight] = useState('75');
  const [height, setHeight] = useState('175');
  const [age, setAge] = useState('25');
+ const [sex, setSex] = useState<'male' | 'female'>('male');
  const [activity, setActivity] = useState<Activity>('moderate');
  const [goal, setGoal] = useState<Goal>('maintain');
 
@@ -226,7 +229,7 @@ function OnboardingModal({ onComplete }: OnboardingProps) {
  Alert.alert('Erreur', 'Valeurs invalides');
  return;
  }
- const profile = computeProfile(w, h, a, activity, goal);
+ const profile = computeProfile(w, h, a, activity, goal, sex);
  saveProfile(profile);
  onComplete(profile);
  };
@@ -244,13 +247,26 @@ function OnboardingModal({ onComplete }: OnboardingProps) {
  <Text style={{ fontSize: 20, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', letterSpacing: -0.4 }}>
  {step === 1 && 'PROFIL BIOMÉTRIQUE'}
  {step === 2 && "NIVEAU D'ACTIVITÉ"}
- {step === 3 && 'OBJECTIF ÉNERGÉTIQUE'}
+ {step === 3 && "OBJECTIF ÉNERGÉTIQUE"}
  </Text>
  </View>
 
  <ScrollView style={{ maxHeight: 480 }} contentContainerStyle={{ padding: 24, paddingBottom: 32 }}>
  {step === 1 && (
  <View style={{ gap: 16 }}>
+ <View>
+ <Text style={[sn.label, { color: theme.mute, marginBottom: 8 }]}>SEXE</Text>
+ <View style={{ flexDirection: 'row', gap: 8 }}>
+ {([{ k: 'male', l: 'HOMME' }, { k: 'female', l: 'FEMME' }] as Array<{ k: 'male' | 'female'; l: string }>).map(opt => {
+ const active = sex === opt.k;
+ return (
+ <Touch key={opt.k} onPress={() => setSex(opt.k)} style={{ flex: 1, height: 44, borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: active ? Clr.gold12 : Clr.white5, borderColor: active ? `${theme.selected}66` : Clr.white5 }}>
+ <Text style={[sn.md, { color: active ? theme.selected : theme.mute }]}>{opt.l}</Text>
+ </Touch>
+ );
+ })}
+ </View>
+ </View>
  <View>
  <Text style={[sn.label, { color: theme.mute, marginBottom: 8 }]}>POIDS (KG)</Text>
  <TextInput style={[sn.field, { backgroundColor: theme.bg, color: theme.title }]} placeholder="75" placeholderTextColor="#6C665E" value={weight} onChangeText={setWeight} keyboardType="numeric" />
