@@ -392,7 +392,7 @@ export default function ScanTab() {
                   <Text style={[s.historyDate, { color: theme.selected }]}>
                     {m.date.slice(5).replace('-', '/')}
                   </Text>
-                  {w && <Text style={[s.historyWeight, { color: theme.mute }]}>{w.weightKg} KG</Text>}
+                  {w && <Text style={[s.historyWeight, { color: theme.mute }]}>{w.weight} KG</Text>}
                 </View>
                 <View style={s.historyValues}>
                   {bf13 !== null && (
