@@ -93,9 +93,9 @@ export function MetaboliqueTab() {
   return (
     <View style={{ gap: 32 }}>
       <WidgetInfo
-        id="W5"
-        title="ANALYSE MÉTABOLIQUE"
-        content="Régression linéaire calories vs vélocité pondérale (Trexler 2014). Détection de l'adaptation métabolique : si la pente s'aplatit à calories constantes, le TDEE a chuté (baisse du NEAT). Recommandation : refeed ou pause diète."
+        id="Wn5"
+        title="PILOTAGE MÉTABOLIQUE"
+        content="Dashboard circadien radial (1°=4min) : Zone 1 catabolisme (R<R_neutre), Zone 2 anabolisme optimal MPS (R_neutre<R<R_sat), Zone 3 saturation lipogénique (R>R_sat). Multi-échelles : 24h (donut) → 31j (barres dégradé bleu/rouge) → trimestriel. Bilan net = ∫(Anabolisme−Catabolisme)dt."
       />
       <View style={s.toggleRow}>
         {(['31j', '12s'] as ViewMode[]).map(m => (
