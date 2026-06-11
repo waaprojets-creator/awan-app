@@ -472,21 +472,28 @@ export default function MensurationScreen() {
   }, [measureStore.loading, selectedDate]);
 
   const persistEntry = (entry: typeof blankEntry) => {
-    const profileHeight = anthropoStore.latest?.heightCm;
+    const ap = anthropoStore.latest;
+    const profileHeight = ap?.heightCm;
     const waist = entry.circumferences?.waist ? median(entry.circumferences.waist) : undefined;
     const hip = entry.circumferences?.hips ? median(entry.circumferences.hips) : undefined;
     const whtr = waist && profileHeight ? waist / profileHeight : undefined;
     const whr = waist && hip ? waist / hip : undefined;
-    measureStore.save({
+    const wKg = getWeightKg(selectedDate);
+    const measureProfile = ap ? {
+      age: profileAge,
+      sex: profileSex,
+      heightCm: ap.heightCm,
+      ...(wKg > 0 ? { weightKg: wKg } : {}),
+    } : undefined;
+    void measureStore.save({
       v: 3 as const,
       savedAt: Date.now(),
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       ...entry,
       date: selectedDate,
-      s13_sum: null, bf_pct_jp7: null, bf_pct_dw4: null, ffmi: null,
       ...(whtr !== undefined ? { whtr } : {}),
       ...(whr !== undefined ? { whr } : {}),
-    });
+    }, measureProfile);
   };
 
   const handleAddEntry = () => {
