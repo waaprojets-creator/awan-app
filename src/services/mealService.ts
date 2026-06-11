@@ -11,7 +11,8 @@ function mealKey(id: string): string {
 export const MealService = {
   async getByDate(date: string): Promise<MealEntryLatest[]> {
     const storage = await getStorage();
-    const keys = await storage.listFiltered(MEAL_PREFIX, { date });
+    let keys = await storage.list(`${MEAL_PREFIX}.${date}`);
+    if (keys.length === 0) keys = await storage.listFiltered(MEAL_PREFIX, { date });
     const all = await Promise.all(keys.map(k => storage.get(k, migrateMealEntry)));
     return all
       .filter((e): e is MealEntryLatest => e !== null)
@@ -19,15 +20,8 @@ export const MealService = {
   },
 
   async getDailyTotals(date: string): Promise<{ kcal: number; p: number; c: number; f: number; fiberG: number }> {
-    const storage = await getStorage();
-    const [kcal, p, c, f, fiberG] = await Promise.all([
-      storage.aggregate(MEAL_PREFIX, 'kcal', 'SUM', { date }),
-      storage.aggregate(MEAL_PREFIX, 'p', 'SUM', { date }),
-      storage.aggregate(MEAL_PREFIX, 'c', 'SUM', { date }),
-      storage.aggregate(MEAL_PREFIX, 'f', 'SUM', { date }),
-      storage.aggregate(MEAL_PREFIX, 'fiberG', 'SUM', { date }),
-    ]);
-    return { kcal, p, c, f, fiberG };
+    const entries = await MealService.getByDate(date);
+    return MealService.totals(entries);
   },
 
   async save(entry: MealEntryLatest): Promise<void> {

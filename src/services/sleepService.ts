@@ -19,8 +19,11 @@ export const SleepService = {
   },
 
   async getByDate(date: string): Promise<SleepEntryLatest | null> {
-    const all = await SleepService.getAll();
-    return all.find(e => e.date === date) ?? null;
+    const storage = await getStorage();
+    let keys = await storage.list(`${SLEEP_PREFIX}.${date}`);
+    if (keys.length === 0) keys = await storage.list(SLEEP_PREFIX);
+    const all = await Promise.all(keys.map(k => storage.get(k, migrateSleepEntry)));
+    return all.filter((e): e is SleepEntryLatest => e !== null && e.date === date)[0] ?? null;
   },
 
   async getLast7Days(): Promise<SleepEntryLatest[]> {
