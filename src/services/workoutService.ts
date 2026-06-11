@@ -53,13 +53,25 @@ export const WorkoutService = {
 
   async getSessionsByDateRange(from: string, to: string): Promise<WorkoutSessionLatest[]> {
     const storage = await getStorage();
-    const keys = await storage.listByPrefix(SESSION_PREFIX);
+    const allKeys = await storage.listByPrefix(SESSION_PREFIX);
     const results: WorkoutSessionLatest[] = [];
-    for (const key of keys) {
+    for (const key of allKeys) {
       const s = await storage.get(key, migrateWorkoutSession);
       if (s && s.date >= from && s.date <= to) results.push(s);
     }
     return results.sort((a, b) => a.date.localeCompare(b.date));
+  },
+
+  async getSessionsByDate(date: string): Promise<WorkoutSessionLatest[]> {
+    const storage = await getStorage();
+    let keys = await storage.list(`${SESSION_PREFIX}.${date}`);
+    if (keys.length === 0) keys = await storage.listFiltered(SESSION_PREFIX, { date });
+    const results: WorkoutSessionLatest[] = [];
+    for (const key of keys) {
+      const s = await storage.get(key, migrateWorkoutSession);
+      if (s) results.push(s);
+    }
+    return results.sort((a, b) => a.startTime - b.startTime);
   },
 
   async getLastSessionByRoutine(routineId: string): Promise<WorkoutSessionLatest | null> {
@@ -83,7 +95,7 @@ export const WorkoutService = {
       durationMin,
       rpe: session.sessionRPE,
     };
-    await storage.set(`${SESSION_PREFIX}.${session.id}`, enriched);
+    await storage.set(`${SESSION_PREFIX}.${session.date}.${session.id}`, enriched);
     eventBus.emit('workout.completed', { workoutId: session.id, date: session.date });
   },
 
