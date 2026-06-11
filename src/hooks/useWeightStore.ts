@@ -25,8 +25,8 @@ export function useWeightStore() {
   const add = useCallback(async (entry: WeightEntryLatest): Promise<void> => {
     try {
       await WeightService.save(entry);
-      eventBus.emit('measurement.recorded', { measurementId: entry.id, date: entry.date });
-      setEntries(prev => [entry, ...prev.filter(e => e.id !== entry.id)]
+      eventBus.emit('measurement.recorded', { measurementId: entry.date, date: entry.date });
+      setEntries(prev => [entry, ...prev.filter(e => e.date !== entry.date)]
         .sort((a, b) => b.date.localeCompare(a.date)));
     } catch (err) {
       if (err instanceof DbFullError) { dispatchDbFull(); return; }
@@ -37,9 +37,9 @@ export function useWeightStore() {
   const update = useCallback(async (entry: WeightEntryLatest): Promise<void> => {
     try {
       await WeightService.save(entry);
-      eventBus.emit('measurement.recorded', { measurementId: entry.id, date: entry.date });
+      eventBus.emit('measurement.recorded', { measurementId: entry.date, date: entry.date });
       setEntries(prev =>
-        prev.map(e => e.id === entry.id ? entry : e)
+        prev.map(e => e.date === entry.date ? entry : e)
           .sort((a, b) => b.date.localeCompare(a.date)),
       );
     } catch (err) {
@@ -48,9 +48,9 @@ export function useWeightStore() {
     }
   }, []);
 
-  const remove = useCallback(async (id: string): Promise<void> => {
-    await WeightService.delete(id);
-    setEntries(prev => prev.filter(e => e.id !== id));
+  const remove = useCallback(async (date: string): Promise<void> => {
+    await WeightService.delete(date);
+    setEntries(prev => prev.filter(e => e.date !== date));
   }, []);
 
   const avg7d = useMemo(() => WeightService.getAvg7d(entries), [entries]);

@@ -162,7 +162,7 @@ export default function MensurationScreen() {
   // Helper : poids le plus récent ≤ date (depuis weightStore)
   const getWeightKg = useMemo(() => (date: string): number => {
     const sorted = weightStore.entries.filter(e => e.date <= date).sort((a, b) => b.date.localeCompare(a.date));
-    return sorted[0]?.weightKg ?? 0;
+    return sorted[0]?.weight ?? 0;
   }, [weightStore.entries]);
 
   // S2.1 — Données du graphique filtrées par fenêtre temporelle
@@ -187,7 +187,7 @@ export default function MensurationScreen() {
       if (new Date(e.date).getTime() <= sevenDaysAgo) baseline = e;
     }
     if (!baseline || baseline.date === last.date) return null;
-    return { delta: last.weightKg - baseline.weightKg, current: last.weightKg };
+    return { delta: last.weight - baseline.weight, current: last.weight };
   }, [weightStore.entries]);
 
   // S2.3 — Progression vers le poids cible
@@ -276,7 +276,7 @@ export default function MensurationScreen() {
     const last = sorted[0];
     const diffMs = new Date(selectedDate).getTime() - new Date(last.date).getTime();
     const diffDays = Math.round(diffMs / (24 * 60 * 60 * 1000));
-    return { weight: last.weightKg, daysAgo: diffDays };
+    return { weight: last.weight, daysAgo: diffDays };
   }, [weightStore.entries, selectedDate]);
 
   // S2.4 — Suppression mesure
@@ -345,9 +345,9 @@ export default function MensurationScreen() {
     if (isNaN(w) || w <= 0) return;
     const existing = weightStore.entries.find(e => e.date === selectedDate);
     if (existing) {
-      void weightStore.update({ ...existing, weightKg: w });
+      void weightStore.update({ ...existing, weight: w });
     } else {
-      void weightStore.add({ v: 1 as const, id: uid(), date: selectedDate, timestamp: Date.now(), weightKg: w });
+      void weightStore.add({ v: 2 as const, date: selectedDate, savedAt: Date.now(), weight: w, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
     }
   };
 
@@ -406,7 +406,7 @@ export default function MensurationScreen() {
             <TextInput
               style={[s.bigInput, { color: theme.title, width: 80, textAlign: 'center' }]}
               keyboardType="numeric"
-              value={currentWeightEntry?.weightKg?.toString() ?? ''}
+              value={currentWeightEntry?.weight?.toString() ?? ''}
               onChangeText={updateWeight}
               placeholder={lastKnownWeight ? lastKnownWeight.weight.toString() : '00.0'}
               placeholderTextColor={lastKnownWeight ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.1)'}
@@ -462,7 +462,7 @@ export default function MensurationScreen() {
               ) : (() => {
                 const ws = weightSeries;
                 const xs = ws.map(e => new Date(e.date).getTime());
-                const ys = ws.map(e => e.weightKg);
+                const ys = ws.map(e => e.weight);
                 const minX = Math.min(...xs);
                 const maxX = Math.max(...xs);
                 const minY = Math.min(...ys);
@@ -550,7 +550,7 @@ export default function MensurationScreen() {
             <Heading level={4} mono subtitle="Suivi quotidien" style={{ marginBottom: 24 }}>POIDS DU JOUR</Heading>
             <Card variant="flat" style={[s.cardFlat, { padding: 20 }]}>
               <View style={[s.row, { gap: 16, marginBottom: 16 }]}>
-                <TextInput style={[s.bigInput, { color: theme.title, width: 96 }]} keyboardType="numeric" value={weightInput} onChangeText={setWeightInput} placeholder={weightStore.todayEntry ? String(weightStore.todayEntry.weightKg) : '00.0'} placeholderTextColor="rgba(255,255,255,0.2)" />
+                <TextInput style={[s.bigInput, { color: theme.title, width: 96 }]} keyboardType="numeric" value={weightInput} onChangeText={setWeightInput} placeholder={weightStore.todayEntry ? String(weightStore.todayEntry.weight) : '00.0'} placeholderTextColor="rgba(255,255,255,0.2)" />
                 <Text style={[s.unit, { color: theme.mute }]}>KG</Text>
                 <Touch
                   onPress={async () => {
@@ -559,8 +559,8 @@ export default function MensurationScreen() {
                     const today = ds(new Date());
                     const existing = weightStore.todayEntry;
                     const entry = existing
-                      ? { ...existing, weightKg: w, timestamp: Date.now() }
-                      : { v: 1 as const, id: uid(), date: today, timestamp: Date.now(), weightKg: w };
+                      ? { ...existing, weight: w, savedAt: Date.now() }
+                      : { v: 2 as const, date: today, savedAt: Date.now(), weight: w, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone };
                     await weightStore.add(entry);
                     setWeightInput('');
                   }}

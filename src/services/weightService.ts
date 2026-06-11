@@ -4,8 +4,8 @@ import type { WeightEntryLatest } from '@/data/schemas/body/weightEntry';
 
 const WEIGHT_PREFIX = 'weight.entry';
 
-function weightKey(id: string): string {
-  return `${WEIGHT_PREFIX}.${id}`;
+function weightKey(date: string): string {
+  return `${WEIGHT_PREFIX}.${date}`;
 }
 
 export const WeightService = {
@@ -25,12 +25,12 @@ export const WeightService = {
 
   async save(entry: WeightEntryLatest): Promise<void> {
     const storage = await getStorage();
-    await storage.set(weightKey(entry.id), entry);
+    await storage.set(weightKey(entry.date), entry);
   },
 
-  async delete(id: string): Promise<void> {
+  async delete(date: string): Promise<void> {
     const storage = await getStorage();
-    await storage.delete(weightKey(id));
+    await storage.delete(weightKey(date));
   },
 
   getAvg7d(entries: WeightEntryLatest[], refDate?: Date): number {
@@ -40,6 +40,6 @@ export const WeightService = {
     const cutoffStr = cutoff.toISOString().slice(0, 10);
     const recent = entries.filter(e => e.date >= cutoffStr);
     if (recent.length === 0) return 0;
-    return recent.reduce((acc, e) => acc + e.weightKg, 0) / recent.length;
+    return recent.reduce((acc, e) => acc + e.weight, 0) / recent.length;
   },
 };

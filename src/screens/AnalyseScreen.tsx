@@ -285,7 +285,7 @@ export default function AnalyseScreen() {
           if (entry && entry.date <= m.date) { w = entry; lo = mid + 1; }
           else hi = mid - 1;
         }
-        return { label: format(parseISO(m.date), 'dd/MM'), weight: w?.weightKg ?? null };
+        return { label: format(parseISO(m.date), 'dd/MM'), weight: w?.weight ?? null };
       });
   }, [measureStore.history, weightStore.entries, interval]);
 
@@ -294,7 +294,7 @@ export default function AnalyseScreen() {
     const latest = sorted.at(-1) ?? null;
     const prev = sorted.at(-2) ?? null;
     const wt = latest && prev
-      ? latest.weightKg > prev.weightKg ? 'up' : latest.weightKg < prev.weightKg ? 'down' : 'stable'
+      ? latest.weight > prev.weight ? 'up' : latest.weight < prev.weight ? 'down' : 'stable'
       : null;
     setAiLoading(true);
     LocalAIService.generateZenSummary({
@@ -302,12 +302,12 @@ export default function AnalyseScreen() {
       prayersDone: prayerStore.doneCount,
       prayersTotal: prayerStore.total,
       lastWorkoutName: workoutStore.sessions.at(-1)?.name ?? null,
-      weightKg: latest?.weightKg ?? null,
+      weightKg: latest?.weight ?? null,
       weightTrend: wt,
     }).then(s => { setAiSummary(s); setAiLoading(false); });
   }, [weightStore.entries, mealsByDay, workoutStore.sessions, prayerStore.doneCount]);
 
-  const bodyWeightKg = weightStore.avg7d ?? weightStore.entries[0]?.weightKg ?? null;
+  const bodyWeightKg = weightStore.avg7d ?? weightStore.entries[0]?.weight ?? null;
 
   const activityData = useMemo(() => {
     const workoutMins = workoutStore.sessions
@@ -379,7 +379,7 @@ export default function AnalyseScreen() {
                   prayersDone: prayerStore.doneCount,
                   prayersTotal: prayerStore.total,
                   lastWorkoutName: workoutStore.sessions.at(-1)?.name ?? null,
-                  weightKg: weightStore.entries.at(-1)?.weightKg ?? null,
+                  weightKg: weightStore.entries.at(-1)?.weight ?? null,
                 }).then(s => { setAiSummary(s); setAiLoading(false); });
               }}
             />

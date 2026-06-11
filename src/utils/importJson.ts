@@ -89,7 +89,7 @@ export async function importFromJson(raw: string): Promise<{ success: boolean; m
         try { const m = migrateMeasurement(item) as MeasurementLatest; await tx.set(`anthropo.measurement.${m.date}`, m); nMeasurements++; } catch { /* skip */ }
       }
       for (const item of data.weightEntries ?? []) {
-        try { const w = migrateWeightEntry(item) as WeightEntryLatest; await tx.set(`weight.entry.${w.id}`, w); nWeights++; } catch { /* skip */ }
+        try { const w = migrateWeightEntry(item) as WeightEntryLatest; await tx.set(`weight.entry.${w.date}`, w); nWeights++; } catch { /* skip */ }
       }
       for (const item of data.meals ?? []) {
         try { const m = migrateMealEntry(item) as MealEntryLatest; await tx.set(`nutrition.meal.${m.id}`, m); nMeals++; } catch { /* skip */ }
