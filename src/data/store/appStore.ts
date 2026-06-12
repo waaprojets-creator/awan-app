@@ -37,6 +37,7 @@ interface AppState {
   unlock: () => void;
   lock: () => void;
   setReady: () => void;
+  applyHydratedSettings: () => void;
   toggleTheme: () => void;
   setTheme: (mode: Theme) => void;
   setJitFactor: (v: number) => void;
@@ -47,7 +48,9 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set) => ({
   isUnlocked: false,
-  ready: true,
+  // ready démarre false : on attend l'hydratation durable (safeStorage memCache ← IStorage)
+  // avant le premier rendu, sinon theme/jit s'affichent avec le défaut puis sautent.
+  ready: false,
   theme: savedTheme(),
   jitFactor: savedJitFactor(),
   isOfflineForced: false,
@@ -56,6 +59,14 @@ export const useAppStore = create<AppState>((set) => ({
   unlock: () => set({ isUnlocked: true }),
   lock:   () => set({ isUnlocked: false }),
   setReady: () => set({ ready: true }),
+  // Appelé une fois après hydrateSafeStorage() : relit les prefs désormais durables
+  // depuis le memCache hydraté et débloque le rendu. Toujours passer ready=true (même si défauts).
+  applyHydratedSettings: () => set({
+    theme: savedTheme(),
+    jitFactor: savedJitFactor(),
+    showNetworkBanner: savedNetworkBanner(),
+    ready: true,
+  }),
   bumpDataVersion: () => set((s) => ({ dataVersion: s.dataVersion + 1 })),
   toggleTheme: () => set((s) => {
     const cycle: Theme[] = ['light', 'dark', 'black'];

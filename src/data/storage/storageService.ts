@@ -1,6 +1,5 @@
 import { Platform } from 'react-native';
 import type { IStorage } from './IStorage';
-import { safeStorage } from '../../utils/safeStorage';
 
 // Stub retained for API compat (LockScreen imports it); encryption handled by OS on expo-sqlite
 export async function initStorageEncryption(): Promise<void> {}
@@ -38,7 +37,9 @@ async function createStorage(role: 'app' | 'user'): Promise<IStorage> {
  * new 'awan-user-*' DB. Runs at most once, marked by safeStorage flag.
  */
 async function migrateLegacyData(userStorage: IStorage): Promise<void> {
-  if (safeStorage.get(MIGRATION_FLAG) === '1') return;
+  // Flag persisté dans le user DB (pas safeStorage) → durable sur natif, ne re-migre pas à chaque boot.
+  const flag = await userStorage.get<string>(MIGRATION_FLAG, (raw) => String(raw));
+  if (flag === '1') return;
   try {
     let legacyKeys: string[] = [];
     let legacyGet: ((key: string) => Promise<unknown>) | null = null;
@@ -64,7 +65,7 @@ async function migrateLegacyData(userStorage: IStorage): Promise<void> {
       }
       await deleteIndexedDB('awan-kv').catch(() => undefined);
     }
-    safeStorage.set(MIGRATION_FLAG, '1');
+    await userStorage.set(MIGRATION_FLAG, '1');
   } catch {
     /* migration silent — données legacy probablement absentes */
   }

@@ -10,6 +10,7 @@ import LockScreen from '@/screens/LockScreen';
 import MainLayout from '@/components/MainLayout';
 import { importFromJson } from '@/utils/importJson';
 import { getStorage } from '@/data/storage/storageService';
+import { hydrateSafeStorage } from '@/utils/safeStorage';
 
 // Flag stocké dans le même storage (SQLite/IndexedDB) que les données.
 // Si la base est vidée (réinstall, clear data), le flag l'est aussi → re-seed automatique.
@@ -52,6 +53,11 @@ function Root() {
   const { isUnlocked, ready } = useAppStore();
   useThemeSync();
   useDayBoundary();
+
+  // Hydrate le stockage durable (memCache ← IStorage) puis applique les prefs et débloque le rendu.
+  useEffect(() => {
+    hydrateSafeStorage().finally(() => useAppStore.getState().applyHydratedSettings());
+  }, []);
 
   useEffect(() => {
     if (!isUnlocked) return;
