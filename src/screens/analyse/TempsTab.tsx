@@ -38,6 +38,7 @@ import type { WorkoutSessionLatest } from '@/data/schemas/sport/routine';
 import { ds } from '@/utils/storage';
 import { Planner } from '@/modules/planning/api';
 import type { ScheduleTaskLatest } from '@/data/schemas/planning/scheduleTask';
+import { migrateDaySchedule, type DayScheduleLatest } from '@/data/schemas/planning/daySchedule';
 import { useTheme, type AwanTheme } from '@/hooks/useTheme';
 import { FontMono } from '@/constants/typography';
 
@@ -75,7 +76,8 @@ interface AllData {
   sleepByDate: Record<string, SleepEntryLatest>;
   mealsByDate: Record<string, MealEntryLatest[]>;
   prayersByDate: Record<string, PrayerLogLatest>;
-  weeklyProductionH: number; // tasks timeCategory='production', spread evenly per day
+  scheduleByDate: Record<string, DayScheduleLatest>;
+  taskMap: Record<string, ScheduleTaskLatest>;
 }
 
 // ─── Layer definitions ────────────────────────────────────────────────────────
@@ -118,8 +120,17 @@ function computeDayLayers(date: string, data: AllData): DayLayers {
   const meals = data.mealsByDate[date] ?? [];
   const nutritionH = meals.length * 0.5;
 
-  // Distribute weekly production budget evenly — tasks lack intrinsic dates in V3
-  const travailH = parseFloat((data.weeklyProductionH / 7).toFixed(2));
+  const schedule = data.scheduleByDate[date];
+  let travailH = 0;
+  if (schedule) {
+    schedule.slots.forEach(slot => {
+      const task = data.taskMap[slot.taskId];
+      if (task?.timeCategory === 'production') {
+        travailH += (slot.endMin - slot.startMin) / 60;
+      }
+    });
+    travailH = parseFloat(travailH.toFixed(2));
+  }
 
   const daySessions = data.sessions.filter(s => s.date === date);
   const sportH = daySessions.reduce((sum, s) => sum + s.duration / 3600, 0);
@@ -181,6 +192,20 @@ function computeDaySlots(date: string, data: AllData): DaySlot[] {
       const durationMin = Math.round(s.duration / 60);
       slots.push({ startMin, durationMin, layer: 'sport' });
     });
+
+  // Work slots from planning.schedule (real booked slots)
+  const schedule = data.scheduleByDate[date];
+  if (schedule) {
+    schedule.slots.forEach(slot => {
+      const task = data.taskMap[slot.taskId];
+      if (!task) return;
+      const layer: LayerKey =
+        task.timeCategory === 'production' ? 'travail' :
+        task.timeCategory === 'friction'   ? 'trajet'  :
+        task.timeCategory === 'somatique'  ? 'sport'   : 'libre';
+      slots.push({ startMin: slot.startMin, durationMin: slot.endMin - slot.startMin, layer });
+    });
+  }
 
   return slots;
 }
@@ -800,9 +825,18 @@ export default function TempsTab() {
         ]);
         const planner = new Planner(storage);
         const allTasks = await planner.getActiveTasks();
-        const weeklyProductionH = allTasks
-          .filter(t => t.status === 'active' && t.timeCategory === 'production')
-          .reduce((sum, t) => sum + (t.durationMin ?? 0) / 60, 0);
+
+        // Build task lookup map for schedule slot resolution
+        const taskMap: Record<string, ScheduleTaskLatest> = {};
+        allTasks.forEach(t => { taskMap[t.id] = t; });
+
+        // Load real per-day schedules from planning.schedule silo
+        const scheduleKeys = await storage.list('planning.schedule');
+        const scheduleEntries = await Promise.all(
+          scheduleKeys.map(k => storage.get(k, migrateDaySchedule)),
+        );
+        const scheduleByDate: Record<string, DayScheduleLatest> = {};
+        scheduleEntries.forEach(e => { if (e) scheduleByDate[e.date] = e; });
 
         const sleepByDate: Record<string, SleepEntryLatest> = {};
         sleepEntries.forEach(e => { sleepByDate[e.date] = e; });
@@ -831,7 +865,7 @@ export default function TempsTab() {
         });
 
         if (!active) return;
-        setAllData({ sessions, sleepByDate, mealsByDate, prayersByDate, weeklyProductionH });
+        setAllData({ sessions, sleepByDate, mealsByDate, prayersByDate, scheduleByDate, taskMap });
       } catch (_) {
         // silently fail — show empty state
       } finally {
@@ -846,7 +880,7 @@ export default function TempsTab() {
   const period = computePeriod(view, offset);
 
   const emptyAllData: AllData = {
-    sessions: [], sleepByDate: {}, mealsByDate: {}, prayersByDate: {}, weeklyProductionH: 0,
+    sessions: [], sleepByDate: {}, mealsByDate: {}, prayersByDate: {}, scheduleByDate: {}, taskMap: {},
   };
   const dayLayersList: DayLayers[] = period.days.map(date =>
     computeDayLayers(date, allData ?? emptyAllData),

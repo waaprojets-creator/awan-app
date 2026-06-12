@@ -335,7 +335,7 @@ export default function AnalyseScreen() {
   const activityData = useMemo(() => {
     const workoutMins = workoutStore.sessions
       .filter(s => { const d = parseISO(s.date); return d >= interval.start && d <= interval.end; })
-      .reduce((acc, s) => acc + ((s as any).durationMin ?? 60), 0);
+      .reduce((acc, s) => acc + (s.durationMin ?? 0), 0);
     const sleepMins = sleepEntries
       .filter(e => { const d = parseISO(e.date); return d >= interval.start && d <= interval.end; })
       .reduce((acc, e) => acc + Math.round(e.durationH * 60), 0);
