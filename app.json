@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "AWAN",
+    "name": "أوان",
     "slug": "awan-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,7 +13,11 @@
       "package": "com.awan.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0A0A0A"
+        "backgroundImage": "./assets/adaptive-icon-bg-transparent.png"
+      },
+      "notification": {
+        "icon": "./assets/adaptive-icon.png",
+        "color": "#D4AF37"
       }
     },
     "plugins": ["expo-sqlite", "expo-notifications", "expo-secure-store"]

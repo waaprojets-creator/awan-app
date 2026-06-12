@@ -777,7 +777,7 @@ export default function PlanningScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+    <View style={{ flex: 1, backgroundColor: theme.bg }}>
       <View style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 4 }}>
         <View style={[sp.rowBetween, { alignItems: 'baseline' }]}>
           <View style={{ flex: 1 }}>
@@ -809,12 +809,12 @@ export default function PlanningScreen() {
         {subTab === 6 && renderAnalyse()}
       </Animated.View>
       <View style={{ paddingHorizontal: 24, paddingBottom: 96, flexDirection: 'row', gap: 16, marginTop: 'auto' }}>
-        <Card variant="flat" style={[sp.row, { flex: 1, gap: 16, paddingVertical: 24, paddingHorizontal: 24, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white5 }]}>
+        <Card variant="flat" style={[sp.row, { flex: 1, gap: 16, paddingVertical: 24, paddingHorizontal: 24, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border }]}>
           <View style={{ width: 40, height: 40, backgroundColor: Clr.gold10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Clr.gold20 }}><Zap size={18} color={theme.selected} /></View>
           <View><Text style={{ fontSize: 24, fontWeight: Fw.display, color: theme.title }}>{eventsForDate(db, ds(new Date())).length}</Text><Text style={[sp.sm, { color: theme.mute, fontFamily: FontMono }]}>Auj.</Text></View>
         </Card>
-        <Card variant="flat" style={[sp.row, { flex: 1, gap: 16, paddingVertical: 24, paddingHorizontal: 24, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white5 }]}>
-          <View style={{ width: 40, height: 40, backgroundColor: Clr.white5, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Clr.white10 }}><Layers size={18} color={theme.mute} /></View>
+        <Card variant="flat" style={[sp.row, { flex: 1, gap: 16, paddingVertical: 24, paddingHorizontal: 24, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border }]}>
+          <View style={{ width: 40, height: 40, backgroundColor: theme.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.border }}><Layers size={18} color={theme.mute} /></View>
           <View><Text style={{ fontSize: 24, fontWeight: Fw.display, color: theme.title }}>{(db?.tasks || []).filter((t: any) => !t.done).length}</Text><Text style={[sp.sm, { color: theme.mute, fontFamily: FontMono }]}>Tâches</Text></View>
         </Card>
       </View>

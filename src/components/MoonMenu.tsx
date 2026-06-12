@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Modal, Pressable, Platform, View, Text, StyleSheet, useWindowDimensions } from 'react-native';
+import { Modal, Pressable, Platform, View, Text, StyleSheet, useWindowDimensions, Vibration } from 'react-native';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Svg, { Circle, Line, G, Text as SvgText, Path } from 'react-native-svg';
 import { L } from '../constants/labels';
 import { safeStorage } from '../utils/safeStorage';
@@ -147,7 +148,8 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
     return { textX: Math.max(MARGIN, cx - gap), textY: cy + 3, anchor: 'end' as const };
   }
 
-  // Drag — web only (mouse/touch events not available on RN SVG elements)
+  // Drag web : événements souris/touch DOM sur les <G> du SVG.
+  // Drag natif : Gesture.Pan (appui long) sur des cibles absolues — voir editDragTargets.
   function onDragStart(nodeId: string, mx: number, my: number) {
     if (!editMode || Platform.OS !== 'web') return;
     const node = resolvedNodes.find(nd => nd.id === nodeId)!;
@@ -196,6 +198,9 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
         animationType="fade"
         onRequestClose={() => { if (editMode) cancelEdit(); else setIsOpen(false); }}
       >
+        {/* Racine gesture-handler dédiée : le Modal Android vit dans une racine
+            native séparée — sans elle, Gesture.Pan ne reçoit aucun événement. */}
+        <GestureHandlerRootView style={{ flex: 1 }}>
         <View
           style={[s.overlay, { backgroundColor: editMode ? theme.overlayDeep : 'rgba(0,0,0,0.88)' }]}
           {...webDragHandlers}
@@ -307,6 +312,45 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
             );
           })}
 
+          {/* Cibles drag natives — mode édition : appui long (vibration) puis glisser.
+              Même pattern que DraggableEvent (Planning) ; translation cumulée depuis
+              le début du geste, position de départ figée dans dragStart. */}
+          {Platform.OS !== 'web' && editMode && resolvedNodes.map(node => {
+            const cx = (node.x / 100) * W;
+            const cy = (node.y / 100) * CH;
+            const pan = Gesture.Pan()
+              .runOnJS(true)
+              .activateAfterLongPress(400)
+              .onStart(() => {
+                Vibration.vibrate(50);
+                dragStart.current = { mx: 0, my: 0, nx: node.x, ny: node.y };
+                setDraggingId(node.id);
+              })
+              .onUpdate((e) => {
+                const st = dragStart.current;
+                if (!st) return;
+                const dx = (e.translationX / W) * 100;
+                const dy = (e.translationY / CH) * 100;
+                setNodePositions(prev => ({
+                  ...prev,
+                  [node.id]: {
+                    x: Math.max(4, Math.min(96, st.nx + dx)),
+                    y: Math.max(4, Math.min(96, st.ny + dy)),
+                  },
+                }));
+              })
+              .onEnd(() => onDragEnd())
+              .onFinalize(() => onDragEnd());
+            return (
+              <GestureDetector key={`drag-${node.id}`} gesture={pan}>
+                <View
+                  accessibilityLabel={`Déplacer ${node.label}`}
+                  style={{ position: 'absolute', left: cx - HIT / 2, top: cy - HIT / 2, width: HIT, height: HIT }}
+                />
+              </GestureDetector>
+            );
+          })}
+
           {editMode && (
             <View style={s.editHeader}>
               <Pressable
@@ -326,7 +370,7 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
           {editMode && (
             <View style={s.editHint}>
               <Text style={[s.editHintText, { color: theme.text }]}>
-                GLISSER LES NŒUDS POUR REPOSITIONNER
+                {Platform.OS === 'web' ? 'GLISSER LES NŒUDS POUR REPOSITIONNER' : 'APPUI LONG SUR UN NŒUD PUIS GLISSER'}
               </Text>
             </View>
           )}
@@ -343,6 +387,7 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
             </View>
           </Pressable>
         </View>
+        </GestureHandlerRootView>
       </Modal>
 
       {/* Bouton trigger — absolu dans le wrapper MainLayout (visible menu fermé) */}

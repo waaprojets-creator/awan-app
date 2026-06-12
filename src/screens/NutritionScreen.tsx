@@ -889,7 +889,7 @@ export default function NutritionScreen() {
 
  if (showOnboarding) {
  return (
- <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+ <View style={{ flex: 1, backgroundColor: theme.bg }}>
  <View style={{ flex: 1 }} />
  <OnboardingModal onComplete={(p) => { setProfile(p); setShowOnboarding(false); }} />
  </View>
@@ -897,7 +897,7 @@ export default function NutritionScreen() {
  }
 
  return (
- <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+ <View style={{ flex: 1, backgroundColor: theme.bg }}>
  <ScrollView contentContainerStyle={{ paddingBottom: 120 }} style={{ flex: 1, backgroundColor: theme.bg }} showsVerticalScrollIndicator={false}>
  <View style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 16 }}>
  <ScreenHeader tag="BODY · NUTRITION" title="NUTRITION" />

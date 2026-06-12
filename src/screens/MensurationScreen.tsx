@@ -572,7 +572,7 @@ export default function MensurationScreen() {
   const currentBpmRest = currentWeightEntry?.bpm_rest ?? 0;
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+    <View style={{ flex: 1, backgroundColor: theme.bg }}>
       <View style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 8 }}>
         <ScreenHeader tag="BODY · MENSURATION" title="DÉTAILS PHYSIQUES" />
         {/* A7: Non-blocking profile alert */}

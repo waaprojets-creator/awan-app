@@ -12,7 +12,7 @@ import type { ForecastLatest } from '../data/schemas/coach/forecast';
 import type { Domain, Severity } from '../data/schemas/coach/rule';
 import type { NavProps } from '../types/nav';
 import { FontSans, FontMono } from '../constants/typography';
-import { Fs, Fw, T } from '../theme/tokens';
+import { Fs, Fw, T, Clr } from '../theme/tokens';
 
 type TabKey = 'sport' | 'nutrition' | 'anthropo' | 'cross';
 
@@ -30,12 +30,12 @@ interface SeverityStyle {
   color: string;
 }
 
-function getSeverityStyles(t: Pick<AwanTheme, 'selected'>): Record<Severity, SeverityStyle> {
+function getSeverityStyles(t: Pick<AwanTheme, 'selected' | 'statusOk' | 'statusWarn'>): Record<Severity, SeverityStyle> {
   return {
     info:  { Icon: Info,          color: t.selected },
-    good:  { Icon: CheckCircle2,  color: '#22C55E' },
-    warn:  { Icon: AlertTriangle, color: '#FBBF24' },
-    alert: { Icon: AlertOctagon,  color: '#EF4444' },
+    good:  { Icon: CheckCircle2,  color: t.statusOk },
+    warn:  { Icon: AlertTriangle, color: t.statusWarn },
+    alert: { Icon: AlertOctagon,  color: Clr.alert },
   };
 }
 
@@ -180,10 +180,10 @@ export default function CoachScreen(_props: NavProps): React.ReactElement {
             const triggeredAdvices = assessment.advices;
             if (triggeredAdvices.length === 0) {
               return (
-                <View key={assessment.id} style={[s.card, { borderColor: '#22C55E33', backgroundColor: '#22C55E0D' }]}>
-                  <CheckCircle2 size={20} color="#22C55E" />
+                <View key={assessment.id} style={[s.card, { borderColor: `${theme.statusOk}33`, backgroundColor: `${theme.statusOk}0D` }]}>
+                  <CheckCircle2 size={20} color={theme.statusOk} />
                   <View style={{ flex: 1 }}>
-                    <Text style={[T.label, { color: '#22C55E' }]}>{'RAS · '}{assessment.domain.toUpperCase()}</Text>
+                    <Text style={[T.label, { color: theme.statusOk }]}>{'RAS · '}{assessment.domain.toUpperCase()}</Text>
                     <Text style={{ fontFamily: FontSans, fontSize: Fs.body, color: theme.title, marginTop: 4 }}>Aucune anomalie détectée.</Text>
                   </View>
                 </View>
