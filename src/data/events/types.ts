@@ -11,4 +11,10 @@ export type EventMap = {
   'sport.routine.modified':     { routineId: string };
   'habit.definition.modified':  { habitId: string };
   'sleep.alarm.modified':       { date: string };
+  // Écritures domaine sans store dédié — émises au niveau service pour tenir
+  // le visionneur Planning à jour (getByDate + event bus).
+  'journal.logged':             { date: string };
+  'prayer.logged':              { date: string };
+  'quran.logged':               { date: string };
+  'habit.logged':               { date: string };
 };

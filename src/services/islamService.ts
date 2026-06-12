@@ -1,4 +1,5 @@
 import { getStorage } from '@/data/storage/storageService';
+import { eventBus } from '@/data/events/bus';
 import {
   migratePrayerLog,
   PRAYER_NAMES_V2,
@@ -34,6 +35,7 @@ export const IslamService = {
   async savePrayerLog(log: PrayerLogLatest): Promise<void> {
     const storage = await getStorage();
     await storage.set(prayerKey(log.date), log);
+    eventBus.emit('prayer.logged', { date: log.date });
   },
 
   /** Toggle une prière et persiste. Crée le log du jour si absent. */
@@ -113,6 +115,7 @@ export const IslamService = {
   async addQuranSession(session: QuranSessionLatest): Promise<void> {
     const storage = await getStorage();
     await storage.set(quranSessionKey(session), session);
+    eventBus.emit('quran.logged', { date: session.date });
     // Mettre à jour le progress singleton
     const progress = await this.getQuranProgress();
     if (progress) {

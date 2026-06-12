@@ -1,4 +1,5 @@
 import { getStorage } from '@/data/storage/storageService';
+import { eventBus } from '@/data/events/bus';
 import { migrateJournalEntry } from '@/data/schemas/journal/journalEntry';
 import type { JournalEntryLatest } from '@/data/schemas/journal/journalEntry';
 
@@ -26,6 +27,7 @@ export const JournalService = {
   async save(entry: JournalEntryLatest): Promise<void> {
     const storage = await getStorage();
     await storage.set(`${JOURNAL_PREFIX}.${entry.id}`, entry);
+    eventBus.emit('journal.logged', { date: entry.date });
   },
 
   async delete(id: string): Promise<void> {
