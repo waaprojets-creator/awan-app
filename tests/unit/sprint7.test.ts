@@ -116,7 +116,7 @@ describe('JournalService', () => {
   });
 
   it('save et getByDate fonctionnent', async () => {
-    const e = makeEntry(UUID1, DATE);
+    const e = makeEntry(`${DATE}.1`, DATE);
     await JournalService.save(e);
     const result = await JournalService.getByDate(DATE);
     expect(result).toHaveLength(1);
@@ -124,8 +124,8 @@ describe('JournalService', () => {
   });
 
   it('getByDate filtre par date', async () => {
-    await JournalService.save(makeEntry(UUID1, DATE, "Aujourd'hui"));
-    await JournalService.save(makeEntry(UUID2, '2026-05-09', 'Hier'));
+    await JournalService.save(makeEntry(`${DATE}.1`, DATE, "Aujourd'hui"));
+    await JournalService.save(makeEntry('2026-05-09.2', '2026-05-09', 'Hier'));
     const today = await JournalService.getByDate(DATE);
     expect(today).toHaveLength(1);
     expect(today[0]?.content).toBe("Aujourd'hui");
@@ -142,9 +142,9 @@ describe('JournalService', () => {
   });
 
   it('delete supprime une entrée', async () => {
-    const e = makeEntry(UUID1, DATE);
+    const e = makeEntry(`${DATE}.1`, DATE);
     await JournalService.save(e);
-    await JournalService.delete(UUID1);
+    await JournalService.delete(`${DATE}.1`);
     const result = await JournalService.getByDate(DATE);
     expect(result).toHaveLength(0);
   });

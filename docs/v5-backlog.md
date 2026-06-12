@@ -18,3 +18,7 @@ Items reportés explicitement de v4 vers v5.
 
 - **Chiffrement** — chiffrement at-rest de la base IndexedDB (clé dérivée du déverrouillage biométrique ou code PIN). Aucune donnée lisible si le device est compromis.
 - **Biométrie** — déverrouillage app par empreinte / Face ID via Capacitor BiometricAuth. Fallback PIN à 6 chiffres. Verrouillage automatique après inactivité configurable.
+
+## Planning — optimisation temporelle
+
+- **Câbler l'`energyModel` dans le moteur greedy** — `energyModel.ts` (modèle chronobiologique evidence-based : pics 06–09h / 17–19h, creux post-déjeuner 11h30–15h ; sources Blatter & Cajochen 2007, Monk 2005) n'est aujourd'hui utilisé que pour **afficher** un diagnostic dans `PlanningScreen` (alignement tâches/pics). Il n'est **pas** branché dans `findBestSlot` (`engine/greedy.ts`), qui fait un simple earliest-fit. Brancher le score d'énergie dans le placement → deep work auto-placé sur le pic du matin, tâches à faible charge dans le creux de 14h. Remplace avantageusement les anciennes contraintes manuelles `notBeforeMin`/`notAfterMin` (supprimées en ScheduleTask V4) par une optimisation automatique et scientifique. Maille avec la priorité T_slack : placer la production cognitive dans les fenêtres de capacité maximale.

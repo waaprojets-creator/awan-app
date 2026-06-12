@@ -17,7 +17,7 @@ vi.mock('../../src/data/storage/storageService', () => ({
 
 vi.mock('../../src/modules/planning/api', () => ({
   Planner: class {
-    getTasks() { return mockGetTasks(); }
+    getActiveTasks() { return mockGetTasks(); }
   },
 }));
 
@@ -39,13 +39,13 @@ function makeTask(
   id: string,
   timeCategory: ScheduleTaskLatest['timeCategory'],
   durationMin: number,
-  enabled = true,
+  active = true,
 ): ScheduleTaskLatest {
   return {
-    v: 3, id, title: `Task ${id}`,
+    v: 4, id, date: '2026-01-01', title: `Task ${id}`,
     durationMin, priority: 3,
     domain: 'general', tags: [], dependsOn: [],
-    enabled, timeCategory,
+    status: active ? 'active' : 'cancelled', timeCategory,
   };
 }
 
@@ -97,7 +97,7 @@ describe('buildWeekTimeFrame', () => {
     expect(frame.T_somatique).toBe(0);
   });
 
-  it('computes T_production from enabled production tasks', async () => {
+  it('computes T_production from active production tasks', async () => {
     mockGetTasks.mockResolvedValue([
       makeTask('t1', 'production', 120),  // 2h
       makeTask('t2', 'production', 60),   // 1h
@@ -107,7 +107,7 @@ describe('buildWeekTimeFrame', () => {
     expect(frame.T_production).toBeCloseTo(3, 5);
   });
 
-  it('computes T_friction from enabled friction tasks', async () => {
+  it('computes T_friction from active friction tasks', async () => {
     mockGetTasks.mockResolvedValue([
       makeTask('t1', 'friction', 60),     // 1h
       makeTask('t2', 'friction', 30),     // 0.5h
@@ -117,7 +117,7 @@ describe('buildWeekTimeFrame', () => {
     expect(frame.T_friction).toBeCloseTo(1.5, 5);
   });
 
-  it('excludes disabled tasks', async () => {
+  it('excludes non-active (cancelled) tasks', async () => {
     mockGetTasks.mockResolvedValue([
       makeTask('t1', 'production', 120, false),
       makeTask('t2', 'friction', 60, false),

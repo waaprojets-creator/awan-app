@@ -42,21 +42,21 @@ describe('MealService', () => {
   beforeEach(() => _setStorageForTest(new MemoryStorage()));
 
   it('sauvegarde et récupère des repas par date', async () => {
-    await MealService.save(makeMeal('990e8400-e29b-41d4-a716-446655440001', '2026-05-10'));
-    await MealService.save(makeMeal('990e8400-e29b-41d4-a716-446655440002', '2026-05-10'));
-    await MealService.save(makeMeal('990e8400-e29b-41d4-a716-446655440003', '2026-05-11'));
+    await MealService.save(makeMeal('2026-05-10.1', '2026-05-10'));
+    await MealService.save(makeMeal('2026-05-10.2', '2026-05-10'));
+    await MealService.save(makeMeal('2026-05-11.3', '2026-05-11'));
     const today = await MealService.getByDate('2026-05-10');
     expect(today).toHaveLength(2);
   });
 
   it('n\'inclut pas les repas d\'une autre date', async () => {
-    await MealService.save(makeMeal('990e8400-e29b-41d4-a716-446655440004', '2026-05-09'));
+    await MealService.save(makeMeal('2026-05-09.4', '2026-05-09'));
     const today = await MealService.getByDate('2026-05-10');
     expect(today).toHaveLength(0);
   });
 
   it('supprime un repas', async () => {
-    const id = '990e8400-e29b-41d4-a716-446655440005';
+    const id = '2026-05-10.5';
     await MealService.save(makeMeal(id, '2026-05-10'));
     await MealService.delete(id);
     expect(await MealService.getByDate('2026-05-10')).toHaveLength(0);
