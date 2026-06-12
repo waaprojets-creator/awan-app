@@ -18,17 +18,16 @@ const SEED_FLAG_KEY = 'awan.seed.loaded';
 
 async function autoLoadSeed() {
   try {
-    const res = await fetch('/data/seed-demo.json');
-    if (!res.ok) return;
-    const text = await res.text();
-    let seedTs = '1';
-    try { seedTs = (JSON.parse(text) as { generatedAt?: string }).generatedAt ?? '1'; } catch { /* ignore */ }
+    // require statique : Metro bundle le JSON dans l'app — l'ancien fetch('/data/…')
+    // dépendait du serveur HTTP de la WebView Capacitor, inexistant en Expo natif.
+    const seed = require('../public/data/seed-demo.json') as { generatedAt?: string };
+    const seedTs = seed.generatedAt ?? '1';
 
     const storage = await getStorage();
     const storedTs = await storage.get<string>(SEED_FLAG_KEY, (raw) => String(raw));
     if (storedTs === seedTs) return;
 
-    const result = await importFromJson(text);
+    const result = await importFromJson(seed);
     if (result.success) {
       await storage.set(SEED_FLAG_KEY, seedTs);
       useAppStore.getState().bumpDataVersion();
@@ -36,7 +35,7 @@ async function autoLoadSeed() {
       console.warn('[Seed] import failed:', result.message);
     }
   } catch (e) {
-    console.warn('[Seed] fetch error:', e);
+    console.warn('[Seed] load error:', e);
   }
 }
 

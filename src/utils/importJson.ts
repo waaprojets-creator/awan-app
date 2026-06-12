@@ -8,6 +8,10 @@ import { migrateWaterIntake } from '../data/schemas/nutrition/waterIntake';
 import { migrateScheduleTask } from '../data/schemas/planning/scheduleTask';
 import { migrateDaySchedule } from '../data/schemas/planning/daySchedule';
 import { migrateWeightEntry } from '../data/schemas/body/weightEntry';
+import { migrateHabitDefinition } from '../data/schemas/habits/habitDefinition';
+import { migrateHabitOccurrence } from '../data/schemas/habits/habitOccurrence';
+import { migrateQuranSession } from '../data/schemas/islam/quranSession';
+import { migrateQuranProgress } from '../data/schemas/islam/quranProgress';
 import { WorkoutService } from '../services/workoutService';
 import { getStorage } from '../data/storage/storageService';
 import type { RoutineLatest, WorkoutSessionLatest } from '../data/schemas/sport/routine';
@@ -20,6 +24,10 @@ import type { WaterIntakeLatest } from '../data/schemas/nutrition/waterIntake';
 import type { ScheduleTaskLatest } from '../data/schemas/planning/scheduleTask';
 import type { DayScheduleLatest } from '../data/schemas/planning/daySchedule';
 import type { WeightEntryLatest } from '../data/schemas/body/weightEntry';
+import type { HabitDefinitionLatest } from '../data/schemas/habits/habitDefinition';
+import type { HabitOccurrenceLatest } from '../data/schemas/habits/habitOccurrence';
+import type { QuranSessionLatest } from '../data/schemas/islam/quranSession';
+import type { QuranProgressLatest } from '../data/schemas/islam/quranProgress';
 
 export interface SeedData {
   routines?: unknown[];
@@ -33,6 +41,10 @@ export interface SeedData {
   waterIntakes?: unknown[];
   scheduleTasks?: unknown[];
   daySchedules?: unknown[];
+  habitDefinitions?: unknown[];
+  habitOccurrences?: unknown[];
+  quranSessions?: unknown[];
+  quranProgress?: unknown;
 }
 
 export type ImportPayload =
@@ -40,10 +52,17 @@ export type ImportPayload =
   | { type: 'sport.routines'; data: unknown[] }
   | { type: 'seed.full'; data: SeedData };
 
-export async function importFromJson(raw: string): Promise<{ success: boolean; message: string }> {
+type SiloCount = { ok: number; fail: number };
+
+/** Accepte le JSON brut (string) ou le payload déjà parsé (require Metro). */
+export async function importFromJson(raw: string | object): Promise<{ success: boolean; message: string }> {
   let parsed: unknown;
-  try { parsed = JSON.parse(raw); }
-  catch { return { success: false, message: 'JSON invalide' }; }
+  if (typeof raw === 'string') {
+    try { parsed = JSON.parse(raw); }
+    catch { return { success: false, message: 'JSON invalide' }; }
+  } else {
+    parsed = raw;
+  }
 
   const payload = parsed as ImportPayload;
 
@@ -72,51 +91,77 @@ export async function importFromJson(raw: string): Promise<{ success: boolean; m
 
   if (payload.type === 'seed.full') {
     const data = payload.data ?? {};
-    let nRoutines = 0, nSessions = 0, nMeasurements = 0, nMeals = 0;
-    let nPrayers = 0, nJournal = 0, nSleep = 0, nWater = 0, nTasks = 0;
-    let nWeights = 0, nSchedules = 0;
+    const counts: Record<string, SiloCount> = {};
 
     const storage = await getStorage();
 
     await storage.transaction(async (tx) => {
-      for (const item of data.routines ?? []) {
-        try { const r = migrateRoutine(item) as RoutineLatest; await tx.set(`sport.routine.${r.id}`, r); nRoutines++; } catch { /* skip */ }
+      // Importe un silo : migration Zod puis écriture sous la clé construite.
+      // Les rejets sont comptés (plus de skip silencieux) pour diagnostic.
+      async function importSilo<T>(
+        name: string,
+        items: unknown[] | undefined,
+        migrate: (raw: unknown) => unknown,
+        keyOf: (entry: T) => string,
+      ): Promise<void> {
+        const c: SiloCount = { ok: 0, fail: 0 };
+        counts[name] = c;
+        for (const item of items ?? []) {
+          try {
+            const entry = migrate(item) as T;
+            await tx.set(keyOf(entry), entry);
+            c.ok++;
+          } catch {
+            c.fail++;
+          }
+        }
       }
-      for (const item of data.sessions ?? []) {
-        try { const s = migrateWorkoutSession(item) as WorkoutSessionLatest; await tx.set(`sport.session.${s.id}`, s); nSessions++; } catch { /* skip */ }
-      }
-      for (const item of data.measurements ?? []) {
-        try { const m = migrateMeasurement(item) as MeasurementLatest; await tx.set(`anthropo.measurement.${m.date}`, m); nMeasurements++; } catch { /* skip */ }
-      }
-      for (const item of data.weightEntries ?? []) {
-        try { const w = migrateWeightEntry(item) as WeightEntryLatest; await tx.set(`weight.entry.${w.date}`, w); nWeights++; } catch { /* skip */ }
-      }
-      for (const item of data.meals ?? []) {
-        try { const m = migrateMealEntry(item) as MealEntryLatest; await tx.set(`nutrition.meal.${m.id}`, m); nMeals++; } catch { /* skip */ }
-      }
-      for (const item of data.prayerLogs ?? []) {
-        try { const p = migratePrayerLog(item) as PrayerLogLatest; await tx.set(`islam.prayer.${p.date}`, p); nPrayers++; } catch { /* skip */ }
-      }
-      for (const item of data.journalEntries ?? []) {
-        try { const j = migrateJournalEntry(item) as JournalEntryLatest; await tx.set(`journal.entry.${j.id}`, j); nJournal++; } catch { /* skip */ }
-      }
-      for (const item of data.sleepEntries ?? []) {
-        try { const s = migrateSleepEntry(item) as SleepEntryLatest; await tx.set(`sleep.entry.${s.id}`, s); nSleep++; } catch { /* skip */ }
-      }
-      for (const item of data.waterIntakes ?? []) {
-        try { const w = migrateWaterIntake(item) as WaterIntakeLatest; await tx.set(`nutrition.water.${w.date}`, w); nWater++; } catch { /* skip */ }
-      }
-      for (const item of data.scheduleTasks ?? []) {
-        try { const t = migrateScheduleTask(item) as ScheduleTaskLatest; await tx.set(`planning.task.${t.id}`, t); nTasks++; } catch { /* skip */ }
-      }
-      for (const item of data.daySchedules ?? []) {
-        try { const s = migrateDaySchedule(item) as DayScheduleLatest; await tx.set(`planning.schedule.${s.date}`, s); nSchedules++; } catch { /* skip */ }
+
+      await importSilo<RoutineLatest>('routines', data.routines, migrateRoutine,
+        r => `sport.routine.${r.id}`);
+      // Clé alignée sur WorkoutService.save : sport.session.{date}.{id}
+      await importSilo<WorkoutSessionLatest>('sessions', data.sessions, migrateWorkoutSession,
+        s => `sport.session.${s.date}.${s.id}`);
+      await importSilo<MeasurementLatest>('mesures', data.measurements, migrateMeasurement,
+        m => `anthropo.measurement.${m.date}`);
+      await importSilo<WeightEntryLatest>('poids', data.weightEntries, migrateWeightEntry,
+        w => `weight.entry.${w.date}`);
+      // id = dateId "{date}.{ms}" → la clé encode la date
+      await importSilo<MealEntryLatest>('repas', data.meals, migrateMealEntry,
+        m => `nutrition.meal.${m.id}`);
+      await importSilo<PrayerLogLatest>('prières', data.prayerLogs, migratePrayerLog,
+        p => `islam.prayer.${p.date}`);
+      await importSilo<JournalEntryLatest>('journal', data.journalEntries, migrateJournalEntry,
+        j => `journal.entry.${j.id}`);
+      // id = dateId "{date}.{ms}" → la clé encode la date
+      await importSilo<SleepEntryLatest>('sommeil', data.sleepEntries, migrateSleepEntry,
+        s => `sleep.entry.${s.id}`);
+      await importSilo<WaterIntakeLatest>('eau', data.waterIntakes, migrateWaterIntake,
+        w => `nutrition.water.${w.date}`);
+      // id = dateId "{date}.{ms}" (V4) → la clé encode la date
+      await importSilo<ScheduleTaskLatest>('tâches', data.scheduleTasks, migrateScheduleTask,
+        t => `planning.task.${t.id}`);
+      await importSilo<DayScheduleLatest>('plannings', data.daySchedules, migrateDaySchedule,
+        s => `planning.schedule.${s.date}`);
+      await importSilo<HabitDefinitionLatest>('habitudes', data.habitDefinitions, migrateHabitDefinition,
+        h => `habit.definition.${h.id}`);
+      await importSilo<HabitOccurrenceLatest>('occurrences', data.habitOccurrences, migrateHabitOccurrence,
+        o => `habit.occurrence.${o.id}`);
+      await importSilo<QuranSessionLatest>('coran', data.quranSessions, migrateQuranSession,
+        q => `islam.quran.session.${q.id}`);
+      if (data.quranProgress !== undefined) {
+        await importSilo<QuranProgressLatest>('coranProgress', [data.quranProgress], migrateQuranProgress,
+          () => 'islam.quran.progress');
       }
     });
 
+    const parts = Object.entries(counts).map(([name, c]) =>
+      c.fail > 0 ? `${name} ${c.ok} (${c.fail} rejetés)` : `${name} ${c.ok}`);
+    const totalFail = Object.values(counts).reduce((a, c) => a + c.fail, 0);
+
     return {
       success: true,
-      message: `Seed: ${nRoutines} routines, ${nSessions} sessions, ${nMeasurements} mesures, ${nWeights} poids, ${nMeals} repas, ${nPrayers} prières, ${nJournal} journal, ${nSleep} sommeil, ${nWater} eau, ${nTasks} tâches, ${nSchedules} plannings`,
+      message: `Seed: ${parts.join(', ')}${totalFail > 0 ? ` — ${totalFail} entrées rejetées` : ''}`,
     };
   }
 
