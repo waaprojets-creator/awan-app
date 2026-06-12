@@ -31,7 +31,7 @@ const MODULE_LABELS: Record<string, string> = {
 
 export default function JournalScreen() {
   const { navigate } = useAppState() as any;
-  const { getEntriesByDate, addEntry, moveEntry } = useDaily();
+  const { getEntriesByDate, moveEntry } = useDaily();
   const today = ds(new Date());
 
   const [selectedDate, setSelectedDate] = useState(today);
@@ -58,17 +58,6 @@ export default function JournalScreen() {
       module: activeModule,
       tags: [activeModule],
       timestamp: Date.now(),
-    });
-
-    addEntry(selectedDate, {
-      id: entryId,
-      timestamp: Date.now(),
-      module: activeModule,
-      rawText: inputText,
-      tokens: [
-        { label: 'SYS', value: activeModule.toUpperCase(), icon: 'radio' },
-        { label: 'LOG', value: inputText.slice(0, 20).toUpperCase(), icon: MODULE_ICON_KEY[activeModule] || 'file' },
-      ]
     });
     setInputText('');
   };

@@ -5,7 +5,6 @@ import { SpiritualService } from '../utils/spiritualService';
 import arabicData from '../assets/data/1.json';
 import { ds } from '../utils/storage';
 import { safeStorage } from '../utils/safeStorage';
-import { useAppState } from '../context/AppStateContext';
 import { usePrayerStore } from '../hooks/usePrayerStore';
 import { useQuranStore } from '../hooks/useQuranStore';
 import { useQuranSessionStore } from '../hooks/useQuranSessionStore';
@@ -195,7 +194,6 @@ async function cancelPrayerNotifications(): Promise<void> {
 
 export default function IslamScreen() {
   const theme = useTheme();
-  useAppState() as any;
 
   const todayStr = ds(new Date());
   const [selectedDate, setSelectedDate] = useState(todayStr);

@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { View, Text, ScrollView, TextInput as RNTextInput, Modal, FlatList as RNFlatList, Pressable, Platform, Alert, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { useAppState } from '../context/AppStateContext';
-import { useDaily } from '../context/DailyContext';
 import {
  MUSCLES,
  searchExercises,
@@ -264,9 +262,6 @@ function VolumeWeekSection({ sessions }: { sessions: WorkoutSessionLatest[] }) {
 
 export default function SportScreen() {
  const theme = useTheme();
- useAppState();
- const { addEntry, moveEntry, getEntriesByDate } = useDaily();
- void moveEntry; void getEntriesByDate;
  const workoutStore = useWorkoutStore();
 
  const [view, setView] = useState<ViewMode>('list');
@@ -487,27 +482,10 @@ export default function SportScreen() {
    }
  })();
 
- const workingCount = exercisesLog.reduce(
- (acc, ex) => acc + ex.sets.filter(s => s.kind === 'working').length,
- 0,
- );
-
- addEntry(ds(new Date()), {
- id: uid(),
- timestamp: Date.now(),
- module: 'sport',
- rawText: `Séance: ${session.name} (${Math.floor(session.duration / 60)} min)`,
- tokens: [
- { label: 'Routine', value: session.name, icon: 'dumbbell' },
- { label: 'Durée', value: `${Math.floor(session.duration / 60)} min`, icon: 'clock' },
- { label: 'Sets working', value: String(workingCount), icon: 'hash' },
- ],
- });
-
  safeStorage.remove(ACTIVE_SESSION_KEY);
  setActiveSession(null);
  setView('list');
- }, [activeSession, workoutStore, addEntry]);
+ }, [activeSession, workoutStore]);
 
  const deleteRoutine = useCallback((r: RoutineLatest) => {
  setConfirmDeleteId(r.id);
