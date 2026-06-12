@@ -6,6 +6,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import { InstrumentCard } from '../../components/ui/InstrumentCard';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import { Touch } from '../../components/ui/Touch';
 import type { WorkoutSessionLatest } from '../../data/schemas/sport/routine';
 import {
@@ -138,6 +139,11 @@ export function PerformanceTab({ sessions, assessments = [] }: PerformanceTabPro
 
   return (
     <View style={{ gap: 32 }}>
+      <WidgetInfo
+        id="W2"
+        title="PERFORMANCE MÉCANIQUE"
+        content="Tonnage par chaîne cinétique (Push / Pull / Legs). 1RM estimé via formule Brzycki. 3 échelles temporelles : séance (intensité/chaîne), cycle (densité 2 mois), tendance (progression hebdo). SMA_7 par chaîne pour seuils de tolérance."
+      />
       {hasPRthisWeek && (
         <Card variant="flat" style={{ borderColor: theme.selected, backgroundColor: 'rgba(212,175,55,0.1)' }}>
           <View style={s.row}>

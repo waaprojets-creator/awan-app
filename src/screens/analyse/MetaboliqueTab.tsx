@@ -6,6 +6,7 @@ import { Zap } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import { Touch } from '../../components/ui/Touch';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import { getStorage } from '../../data/storage/storageService';
 import { GuardCard, LoadingState, loadNutritionProfile } from './shared';
 import { FontMono } from '../../constants/typography';
@@ -91,6 +92,11 @@ export function MetaboliqueTab() {
 
   return (
     <View style={{ gap: 32 }}>
+      <WidgetInfo
+        id="Wn5"
+        title="PILOTAGE MÉTABOLIQUE"
+        content="Dashboard circadien radial (1°=4min) : Zone 1 catabolisme (R<R_neutre), Zone 2 anabolisme optimal MPS (R_neutre<R<R_sat), Zone 3 saturation lipogénique (R>R_sat). Multi-échelles : 24h (donut) → 31j (barres dégradé bleu/rouge) → trimestriel. Bilan net = ∫(Anabolisme−Catabolisme)dt."
+      />
       <View style={s.toggleRow}>
         {(['31j', '12s'] as ViewMode[]).map(m => (
           <Touch

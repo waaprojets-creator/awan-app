@@ -5,6 +5,7 @@ import Svg, { Rect, Line, Path } from 'react-native-svg';
 import { BarChart2 } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import type { WorkoutSessionLatest } from '../../data/schemas/sport/routine';
 import { MealService } from '../../services/mealService';
 import { ds } from '../../utils/storage';
@@ -103,6 +104,12 @@ function SynoptiqueChart({ data }: { data: DayData[] }) {
     .filter(Boolean) as string[];
 
   return (
+    <View style={{ gap: 0 }}>
+      <WidgetInfo
+        id="Wn4"
+        title="DASHBOARD SYNOPTIQUE"
+        content="Grid system journalier : axe supérieur = tonnage (barres) + macros empilées + courbe rendement (tonnage/calories). Axe inférieur inversé = suppléments par molécule (position index fixe, épaisseur = dosage mg/g). Pattern matching visuel : corrélation booster → performance."
+      />
     <Card variant="flat">
       <Heading level={4} mono subtitle="Tonnage × Macros · 30 jours">SYNOPTIQUE</Heading>
       <View style={{ marginTop: 16 }}>
@@ -152,6 +159,7 @@ function SynoptiqueChart({ data }: { data: DayData[] }) {
         </View>
       </View>
     </Card>
+    </View>
   );
 }
 

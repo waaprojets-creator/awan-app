@@ -211,7 +211,7 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
             height={H}
             style={StyleSheet.absoluteFillObject as any}
             pointerEvents={Platform.OS === 'web' ? 'auto' : 'none'}
-            onPress={Platform.OS === 'web' ? (e: any) => e.stopPropagation?.() : undefined}
+            {...(Platform.OS === 'web' ? { onPress: (e: any) => e.stopPropagation?.() } : {})}
           >
             {/* Anneaux orbitaux */}
             {!editMode && (
