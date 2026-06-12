@@ -16,7 +16,7 @@ import { ds } from '../utils/storage';
 import { sessionsThisWeek } from '../hooks/useAwanScore';
 import { getAdviceText } from '../constants/coachAdvice';
 import { DEFAULT_KCAL_TARGET } from '../constants/app';
-import { safeStorage } from '../utils/safeStorage';
+import { NutritionProfileService } from '../services/nutritionProfileService';
 import { Fs, Fw, Clr } from '../theme/tokens';
 import { FontMono } from '../constants/typography';
 import type { Severity } from '../data/schemas/coach/rule';
@@ -58,10 +58,7 @@ export default function SanteScreen({ navigate }: any) {
   const { assessments: coachAssessments } = useCoach(today);
 
   const KCAL_TARGET = useMemo(() => {
-    try {
-      const profile = JSON.parse(safeStorage.get('awan.nutrition.profile') ?? '{}');
-      return typeof profile.targetKcal === 'number' ? profile.targetKcal : DEFAULT_KCAL_TARGET;
-    } catch { return DEFAULT_KCAL_TARGET; }
+    return NutritionProfileService.getCached()?.targetKcal ?? DEFAULT_KCAL_TARGET;
   }, []);
 
   const sessCount = sessionsThisWeek(workoutStore.sessions as Array<{ date?: string; startTime?: number }>);

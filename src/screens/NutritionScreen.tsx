@@ -53,6 +53,7 @@ import type { WeeklyNutritionReport } from '../services/weeklyNutritionReport';
 import { buildNutritionExport } from '../services/nutritionExportService';
 import { estimateAdaptiveTDEE } from '../services/tdeeAdaptiveService';
 import { scoreMeal } from '../services/nutritionScoreService';
+import { NutritionProfileService } from '../services/nutritionProfileService';
 import { useTheme, type AwanTheme } from '../hooks/useTheme';
 import { FontMono } from '../constants/typography';
 import { Fs, Fw, Ls, Clr } from '../theme/tokens';
@@ -76,8 +77,6 @@ interface NutritionProfile {
  targetC: number;
  targetF: number;
 }
-
-const PROFILE_KEY = 'awan.nutrition.profile';
 
 const ACTIVITY_FACTORS: Record<Activity, number> = {
  sedentary: 1.2,
@@ -107,17 +106,11 @@ function computeProfile(
 }
 
 function loadProfile(): NutritionProfile | null {
- try {
- const raw = safeStorage.get(PROFILE_KEY);
- if (!raw) return null;
- return JSON.parse(raw) as NutritionProfile;
- } catch {
- return null;
- }
+ return NutritionProfileService.getCached();
 }
 
 function saveProfile(p: NutritionProfile): void {
- safeStorage.set(PROFILE_KEY, JSON.stringify(p));
+ void NutritionProfileService.save({ v: 1, ...p });
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

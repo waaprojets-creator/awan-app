@@ -3,7 +3,7 @@ import { ScrollView, View, Text, TextInput as RNTextInput, Modal, TouchableWitho
 import { Upload, X } from 'lucide-react-native';
 import { getAdviceText } from '../constants/coachAdvice';
 import { DEFAULT_KCAL_TARGET } from '../constants/app';
-import { safeStorage } from '../utils/safeStorage';
+import { NutritionProfileService } from '../services/nutritionProfileService';
 import { L, DATE_FORMAT_BANNER, TRANSPORT_OPTIONS } from '../constants/labels';
 import { TRANSPORT_ICONS } from '../constants/icons';
 import { ds } from '../utils/storage';
@@ -80,8 +80,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
   );
 
   const kcalTargetScore = useMemo(() => {
-    try { const p = JSON.parse(safeStorage.get('awan.nutrition.profile') ?? '{}'); return typeof p.targetKcal === 'number' ? p.targetKcal : KCAL_TARGET_DEFAULT; }
-    catch { return KCAL_TARGET_DEFAULT; }
+    return NutritionProfileService.getCached()?.targetKcal ?? KCAL_TARGET_DEFAULT;
   }, []);
 
   const score = useAwanScore({
@@ -130,8 +129,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
 
   // Weekly retrospective computations
   const kcalTarget = useMemo(() => {
-    try { const p = JSON.parse(safeStorage.get('awan.nutrition.profile') ?? '{}'); return p.targetKcal ?? KCAL_TARGET_DEFAULT; }
-    catch { return KCAL_TARGET_DEFAULT; }
+    return NutritionProfileService.getCached()?.targetKcal ?? KCAL_TARGET_DEFAULT;
   }, []);
 
   const weeklyWeightDelta = useMemo(() => {

@@ -12,6 +12,7 @@ import { importFromJson } from '@/utils/importJson';
 import { getStorage } from '@/data/storage/storageService';
 import { hydrateSafeStorage } from '@/utils/safeStorage';
 import { PeriodizationService } from '@/services/periodizationService';
+import { NutritionProfileService } from '@/services/nutritionProfileService';
 
 // Flag stocké dans le même storage (SQLite/IndexedDB) que les données.
 // Si la base est vidée (réinstall, clear data), le flag l'est aussi → re-seed automatique.
@@ -61,6 +62,7 @@ function Root() {
     Promise.allSettled([
       hydrateSafeStorage(),
       PeriodizationService.hydrate(),
+      NutritionProfileService.hydrate(),
     ]).finally(() => useAppStore.getState().applyHydratedSettings());
   }, []);
 

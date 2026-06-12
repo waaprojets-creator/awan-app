@@ -5,7 +5,7 @@ import { Fs, Fw, Ls } from '../../theme/tokens';
 import Svg, { Line, Rect, G, Text as SvgTextEl } from 'react-native-svg';
 import type { LucideIcon } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
-import { safeStorage } from '../../utils/safeStorage';
+import { NutritionProfileService } from '../../services/nutritionProfileService';
 
 const SvgLine = Line as any;
 const SvgRect = Rect as any;
@@ -240,11 +240,5 @@ export function deriveTDEE(profile: NutritionProfile): number {
 }
 
 export function loadNutritionProfile(): NutritionProfile | null {
-  try {
-    const raw = safeStorage.get('awan.nutrition.profile');
-    if (!raw) return null;
-    return JSON.parse(raw) as NutritionProfile;
-  } catch {
-    return null;
-  }
+  return NutritionProfileService.getCached();
 }
