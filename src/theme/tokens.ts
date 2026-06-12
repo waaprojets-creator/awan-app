@@ -81,6 +81,10 @@ export const Clr = {
   overlay:  'rgba(0,0,0,0.85)',
   overlayDeep:'rgba(0,0,0,0.92)',
   surfaceDim:'rgba(255,255,255,0.05)',
+  // Couleurs statut fixes (identiques aux theme.statusOk/Warn/Info mais utilisables hors hook)
+  ok:   '#4ECDC4',
+  warn: '#FFE66D',
+  alert:'#EF4444',
 } as const;
 
 // ─── Fragments de style réutilisables ─────────────────────────────────────────

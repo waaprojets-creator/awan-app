@@ -29,6 +29,7 @@ import type { NavProps } from '../types/nav';
 import arabicData from '../assets/data/1.json';
 import { useToast } from '../components/ui/Toast';
 import { useTheme } from '../hooks/useTheme';
+import { Clr } from '../theme/tokens';
 import { FontSans, FontMono, FwMute, FwBody, FwLabel, FwValue } from '../constants/typography';
 
 const KCAL_TARGET_DEFAULT = DEFAULT_KCAL_TARGET;
@@ -69,9 +70,9 @@ export default function DashboardScreen({ navigate }: NavProps) {
   const coachAnalyzed = coachAssessments.length > 0;
   const COACH_COLOR: Record<Severity, string> = {
     info:  theme.selected,
-    good:  'rgb(34,197,94)',
-    warn:  'rgb(251,191,36)',
-    alert: 'rgb(239,68,68)',
+    good:  theme.statusOk,
+    warn:  theme.statusWarn,
+    alert: Clr.alert,
   };
 
   const sessionsCount = useMemo(

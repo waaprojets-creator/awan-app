@@ -527,7 +527,7 @@ export default function SportScreen() {
 
  if (view === 'recovery' && pendingRoutine) {
  return (
-   <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+   <View style={{ flex: 1, backgroundColor: theme.bg }}>
      <View style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 8 }}>
        <ScreenHeader tag="SPORT · RÉCUPÉRATION" title={pendingRoutine.routine.name} />
      </View>
@@ -643,7 +643,7 @@ export default function SportScreen() {
  }
 
  return (
- <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+ <View style={{ flex: 1, backgroundColor: theme.bg }}>
  {resumeModal && (
  <Modal visible={true} transparent animationType="fade">
  <View style={[ss.sheetOverlay, { backgroundColor: 'rgba(0,0,0,0.75)' }]}>

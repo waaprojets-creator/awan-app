@@ -134,10 +134,10 @@ export default function TasksScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+    <View style={{ flex: 1, backgroundColor: theme.bg }}>
       <ScrollView
         contentContainerStyle={{ paddingBottom: 150 }}
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: theme.bg }}
         showsVerticalScrollIndicator={false}
       >
         <View style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 16 }}>

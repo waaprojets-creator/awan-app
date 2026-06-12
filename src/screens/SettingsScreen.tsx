@@ -199,7 +199,7 @@ export default function SettingsScreen() {
   const THEME_LABELS: Record<string, string> = { light: 'LIGHT', dark: 'DARK', black: 'BLACK' };
 
   return (
-    <PageWrapper style={{ flex: 1, backgroundColor: 'transparent' }}>
+    <PageWrapper style={{ flex: 1, backgroundColor: theme.bg }}>
       <ScrollView
         contentContainerStyle={{ paddingBottom: 150 }}
         style={{ flex: 1, backgroundColor: theme.bg }}
@@ -538,8 +538,8 @@ export default function SettingsScreen() {
                     <Switch
                       value={!!config.isLocked}
                       onValueChange={() => setPendingAction('lock')}
-                      trackColor={{ false: '#1A1A1A', true: '#FF4B4B' }}
-                      thumbColor={config.isLocked ? '#fff' : '#444'}
+                      trackColor={{ false: theme.surface, true: theme.danger }}
+                      thumbColor={config.isLocked ? '#fff' : theme.mute}
                     />
                   </>
                 )}
