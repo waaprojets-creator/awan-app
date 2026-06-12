@@ -22,8 +22,6 @@ import {
  BarChart2,
 } from 'lucide-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
-import { useAppState } from '../context/AppStateContext';
-import { useDaily } from '../context/DailyContext';
 import { ds, uid, dateId } from '../utils/storage';
 import { useMealStore } from '../hooks/useMealStore';
 import { Card } from '../components/ui/Card';
@@ -661,8 +659,6 @@ function EditMealModal({ visible, entry, onClose, onUpdate }: EditModalProps) {
 
 export default function NutritionScreen() {
  const theme = useTheme();
- useAppState();
- const { addEntry } = useDaily();
 
  const today = ds(new Date());
  const [selectedDate, setSelectedDate] = useState<string>(today);
@@ -837,17 +833,6 @@ export default function NutritionScreen() {
  : baseEntry;
  void mealStore.add(entry);
  recordRecentFood(food.id);
- addEntry(selectedDate, {
- id: entryId,
- timestamp: now,
- module: 'nutrition',
- rawText: `${food.n} ${grams}g ${macros.kcal}kcal`,
- tokens: [
- { label: 'Aliment', value: food.n, icon: 'utensils' },
- { label: 'Quantité', value: `${grams}g`, icon: 'scale' },
- { label: 'Énergie', value: `${macros.kcal}kcal`, icon: 'flame' },
- ],
- });
  setShowAdd(false);
  };
 

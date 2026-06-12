@@ -23,7 +23,6 @@ import { WorkoutService } from '../services/workoutService';
 import { useHealthScore } from '../hooks/useHealthScore';
 import { useTemporalMode } from '../hooks/useTemporalMode';
 import { useCoach } from '../hooks/useCoach';
-import { useDaily } from '../context/DailyContext';
 import type { Severity } from '../data/schemas/coach/rule';
 import type { Advice } from '../data/schemas/coach/assessment';
 import type { NavProps } from '../types/nav';
@@ -57,11 +56,8 @@ export default function DashboardScreen({ navigate }: NavProps) {
   const prayerStore  = usePrayerStore(today);
   const temporal     = useTemporalMode();
 
-  const { getEntriesByDate } = useDaily();
-  const trajetEntries = useMemo(
-    () => (getEntriesByDate(today) as any[]).filter((e: any) => e.module === 'trajet'),
-    [today, getEntriesByDate]
-  );
+  // Timeline trajet débranchée (DailyContext mort) — widget neutre tant que la source n'est pas recâblée.
+  const trajetEntries: unknown[] = [];
 
   const { assessments: coachAssessments } = useCoach(today);
   const topAdvice = useMemo<Advice | null>(() => {
