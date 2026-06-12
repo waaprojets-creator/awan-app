@@ -3,6 +3,7 @@ import { MemoryStorage } from '../../src/data/storage/MemoryStorage';
 import { _setStorageForTest } from '../../src/data/storage/storageService';
 import { AnthropoGoalsService } from '../../src/services/anthropoGoalsService';
 import { OneRepMaxService } from '../../src/services/oneRepMaxService';
+import { migratePeriodization } from '../../src/data/schemas/sport/periodization';
 
 // ─── anthropo.goals ───────────────────────────────────────────────────────────
 
@@ -46,5 +47,17 @@ describe('OneRepMaxService (silo sport.oneRepMax)', () => {
     await OneRepMaxService.saveRecords({ squat: 140 });
     await OneRepMaxService.saveRecords({ squat: 145, deadlift: 180 });
     expect(await OneRepMaxService.getRecords()).toEqual({ squat: 145, deadlift: 180 });
+  });
+});
+
+// ─── sport.periodization ──────────────────────────────────────────────────────
+
+describe('Periodization silo (sport.periodization)', () => {
+  it('migrator + storage round-trip (durabilité du mésocycle)', async () => {
+    const storage = new MemoryStorage();
+    const state = { v: 1 as const, phase: 1 as const, mesoWeek: 3, startDate: '2026-01-01', deloadTriggered: true };
+    await storage.set('sport.periodization', state);
+    const loaded = await storage.get('sport.periodization', migratePeriodization);
+    expect(loaded).toEqual(state);
   });
 });

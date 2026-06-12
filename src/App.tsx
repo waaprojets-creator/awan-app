@@ -11,6 +11,7 @@ import MainLayout from '@/components/MainLayout';
 import { importFromJson } from '@/utils/importJson';
 import { getStorage } from '@/data/storage/storageService';
 import { hydrateSafeStorage } from '@/utils/safeStorage';
+import { PeriodizationService } from '@/services/periodizationService';
 
 // Flag stocké dans le même storage (SQLite/IndexedDB) que les données.
 // Si la base est vidée (réinstall, clear data), le flag l'est aussi → re-seed automatique.
@@ -54,9 +55,13 @@ function Root() {
   useThemeSync();
   useDayBoundary();
 
-  // Hydrate le stockage durable (memCache ← IStorage) puis applique les prefs et débloque le rendu.
+  // Hydrate le stockage durable (memCache + caches sync des silos ← IStorage) puis applique
+  // les prefs et débloque le rendu. allSettled : un échec d'hydratation n'empêche pas le boot.
   useEffect(() => {
-    hydrateSafeStorage().finally(() => useAppStore.getState().applyHydratedSettings());
+    Promise.allSettled([
+      hydrateSafeStorage(),
+      PeriodizationService.hydrate(),
+    ]).finally(() => useAppStore.getState().applyHydratedSettings());
   }, []);
 
   useEffect(() => {

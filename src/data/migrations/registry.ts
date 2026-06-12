@@ -14,6 +14,7 @@ import { migrateDailySummary } from '../schemas/activity/dailySummary';
 import { migrateSleepEntry } from '../schemas/sleep/sleepEntry';
 import { migrateAnthropoGoals } from '../schemas/anthropo/anthropoGoals';
 import { migrateOneRepMax } from '../schemas/sport/oneRepMax';
+import { migratePeriodization } from '../schemas/sport/periodization';
 
 /**
  * Central registry mapping storage keys (or domain identifiers) to their
@@ -38,6 +39,7 @@ export const migrators = {
   'sleep.entry': migrateSleepEntry,
   'anthropo.goals': migrateAnthropoGoals,
   'sport.oneRepMax': migrateOneRepMax,
+  'sport.periodization': migratePeriodization,
 } as const;
 
 export type MigratorKey = keyof typeof migrators;
