@@ -6,7 +6,7 @@ import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import { FontMono } from '../../constants/typography';
-import { Fs, Fw, Ls } from '../../theme/tokens';
+import { Fs, Fw, Ls, Clr } from '../../theme/tokens';
 import { BarChart, EmptyState, LoadingState } from './shared';
 
 interface DayWater { label: string; ml: number }
@@ -53,7 +53,7 @@ export function HydrationTab({ waterByDay, waterLoading, todayMl, targetMl }: Hy
             <Text style={[s.labelXs, { color: theme.mute, marginTop: 4 }]}>
               cible {targetMl} mL · {pct}%
             </Text>
-            <View style={[s.progressTrack, { backgroundColor: 'rgba(255,255,255,0.06)', marginTop: 12 }]}>
+            <View style={[s.progressTrack, { backgroundColor: Clr.white5, marginTop: 12 }]}>
               <View style={[s.progressBar, {
                 width: `${pct}%` as any,
                 backgroundColor: pct >= 100 ? theme.selected : theme.selected,
