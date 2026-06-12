@@ -15,6 +15,7 @@ import { Fs, Fw, Ls, Clr } from '../theme/tokens';
 import { ds } from '../utils/storage';
 import { LocalAIService } from '../services/localAIService';
 import { MealService } from '../services/mealService';
+import { WaterService } from '../services/waterService';
 import { SleepService } from '../services/sleepService';
 import { useWorkoutStore } from '../hooks/useWorkoutStore';
 import { useMeasurementStore } from '../hooks/useMeasurementStore';
@@ -24,7 +25,7 @@ import { usePrayerStore } from '../hooks/usePrayerStore';
 import { useAppStore } from '../data/store/appStore';
 import {
   Activity, Dumbbell, Flame, TrendingUp,
-  Trophy, Heart, BarChart2, Zap, Clock, Star, ScanLine,
+  Trophy, Heart, BarChart2, Zap, Clock, Star, ScanLine, Droplets,
 } from 'lucide-react-native';
 import { Card } from '../components/ui/Card';
 import { Touch } from '../components/ui/Touch';
@@ -45,6 +46,7 @@ const OrthometryTab  = lazy(() => import('./analyse/OrthometryTab').then(m => ({
 const FluxDensiteTab = lazy(() => import('./analyse/FluxDensiteTab').then(m => ({ default: m.FluxDensiteTab })));
 const SynoptiqueTab  = lazy(() => import('./analyse/SynoptiqueTab').then(m => ({ default: m.SynoptiqueTab })));
 const MetaboliqueTab = lazy(() => import('./analyse/MetaboliqueTab').then(m => ({ default: m.MetaboliqueTab })));
+const HydrationTab   = lazy(() => import('./analyse/HydrationTab').then(m => ({ default: m.HydrationTab })));
 const IslamTab       = lazy(() => import('./analyse/IslamTab').then(m => ({ default: m.IslamTab })));
 const BudgetTab      = lazy(() => import('./analyse/BudgetTab').then(m => ({ default: m.BudgetTab })));
 const ReadinessTab   = lazy(() => import('./analyse/ReadinessTab').then(m => ({ default: m.ReadinessTab })));
@@ -84,6 +86,7 @@ const DOMAINS: Array<{
     id: 'energie', label: 'ÉNERGIE', Icon: Flame,
     subs: [
       { id: 'nutrition',   label: 'NUTRITION',   Icon: Flame },
+      { id: 'hydration',   label: 'HYDRATATION', Icon: Droplets },
       { id: 'disponible',  label: 'DISPONIBLE',  Icon: TrendingUp },
       { id: 'synoptique',  label: 'SYNOPTIQUE',  Icon: BarChart2 },
       { id: 'metabolisme', label: 'MÉTABOLISME', Icon: Zap },
@@ -103,7 +106,7 @@ const DOMAINS: Array<{
   },
 ];
 
-const RANGE_SUB_TABS = new Set(['nutrition', 'volume', 'morphologie', 'performance', 'charge', 'activite']);
+const RANGE_SUB_TABS = new Set(['nutrition', 'hydration', 'volume', 'morphologie', 'performance', 'charge', 'activite']);
 type RangeId = 'day' | 'week' | 'month' | 'quarter' | 'year';
 
 const RANGES: Array<{ id: RangeId; label: string; sublabel: string }> = [
@@ -216,6 +219,8 @@ export default function AnalyseScreen() {
   const [aiLoading, setAiLoading] = useState(false);
   const [mealsByDay, setMealsByDay] = useState<Array<{ label: string; kcal: number; p: number }>>([]);
   const [mealsLoading, setMealsLoading] = useState(false);
+  const [waterByDay, setWaterByDay] = useState<Array<{ label: string; ml: number }>>([]);
+  const [waterLoading, setWaterLoading] = useState(false);
   const [sleepEntries, setSleepEntries] = useState<SleepEntryLatest[]>([]);
 
   const workoutStore = useWorkoutStore();
@@ -269,6 +274,24 @@ export default function AnalyseScreen() {
       setMealsByDay(results);
       setMealsLoading(false);
     }).catch(() => { if (active) setMealsLoading(false); });
+    return () => { active = false; };
+  }, [interval, subTab]);
+
+  useEffect(() => {
+    if (subTab !== 'hydration') return;
+    let active = true;
+    setWaterLoading(true);
+    const days = eachDayOfInterval(interval);
+    Promise.all(
+      days.map(async day => {
+        const entry = await WaterService.getByDate(ds(day));
+        return { label: format(day, 'dd/MM'), ml: entry?.totalMl ?? 0 };
+      }),
+    ).then(results => {
+      if (!active) return;
+      setWaterByDay(results);
+      setWaterLoading(false);
+    }).catch(() => { if (active) setWaterLoading(false); });
     return () => { active = false; };
   }, [interval, subTab]);
 
@@ -340,6 +363,7 @@ export default function AnalyseScreen() {
       case 'morphologie':  return <BiometrieTab weightTrend={weightTrend} history={measureStore.history} loading={measureStore.loading} />;
       case 'symetrie':     return <OrthometryTab history={measureStore.history} loading={measureStore.loading} />;
       case 'nutrition':    return <NutritionTab mealsByDay={mealsByDay} mealsLoading={mealsLoading} todayKcal={mealStoreToday.totals.kcal} todayP={mealStoreToday.totals.p} todayC={mealStoreToday.totals.c} todayF={mealStoreToday.totals.f} />;
+      case 'hydration':    return <HydrationTab waterByDay={waterByDay} waterLoading={waterLoading} todayMl={waterByDay.at(-1)?.ml ?? 0} targetMl={WaterService.targetMl(bodyWeightKg ?? 70)} />;
       case 'disponible':   return <FluxDensiteTab sessions={workoutStore.sessions} weightKg={bodyWeightKg} />;
       case 'synoptique':   return <SynoptiqueTab sessions={workoutStore.sessions} />;
       case 'metabolisme':  return <MetaboliqueTab />;
