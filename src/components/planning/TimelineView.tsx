@@ -9,6 +9,7 @@ import { Fs, Fw, Ls, Sp } from '../../theme/tokens';
 import { L } from '../../constants/labels';
 import { ds } from '../../utils/storage';
 import { Touch } from '../ui/Touch';
+import { DayStateControl } from './DayStateControl';
 import { useTimeline } from '../../hooks/useTimeline';
 import { TASK_TYPE_META, type TaskType } from '../../data/schemas/planning/taskType';
 import type { TimelineItem } from '../../modules/planning/timeline';
@@ -79,6 +80,9 @@ export function TimelineView() {
           <ChevronRight size={18} color={theme.mute} />
         </Touch>
       </View>
+
+      {/* États de vie (segments intra-journée) coiffant la timeline */}
+      <DayStateControl date={ds(cursor)} />
 
       <ScrollView
         contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: Sp[6], paddingTop: Sp[3] }}

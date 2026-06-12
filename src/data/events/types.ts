@@ -17,4 +17,6 @@ export type EventMap = {
   'prayer.logged':              { date: string };
   'quran.logged':               { date: string };
   'habit.logged':               { date: string };
+  // États de vie (segments intra-journée) modifiés pour une date.
+  'state.changed':              { date: string };
 };
