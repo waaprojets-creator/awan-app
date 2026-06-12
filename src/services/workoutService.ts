@@ -95,7 +95,8 @@ export const WorkoutService = {
       durationMin,
       rpe: session.sessionRPE,
     };
-    await storage.set(`${SESSION_PREFIX}.${session.date}.${session.id}`, enriched);
+    // id = dateId ({date}.{ms}) → la date est déjà dans la clé ; aligne sur importJson & quran/journal/meal
+    await storage.set(`${SESSION_PREFIX}.${session.id}`, enriched);
     eventBus.emit('workout.completed', { workoutId: session.id, date: session.date });
   },
 

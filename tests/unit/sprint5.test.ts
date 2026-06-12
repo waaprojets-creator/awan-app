@@ -71,32 +71,38 @@ describe('Planner via IStorage', () => {
 
   it('sauvegarde et récupère une tâche', async () => {
     await planner.saveTask({
-      v: 2,
+      v: 4,
       id: '770e8400-e29b-41d4-a716-446655440000',
+      date: '2026-05-10',
+      scheduledDate: '2026-05-10',
       title: 'Musculation',
       durationMin: 60,
-      priority: 4,
+      priority: 2,
       domain: 'sport',
       tags: [],
       dependsOn: [],
-      enabled: true,
+      status: 'active',
+      timeCategory: null,
     });
-    const tasks = await planner.getTasks();
+    const tasks = await planner.getActiveTasks();
     expect(tasks).toHaveLength(1);
     expect(tasks[0].title).toBe('Musculation');
   });
 
   it('optimise un planning et persiste le résultat', async () => {
     await planner.saveTask({
-      v: 2,
+      v: 4,
       id: '770e8400-e29b-41d4-a716-446655440001',
+      date: '2026-05-10',
+      scheduledDate: '2026-05-10',
       title: 'Révision',
       durationMin: 45,
       priority: 3,
       domain: 'planning',
       tags: [],
       dependsOn: [],
-      enabled: true,
+      status: 'active',
+      timeCategory: null,
     });
     const schedule = await planner.optimize('2026-05-10');
     expect(schedule.date).toBe('2026-05-10');
@@ -109,11 +115,12 @@ describe('Planner via IStorage', () => {
   it('supprime une tâche', async () => {
     const id = '770e8400-e29b-41d4-a716-446655440002';
     await planner.saveTask({
-      v: 2, id, title: 'À supprimer', durationMin: 30,
+      v: 4, id, date: '2026-05-10', scheduledDate: '2026-05-10',
+      title: 'À supprimer', durationMin: 30,
       priority: 1, domain: 'general',
-      tags: [], dependsOn: [], enabled: true,
+      tags: [], dependsOn: [], status: 'active', timeCategory: null,
     });
     await planner.deleteTask(id);
-    expect(await planner.getTasks()).toHaveLength(0);
+    expect(await planner.getActiveTasks()).toHaveLength(0);
   });
 });

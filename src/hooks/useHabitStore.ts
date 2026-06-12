@@ -1,3 +1,6 @@
+// ⚠️ HOOK MORT — défini ici mais jamais importé/utilisé (aucun consommateur dans src/).
+// Vestige du refactor habit.history → habit.occurrence. Décision en attente (arbitrage utilisateur) :
+// supprimer une fois le module Habit clôturé. Ne pas y rebrancher de logique avant arbitrage. — audit 2026-06-11
 import { useState, useEffect, useCallback } from 'react';
 import { HabitService } from '@/services/habitService';
 import { HabitOccurrenceService } from '@/services/habitOccurrenceService';
