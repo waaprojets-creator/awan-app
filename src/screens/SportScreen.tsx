@@ -8,6 +8,7 @@ import {
  type ExerciseEntry,
 } from '../utils/sportData';
 import { uid, ds, dateId } from '../utils/storage';
+import { OneRepMaxService } from '../services/oneRepMaxService';
 import {
  Play,
  Plus,
@@ -88,7 +89,6 @@ function setKindColor(kind: SetKind, theme: AwanTheme): string {
 }
 
 const ACTIVE_SESSION_KEY = 'awan.sport.activeSession';
-const BEST_ONERMS_KEY = 'awan.sport.bestOneRMs';
 const ROUTINE_DRAFT_KEY = 'awan.sport.routineDraft';
 
 interface RoutineDraft {
@@ -109,10 +109,6 @@ function formatTime(s: number) {
 function computeOneRM(weightKg: number, reps: number): number {
  if (reps <= 0 || weightKg <= 0) return 0;
  return Math.round(weightKg * (1 + reps / 30) * 10) / 10;
-}
-
-function loadBestOneRMs(): Record<string, number> {
- try { return JSON.parse(safeStorage.get(BEST_ONERMS_KEY) ?? '{}'); } catch { return {}; }
 }
 
 async function notifyRestEnd() {
@@ -387,6 +383,7 @@ export default function SportScreen() {
  sets,
  };
  });
+ const bestRecords = await OneRepMaxService.getRecords();
  setActiveSession({
  id: dateId(today),
  routineId: routine.id,
@@ -403,7 +400,7 @@ export default function SportScreen() {
  currentExerciseIdx: 0,
  restEndAt: null,
  stage: 'arrived',
- bestOneRMs: loadBestOneRMs(),
+ bestOneRMs: bestRecords,
  });
  setView('active');
  }, []);
@@ -1354,11 +1351,7 @@ function ActiveWorkout({
  if (oneRM > currentBest) {
  isPR = true;
  newBestOneRMs = { ...s.bestOneRMs, [ex.exerciseId]: oneRM };
- try {
- const stored = loadBestOneRMs();
- stored[ex.exerciseId] = oneRM;
- safeStorage.set(BEST_ONERMS_KEY, JSON.stringify(stored));
- } catch { /* ignore */ }
+ void OneRepMaxService.saveRecords(newBestOneRMs);
  }
  }
 

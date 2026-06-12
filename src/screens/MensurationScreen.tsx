@@ -8,7 +8,8 @@ import { ds, uid } from '../utils/storage';
 import type { CircumferenceKey, SkinfoldKey, TrialTuple } from '../data/schemas/anthropo/measurement';
 import { BiometricsService } from '../services/biometricsService';
 import { analyzeSymmetry, asymmetryToHeatmapValue } from '../services/symmetryService';
-import { safeStorage } from '../utils/safeStorage';
+import { AnthropoGoalsService } from '../services/anthropoGoalsService';
+import type { AnthropoGoalsLatest } from '../data/schemas/anthropo/anthropoGoals';
 import { useWeightStore } from '../hooks/useWeightStore';
 import { useMeasurementStore } from '../hooks/useMeasurementStore';
 import { useAnthropoProfileStore } from '../hooks/useAnthropoProfileStore';
@@ -287,32 +288,28 @@ export default function MensurationScreen() {
   // S2.1 — Filtre fenêtre temporelle pour le graphique
   const [weightFilter, setWeightFilter] = useState<30 | 90 | 365>(30);
 
-  // S2.3 — Objectifs configurables (persistés en safeStorage)
-  const GOALS_KEY = 'awan.mensuration.goals';
+  // S2.3 — Objectifs configurables (silo anthropo.goals)
   const [targetWeightKg, setTargetWeightKg] = useState<string>('');
   const [targetBodyFatPct, setTargetBodyFatPct] = useState<string>('');
 
   useEffect(() => {
-    try {
-      const raw = safeStorage.get(GOALS_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as { targetWeightKg?: number; targetBodyFatPct?: number };
-        if (typeof parsed.targetWeightKg === 'number') setTargetWeightKg(String(parsed.targetWeightKg));
-        if (typeof parsed.targetBodyFatPct === 'number') setTargetBodyFatPct(String(parsed.targetBodyFatPct));
-      }
-    } catch {
-      /* ignore malformed storage */
-    }
+    let active = true;
+    AnthropoGoalsService.get().then(goals => {
+      if (!active || !goals) return;
+      if (typeof goals.targetWeightKg === 'number') setTargetWeightKg(String(goals.targetWeightKg));
+      if (typeof goals.targetBodyFatPct === 'number') setTargetBodyFatPct(String(goals.targetBodyFatPct));
+    });
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
     const handle = setTimeout(() => {
-      const payload: { targetWeightKg?: number; targetBodyFatPct?: number } = {};
+      const payload: AnthropoGoalsLatest = { v: 1 };
       const w = parseFloat(targetWeightKg.replace(',', '.'));
       const bf = parseFloat(targetBodyFatPct.replace(',', '.'));
       if (!isNaN(w) && w > 0) payload.targetWeightKg = w;
       if (!isNaN(bf) && bf > 0) payload.targetBodyFatPct = bf;
-      try { safeStorage.set(GOALS_KEY, JSON.stringify(payload)); } catch { /* quota */ }
+      void AnthropoGoalsService.save(payload);
     }, 800);
     return () => clearTimeout(handle);
   }, [targetWeightKg, targetBodyFatPct]);
