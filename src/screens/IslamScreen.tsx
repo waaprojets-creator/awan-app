@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { View, Text, ScrollView, TextInput as RNTextInput, StyleSheet } from 'react-native';
 import { Compass, BookOpen, RefreshCcw, Clock, CheckCircle2, Plus, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import * as Location from 'expo-location';
+import { Magnetometer } from 'expo-sensors';
 import { SpiritualService } from '../utils/spiritualService';
 import arabicData from '../assets/data/1.json';
 import { ds } from '../utils/storage';
@@ -203,6 +205,8 @@ export default function IslamScreen() {
   const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'ok' | 'cached' | 'denied'>('idle');
   const [northRot, setNorthRot] = useState(0);
   const [qiblaRot, setQiblaRot] = useState(0);
+  const magnetoSub = useRef<ReturnType<typeof Magnetometer.addListener> | null>(null);
+  const qiblaAngleRef = useRef(0);
   const [currentWord, setCurrentWord] = useState<any>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [calView, setCalView] = useState<'month' | 'year'>('month');
@@ -251,12 +255,69 @@ export default function IslamScreen() {
 
   useEffect(() => { pickNewWord(); }, []);
 
-  // J0: static qibla display — expo-sensors compass integrated in J0.4+
+  // Garde qiblaAngleRef en sync pour le listener magnétomètre (évite stale closure)
+  useEffect(() => { qiblaAngleRef.current = qiblaAngle; }, [qiblaAngle]);
+
+  // Nettoie le magnétomètre quand la boussole se ferme
   useEffect(() => {
-    if (!showQibla) return;
-    setNorthRot(0);
-    setQiblaRot(qiblaAngle);
-  }, [showQibla, qiblaAngle]);
+    if (!showQibla) {
+      magnetoSub.current?.remove();
+      magnetoSub.current = null;
+    }
+  }, [showQibla]);
+
+  const startMagnetometer = () => {
+    magnetoSub.current?.remove();
+    Magnetometer.setUpdateInterval(100);
+    magnetoSub.current = Magnetometer.addListener(({ x, y }) => {
+      // heading : 0° = Nord magnétique, 90° = Est (convention géographique)
+      const rad = Math.atan2(y, x);
+      const heading = ((rad * 180 / Math.PI) + 360) % 360;
+      setNorthRot(-heading);
+      setQiblaRot(qiblaAngleRef.current - heading);
+    });
+  };
+
+  const activateQibla = useCallback(async () => {
+    setLocationStatus('loading');
+    setShowQibla(true);
+
+    let lat: number | null = null;
+    let lon: number | null = null;
+
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        lat = pos.coords.latitude;
+        lon = pos.coords.longitude;
+        safeStorage.set('awan.user.location', JSON.stringify({ lat, lon }));
+        setLocationStatus('ok');
+      } else {
+        throw new Error('permission denied');
+      }
+    } catch {
+      const cached = safeStorage.get('awan.user.location');
+      if (cached) {
+        try { const p = JSON.parse(cached); lat = p.lat; lon = p.lon; setLocationStatus('cached'); }
+        catch { setLocationStatus('denied'); }
+      } else {
+        setLocationStatus('denied');
+      }
+    }
+
+    const angle = lat != null && lon != null
+      ? SpiritualService.getQiblaAngle(lat, lon)
+      : SpiritualService.getQiblaAngle();
+    qiblaAngleRef.current = angle;
+    setQiblaAngle(angle);
+    if (lat != null && lon != null) {
+      setPrayerTimesForDate(SpiritualService.getPrayerTimes(lat, lon));
+    }
+
+    startMagnetometer();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const pickNewWord = () => {
     setCurrentWord(arabicData[Math.floor(Math.random() * arabicData.length)]);
@@ -339,7 +400,7 @@ export default function IslamScreen() {
               value={showQibla ? `${Math.round(qiblaAngle)}°` : '—'}
               status={showQibla ? 'spirit' : 'mute'}
               index={2}
-              onPress={activateQibla}
+              onPress={() => void activateQibla()}
             />
           </View>
         </View>
@@ -477,7 +538,7 @@ export default function IslamScreen() {
         </View>
 
         {/* Qibla */}
-        <Touch onPress={activateQibla} style={{ marginBottom: 16 }}>
+        <Touch onPress={() => void activateQibla()} style={{ marginBottom: 16 }}>
           <View style={[s.row, { gap: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(212,175,55,0.25)', backgroundColor: 'rgba(212,175,55,0.04)' }]}>
             <View style={{ padding: 12, borderWidth: 1, borderColor: theme.selected, backgroundColor: 'rgba(212,175,55,0.1)' }}>
               <Compass size={22} color={theme.selected} />
@@ -525,7 +586,7 @@ export default function IslamScreen() {
                 <View style={[s.row, { gap: 8, marginTop: 12 }]}>
                   <View style={{ width: 6, height: 6, backgroundColor: locationStatus === 'ok' ? theme.statusOk : locationStatus === 'cached' ? theme.selected : theme.statusWarn }} />
                   <Text style={{ fontFamily: FontMono, fontSize: 9, color: theme.mute, letterSpacing: 2.0 }}>
-                    {locationStatus === 'ok' ? 'GPS ACTIF' : locationStatus === 'cached' ? 'POSITION MÉMORISÉE' : 'DÉFAUT'}
+                    {locationStatus === 'ok' ? 'GPS ACTIF · MAGNÉTOMÈTRE ACTIF' : locationStatus === 'cached' ? 'POSITION MÉMORISÉE · MAGNÉTOMÈTRE ACTIF' : 'POSITION PAR DÉFAUT · MAGNÉTOMÈTRE ACTIF'}
                   </Text>
                 </View>
               </>

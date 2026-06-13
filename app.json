@@ -20,6 +20,17 @@
         "color": "#D4AF37"
       }
     },
-    "plugins": ["expo-sqlite", "expo-notifications", "expo-secure-store"]
+    "plugins": [
+      "expo-sqlite",
+      "expo-notifications",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "AWAN utilise votre position pour calculer la direction de la Qibla et les horaires de prière.",
+          "locationWhenInUsePermission": "AWAN utilise votre position pour calculer la direction de la Qibla et les horaires de prière."
+        }
+      ]
+    ]
   }
 }
