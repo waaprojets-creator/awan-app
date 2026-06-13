@@ -7,21 +7,11 @@ import { FontSans, FontMono } from '../../constants/typography';
 import { Fs, Fw, Ls, Sp, Clr } from '../../theme/tokens';
 import { L } from '../../constants/labels';
 import { Touch } from '../ui/Touch';
-import { useDayState } from '../../hooks/useDayState';
 import { summarizeStates } from '../../modules/planning/dayState';
 import { LIFE_STATES, LIFE_STATE_META, type LifeState, type StateSegment } from '../../data/schemas/planning/dayState';
+import { stateColor } from './stateColor';
 
 const TextInput = RNTextInput as React.ComponentType<any>;
-
-function stateColor(theme: AwanTheme, st: LifeState): string {
-  switch (st) {
-    case 'endormi':  return theme.statusInfo;
-    case 'travail':  return theme.selected;
-    case 'malade':   return theme.danger;
-    case 'vacances': return theme.statusOk;
-    case 'libre':    return theme.borderSoft;
-  }
-}
 
 const PRESETS: ReadonlyArray<{ label: string; start: number; end: number }> = [
   { label: 'Nuit',       start: 0,    end: 420 },
@@ -68,9 +58,12 @@ function Strip({ segments, theme }: { segments: StateSegment[]; theme: AwanTheme
  * Contrôle des états de vie d'une journée : barre 24h proportionnelle (segments
  * intra-journée) + éditeur pour peindre un état sur une plage horaire.
  */
-export function DayStateControl({ date }: { date: string }) {
+export function DayStateControl({ segments, setSegment, reset }: {
+  segments: StateSegment[];
+  setSegment: (state: LifeState, startMin: number, endMin: number) => Promise<void> | void;
+  reset: () => Promise<void> | void;
+}) {
   const theme = useTheme();
-  const { segments, setSegment, reset } = useDayState(date);
   const [open, setOpen] = useState(false);
   const [sel, setSel] = useState<LifeState>('travail');
   const [startStr, setStartStr] = useState('08:00');

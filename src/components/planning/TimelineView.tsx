@@ -10,8 +10,12 @@ import { L } from '../../constants/labels';
 import { ds } from '../../utils/storage';
 import { Touch } from '../ui/Touch';
 import { DayStateControl } from './DayStateControl';
+import { stateColor, STATE_BG_OPACITY } from './stateColor';
 import { useTimeline } from '../../hooks/useTimeline';
+import { useDayState } from '../../hooks/useDayState';
+import { stateAtMinute } from '../../modules/planning/dayState';
 import { TASK_TYPE_META, type TaskType } from '../../data/schemas/planning/taskType';
+import type { LifeState } from '../../data/schemas/planning/dayState';
 import type { TimelineItem } from '../../modules/planning/timeline';
 
 // Couleur par type : index stable dans la palette design-system (10 teintes).
@@ -52,6 +56,7 @@ export function TimelineView() {
   const theme = useTheme();
   const [cursor, setCursor] = useState<Date>(() => new Date());
   const { items, loading } = useTimeline(ds(cursor));
+  const { segments, setSegment, reset } = useDayState(ds(cursor));
 
   const goPrev = useCallback(() => setCursor(c => addDays(c, -1)), []);
   const goNext = useCallback(() => setCursor(c => addDays(c, 1)), []);
@@ -81,8 +86,8 @@ export function TimelineView() {
         </Touch>
       </View>
 
-      {/* États de vie (segments intra-journée) coiffant la timeline */}
-      <DayStateControl date={ds(cursor)} />
+      {/* États de vie (segments intra-journée) — éditeur + fond du calendrier */}
+      <DayStateControl segments={segments} setSegment={setSegment} reset={reset} />
 
       <ScrollView
         contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: Sp[6], paddingTop: Sp[3] }}
@@ -96,15 +101,22 @@ export function TimelineView() {
         )}
 
         {items.map((item, i) => (
-          <Row key={item.id} item={item} index={i} />
+          <Row
+            key={item.id}
+            item={item}
+            index={i}
+            tint={item.startMin != null ? stateAtMinute(segments, item.startMin) : null}
+          />
         ))}
       </ScrollView>
     </View>
   );
 }
 
-function Row({ item, index }: { item: TimelineItem; index: number }) {
+function Row({ item, index, tint }: { item: TimelineItem; index: number; tint: LifeState | null }) {
   const theme = useTheme();
+  // « libre » = état par défaut → pas de teinte (seuls les états notables ressortent).
+  const tintColor = tint && tint !== 'libre' ? stateColor(theme, tint) : null;
   const color = theme.palette[TYPE_PALETTE_INDEX[item.type]] ?? theme.selected;
   const time = item.startMin != null ? minToHHMM(item.startMin) : '—';
   const tag =
@@ -115,6 +127,10 @@ function Row({ item, index }: { item: TimelineItem; index: number }) {
   return (
     <Animated.View entering={FadeInDown.duration(220).delay(Math.min(index * 20, 200))}>
       <View style={[s.row, { borderBottomColor: theme.borderSoft }]}>
+        {/* Calque état en fond (opacité 10%) — les tâches restent au premier plan */}
+        {tintColor ? (
+          <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: tintColor, opacity: STATE_BG_OPACITY }]} />
+        ) : null}
         <Text style={[s.time, { color: item.startMin != null ? theme.text : theme.mute }]}>{time}</Text>
         <View style={[s.bar, { backgroundColor: color }]} />
         <View style={{ flex: 1 }}>
