@@ -324,25 +324,6 @@ export default function IslamScreen() {
     setShowAnswer(false);
   };
 
-  const activateQibla = () => {
-    setLocationStatus('loading');
-    setShowQibla(true);
-    const cached = safeStorage.get('awan.user.location');
-    if (cached) {
-      try {
-        const { lat, lon } = JSON.parse(cached);
-        setQiblaAngle(SpiritualService.getQiblaAngle(lat, lon));
-        setPrayerTimesForDate(SpiritualService.getPrayerTimes(lat, lon));
-      } catch {
-        setQiblaAngle(SpiritualService.getQiblaAngle());
-      }
-      setLocationStatus('cached');
-    } else {
-      setQiblaAngle(SpiritualService.getQiblaAngle());
-      setLocationStatus('denied');
-    }
-  };
-
   const prevMonth = () => {
     if (hijriMonth === 1) { setHijriMonth(12); setHijriYear(y => y - 1); }
     else setHijriMonth(m => m - 1);
