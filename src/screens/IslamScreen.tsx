@@ -207,6 +207,7 @@ export default function IslamScreen() {
   const [qiblaRot, setQiblaRot] = useState(0);
   const magnetoSub = useRef<ReturnType<typeof Magnetometer.addListener> | null>(null);
   const qiblaAngleRef = useRef(0);
+  const qiblaCancelledRef = useRef(false);
   const [currentWord, setCurrentWord] = useState<any>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [calView, setCalView] = useState<'month' | 'year'>('month');
@@ -278,7 +279,16 @@ export default function IslamScreen() {
     });
   };
 
+  const deactivateQibla = useCallback(() => {
+    qiblaCancelledRef.current = true;
+    magnetoSub.current?.remove();
+    magnetoSub.current = null;
+    setShowQibla(false);
+    setLocationStatus('idle');
+  }, []);
+
   const activateQibla = useCallback(async () => {
+    qiblaCancelledRef.current = false;
     setLocationStatus('loading');
     setShowQibla(true);
 
@@ -305,6 +315,9 @@ export default function IslamScreen() {
         setLocationStatus('denied');
       }
     }
+
+    // Ignorer le résultat si l'utilisateur a fermé la boussole pendant l'acquisition GPS
+    if (qiblaCancelledRef.current) return;
 
     const angle = lat != null && lon != null
       ? SpiritualService.getQiblaAngle(lat, lon)
@@ -381,7 +394,7 @@ export default function IslamScreen() {
               value={showQibla ? `${Math.round(qiblaAngle)}°` : '—'}
               status={showQibla ? 'spirit' : 'mute'}
               index={2}
-              onPress={() => void activateQibla()}
+              onPress={() => showQibla ? deactivateQibla() : void activateQibla()}
             />
           </View>
         </View>
@@ -518,15 +531,15 @@ export default function IslamScreen() {
           })}
         </View>
 
-        {/* Qibla */}
-        <Touch onPress={() => void activateQibla()} style={{ marginBottom: 16 }}>
+        {/* Qibla — prompt d'activation masqué quand la boussole est ouverte */}
+        {!showQibla && <Touch onPress={() => void activateQibla()} style={{ marginBottom: 16 }}>
           <View style={[s.row, { gap: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(212,175,55,0.25)', backgroundColor: 'rgba(212,175,55,0.04)' }]}>
             <View style={{ padding: 12, borderWidth: 1, borderColor: theme.selected, backgroundColor: 'rgba(212,175,55,0.1)' }}>
               <Compass size={22} color={theme.selected} />
             </View>
             <Text style={{ fontFamily: FontSans, fontSize: 11, fontWeight: FwValue, color: theme.selected, letterSpacing: 2.2 }}>INSTRUMENT DE QIBLA</Text>
           </View>
-        </Touch>
+        </Touch>}
 
         {showQibla && (
           <View style={[s.section, { borderColor: theme.border, backgroundColor: theme.surface, alignItems: 'center', padding: 32, marginBottom: 16, overflow: 'hidden' }]}>
