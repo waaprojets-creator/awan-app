@@ -12,6 +12,8 @@ export const HabitDefinitionV1Schema = z.object({
   description: z.string().optional(),
   daysOfWeek:  z.array(z.number().int().min(0).max(6)), // [] = tous les jours, [1,3,5] = L/M/V
   domain:      z.enum(HABIT_DOMAINS).optional(),
+  // Dossiers/projets transverses (villa n2, awan app…). Optionnel, rétro-compatible.
+  tags:        z.array(z.string()).optional(),
   order:       z.number().int().nonnegative(),
   isActive:    z.boolean().default(true),
   startDate:   DateStringSchema.optional(),  // routine temporaire (Ramadan, mésocycle…)
