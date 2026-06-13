@@ -19,6 +19,8 @@ Items reportés explicitement de v4 vers v5.
 - **Chiffrement** — chiffrement at-rest de la base IndexedDB (clé dérivée du déverrouillage biométrique ou code PIN). Aucune donnée lisible si le device est compromis.
 - **Biométrie** — déverrouillage app par empreinte / Face ID via Capacitor BiometricAuth. Fallback PIN à 6 chiffres. Verrouillage automatique après inactivité configurable.
 
+- **Notifications opaques** — les notifications planifiées (rappels repas, séance, prière, mesures) ne doivent jamais contenir de données sensibles dans leur payload OS. Implémenter le pattern : ping silencieux → l'OS reçoit un titre générique ("AWAN") sans contenu lisible ; au tap, l'app se déverrouille via biométrie et affiche le contenu réel. Caler `visibility: AndroidNotificationVisibility.PRIVATE` pour masquer tout contenu sur l'écran de verrouillage. Aligné sur le modèle Signal / Proton Mail.
+
 ## Analyse — précision des données (approximations résiduelles)
 
 - **Durée de prière réelle** — TempsTab (`islamH`) calcule actuellement 15 min fixes par prière accomplie (`donePrayers × 0.25`). Ajouter un champ `durationMin?: number` dans `PrayerLogV2` (ou V3) pour stocker le temps réel passé. Brancher dans `computeDayLayers` et `computeDaySlots`.
