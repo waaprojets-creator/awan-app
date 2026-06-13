@@ -25,6 +25,7 @@ import { Card } from '../components/ui/Card';
 import { Heading } from '../components/ui/Heading';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
+import { TimelineView } from '../components/planning/TimelineView';
 import { Fs, Fw, Ls, Clr } from '../theme/tokens';
 
 const TextInput = RNTextInput as React.ComponentType<any>;
@@ -592,96 +593,10 @@ export default function PlanningScreen() {
   }
 
   function renderUnifiedTimeline() {
-    type TimelineItem = { key: string; type: 'workout' | 'measurement' | 'event'; label: string; sub: string; color: string; };
-    type DayGroup = { date: string; dateLabel: string; isFuture: boolean; items: TimelineItem[] };
-
-    const today = dsDate(new Date());
-    const dayMap = new Map<string, TimelineItem[]>();
-    const addItem = (date: string, item: TimelineItem) => {
-      if (!dayMap.has(date)) dayMap.set(date, []);
-      dayMap.get(date)!.push(item);
-    };
-
-    for (const sess of workoutStore.sessions) {
-      const date = (sess as any).date ?? dsDate(new Date((sess as any).startTime ?? 0));
-      addItem(date, {
-        key: `workout-${(sess as any).id}`,
-        type: 'workout',
-        label: (sess as any).name ?? 'SÉANCE',
-        sub: `${Math.round(((sess as any).duration ?? 0) / 60)} min · ${((sess as any).exercises ?? []).length} exercices`,
-        color: theme.selected,
-      });
-    }
-
-    for (const m of measureStore.history) {
-      const parts: string[] = [];
-      const mw = weightStore.entries.find(e => e.date === (m as any).date);
-      if (mw && (mw.weight ?? 0) > 0) parts.push(`${mw.weight}kg`);
-      if ((m as any).body_fat_pct > 0) parts.push(`${(m as any).body_fat_pct}% MG`);
-      addItem((m as any).date, {
-        key: `meas-${(m as any).date}`,
-        type: 'measurement',
-        label: 'MESURE CORPORELLE',
-        sub: parts.join(' · ') || 'Mesures enregistrées',
-        color: theme.statusOk,
-      });
-    }
-
-    const cutoffPast = new Date(); cutoffPast.setDate(cutoffPast.getDate() - 30);
-    const cutoffFuture = new Date(); cutoffFuture.setDate(cutoffFuture.getDate() + 30);
-    for (const ev of (db?.events ?? [])) {
-      const date = ev.date ?? today;
-      if (date >= dsDate(cutoffPast) && date <= dsDate(cutoffFuture)) {
-        addItem(date, {
-          key: `ev-${ev.id}`,
-          type: 'event',
-          label: ev.title ?? 'Événement',
-          sub: ev.time ? `${ev.time} · ${ev.category ?? ''}` : (ev.category ?? ''),
-          color: ev.color ?? 'rgba(255,255,255,0.4)',
-        });
-      }
-    }
-
-    const groups: DayGroup[] = Array.from(dayMap.entries())
-      .sort(([a], [b]) => b.localeCompare(a))
-      .map(([date, items]) => ({
-        date,
-        dateLabel: new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase(),
-        isFuture: date > today,
-        items,
-      }));
-
-    return (
-      <ScrollView contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 24, paddingTop: 8 }} style={{ backgroundColor: theme.bg }} showsVerticalScrollIndicator={false}>
-        {groups.length === 0 && (
-          <View style={{ paddingVertical: 80, alignItems: 'center' }}>
-            <Text style={{ fontSize: Fs.md, fontWeight: Fw.display, color: theme.mute, textTransform: 'uppercase', letterSpacing: 2 }}>AUCUNE DONNÉE</Text>
-          </View>
-        )}
-        {groups.map(g => (
-          <View key={g.date} style={{ marginBottom: 20 }}>
-            <View style={[sp.row, { gap: 12, marginBottom: 8 }]}>
-              <Text style={{ fontFamily: FontMono, fontSize: 7, fontWeight: Fw.value, letterSpacing: 2.45, color: g.isFuture ? theme.selected : theme.mute }}>
-                {g.date === today ? 'AUJOURD\'HUI' : g.dateLabel}
-              </Text>
-              <View style={{ height: 1, flex: 1, backgroundColor: g.isFuture ? theme.borderSoft : theme.border }} />
-            </View>
-            {g.items.map(item => (
-              <View key={item.key} style={[sp.row, { gap: 12, marginBottom: 4, paddingVertical: 8, borderBottomWidth: 1, alignItems: 'stretch', borderBottomColor: theme.borderSoft }]}>
-                <View style={{ width: 3, alignSelf: 'stretch', backgroundColor: item.color }} />
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontFamily: FontMono, fontSize: 7, fontWeight: Fw.value, color: item.color, letterSpacing: 2.1, marginBottom: 2 }}>
-                    {item.type === 'workout' ? 'SÉANCE' : item.type === 'measurement' ? 'MESURE' : 'ÉVÉN.'}
-                  </Text>
-                  <Text style={{ fontFamily: FontSans, fontSize: 12, fontWeight: Fw.value, color: theme.title, letterSpacing: 0.48, textTransform: 'uppercase' }}>{item.label}</Text>
-                  {item.sub ? <Text style={{ fontFamily: FontMono, fontSize: 8, color: theme.mute, letterSpacing: 0.8, marginTop: 2 }}>{item.sub}</Text> : null}
-                </View>
-              </View>
-            ))}
-          </View>
-        ))}
-      </ScrollView>
-    );
+    // Visionneur AWAN dans le temps — agrège les 8 types de tâches via
+    // useTimeline (getByDate + event bus). Remplace l'ancien flux partiel
+    // (séances + mesures + db.events mort).
+    return <TimelineView />;
   }
 
   function renderAnalyse() {

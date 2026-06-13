@@ -1,4 +1,5 @@
 import { getStorage } from '@/data/storage/storageService';
+import { eventBus } from '@/data/events/bus';
 import { migrateHabitOccurrence } from '@/data/schemas/habits/habitOccurrence';
 import type { HabitOccurrenceLatest } from '@/data/schemas/habits/habitOccurrence';
 import { dateId } from '@/utils/id';
@@ -9,6 +10,7 @@ export const HabitOccurrenceService = {
   async save(occurrence: HabitOccurrenceLatest): Promise<void> {
     const storage = await getStorage();
     await storage.set(`${PREFIX}.${occurrence.id}`, occurrence);
+    eventBus.emit('habit.logged', { date: occurrence.date });
   },
 
   async delete(id: string): Promise<void> {

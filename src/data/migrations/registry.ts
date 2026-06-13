@@ -9,6 +9,7 @@ import { migrateRule } from '../schemas/coach/rule';
 import { migrateAssessment } from '../schemas/coach/assessment';
 import { migrateScheduleTask } from '../schemas/planning/scheduleTask';
 import { migrateDaySchedule } from '../schemas/planning/daySchedule';
+import { migrateDayState } from '../schemas/planning/dayState';
 import { migrateActivityRecord } from '../schemas/activity/activityRecord';
 import { migrateDailySummary } from '../schemas/activity/dailySummary';
 import { migrateSleepEntry } from '../schemas/sleep/sleepEntry';
@@ -35,6 +36,7 @@ export const migrators = {
   'coach.assessment': migrateAssessment,
   'planning.task': migrateScheduleTask,
   'planning.schedule': migrateDaySchedule,
+  'planning.state': migrateDayState,
   'activity.record': migrateActivityRecord,
   'activity.summary': migrateDailySummary,
   'sleep.entry': migrateSleepEntry,

@@ -25,10 +25,23 @@ export class Planner {
 
   async saveTask(task: ScheduleTaskLatest): Promise<void> {
     await this.storage.set(taskKey(task), task);
+    eventBus.emit('task.modified', { taskId: task.id });
   }
 
   async deleteTask(id: string): Promise<void> {
     await this.storage.delete(`${TASKS_PREFIX}.${id}`);
+    eventBus.emit('task.modified', { taskId: id });
+  }
+
+  /** Toutes les tâches (tous statuts) — inventaire du gestionnaire de tâches. */
+  async getAllTasks(): Promise<ScheduleTaskLatest[]> {
+    const keys = await this.storage.list(TASKS_PREFIX);
+    const tasks: ScheduleTaskLatest[] = [];
+    for (const k of keys) {
+      const t = await this.storage.get(k, migrateScheduleTask);
+      if (t) tasks.push(t);
+    }
+    return tasks;
   }
 
   async getTasksByDate(date: string): Promise<ScheduleTaskLatest[]> {
@@ -39,6 +52,10 @@ export class Planner {
       if (t) tasks.push(t);
     }
     return tasks;
+  }
+
+  async getTask(id: string): Promise<ScheduleTaskLatest | null> {
+    return this.storage.get(`${TASKS_PREFIX}.${id}`, migrateScheduleTask);
   }
 
   async getActiveTasks(): Promise<ScheduleTaskLatest[]> {
