@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { MemoryStorage } from '@/data/storage/MemoryStorage';
 import { Planner } from '@/modules/planning/api';
+import { HabitService } from '@/services/habitService';
+import { _setStorageForTest } from '@/data/storage/storageService';
 import {
   taskToItem, habitToItem, assembleInventory, applyFilters, collectFacets, EMPTY_FILTERS,
   type TaskFilters,
@@ -120,5 +122,27 @@ describe('Planner.getAllTasks', () => {
     await planner.saveTask(task({ id: `${DATE}.2`, status: 'cancelled' }));
     const all = await planner.getAllTasks();
     expect(all).toHaveLength(2);
+  });
+});
+
+describe('édition — invariants', () => {
+  it('édite une tâche en préservant les champs hors formulaire (date, dépendances, statut)', async () => {
+    const planner = new Planner(new MemoryStorage());
+    await planner.saveTask(task({ id: `${DATE}.9`, title: 'Avant', priority: 3, dependsOn: ['x'], status: 'active' }));
+    const existing = await planner.getTask(`${DATE}.9`);
+    expect(existing).not.toBeNull();
+    await planner.saveTask({ ...existing!, title: 'Après', priority: 1 });
+    const after = await planner.getTask(`${DATE}.9`);
+    expect(after).toMatchObject({ title: 'Après', priority: 1, date: DATE, dependsOn: ['x'], status: 'active' });
+  });
+
+  it('renomme une habitude en conservant son id (occurrences non orphelines)', async () => {
+    _setStorageForTest(new MemoryStorage());
+    await HabitService.saveDefinition(habit({ id: 'med', name: 'Méditation', daysOfWeek: [1, 3] }));
+    const existing = (await HabitService.getDefinitions()).find(d => d.id === 'med')!;
+    await HabitService.saveDefinition({ ...existing, name: 'Coran', daysOfWeek: [2, 4] });
+    const defs = await HabitService.getDefinitions();
+    expect(defs).toHaveLength(1);
+    expect(defs[0]).toMatchObject({ id: 'med', name: 'Coran', daysOfWeek: [2, 4] });
   });
 });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Modal, ScrollView, TextInput as RNTextInput } from 'react-native';
 import { X } from 'lucide-react-native';
 
@@ -11,6 +11,7 @@ import { getStorage } from '../../data/storage/storageService';
 import { Planner } from '../../modules/planning/api';
 import { HabitService } from '../../services/habitService';
 import { slugify, HABIT_DOMAINS, type HabitDomain, type HabitDefinitionLatest } from '../../data/schemas/habits/habitDefinition';
+import type { TaskListItem } from '../../modules/tasks/inventory';
 import { domainColor, priorityColor, PRIORITY_LABEL, DOW_LABELS } from './taskColors';
 
 const TextInput = RNTextInput as React.ComponentType<any>;
@@ -21,9 +22,11 @@ interface Props {
   onCreated: () => void;
   existingDomains: string[];
   existingTags: string[];
+  /** Si fourni, le modal édite cet item au lieu d'en créer un nouveau. */
+  editItem?: TaskListItem | null;
 }
 
-export function TaskCreateModal({ visible, onClose, onCreated, existingDomains, existingTags }: Props) {
+export function TaskCreateModal({ visible, onClose, onCreated, existingDomains, existingTags, editItem }: Props) {
   const theme = useTheme();
   const [type, setType] = useState<'task' | 'habit'>('task');
   const [title, setTitle] = useState('');
@@ -33,6 +36,25 @@ export function TaskCreateModal({ visible, onClose, onCreated, existingDomains, 
   const [tagInput, setTagInput] = useState('');
   const [priority, setPriority] = useState<1 | 2 | 3>(2);
   const [days, setDays] = useState<number[]>([]);
+  const isEdit = !!editItem;
+
+  // Préremplit le formulaire à l'ouverture (édition) ou le vide (création).
+  useEffect(() => {
+    if (!visible) return;
+    if (editItem) {
+      setType(editItem.source);
+      setTitle(editItem.title);
+      setDomain(editItem.source === 'task' ? (editItem.domain ?? '') : '');
+      setHabitDomain(editItem.source === 'habit' ? ((editItem.domain as HabitDomain | null) ?? undefined) : undefined);
+      setTags(editItem.tags);
+      setPriority(editItem.priority ?? 2);
+      setDays(editItem.daysOfWeek ?? []);
+      setTagInput('');
+    } else {
+      setType('task'); setTitle(''); setDomain(''); setHabitDomain(undefined);
+      setTags([]); setTagInput(''); setPriority(2); setDays([]);
+    }
+  }, [visible, editItem]);
 
   const reset = () => {
     setType('task'); setTitle(''); setDomain(''); setHabitDomain(undefined);
@@ -55,20 +77,33 @@ export function TaskCreateModal({ visible, onClose, onCreated, existingDomains, 
     if (!t) return;
     if (type === 'task') {
       const planner = new Planner(await getStorage());
-      await planner.createTask({ title: t, domain: domain.trim() || 'general', durationMin: 30, priority, tags });
+      if (editItem) {
+        // Conserve les champs hors formulaire (date, dépendances, statut…).
+        const existing = await planner.getTask(editItem.refId);
+        if (existing) await planner.saveTask({ ...existing, title: t, domain: domain.trim() || existing.domain, priority, tags });
+      } else {
+        await planner.createTask({ title: t, domain: domain.trim() || 'general', durationMin: 30, priority, tags });
+      }
     } else {
-      const def: HabitDefinitionLatest = {
-        v: 1,
-        id: slugify(t),
-        name: t,
-        daysOfWeek: days,
-        domain: habitDomain,
-        tags,
-        order: Math.floor(Date.now() / 1000),
-        isActive: true,
-        savedAt: Date.now(),
-      };
-      await HabitService.saveDefinition(def);
+      if (editItem) {
+        // Conserve l'id d'origine (les occurrences le référencent) + order/savedAt.
+        const defs = await HabitService.getDefinitions();
+        const existing = defs.find(d => d.id === editItem.refId);
+        if (existing) await HabitService.saveDefinition({ ...existing, name: t, daysOfWeek: days, domain: habitDomain, tags });
+      } else {
+        const def: HabitDefinitionLatest = {
+          v: 1,
+          id: slugify(t),
+          name: t,
+          daysOfWeek: days,
+          domain: habitDomain,
+          tags,
+          order: Math.floor(Date.now() / 1000),
+          isActive: true,
+          savedAt: Date.now(),
+        };
+        await HabitService.saveDefinition(def);
+      }
     }
     onCreated();
     reset();
@@ -82,7 +117,7 @@ export function TaskCreateModal({ visible, onClose, onCreated, existingDomains, 
       <View style={[s.overlay, { backgroundColor: theme.overlay }]}>
         <View style={[s.card, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
           <View style={s.head}>
-            <Text style={[s.title, { color: theme.title }]}>NOUVELLE {type === 'task' ? 'TÂCHE' : 'HABITUDE'}</Text>
+            <Text style={[s.title, { color: theme.title }]}>{isEdit ? L.common.edit.toUpperCase() : 'NOUVELLE'} {type === 'task' ? 'TÂCHE' : 'HABITUDE'}</Text>
             <Touch onPress={onClose} style={s.iconBtn} accessibilityLabel={L.common.close}>
               <X size={18} color={theme.mute} />
             </Touch>
@@ -95,7 +130,8 @@ export function TaskCreateModal({ visible, onClose, onCreated, existingDomains, 
                 <Touch
                   key={ty}
                   onPress={() => setType(ty)}
-                  style={[s.segBtn, { borderColor: theme.border, backgroundColor: type === ty ? theme.selected : 'transparent' }]}
+                  disabled={isEdit}
+                  style={[s.segBtn, { borderColor: theme.border, backgroundColor: type === ty ? theme.selected : 'transparent', opacity: isEdit && type !== ty ? 0.4 : 1 }]}
                 >
                   <Text style={[s.segText, { color: type === ty ? theme.bg : theme.mute }]}>
                     {ty === 'task' ? 'TÂCHE' : 'HABITUDE'}
@@ -217,7 +253,7 @@ export function TaskCreateModal({ visible, onClose, onCreated, existingDomains, 
               disabled={!canSubmit}
               style={[s.primaryBtn, { backgroundColor: canSubmit ? theme.selected : theme.border, opacity: canSubmit ? 1 : 0.5 }]}
             >
-              <Text style={[s.primaryText, { color: theme.bg }]}>{L.common.validate.toUpperCase()}</Text>
+              <Text style={[s.primaryText, { color: theme.bg }]}>{(isEdit ? L.common.save : L.common.validate).toUpperCase()}</Text>
             </Touch>
           </ScrollView>
         </View>

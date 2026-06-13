@@ -26,6 +26,7 @@ export default function TasksScreen() {
   const { items, reload, today } = useTaskInventory();
   const [filters, setFilters] = useState<TaskFilters>(EMPTY_FILTERS);
   const [showCreate, setShowCreate] = useState(false);
+  const [editItem, setEditItem] = useState<TaskListItem | null>(null);
 
   const facets = useMemo(() => collectFacets(items), [items]);
   const filtered = useMemo(() => applyFilters(items, filters), [items, filters]);
@@ -125,7 +126,13 @@ export default function TasksScreen() {
         {/* Liste */}
         <View style={{ paddingHorizontal: Sp[6], marginTop: Sp[4] }}>
           {filtered.map(it => (
-            <Row key={it.id} item={it} onToggle={() => toggleDone(it)} onDelete={() => remove(it)} />
+            <Row
+              key={it.id}
+              item={it}
+              onToggle={() => toggleDone(it)}
+              onDelete={() => remove(it)}
+              onEdit={() => { setEditItem(it); setShowCreate(true); }}
+            />
           ))}
           {filtered.length === 0 && (
             <View style={s.empty}>
@@ -137,17 +144,18 @@ export default function TasksScreen() {
 
       {/* FAB */}
       <View style={{ position: 'absolute', bottom: 128, right: 32, zIndex: 50 }}>
-        <Touch onPress={() => setShowCreate(true)} style={[s.fab, { backgroundColor: theme.selected, borderColor: theme.border }]}>
+        <Touch onPress={() => { setEditItem(null); setShowCreate(true); }} style={[s.fab, { backgroundColor: theme.selected, borderColor: theme.border }]}>
           <Plus size={28} color={theme.bg} strokeWidth={3} />
         </Touch>
       </View>
 
       <TaskCreateModal
         visible={showCreate}
-        onClose={() => setShowCreate(false)}
+        onClose={() => { setShowCreate(false); setEditItem(null); }}
         onCreated={reload}
         existingDomains={facets.domains}
         existingTags={facets.tags}
+        editItem={editItem}
       />
     </View>
   );
@@ -188,7 +196,7 @@ function Chip({ label, active, onPress, color, dot }: { label: string; active: b
   );
 }
 
-function Row({ item, onToggle, onDelete }: { item: TaskListItem; onToggle: () => void; onDelete: () => void }) {
+function Row({ item, onToggle, onDelete, onEdit }: { item: TaskListItem; onToggle: () => void; onDelete: () => void; onEdit: () => void }) {
   const theme = useTheme();
   const barColor = domainColor(theme, item.domain);
   const recurrenceLabel = item.daysOfWeek == null
@@ -204,7 +212,7 @@ function Row({ item, onToggle, onDelete }: { item: TaskListItem; onToggle: () =>
         {item.done ? <CheckCircle size={22} color={theme.selected} /> : <Circle size={22} color={theme.border} />}
       </Touch>
 
-      <View style={{ flex: 1 }}>
+      <Touch onPress={onEdit} style={{ flex: 1 }}>
         <Text style={[s.rowTitle, { color: theme.title, textDecorationLine: item.done ? 'line-through' : 'none' }]} numberOfLines={1}>
           {item.title}
         </Text>
@@ -229,7 +237,7 @@ function Row({ item, onToggle, onDelete }: { item: TaskListItem; onToggle: () =>
             <Text key={t} style={[s.tag, { color: theme.selected }]}>#{t}</Text>
           ))}
         </View>
-      </View>
+      </Touch>
 
       <Touch onPress={onDelete} style={[s.del, { borderColor: theme.border }]}>
         <Trash2 size={15} color={theme.mute} />
