@@ -10,8 +10,8 @@ const NETWORK_BANNER_KEY = 'awan.network-banner';
 function savedTheme(): Theme {
   try {
     const t = safeStorage.get(THEME_KEY);
-    return t === 'dark' || t === 'light' || t === 'black' ? t : 'light';
-  } catch { return 'light'; }
+    return t === 'dark' || t === 'light' || t === 'black' ? t : 'black';
+  } catch { return 'black'; }
 }
 
 function savedNetworkBanner(): boolean {

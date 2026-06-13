@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, ActivityIndicator, StyleSheet, Animated } from 'react-native';
+import { LightSensor } from 'expo-sensors';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAppStore } from '@/data/store/appStore';
-import { useTheme, useThemeSync } from '@/hooks/useTheme';
+import { useTheme, useThemeSync, useThemeMode } from '@/hooks/useTheme';
 import { useDayBoundary } from '@/hooks/useDayBoundary';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import LockScreen from '@/screens/LockScreen';
@@ -13,6 +14,13 @@ import { getStorage } from '@/data/storage/storageService';
 import { hydrateSafeStorage } from '@/utils/safeStorage';
 import { PeriodizationService } from '@/services/periodizationService';
 import { NutritionProfileService } from '@/services/nutritionProfileService';
+
+// Seuils lux → thème : < 10 lux = noir complet, < 300 = intérieur, ≥ 300 = lumière vive
+function luxToTheme(lux: number): 'black' | 'dark' | 'light' {
+  if (lux < 10)  return 'black';
+  if (lux < 300) return 'dark';
+  return 'light';
+}
 
 // Flag stocké dans le même storage (SQLite/IndexedDB) que les données.
 // Si la base est vidée (réinstall, clear data), le flag l'est aussi → re-seed automatique.
@@ -53,17 +61,66 @@ function SplashLoader() {
 
 function Root() {
   const { isUnlocked, ready } = useAppStore();
+  const themeMode = useThemeMode();
   useThemeSync();
   useDayBoundary();
 
-  // Hydrate le stockage durable (memCache + caches sync des silos ← IStorage) puis applique
-  // les prefs et débloque le rendu. allSettled : un échec d'hydratation n'empêche pas le boot.
+  // Fondu 500ms sur chaque changement de thème — ignoré pendant le SplashLoader (ready=false)
+  const fadeAnim = useRef(new Animated.Value(1)).current;
   useEffect(() => {
+    if (!useAppStore.getState().ready) return;
+    fadeAnim.setValue(0);
+    Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+  }, [themeMode]);
+
+  // Hydratation + LightSensor ambiant
+  // Ordre critique : applyHydratedSettings() d'abord, puis le capteur écrase si disponible,
+  // pour éviter que la restauration SQLite efface la lecture initiale du capteur.
+  useEffect(() => {
+    let sub: { remove: () => void } | null = null;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    let firstLux: number | null = null;
+    let hydrated = false;
+
+    const applyLux = (lux: number, immediate: boolean) => {
+      const target = luxToTheme(lux);
+      if (target === useAppStore.getState().theme) return;
+      if (immediate) {
+        useAppStore.getState().setTheme(target);
+      } else {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => useAppStore.getState().setTheme(target), 3000);
+      }
+    };
+
+    LightSensor.isAvailableAsync().then((available) => {
+      if (!available) return;
+      LightSensor.setUpdateInterval(5000);
+      sub = LightSensor.addListener(({ illuminance }) => {
+        const isFirst = firstLux === null;
+        if (isFirst) firstLux = illuminance;
+        // Pendant le splash : stocker sans appliquer (hydratation pas encore terminée)
+        if (hydrated) applyLux(illuminance, isFirst);
+      });
+    });
+
+    // Hydrate le stockage durable (memCache + caches sync des silos ← IStorage) puis applique
+    // les prefs et débloque le rendu. allSettled : un échec d'hydratation n'empêche pas le boot.
     Promise.allSettled([
       hydrateSafeStorage(),
       PeriodizationService.hydrate(),
       NutritionProfileService.hydrate(),
-    ]).finally(() => useAppStore.getState().applyHydratedSettings());
+    ]).finally(() => {
+      useAppStore.getState().applyHydratedSettings();
+      hydrated = true;
+      // Appliquer la première lecture capteur si déjà disponible (couvre le cas cold start rapide)
+      if (firstLux !== null) applyLux(firstLux, true);
+    });
+
+    return () => {
+      sub?.remove();
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -73,7 +130,11 @@ function Root() {
 
   if (!ready) return <SplashLoader />;
   if (!isUnlocked) return <LockScreen />;
-  return <MainLayout />;
+  return (
+    <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+      <MainLayout />
+    </Animated.View>
+  );
 }
 
 export default function App() {
