@@ -81,7 +81,7 @@ export default function JournalScreen() {
               onPress={() => setIsFilterOpen(!isFilterOpen)}
               style={[styles.iconBtn, { backgroundColor: isFilterOpen ? theme.selected : Clr.white5 }]}
             >
-              <Filter size={18} color={isFilterOpen ? '#000' : theme.mute} />
+              <Filter size={18} color={isFilterOpen ? theme.bg : theme.mute} />
             </Touch>
           </View>
         </View>
@@ -128,11 +128,11 @@ export default function JournalScreen() {
                       <TokenIcon
                         iconKey={MODULE_ICON_KEY[mod.toLowerCase()] ?? 'file'}
                         size={12}
-                        color={activeModule === mod ? '#000' : theme.mute}
+                        color={activeModule === mod ? theme.bg : theme.mute}
                       />
                       <Text style={[
                         styles.modulePillText,
-                        { color: activeModule === mod ? '#000' : theme.mute },
+                        { color: activeModule === mod ? theme.bg : theme.mute },
                       ]}>
                         {MODULE_LABELS[mod] ?? mod.toUpperCase()}
                       </Text>
@@ -154,7 +154,7 @@ export default function JournalScreen() {
                         : { backgroundColor: Clr.white5, borderColor: Clr.white10 },
                     ]}
                   >
-                    <Text style={[styles.moodBtnText, { color: moodValue === v ? '#000' : theme.mute }]}>
+                    <Text style={[styles.moodBtnText, { color: moodValue === v ? theme.bg : theme.mute }]}>
                       {v}
                     </Text>
                   </Touch>
@@ -178,7 +178,7 @@ export default function JournalScreen() {
                   onPress={handleAddEntry}
                   style={[styles.addBtn, { backgroundColor: theme.selected }]}
                 >
-                  <Plus size={24} color="black" strokeWidth={3} />
+                  <Plus size={24} color={theme.bg} strokeWidth={3} />
                 </Touch>
               </View>
             </View>
