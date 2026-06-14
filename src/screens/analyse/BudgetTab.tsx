@@ -1,24 +1,62 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { View, Text, ActivityIndicator, Dimensions, StyleSheet } from 'react-native';
 import Svg, { Path, Circle, Line, Text as SvgText } from 'react-native-svg';
-import { Clock } from 'lucide-react-native';
-import { startOfWeek, differenceInCalendarWeeks } from 'date-fns';
+import { ChevronLeft, ChevronRight, Clock } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import { InstrumentCard } from '../../components/ui/InstrumentCard';
-import { DateSelectPopup } from '../../components/ui/DateSelectPopup';
 import type { StatusVariant } from '../../components/ui/InstrumentCard';
-import { buildWeekTimeFrame, type WeekTimeFrame } from '../../services/timeFrameworkService';
+import { Touch } from '../../components/ui/Touch';
+import {
+  buildPeriodTimeFrame,
+  type Granularity,
+  type PeriodTimeFrame,
+} from '../../services/timeFrameworkService';
 import { EmptyState } from './shared';
 import { useTheme, type AwanTheme } from '../../hooks/useTheme';
 import { FontMono } from '../../constants/typography';
-import { Fs, Fw, Ls } from '../../theme/tokens';
+import { Fs, Fw, Ls, Clr } from '../../theme/tokens';
 
 const SvgPath_ = Path as any;
 const SvgCircle_ = Circle as any;
 const SvgLine_ = Line as any;
 const SvgText_ = SvgText as any;
+
+// ─── Granularités disponibles ─────────────────────────────────────────────────
+
+const GRANULARITIES: ReadonlyArray<{ id: Granularity; label: string; unit: string }> = [
+  { id: 'day',   label: 'JOUR',    unit: 'h/j'   },
+  { id: 'week',  label: 'SEMAINE', unit: 'h/sem' },
+  { id: 'month', label: 'MOIS',    unit: 'h/mois' },
+  { id: 'year',  label: 'ANNÉE',   unit: 'h/an'  },
+];
+
+function formatPeriodLabel(g: Granularity, d: Date): string {
+  const today = new Date();
+  const sameDay = d.toDateString() === today.toDateString();
+
+  if (g === 'day') {
+    if (sameDay) return "AUJOURD'HUI";
+    return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
+  }
+  if (g === 'week') {
+    const dow = d.getDay() || 7;
+    const mon = new Date(d); mon.setDate(d.getDate() - (dow - 1));
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    return (
+      mon.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) +
+      ' – ' +
+      sun.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+    ).toUpperCase();
+  }
+  if (g === 'month') {
+    return d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).toUpperCase();
+  }
+  return String(d.getFullYear());
+}
+
+// ─── Jauge Cet ────────────────────────────────────────────────────────────────
 
 function CetGauge({ value }: { value: number }) {
   const theme = useTheme();
@@ -87,6 +125,8 @@ function CetGauge({ value }: { value: number }) {
   );
 }
 
+// ─── Helpers statut ───────────────────────────────────────────────────────────
+
 function productionStatus(h: number): StatusVariant {
   if (h >= 20) return 'ok'; if (h >= 10) return 'warn'; return 'mute';
 }
@@ -100,32 +140,39 @@ function cetStatus(cet: number): StatusVariant {
   if (cet >= 0.866) return 'ok'; if (cet >= 0.70) return 'warn'; return 'error';
 }
 
-function localToday(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+// ─── Composant principal ──────────────────────────────────────────────────────
 
 export function BudgetTab() {
   const theme = useTheme();
   const STATUS_COLOR_MAP = getStatusColorMap(theme);
-  const [frame, setFrame] = useState<WeekTimeFrame | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState<string>(localToday);
 
-  const weekOffset = useMemo(() => {
-    const selMonday = startOfWeek(new Date(`${selectedDate}T00:00:00`), { weekStartsOn: 1 });
-    const nowMonday = startOfWeek(new Date(), { weekStartsOn: 1 });
-    return differenceInCalendarWeeks(selMonday, nowMonday, { weekStartsOn: 1 });
-  }, [selectedDate]);
+  const [frame, setFrame] = useState<PeriodTimeFrame | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [granularity, setGranularity] = useState<Granularity>('week');
+  const [anchor, setAnchor] = useState<Date>(() => new Date());
 
   useEffect(() => {
     let active = true;
     setLoading(true);
-    buildWeekTimeFrame(weekOffset).then(f => {
+    buildPeriodTimeFrame(granularity, anchor).then(f => {
       if (active) { setFrame(f); setLoading(false); }
     }).catch(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [weekOffset]);
+  }, [granularity, anchor]);
+
+  const navigate = useCallback((dir: 1 | -1) => {
+    setAnchor(prev => {
+      const d = new Date(prev);
+      if (granularity === 'day')   d.setDate(d.getDate() + dir);
+      if (granularity === 'week')  d.setDate(d.getDate() + dir * 7);
+      if (granularity === 'month') d.setMonth(d.getMonth() + dir);
+      if (granularity === 'year')  d.setFullYear(d.getFullYear() + dir);
+      return d;
+    });
+  }, [granularity]);
+
+  const periodLabel = useMemo(() => formatPeriodLabel(granularity, anchor), [granularity, anchor]);
+  const unitLabel = GRANULARITIES.find(g => g.id === granularity)?.unit ?? 'h';
 
   if (loading) return (
     <View style={s.center}>
@@ -138,12 +185,48 @@ export function BudgetTab() {
 
   const cetPct = (frame.Cet * 100).toFixed(1);
   const cetColor = STATUS_COLOR_MAP[cetStatus(frame.Cet)];
+  const phLabel = `${Math.round(frame.periodHours)}h`;
 
   return (
     <View style={{ gap: 32 }}>
       <WidgetInfo id="Wt1" title="BUDGET TEMPOREL" content="Coefficient d'Efficience Temporel (Cet) = (T_production + T_slack) / T_éveil. Cible > 86.6%. T_friction cible < 15h/sem — toute tâche sans valeur ajoutée directe." />
-      <View style={{ paddingHorizontal: 8 }}>
-        <DateSelectPopup value={selectedDate} onChange={setSelectedDate} max={localToday()} label="SEMAINE DU" />
+
+      {/* Sélecteur de granularité */}
+      <View style={{ paddingHorizontal: 8, gap: 8 }}>
+        <View style={s.granularityRow}>
+          {GRANULARITIES.map(g => {
+            const active = granularity === g.id;
+            return (
+              <Touch
+                key={g.id}
+                onPress={() => { setGranularity(g.id); setAnchor(new Date()); }}
+                style={[s.granularityBtn, {
+                  backgroundColor: active ? Clr.gold20 : 'transparent',
+                  borderColor: active ? theme.selected : Clr.white10,
+                }]}
+              >
+                <Text style={{ fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.display, color: active ? theme.selected : theme.mute, letterSpacing: 1.6, textTransform: 'uppercase' }}>
+                  {g.label}
+                </Text>
+              </Touch>
+            );
+          })}
+        </View>
+
+        {/* Navigateur de période */}
+        <View style={[s.navRow, { borderColor: Clr.white10 }]}>
+          <Touch onPress={() => navigate(-1)} style={s.navArrow}>
+            <ChevronLeft size={18} color={theme.mute} />
+          </Touch>
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <Text style={{ fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display, color: theme.title, letterSpacing: 2, textTransform: 'uppercase' }}>
+              {periodLabel}
+            </Text>
+          </View>
+          <Touch onPress={() => navigate(1)} style={s.navArrow}>
+            <ChevronRight size={18} color={theme.mute} />
+          </Touch>
+        </View>
       </View>
 
       {frame.alert && (
@@ -177,30 +260,30 @@ export function BudgetTab() {
       </Card>
 
       <Card variant="flat">
-        <Heading level={4} mono subtitle="Répartition hebdomadaire · 168h">RATIO TEMPOREL</Heading>
+        <Heading level={4} mono subtitle={`Répartition · ${phLabel}`}>RATIO TEMPOREL</Heading>
         <View style={s.grid2}>
           <View style={s.gridCell}>
-            <InstrumentCard label="T SOMATIQUE" value={frame.T_somatique.toFixed(1)} unit="h/sem" status="mute" delta="cible 56h" index={1} />
+            <InstrumentCard label="T SOMATIQUE" value={frame.T_somatique.toFixed(1)} unit={unitLabel} status="mute" delta="cible 56h" index={1} />
           </View>
           <View style={s.gridCell}>
-            <InstrumentCard label="T PRODUCTION" value={frame.T_production.toFixed(1)} unit="h/sem" status={productionStatus(frame.T_production)} {...(frame.T_production < 20 ? { delta: '< 20h cible' } : {})} index={2} />
+            <InstrumentCard label="T PRODUCTION" value={frame.T_production.toFixed(1)} unit={unitLabel} status={productionStatus(frame.T_production)} {...(frame.T_production < 20 ? { delta: '< 20h cible' } : {})} index={2} />
           </View>
           <View style={s.gridCell}>
-            <InstrumentCard label="T FRICTION" value={frame.T_friction.toFixed(1)} unit="h/sem" status={frictionStatus(frame.T_friction)} delta={frame.T_friction <= 15 ? '≤ 15h ✓' : 'cible < 15h'} index={3} />
+            <InstrumentCard label="T FRICTION" value={frame.T_friction.toFixed(1)} unit={unitLabel} status={frictionStatus(frame.T_friction)} delta={frame.T_friction <= 15 ? '≤ 15h ✓' : 'cible < 15h'} index={3} />
           </View>
           <View style={s.gridCell}>
-            <InstrumentCard label="T SLACK" value={frame.T_slack.toFixed(1)} unit="h/sem" status={slackStatus(frame.T_slack)} delta={frame.T_slack >= 20 ? '≥ 20h ✓' : 'cible 20-30h'} index={4} />
+            <InstrumentCard label="T SLACK" value={frame.T_slack.toFixed(1)} unit={unitLabel} status={slackStatus(frame.T_slack)} delta={frame.T_slack >= 20 ? '≥ 20h ✓' : 'cible 20-30h'} index={4} />
           </View>
         </View>
       </Card>
 
       <Card variant="flat">
         <View style={s.rowBetween}>
-          <Text style={[s.labelXs, { color: theme.mute }]}>Cet hebdomadaire</Text>
+          <Text style={[s.labelXs, { color: theme.mute }]}>Cet · {granularity}</Text>
           <Text style={[s.bigNum, { color: cetColor }]}>{cetPct}%</Text>
         </View>
         <Text style={[s.labelXs, { color: theme.mute, marginTop: 8 }]}>
-          T_éveil {frame.T_eveil.toFixed(0)}h · semaine du {frame.weekStart}
+          T_éveil {frame.T_eveil.toFixed(0)}h · {frame.periodStart} — {frame.periodEnd}
         </Text>
         {frame.T_production === 0 && frame.T_friction === 0 && (
           <Text style={[s.labelXs, { color: theme.mute, marginTop: 12 }]}>
@@ -227,4 +310,8 @@ const s = StyleSheet.create({
   label: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
   labelXs: { fontFamily: FontMono, fontSize: Fs.xs, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
   bigNum: { fontFamily: FontMono, fontSize: 20, fontWeight: Fw.display, letterSpacing: Ls.tight },
+  granularityRow: { flexDirection: 'row', gap: 6 },
+  granularityBtn: { flex: 1, height: 40, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  navRow: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, height: 44 },
+  navArrow: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
 });
