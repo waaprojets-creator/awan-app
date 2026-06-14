@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
   Modal, TextInput as RNTextInput, Alert, Vibration,
@@ -16,7 +16,11 @@ import { useTheme } from '../hooks/useTheme';
 import { FontSans, FontMono } from '../constants/typography';
 import { L } from '../constants/labels';
 import { ds, parseDate, uid, dateId } from '../utils/storage';
-import { eventsForDate, daysWithEvents } from '../utils/recurrence';
+import { TimelineService, type TimelineItem } from '../modules/planning/timeline';
+import { TASK_TYPE_META } from '../data/schemas/planning/taskType';
+import { eventBus } from '../data/events/bus';
+import type { EventMap } from '../data/events/types';
+import { useTimeline } from '../hooks/useTimeline';
 import { useAppState } from '../context/AppStateContext';
 
 import { Clock, Plus, Download, ChevronLeft, ChevronRight, Calendar, Columns, Grid3X3, Zap, Target, Layers, Trash, TrendingUp } from 'lucide-react-native';
@@ -155,6 +159,11 @@ export default function PlanningScreen() {
   const [aiPriority, setAiPriority] = useState<1 | 2 | 3>(3);
   const [aiTimeCategory, setAiTimeCategory] = useState<'production' | 'friction' | 'slack' | 'somatique' | null>(null);
 
+  const [dayCounts, setDayCounts] = useState<Record<string, number>>({});
+  const [todayCount, setTodayCount] = useState(0);
+  const [busVersion, setBusVersion] = useState(0);
+  const { items: selDayItems } = useTimeline(ds(selDate));
+
   const categories = useMemo(() => {
     const base: any = { ...CATS };
     if (db?.categories) {
@@ -162,6 +171,70 @@ export default function PlanningScreen() {
     }
     return base;
   }, [db?.categories]);
+
+  // Abonnement event bus → recharger les counts quand une donnée est enregistrée dans un silo
+  useEffect(() => {
+    const EVENTS: ReadonlyArray<keyof EventMap> = [
+      'workout.completed', 'meal.logged', 'measurement.recorded', 'day.ended',
+      'planning.optimized', 'journal.logged', 'prayer.logged', 'quran.logged', 'habit.logged',
+    ];
+    const offs = EVENTS.map(ev => eventBus.on(ev, () => setBusVersion(v => v + 1)));
+    return () => offs.forEach(off => off());
+  }, []);
+
+  // Counts du mois visible (dots grille mensuelle + dot hebdo)
+  useEffect(() => {
+    let cancelled = false;
+    const yr = calDate.getFullYear(), mo = calDate.getMonth();
+    const dim = new Date(yr, mo + 1, 0).getDate();
+    const entries: Array<{ dstr: string; p: Promise<number> }> = [];
+    for (let day = 1; day <= dim; day++) {
+      const dstr = `${yr}-${String(mo + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      entries.push({ dstr, p: TimelineService.getByDate(dstr).then(items => items.length) });
+    }
+    Promise.all(entries.map(async ({ dstr, p }) => ({ dstr, count: await p }))).then(results => {
+      if (cancelled) return;
+      setDayCounts(prev => {
+        const next = { ...prev };
+        results.forEach(({ dstr, count }) => { next[dstr] = count; });
+        return next;
+      });
+    });
+    return () => { cancelled = true; };
+  }, [calDate, busVersion]);
+
+  // Counts de l'année (dots grille annuelle) — chargés mois par mois
+  useEffect(() => {
+    let cancelled = false;
+    const yr = annDate.getFullYear();
+    const loadYear = async () => {
+      for (let mo = 0; mo < 12 && !cancelled; mo++) {
+        const dim = new Date(yr, mo + 1, 0).getDate();
+        const entries: Array<{ dstr: string; p: Promise<number> }> = [];
+        for (let day = 1; day <= dim; day++) {
+          const dstr = `${yr}-${String(mo + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          entries.push({ dstr, p: TimelineService.getByDate(dstr).then(items => items.length) });
+        }
+        const results = await Promise.all(entries.map(async ({ dstr, p }) => ({ dstr, count: await p })));
+        if (!cancelled) {
+          setDayCounts(prev => {
+            const next = { ...prev };
+            results.forEach(({ dstr, count }) => { next[dstr] = count; });
+            return next;
+          });
+        }
+      }
+    };
+    loadYear();
+    return () => { cancelled = true; };
+  }, [annDate, busVersion]);
+
+  // Compte du jour actuel (carte stat en bas)
+  useEffect(() => {
+    let cancelled = false;
+    TimelineService.getByDate(ds(new Date())).then(items => { if (!cancelled) setTodayCount(items.length); });
+    return () => { cancelled = true; };
+  }, [busVersion]);
 
   // Création d'événement par appui long + glissement vertical sur la grille quotidienne.
   // (remplace les anciens pointer events web par un geste react-native-gesture-handler)
@@ -251,11 +324,11 @@ export default function PlanningScreen() {
     for (let i = start - 1; i >= 0; i--) cells.push({ day: dipm - i, cur: false, dstr: null, evs: [] });
     for (let day = 1; day <= dim; day++) {
       const dstr = `${yr}-${String(mo+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-      cells.push({ day, cur: true, dstr, isToday: dstr === todayStr, evs: eventsForDate(db, dstr) });
+      cells.push({ day, cur: true, dstr, isToday: dstr === todayStr, evs: (dayCounts[dstr] ?? 0) > 0 ? [true] : [] });
     }
     while (cells.length % 7 !== 0) cells.push({ day: cells.length - (start + dim) + 1, cur: false, dstr: null, evs: [] });
     return cells;
-  }, [calDate, db]);
+  }, [calDate, dayCounts]);
 
   const selectDate = useCallback((dateStr: string) => {
     if (ds(selDate) === dateStr) { setPrevTab(subTab); setSubTab(3); }
@@ -299,7 +372,7 @@ export default function PlanningScreen() {
           <Text style={{ textTransform: 'uppercase', marginBottom: 12, fontFamily: FontSans, fontSize: 7, fontWeight: Fw.value, color: theme.mute, letterSpacing: 2.1 }}>
             {new Date(selDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
           </Text>
-          <EvListSection events={eventsForDate(db, ds(selDate))} categories={categories} onAdd={() => setShowEvModal(true)} onAddRt={() => setShowRtModal(true)} onEdit={(ev: any) => { setEditEv(ev); setShowEvModal(true); }} />
+          <SelDaySection items={selDayItems} onAdd={() => setShowEvModal(true)} onAddRt={() => setShowRtModal(true)} />
         </View>
       </ScrollView>
     );
@@ -312,7 +385,8 @@ export default function PlanningScreen() {
     const lbl = mon.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' — '+sun.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
     const cols = Array.from({ length: 7 }).map((_, i) => {
       const day = new Date(mon); day.setDate(mon.getDate() + i);
-      return { day, dstr: ds(day), evs: eventsForDate(db, ds(day)) };
+      const dstr = ds(day);
+      return { day, dstr, evs: (db?.events || []).filter((e: any) => e.date === dstr) };
     });
     const hours = Array.from({ length: 24 }).map((_, h) => `${String(h).padStart(2, '0')}:00`);
     return (
@@ -329,6 +403,7 @@ export default function PlanningScreen() {
               <Touch key={i} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 64, borderWidth: 1, borderColor: isToday ? Clr.gold30 : 'transparent', backgroundColor: isToday ? Clr.gold10 : 'transparent' }} onPress={() => selectDate(c.dstr)}>
                 <Text style={{ fontSize: Fs.xs, fontWeight: Fw.display, color: theme.mute, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1.6, fontFamily: FontMono }}>{DAYS_S[i]}</Text>
                 <Text style={{ fontSize: 20, fontWeight: Fw.display, color: isToday ? theme.selected : theme.title }}>{c.day.getDate()}</Text>
+                {(dayCounts[c.dstr] ?? 0) > 0 && <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: isToday ? theme.selected : 'rgba(212,175,55,0.5)', marginTop: 3 }} />}
               </Touch>
             );
           })}
@@ -364,7 +439,12 @@ export default function PlanningScreen() {
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginBottom: 96 }}>
           {Array.from({ length: 12 }).map((_, mo) => {
             const dim = new Date(yr, mo + 1, 0).getDate();
-            const daysSet = daysWithEvents(db, yr, mo);
+            const moStr = String(mo + 1).padStart(2, '0');
+            const daysSet = new Set(
+              Object.entries(dayCounts)
+                .filter(([dstr, cnt]) => dstr.startsWith(`${yr}-${moStr}-`) && cnt > 0)
+                .map(([dstr]) => parseInt(dstr.split('-')[2]!, 10))
+            );
             const first = new Date(yr, mo, 1).getDay();
             const start = first === 0 ? 6 : first - 1;
             const cells = [];
@@ -414,7 +494,8 @@ export default function PlanningScreen() {
               <View style={{ flex: 1, position: 'relative' }}>
                 {hours.map((_, h) => <View key={h} style={{ height: 80, borderBottomWidth: 1, borderBottomColor: Clr.white5, opacity: 0.05 }} />)}
                 {creatingEv && <View style={{ position: 'absolute', left: 4, right: 4, backgroundColor: Clr.gold20, borderLeftWidth: 4, borderLeftColor: theme.selected, padding: 12, zIndex: 10, top: (creatingEv.startMins / 60) * 80, height: (creatingEv.duration / 60) * 80 }}><Text style={{ fontSize: Fs.md, fontWeight: Fw.display, color: theme.title, textTransform: 'uppercase', letterSpacing: 1.8 }}>{creatingEv.title}</Text></View>}
-                {eventsForDate(db, dstr).map((ev: any) => ev.time && <DraggableEvent key={ev.id} ev={ev} hourHeight={80} handleEventDragEnd={handleEventDragEnd} setEditEv={setEditEv} setShowEvModal={setShowEvModal} categories={categories} />)}
+                {(db?.events || []).filter((e: any) => e.date === dstr).map((ev: any) => ev.time && <DraggableEvent key={ev.id} ev={ev} hourHeight={80} handleEventDragEnd={handleEventDragEnd} setEditEv={setEditEv} setShowEvModal={setShowEvModal} categories={categories} />)}
+                {selDayItems.filter(item => item.startMin != null).map(item => <TimelineBar key={item.id} item={item} hourHeight={80} theme={theme} />)}
               </View>
             </GestureDetector>
           </View>
@@ -726,7 +807,7 @@ export default function PlanningScreen() {
       <View style={{ paddingHorizontal: 24, paddingBottom: 96, flexDirection: 'row', gap: 16, marginTop: 'auto' }}>
         <Card variant="flat" style={[sp.row, { flex: 1, gap: 16, paddingVertical: 24, paddingHorizontal: 24, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border }]}>
           <View style={{ width: 40, height: 40, backgroundColor: Clr.gold10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Clr.gold20 }}><Zap size={18} color={theme.selected} /></View>
-          <View><Text style={{ fontSize: 24, fontWeight: Fw.display, color: theme.title }}>{eventsForDate(db, ds(new Date())).length}</Text><Text style={[sp.sm, { color: theme.mute, fontFamily: FontMono }]}>Auj.</Text></View>
+          <View><Text style={{ fontSize: 24, fontWeight: Fw.display, color: theme.title }}>{todayCount}</Text><Text style={[sp.sm, { color: theme.mute, fontFamily: FontMono }]}>Auj.</Text></View>
         </Card>
         <Card variant="flat" style={[sp.row, { flex: 1, gap: 16, paddingVertical: 24, paddingHorizontal: 24, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border }]}>
           <View style={{ width: 40, height: 40, backgroundColor: theme.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.border }}><Layers size={18} color={theme.mute} /></View>
@@ -856,6 +937,76 @@ function ImportModal({ visible, onClose, onImport }: any) {
         </View>
       </View>
     </Modal>
+  );
+}
+
+const TYPE_COLOR_IDX: Record<string, number> = {
+  sport: 0, nutrition: 1, islam: 2, sommeil: 3,
+  mensuration: 4, journal: 5, habitude: 6, tache: 7,
+};
+
+function TimelineBar({ item, hourHeight, theme }: { item: TimelineItem; hourHeight: number; theme: any }) {
+  const color = (theme.palette as string[])?.[TYPE_COLOR_IDX[item.type] ?? 0] ?? theme.selected;
+  const top = (item.startMin! / 60) * hourHeight;
+  const heightPx = item.durationMin != null ? (item.durationMin / 60) * hourHeight : hourHeight / 4;
+  return (
+    <View pointerEvents="none" style={{
+      position: 'absolute', left: 2, right: 2, top,
+      height: Math.max(heightPx, 12),
+      backgroundColor: `${color}14`, borderLeftWidth: 3, borderLeftColor: color,
+      borderRadius: 4, padding: 4,
+    }}>
+      <Text style={{ fontSize: 9, color: theme.title, fontFamily: FontMono, opacity: 0.8 }} numberOfLines={1}>{item.title}</Text>
+    </View>
+  );
+}
+
+function SelDaySection({ items, onAdd, onAddRt }: { items: TimelineItem[]; onAdd: () => void; onAddRt: () => void }) {
+  const theme = useTheme();
+  return (
+    <View style={{ gap: 8 }}>
+      {items.length === 0 ? (
+        <View style={{ paddingVertical: 20, alignItems: 'center' }}>
+          <Text style={{ fontFamily: FontMono, fontSize: Fs.xs, color: theme.mute, letterSpacing: 1.8, textTransform: 'uppercase' }}>Aucune activité</Text>
+        </View>
+      ) : (
+        items.map(item => <SelDayItem key={item.id} item={item} />)
+      )}
+      <View style={[sp.row, { gap: 16, paddingTop: 8 }]}>
+        <Touch onPress={onAdd} style={{ flex: 1, backgroundColor: theme.selected, height: 56, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: Fs.md, fontWeight: Fw.display, color: '#000', textTransform: 'uppercase', letterSpacing: 2, fontFamily: FontMono }}>Nouvel Événement</Text>
+        </Touch>
+        <Touch onPress={onAddRt} style={{ flex: 1, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white10, height: 56, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: Fs.md, fontWeight: Fw.display, color: theme.mute, textTransform: 'uppercase', letterSpacing: 2, fontFamily: FontMono }}>Routine</Text>
+        </Touch>
+      </View>
+    </View>
+  );
+}
+
+function SelDayItem({ item }: { item: TimelineItem }) {
+  const theme = useTheme();
+  const time = item.startMin != null
+    ? `${String(Math.floor(item.startMin / 60)).padStart(2, '0')}:${String(item.startMin % 60).padStart(2, '0')}`
+    : '--:--';
+  const color = (theme.palette as string[])?.[TYPE_COLOR_IDX[item.type] ?? 0] ?? theme.selected;
+  return (
+    <View style={{ flexDirection: 'row', borderWidth: 1, borderColor: theme.border, backgroundColor: 'rgba(255,255,255,0.02)', overflow: 'hidden' }}>
+      <View style={{ width: 3, backgroundColor: color }} />
+      <View style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 12 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Clock size={10} color={theme.mute} />
+            <Text style={{ fontFamily: FontMono, fontSize: 10, fontWeight: Fw.value, color: theme.title, letterSpacing: 0.5 }}>{time}</Text>
+          </View>
+          <Text style={{ fontFamily: FontMono, fontSize: 7, fontWeight: Fw.value, color, letterSpacing: 1.75 }}>
+            {(TASK_TYPE_META[item.type]?.label ?? item.type).toUpperCase()}
+          </Text>
+        </View>
+        <Text style={{ fontFamily: FontSans, fontSize: 13, fontWeight: Fw.value, color: theme.title, letterSpacing: 0.52, textTransform: 'uppercase' }} numberOfLines={1}>{item.title}</Text>
+        {item.subtitle ? <Text style={{ fontFamily: FontMono, fontSize: 8, color: theme.mute, letterSpacing: 0.8, marginTop: 2 }}>{item.subtitle}</Text> : null}
+      </View>
+    </View>
   );
 }
 
