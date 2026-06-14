@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { View, ActivityIndicator, StyleSheet, Animated } from 'react-native';
 import { LightSensor } from 'expo-sensors';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -61,14 +61,32 @@ function SplashLoader() {
 
 function Root() {
   const { isUnlocked, ready } = useAppStore();
+  const theme = useTheme();
   const themeMode = useThemeMode();
   useThemeSync();
   useDayBoundary();
 
-  // Fondu 500ms sur chaque changement de thème — ignoré pendant le SplashLoader (ready=false)
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  useEffect(() => {
-    if (!useAppStore.getState().ready) return;
+  // fadeAnim démarre à 0 : MainLayout fade-in à chaque apparition (boot et unlock)
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const showMain = ready && isUnlocked;
+  const prevShowMain = useRef(false);
+  const themeEffectMounted = useRef(false);
+
+  // Fade-in quand MainLayout passe de invisible à visible (SplashLoader→Main, Lock→Main)
+  // useLayoutEffect : synchrone avant le paint natif → pas de flash d'apparition
+  useLayoutEffect(() => {
+    if (!showMain) { prevShowMain.current = false; return; }
+    if (prevShowMain.current) return;
+    prevShowMain.current = true;
+    fadeAnim.setValue(0);
+    Animated.timing(fadeAnim, { toValue: 1, duration: 350, useNativeDriver: true }).start();
+  }, [showMain]);
+
+  // Fondu 500ms au changement de thème
+  // useLayoutEffect élimine le flash causé par useEffect (qui tirait APRÈS le paint natif)
+  useLayoutEffect(() => {
+    if (!themeEffectMounted.current) { themeEffectMounted.current = true; return; }
+    if (!showMain) return;
     fadeAnim.setValue(0);
     Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
   }, [themeMode]);
@@ -128,12 +146,20 @@ function Root() {
     autoLoadSeed();
   }, [isUnlocked]);
 
-  if (!ready) return <SplashLoader />;
-  if (!isUnlocked) return <LockScreen />;
+  // View persistant theme.bg : évite le fond blanc/transparent qui flashait
+  // quand Animated.View était à opacity 0 pendant les transitions
   return (
-    <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
-      <MainLayout />
-    </Animated.View>
+    <View style={{ flex: 1, backgroundColor: theme.bg }}>
+      {!ready ? (
+        <SplashLoader />
+      ) : !isUnlocked ? (
+        <LockScreen />
+      ) : (
+        <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+          <MainLayout />
+        </Animated.View>
+      )}
+    </View>
   );
 }
 
