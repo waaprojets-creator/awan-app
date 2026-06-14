@@ -377,7 +377,7 @@ export default function ScanTab() {
       {history.length > 0 && (
         <View style={{ gap: 12 }}>
           <Text style={[s.historyHeader, { color: theme.mute }]}>HISTORIQUE · {scanRange}J</Text>
-          {history.slice(0, 8).reverse().map((m, i) => {
+          {history.slice(0, 10).map((m, i) => {
             const w = weightStore.entries.filter(e => e.date <= m.date).sort((a, b) => b.date.localeCompare(a.date))[0];
             const sk = m.skinfolds ?? {};
             const age = profileAge; const sex = profileSex;
