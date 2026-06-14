@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { logger } from '@/utils/logger';
+import { perfMonitor } from '@/utils/perfMonitor';
 
 interface Props { children: React.ReactNode; fallback?: React.ReactNode; }
 interface State { error: Error | null; }
@@ -14,6 +15,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   override componentDidCatch(error: Error, info: React.ErrorInfo): void {
     logger.error(error, { componentStack: info.componentStack ?? '' });
+    perfMonitor.recordError(error.message);
   }
 
   override render() {

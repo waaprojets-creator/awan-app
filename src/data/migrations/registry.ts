@@ -17,6 +17,7 @@ import { migrateAnthropoGoals } from '../schemas/anthropo/anthropoGoals';
 import { migrateOneRepMax } from '../schemas/sport/oneRepMax';
 import { migratePeriodization } from '../schemas/sport/periodization';
 import { migrateNutritionProfile } from '../schemas/nutrition/nutritionProfile';
+import { migratePerfSnapshot } from '../schemas/monitoring/perfSnapshot';
 
 /**
  * Central registry mapping storage keys (or domain identifiers) to their
@@ -44,6 +45,7 @@ export const migrators = {
   'sport.oneRepMax': migrateOneRepMax,
   'sport.periodization': migratePeriodization,
   'nutrition.profile': migrateNutritionProfile,
+  'monitoring.perfSnapshot': migratePerfSnapshot,
 } as const;
 
 export type MigratorKey = keyof typeof migrators;

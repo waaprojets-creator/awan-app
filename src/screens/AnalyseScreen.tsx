@@ -49,7 +49,12 @@ const MetaboliqueTab = lazy(() => import('./analyse/MetaboliqueTab').then(m => (
 const HydrationTab   = lazy(() => import('./analyse/HydrationTab').then(m => ({ default: m.HydrationTab })));
 const IslamTab       = lazy(() => import('./analyse/IslamTab').then(m => ({ default: m.IslamTab })));
 const BudgetTab      = lazy(() => import('./analyse/BudgetTab').then(m => ({ default: m.BudgetTab })));
-const ReadinessTab   = lazy(() => import('./analyse/ReadinessTab').then(m => ({ default: m.ReadinessTab })));
+const ReadinessTab      = lazy(() => import('./analyse/ReadinessTab').then(m => ({ default: m.ReadinessTab })));
+const PerfStartupTab    = lazy(() => import('./analyse/PerfStartupTab').then(m => ({ default: m.PerfStartupTab })));
+const PerfFluencyTab    = lazy(() => import('./analyse/PerfFluencyTab').then(m => ({ default: m.PerfFluencyTab })));
+const PerfMemoryTab     = lazy(() => import('./analyse/PerfMemoryTab').then(m => ({ default: m.PerfMemoryTab })));
+const PerfIOTab         = lazy(() => import('./analyse/PerfIOTab').then(m => ({ default: m.PerfIOTab })));
+const PerfStabilityTab  = lazy(() => import('./analyse/PerfStabilityTab').then(m => ({ default: m.PerfStabilityTab })));
 
 const FREE_KEY = '_free';
 const FREE_COLOR = 'rgba(212, 175, 55, 0.05)';
@@ -101,7 +106,12 @@ const DOMAINS: Array<{
   {
     id: 'systeme', label: 'SYSTÈME', Icon: TrendingUp,
     subs: [
-      { id: 'correlations', label: 'CORRÉLATIONS', Icon: TrendingUp },
+      { id: 'correlations',   label: 'CORRÉLATIONS', Icon: TrendingUp },
+      { id: 'perf-startup',   label: 'DÉMARRAGE',    Icon: Zap },
+      { id: 'perf-fluency',   label: 'FLUIDITÉ',     Icon: Activity },
+      { id: 'perf-memory',    label: 'EMPREINTE',    Icon: BarChart2 },
+      { id: 'perf-io',        label: 'E/S SQLITE',   Icon: Clock },
+      { id: 'perf-stability', label: 'STABILITÉ',    Icon: Heart },
     ],
   },
 ];
@@ -369,7 +379,12 @@ export default function AnalyseScreen() {
       case 'metabolisme':  return <MetaboliqueTab />;
       case 'islam':        return <IslamTab />;
       case 'activite':     return <ActivityTab data={activityData} />;
-      case 'correlations': return <CorrelationTab sessions={workoutStore.sessions} history={measureStore.history} weightEntries={weightStore.entries} todayKcal={mealStoreToday.totals.kcal} />;
+      case 'correlations':   return <CorrelationTab sessions={workoutStore.sessions} history={measureStore.history} weightEntries={weightStore.entries} todayKcal={mealStoreToday.totals.kcal} />;
+      case 'perf-startup':   return <PerfStartupTab />;
+      case 'perf-fluency':   return <PerfFluencyTab />;
+      case 'perf-memory':    return <PerfMemoryTab />;
+      case 'perf-io':        return <PerfIOTab />;
+      case 'perf-stability': return <PerfStabilityTab />;
       case 'adiposite':    return <ScanTab />;
       default: return null;
     }

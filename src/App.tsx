@@ -14,6 +14,7 @@ import { getStorage } from '@/data/storage/storageService';
 import { hydrateSafeStorage } from '@/utils/safeStorage';
 import { PeriodizationService } from '@/services/periodizationService';
 import { NutritionProfileService } from '@/services/nutritionProfileService';
+import { perfMonitor } from '@/utils/perfMonitor';
 
 // Seuils lux → thème : < 10 lux = noir complet, < 300 = intérieur, ≥ 300 = lumière vive
 function luxToTheme(lux: number): 'black' | 'dark' | 'light' {
@@ -124,11 +125,15 @@ function Root() {
 
     // Hydrate le stockage durable (memCache + caches sync des silos ← IStorage) puis applique
     // les prefs et débloque le rendu. allSettled : un échec d'hydratation n'empêche pas le boot.
+    perfMonitor.markHydrationStart();
     Promise.allSettled([
       hydrateSafeStorage(),
       PeriodizationService.hydrate(),
       NutritionProfileService.hydrate(),
     ]).finally(() => {
+      perfMonitor.markHydrationEnd();
+      perfMonitor.markBootComplete();
+      perfMonitor.startFpsCapture();
       useAppStore.getState().applyHydratedSettings();
       hydrated = true;
       // Appliquer la première lecture capteur si déjà disponible (couvre le cas cold start rapide)
@@ -138,6 +143,7 @@ function Root() {
     return () => {
       sub?.remove();
       if (debounceTimer) clearTimeout(debounceTimer);
+      perfMonitor.stopFpsCapture();
     };
   }, []);
 

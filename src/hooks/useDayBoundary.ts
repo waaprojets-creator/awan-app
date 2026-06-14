@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { eventBus } from '@/data/events/bus';
 import { toDateString } from '@/utils/date';
+import { perfMonitor } from '@/utils/perfMonitor';
+import { PerfService } from '@/services/perfService';
 
 /**
  * Detects midnight crossings while the app is open and emits `day.ended`
@@ -13,7 +15,11 @@ export function useDayBoundary(): void {
     const id = setInterval(() => {
       const today = toDateString(new Date());
       if (today !== lastDate.current) {
-        eventBus.emit('day.ended', { date: lastDate.current });
+        const yesterday = lastDate.current;
+        eventBus.emit('day.ended', { date: yesterday });
+        perfMonitor.buildSnapshot(yesterday)
+          .then(snap => PerfService.saveSnapshot(snap))
+          .catch(() => { /* silent — perf data non-critique */ });
         lastDate.current = today;
       }
     }, 60_000);
