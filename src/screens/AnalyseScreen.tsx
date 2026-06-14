@@ -74,12 +74,14 @@ const DOMAINS: Array<{
   {
     id: 'corps', label: 'CORPS', Icon: Dumbbell,
     subs: [
+      { id: 'adiposite',   label: 'ADIPOSITÉ',   Icon: ScanLine },
+      { id: 'performance', label: 'PERFORMANCE', Icon: Trophy },
       { id: 'readiness',   label: 'READINESS',   Icon: Activity },
       { id: 'charge',      label: 'CHARGE',      Icon: Heart },
-      { id: 'performance', label: 'PERFORMANCE', Icon: Trophy },
-      { id: 'volume',      label: 'VOLUME',      Icon: Dumbbell },
       { id: 'morphologie', label: 'MORPHOLOGIE', Icon: BarChart2 },
+      { id: 'volume',      label: 'VOLUME',      Icon: Dumbbell },
       { id: 'symetrie',    label: 'SYMÉTRIE',    Icon: ScanLine },
+      { id: 'activite',    label: 'ACTIVITÉ',    Icon: Activity },
     ],
   },
   {
@@ -99,9 +101,7 @@ const DOMAINS: Array<{
   {
     id: 'systeme', label: 'SYSTÈME', Icon: TrendingUp,
     subs: [
-      { id: 'activite',     label: 'ACTIVITÉ',     Icon: Activity },
       { id: 'correlations', label: 'CORRÉLATIONS', Icon: TrendingUp },
-      { id: 'adiposite',    label: 'ADIPOSITÉ',    Icon: ScanLine },
     ],
   },
 ];
