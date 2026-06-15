@@ -35,6 +35,7 @@ const ALL_DOMAINS: Domain[] = ['sport', 'nutrition', 'anthropo', 'sleep', 'cross
 export interface UseCoachResult {
   assessments: AssessmentLatest[];
   loading: boolean;
+  error: string | null;
   runAll: (date: string) => Promise<void>;
   getAssessment: (date: string, domain: Domain) => Promise<AssessmentLatest | null>;
 }
@@ -44,6 +45,7 @@ export function useCoach(date?: string): UseCoachResult {
   const [, forceUpdate] = useState(0);
   const [assessments, setAssessments] = useState<AssessmentLatest[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const today = date ?? new Date().toISOString().slice(0, 10);
 
@@ -85,9 +87,13 @@ export function useCoach(date?: string): UseCoachResult {
     const coach = coachRef.current;
     if (!coach) return;
     setLoading(true);
+    setError(null);
     try {
       await coach.runAll(d);
       await refresh(d);
+    } catch (err) {
+      console.error('[Coach] runAll failed:', err);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -99,7 +105,7 @@ export function useCoach(date?: string): UseCoachResult {
     [],
   );
 
-  return { assessments, loading, runAll, getAssessment };
+  return { assessments, loading, error, runAll, getAssessment };
 }
 
 /** Test-only: tear down the singleton between tests. */

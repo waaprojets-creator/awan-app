@@ -66,6 +66,17 @@ export class SqliteStorage implements IStorage {
     this.invalidateSizeCache();
   }
 
+  async getAll<T>(prefix: string, parse: ParseFn<T>): Promise<T[]> {
+    const rows = await this.handle.getAllAsync<{ value: string }>(
+      'SELECT value FROM kv WHERE key LIKE ?', [`${prefix}%`],
+    );
+    const results: T[] = [];
+    for (const row of rows) {
+      try { results.push(parse(JSON.parse(row.value))); } catch { /* skip invalid */ }
+    }
+    return results;
+  }
+
   async delete(key: string): Promise<void> {
     await this.handle.runAsync('DELETE FROM kv WHERE key = ?', [key]);
     this.invalidateSizeCache();

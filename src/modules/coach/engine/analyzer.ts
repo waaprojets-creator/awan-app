@@ -6,25 +6,17 @@ import { rangeBack } from './dateRange';
  * Reads raw records under signal.source for the requested time window and
  * computes a single numeric value via the chosen aggregation type.
  *
- * The analyzer is the only layer that touches storage. Once it returns,
- * the rest of the engine works on plain numbers.
+ * Source records are bulk-loaded once per prefix and memoised in ctx.sourceCache
+ * to avoid N+1 storage reads across multiple signals sharing the same source.
  */
 export async function analyzeSignal(signal: Signal, ctx: CoachContext): Promise<number> {
+  const allSourceRecords = await loadSource(signal.source, ctx);
+
   const dates = new Set(rangeBack(ctx.date, signal.window.days));
-  const parse = ctx.resolveSource(signal.source);
-
-  const allKeys = await ctx.storage.list(signal.source);
-  const records: Array<{ key: string; record: Record<string, unknown> }> = [];
-
-  for (const key of allKeys) {
-    const raw = await ctx.storage.get(key, parse);
-    if (raw === null) continue;
-    const rec = raw as Record<string, unknown>;
+  const records = allSourceRecords.filter((rec) => {
     const recDate = typeof rec['date'] === 'string' ? rec['date'] : null;
-    if (recDate === null || !dates.has(recDate)) continue;
-    if (!matchesFilter(rec, signal.filter)) continue;
-    records.push({ key, record: rec });
-  }
+    return recDate !== null && dates.has(recDate) && matchesFilter(rec, signal.filter);
+  });
 
   switch (signal.type) {
     case 'count':
@@ -32,32 +24,29 @@ export async function analyzeSignal(signal: Signal, ctx: CoachContext): Promise<
 
     case 'sum': {
       const f = requireField(signal);
-      return records.reduce((acc, r) => acc + numberOrZero(r.record[f]), 0);
+      return records.reduce((acc, r) => acc + numberOrZero(r[f]), 0);
     }
 
     case 'avg': {
       if (records.length === 0) return 0;
       const f = requireField(signal);
-      const sum = records.reduce((acc, r) => acc + numberOrZero(r.record[f]), 0);
+      const sum = records.reduce((acc, r) => acc + numberOrZero(r[f]), 0);
       return sum / records.length;
     }
 
     case 'latest': {
       const f = requireField(signal);
       const sorted = [...records].sort((a, b) =>
-        String(b.record['date']).localeCompare(String(a.record['date'])),
+        String(b['date']).localeCompare(String(a['date'])),
       );
       const head = sorted[0];
-      return head ? numberOrZero(head.record[f]) : 0;
+      return head !== undefined ? numberOrZero(head[f]) : 0;
     }
 
     case 'trend': {
       const f = requireField(signal);
       const series = records
-        .map((r) => ({
-          t: String(r.record['date']),
-          y: numberOrZero(r.record[f]),
-        }))
+        .map((r) => ({ t: String(r['date']), y: numberOrZero(r[f]) }))
         .sort((a, b) => a.t.localeCompare(b.t));
       return linearSlope(series.map((p, i) => [i, p.y] as [number, number]));
     }
@@ -67,23 +56,30 @@ export async function analyzeSignal(signal: Signal, ctx: CoachContext): Promise<
       if (!signal.ratioWindow) throw new Error("Signal 'ratio' requires 'ratioWindow'");
       const longDates = new Set(rangeBack(ctx.date, signal.ratioWindow.days));
       let longSum = 0;
-      for (const key of allKeys) {
-        const raw = await ctx.storage.get(key, parse);
-        if (raw === null) continue;
-        const rec = raw as Record<string, unknown>;
+      for (const rec of allSourceRecords) {
         const recDate = typeof rec['date'] === 'string' ? rec['date'] : null;
         if (recDate === null || !longDates.has(recDate)) continue;
         if (!matchesFilter(rec, signal.filter)) continue;
         longSum += numberOrZero(rec[f]);
       }
-      const shortSum = records.reduce((acc, r) => acc + numberOrZero(r.record[f]), 0);
-      // Normalize per-day: ACWR = (shortSum / shortDays) / (longSum / longDays)
+      const shortSum = records.reduce((acc, r) => acc + numberOrZero(r[f]), 0);
       const shortAvg = shortSum / signal.window.days;
       const longAvg = longSum / signal.ratioWindow.days;
       if (longAvg === 0) return 0;
       return shortAvg / longAvg;
     }
   }
+}
+
+async function loadSource(
+  source: string,
+  ctx: CoachContext,
+): Promise<Record<string, unknown>[]> {
+  if (ctx.sourceCache.has(source)) return ctx.sourceCache.get(source)!;
+  const parse = ctx.resolveSource(source);
+  const records = await ctx.storage.getAll(source, (raw) => parse(raw) as Record<string, unknown>);
+  ctx.sourceCache.set(source, records);
+  return records;
 }
 
 function requireField(s: Signal): string {

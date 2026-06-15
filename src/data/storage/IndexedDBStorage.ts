@@ -60,6 +60,16 @@ export class IndexedDBStorage implements IStorage {
     this.cachedSize = null;
   }
 
+  async getAll<T>(prefix: string, parse: ParseFn<T>): Promise<T[]> {
+    const s = await this.store('readonly');
+    const raw = await idbRequest(s.getAll(this.idbCursorRange(prefix))) as unknown[];
+    const results: T[] = [];
+    for (const item of raw) {
+      try { results.push(parse(item)); } catch { /* skip invalid */ }
+    }
+    return results;
+  }
+
   async delete(key: string): Promise<void> {
     const s = await this.store('readwrite');
     await idbRequest(s.delete(key));

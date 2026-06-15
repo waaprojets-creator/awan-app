@@ -11,7 +11,7 @@ const passthrough = (raw: unknown) => z.record(z.unknown()).parse(raw);
 const resolver = () => passthrough;
 
 function makeCtx(storage: MemoryStorage, date: string): CoachContext {
-  return { storage, date, resolveSource: resolver };
+  return { storage, date, resolveSource: resolver, sourceCache: new Map() };
 }
 
 describe('analyzer — ratio signal', () => {

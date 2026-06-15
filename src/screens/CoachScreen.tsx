@@ -112,7 +112,7 @@ function EmptyState({ message }: { message: string }) {
 export default function CoachScreen(_props: NavProps): React.ReactElement {
   const theme = useTheme();
   const today = ds(new Date());
-  const { assessments, loading, runAll } = useCoach(today);
+  const { assessments, loading, error, runAll } = useCoach(today);
   const [activeTab, setActiveTab] = useState<TabKey>('sport');
 
   const filtered: AssessmentLatest[] = useMemo(
@@ -130,12 +130,18 @@ export default function CoachScreen(_props: NavProps): React.ReactElement {
     >
       <ScreenHeader tag="SYSTÈME · COACH" title="CONSEILLER IA" />
 
-      <Touch onPress={() => void runAll(today)} disabled={loading} style={{ marginBottom: 24 }}>
+      <Touch onPress={() => void runAll(today)} disabled={loading} style={{ marginBottom: error ? 8 : 24 }}>
         <View style={[s.analyzeBtn, { borderColor: `${theme.selected}4D`, backgroundColor: `${theme.selected}0D`, opacity: loading ? 0.5 : 1 }]}>
           <Zap size={16} color={theme.selected} />
           <Text style={[s.mono, { color: theme.selected }]}>{loading ? 'ANALYSE EN COURS…' : 'ANALYSER'}</Text>
         </View>
       </Touch>
+      {error !== null && (
+        <View style={[s.errorBanner, { borderColor: `${Clr.alert}33`, backgroundColor: `${Clr.alert}0D`, marginBottom: 24 }]}>
+          <AlertOctagon size={14} color={Clr.alert} />
+          <Text style={[s.mono, { color: Clr.alert, flex: 1 }]} numberOfLines={2}>{error}</Text>
+        </View>
+      )}
 
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
         {TABS.map(tab => {
@@ -212,4 +218,5 @@ const s = StyleSheet.create({
   tab: { borderWidth: 1, padding: 8, alignItems: 'center' },
   emptyState: { borderWidth: 1, padding: 24, alignItems: 'center', gap: 8 },
   mono: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display },
+  errorBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderWidth: 1 },
 });

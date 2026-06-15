@@ -36,6 +36,21 @@ export class LocalStorageAdapter implements IStorage {
     this.storage.setItem(key, JSON.stringify(value));
   }
 
+  async getAll<T>(prefix: string, parse: ParseFn<T>): Promise<T[]> {
+    const results: T[] = [];
+    for (let i = 0; i < this.storage.length; i++) {
+      const k = this.storage.key(i);
+      if (!k || !k.startsWith(prefix)) continue;
+      const raw = this.storage.getItem(k);
+      if (raw === null) continue;
+      try {
+        const parsed = JSON.parse(raw) as unknown;
+        if (parsed !== null) results.push(parse(parsed));
+      } catch { /* skip invalid */ }
+    }
+    return results;
+  }
+
   async delete(key: string): Promise<void> {
     this.storage.removeItem(key);
   }

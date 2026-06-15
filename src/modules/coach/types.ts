@@ -13,6 +13,8 @@ export interface CoachContext {
   resolveSource: SourceResolver;
   /** ISO YYYY-MM-DD date the assessment is anchored on */
   date: string;
+  /** Memoises bulk-loaded source records across signal evaluations in one run. */
+  sourceCache: Map<string, Record<string, unknown>[]>;
 }
 
 export interface DomainSignalContext {
