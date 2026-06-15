@@ -4,7 +4,7 @@
   "domain": "nutrition",
   "name": "Surplus calorique excessif — moyenne 7j > 2800 kcal",
   "signals": [
-    { "type": "avg", "source": "nutrition.meal", "field": "kcal", "window": { "days": 7 } }
+    { "type": "avgDaily", "source": "nutrition.meal", "field": "kcal", "window": { "days": 7 } }
   ],
   "condition": { "op": "gt", "value": 2800 },
   "signalIndex": 0,

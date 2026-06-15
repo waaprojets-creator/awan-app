@@ -62,6 +62,65 @@ describe('analyzer — ratio signal', () => {
   });
 });
 
+describe('analyzer — avgDaily signal', () => {
+  it('divides by window.days, not by record count (per-day mean)', async () => {
+    const storage = new MemoryStorage();
+    // 4 meals over 2 days, total 1000 kcal → avgDaily = 1000/2 = 500 (avg would be 250)
+    await storage.set('nutrition.meal.1', { date: '2026-05-10', kcal: 300 });
+    await storage.set('nutrition.meal.2', { date: '2026-05-10', kcal: 200 });
+    await storage.set('nutrition.meal.3', { date: '2026-05-09', kcal: 250 });
+    await storage.set('nutrition.meal.4', { date: '2026-05-09', kcal: 250 });
+    const signal: Signal = {
+      type: 'avgDaily', source: 'nutrition.meal', field: 'kcal', window: { days: 2 },
+    };
+    const r = await analyzeSignal(signal, makeCtx(storage, '2026-05-10'));
+    expect(r).toBe(500);
+  });
+
+  it('returns 0 when no records in window', async () => {
+    const storage = new MemoryStorage();
+    const signal: Signal = {
+      type: 'avgDaily', source: 'nutrition.meal', field: 'kcal', window: { days: 7 },
+    };
+    const r = await analyzeSignal(signal, makeCtx(storage, '2026-05-10'));
+    expect(r).toBe(0);
+  });
+});
+
+describe('Coach.run — nutrition.deficit_agressif (avgDaily)', () => {
+  it('does NOT trigger on a normal daily intake split across many meals', async () => {
+    const storage = new MemoryStorage();
+    const coach = new Coach({ storage, resolveSource: resolver });
+    // 7 days × 5 meals × ~430 kcal ≈ 2150 kcal/day → avgDaily ≈ 2150, well above 1200
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(Date.UTC(2026, 4, 10 - d)).toISOString().slice(0, 10);
+      for (let m = 0; m < 5; m++) {
+        await storage.set(`nutrition.meal.${date}.${m}`, { date, kcal: 430 });
+      }
+    }
+    const a = await coach.run('nutrition', '2026-05-10');
+    const r = a.ruleResults.find((x) => x.ruleId === 'nutrition.deficit_agressif');
+    expect(r?.signalValue).toBeCloseTo(2150, 0);
+    expect(r?.triggered).toBe(false);
+  });
+
+  it('triggers when the true daily average is below 1200 kcal', async () => {
+    const storage = new MemoryStorage();
+    const coach = new Coach({ storage, resolveSource: resolver });
+    // 7 days × 2 meals × 400 kcal = 800 kcal/day → avgDaily = 800 < 1200
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(Date.UTC(2026, 4, 10 - d)).toISOString().slice(0, 10);
+      for (let m = 0; m < 2; m++) {
+        await storage.set(`nutrition.meal.${date}.${m}`, { date, kcal: 400 });
+      }
+    }
+    const a = await coach.run('nutrition', '2026-05-10');
+    const r = a.ruleResults.find((x) => x.ruleId === 'nutrition.deficit_agressif');
+    expect(r?.signalValue).toBeCloseTo(800, 0);
+    expect(r?.triggered).toBe(true);
+  });
+});
+
 describe('Coach.run — sport.acwr_danger', () => {
   it('triggers when ACWR > 1.5', async () => {
     const storage = new MemoryStorage();

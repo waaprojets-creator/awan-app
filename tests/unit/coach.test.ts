@@ -164,14 +164,15 @@ describe('Coach.run — nutrition.fat_low', () => {
 });
 
 describe('Coach.run — anthropo.weight_gain_trend', () => {
-  it('detects positive trend in weight series', async () => {
+  it('detects positive trend in the weight.entry series (field: weight)', async () => {
     const storage = new MemoryStorage();
     const coach = new Coach({ storage, resolveSource: resolver });
+    // Weight lives in weight.entry.* (not anthropo.measurement, which dropped weight in V2)
     for (let i = 0; i < 14; i++) {
-      const d = new Date(Date.UTC(2026, 4, 10 - i));
-      await storage.set(`anthropo.measurement.${i}`, {
-        date: d.toISOString().slice(0, 10),
-        weightKg: 80 - i * 0.2, // slope ~0.2/day > threshold 0.15
+      const d = new Date(Date.UTC(2026, 4, 10 - i)).toISOString().slice(0, 10);
+      await storage.set(`weight.entry.${d}`, {
+        date: d,
+        weight: 80 - i * 0.2, // slope ~0.2/day > threshold 0.15
       });
     }
     const a = await coach.run('anthropo', '2026-05-10');

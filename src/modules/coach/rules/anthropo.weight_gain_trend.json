@@ -4,7 +4,7 @@
   "domain": "anthropo",
   "name": "Tendance haussière du poids sur 14 jours",
   "signals": [
-    { "type": "trend", "source": "anthropo.measurement", "field": "weightKg", "window": { "days": 14 } }
+    { "type": "trend", "source": "weight.entry", "field": "weight", "window": { "days": 14 } }
   ],
   "condition": { "op": "gt", "value": 0.15 },
   "signalIndex": 0,

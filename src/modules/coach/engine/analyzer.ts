@@ -34,6 +34,14 @@ export async function analyzeSignal(signal: Signal, ctx: CoachContext): Promise<
       return sum / records.length;
     }
 
+    case 'avgDaily': {
+      // Per-day mean: divide by window length, not record count. Correct for
+      // sources with several records/day (meals) when the threshold is a daily total.
+      const f = requireField(signal);
+      const sum = records.reduce((acc, r) => acc + numberOrZero(r[f]), 0);
+      return signal.window.days > 0 ? sum / signal.window.days : 0;
+    }
+
     case 'latest': {
       const f = requireField(signal);
       const sorted = [...records].sort((a, b) =>
