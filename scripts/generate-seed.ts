@@ -22,6 +22,10 @@ import { migrateWaterIntake } from '../src/data/schemas/nutrition/waterIntake';
 import { migrateScheduleTask } from '../src/data/schemas/planning/scheduleTask';
 import { migrateDaySchedule } from '../src/data/schemas/planning/daySchedule';
 import { migrateWeightEntry } from '../src/data/schemas/body/weightEntry';
+import { migrateHabitDefinition } from '../src/data/schemas/habits/habitDefinition';
+import { migrateHabitOccurrence } from '../src/data/schemas/habits/habitOccurrence';
+import { migrateQuranSession } from '../src/data/schemas/islam/quranSession';
+import { migrateQuranProgress } from '../src/data/schemas/islam/quranProgress';
 
 // ─── Constantes temporelles ────────────────────────────────────────────────
 // TODAY est toujours le jour du build (heure locale)
@@ -97,6 +101,9 @@ function eachDay(start: string, end: string): string[] {
 }
 function dayOfWeek(date: string): number {
   return parseDate(date).getUTCDay();
+}
+function minToHHMM(min: number): string {
+  return `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
 }
 function isoWeek(date: string): number {
   const d = parseDate(date);
@@ -256,17 +263,20 @@ const ROUTINES: RoutineSeed[] = [
 
 // ─── Output ──────────────────────────────────────────────────────────────────
 const out = {
-  routines:       [] as unknown[],
-  sessions:       [] as unknown[],
-  measurements:   [] as unknown[],
-  meals:          [] as unknown[],
-  prayerLogs:     [] as unknown[],
-  journalEntries: [] as unknown[],
-  sleepEntries:   [] as unknown[],
-  waterIntakes:   [] as unknown[],
-  scheduleTasks:  [] as unknown[],
-  daySchedules:   [] as unknown[],
-  weightEntries:  [] as unknown[],
+  routines:         [] as unknown[],
+  sessions:         [] as unknown[],
+  measurements:     [] as unknown[],
+  meals:            [] as unknown[],
+  prayerLogs:       [] as unknown[],
+  journalEntries:   [] as unknown[],
+  sleepEntries:     [] as unknown[],
+  waterIntakes:     [] as unknown[],
+  scheduleTasks:    [] as unknown[],
+  daySchedules:     [] as unknown[],
+  weightEntries:    [] as unknown[],
+  habitDefinitions: [] as unknown[],
+  habitOccurrences: [] as unknown[],
+  quranSessions:    [] as unknown[],
 };
 
 // ─── 1. ROUTINES ─────────────────────────────────────────────────────────────
@@ -484,8 +494,9 @@ for (const date of pastDays) {
       };
     });
     const totals = items.reduce((acc, it) => ({ kcal: acc.kcal + it.kcal, p: acc.p + it.p, c: acc.c + it.c, f: acc.f + it.f }), { kcal: 0, p: 0, c: 0, f: 0 });
+    // id = dateId "{date}.{ms}" — la clé nutrition.meal.{id} encode la date (lecture par préfixe)
     out.meals.push({
-      v: 2 as const, id: randomUUID(), date,
+      v: 2 as const, id: `${date}.${tsAtLocal(date, slot.time)}`, date,
       name: slot.label,
       kcal: Math.round(totals.kcal),
       p: r(totals.p), c: r(totals.c), f: r(totals.f),
@@ -539,8 +550,9 @@ for (const date of pastDays) {
   const pad = (n: number) => String(n).padStart(2, '0');
   const dH = r(durationH);
   const sleepScore = Math.round((quality / 5 * 50) + (Math.max(0, Math.min(dH, 9) - 6) / 3 * 50));
+  // id = dateId "{date}.{ms}" — la clé sleep.entry.{id} encode la date (lecture par préfixe)
   out.sleepEntries.push({
-    v: 2 as const, id: randomUUID(), date,
+    v: 2 as const, id: `${date}.${tsAtLocal(date, '07:30')}`, date,
     timestamp: tsAtLocal(date, '07:30'),
     durationH: dH,
     quality,
@@ -645,21 +657,35 @@ const TASK_TPLS: TaskTpl[] = [
   { title: 'Sommeil',                    durationMin: 450, priority: 5, domain: 'sleep',     tags: ['repos'],               fixedStartMin: 22 * 60 + 30 },
 ];
 
+// timeCategory (BudgetTab/TempsTab) : travail→production, trajet→friction,
+// famille/lecture→slack, besoins physiologiques+spirituel→somatique
+function timeCategoryFor(domain: TaskDomain, tags: string[]): 'production' | 'friction' | 'slack' | 'somatique' | null {
+  if (tags.includes('travail') || tags.includes('formation')) return 'production';
+  if (tags.includes('trajet')) return 'friction';
+  if (domain === 'mental' || tags.includes('vacances') || tags.includes('voyage') || tags.includes('férié')) return 'slack';
+  if (domain === 'sport' || domain === 'nutrition' || domain === 'sleep' || domain === 'islam' || domain === 'anthropo') return 'somatique';
+  return null;
+}
+
+// V4 natif : id = dateId "{date}.{ms}" (clé planning.task.{id}), priority 1 = ancre à heure fixe
 const taskIds = new Map<string, string>();
+let _taskMs = tsAtLocal(PAST_START, '06:00');
 for (const t of TASK_TPLS) {
-  const id = randomUUID();
+  const id = `${PAST_START}.${_taskMs++}`;
   taskIds.set(t.title, id);
   const task: Record<string, unknown> = {
-    v: 2 as const, id,
+    v: 4 as const, id,
+    date: PAST_START,
     title: t.title,
     durationMin: t.durationMin,
-    priority: t.priority,
+    priority: t.fixedStartMin !== undefined ? 1 : t.priority >= 4 ? 2 : 3,
     domain: t.domain,
     tags: t.tags,
     dependsOn: [],
-    enabled: true,
+    status: 'active' as const,
+    timeCategory: timeCategoryFor(t.domain, t.tags),
   };
-  if (t.fixedStartMin !== undefined) task.fixedStartMin = t.fixedStartMin;
+  if (t.fixedStartMin !== undefined) task.timeHHMM = minToHHMM(t.fixedStartMin);
   out.scheduleTasks.push(task);
 }
 
@@ -707,17 +733,20 @@ const oneOffs: OneOff[] = [
 
 const oneOffByDate = new Map<string, Array<{ id: string; startMin: number; duration: number }>>();
 for (const o of oneOffs) {
-  const id = randomUUID();
+  const id = `${o.date}.${tsAtLocal(o.date, minToHHMM(o.startMin))}`;
   out.scheduleTasks.push({
-    v: 2 as const, id,
+    v: 4 as const, id,
+    date: o.date,
+    scheduledDate: o.date,
     title: o.title,
     durationMin: o.duration,
-    priority: o.priority,
+    priority: 1 as const, // heure fixe → structurel
     domain: o.domain,
     tags: o.tags,
-    fixedStartMin: o.startMin,
+    timeHHMM: minToHHMM(o.startMin),
     dependsOn: [],
-    enabled: true,
+    status: (o.date < TODAY ? 'done' : 'active') as 'done' | 'active',
+    timeCategory: timeCategoryFor(o.domain, o.tags),
   });
   const list = oneOffByDate.get(o.date) ?? [];
   list.push({ id, startMin: o.startMin, duration: o.duration });
@@ -851,6 +880,77 @@ for (const date of allDays) {
   });
 }
 
+// ─── 12. HABITS — définitions + occurrences ──────────────────────────────────
+const HABIT_DEFS = [
+  { id: 'dhikr_matin',  name: 'Dhikr du matin',    domain: 'islam'    as const, daysOfWeek: [] as number[],  doneRate: 0.85, timeHHMM: '06:00' },
+  { id: 'marche_10k',   name: 'Marche 10 000 pas', domain: 'sport'    as const, daysOfWeek: [] as number[],  doneRate: 0.70, timeHHMM: '12:30' },
+  { id: 'lecture_soir', name: 'Lecture 20 min',    domain: 'cognitif' as const, daysOfWeek: [] as number[],  doneRate: 0.65, timeHHMM: '21:30' },
+  { id: 'etirements',   name: 'Étirements',        domain: 'sante'    as const, daysOfWeek: [1, 3, 5],       doneRate: 0.75, timeHHMM: '07:15' },
+];
+for (let i = 0; i < HABIT_DEFS.length; i++) {
+  const h = HABIT_DEFS[i]!;
+  out.habitDefinitions.push({
+    v: 1 as const, id: h.id,
+    name: h.name,
+    daysOfWeek: h.daysOfWeek,
+    domain: h.domain,
+    order: i,
+    isActive: true,
+    savedAt: tsAtLocal(PAST_START, '08:00'),
+  });
+}
+for (const date of pastDays) {
+  const dow = dayOfWeek(date);
+  for (const h of HABIT_DEFS) {
+    if (h.daysOfWeek.length > 0 && !h.daysOfWeek.includes(dow)) continue;
+    if (rng() >= h.doneRate) continue;
+    const ms = tsAtLocal(date, h.timeHHMM);
+    // id = dateId — clé habit.occurrence.{date}.{ms}
+    out.habitOccurrences.push({
+      v: 1 as const, id: `${date}.${ms}`, date,
+      habitId: h.id,
+      habitName: h.name,
+      timeHHMM: h.timeHHMM,
+      timezone: 'Europe/Paris',
+      timestamp: ms,
+    });
+  }
+}
+
+// ─── 13. CORAN — sessions quotidiennes + progression ─────────────────────────
+let _surah = 2;
+let _ayah = 1;
+let _totalAyahs = 0;
+let _lastReadDate = PAST_START;
+for (const date of pastDays) {
+  if (rng() >= 0.75) continue;
+  const ayahsRead = rngInt(5, 25);
+  const ms = tsAtLocal(date, '22:10');
+  // id = dateId — clé islam.quran.session.{date}.{ms}
+  out.quranSessions.push({
+    v: 1 as const, id: `${date}.${ms}`, date,
+    ayahsRead,
+    surahStart: _surah,
+    ayahStart: _ayah,
+    durationMin: rngInt(10, 25),
+    timestamp: ms,
+    sessions: [{ timeHHMM: '22:10', ayahsRead }],
+  });
+  _ayah += ayahsRead;
+  _totalAyahs += ayahsRead;
+  _lastReadDate = date;
+  if (_ayah > 200) { _surah = Math.min(114, _surah + 1); _ayah = 1; }
+}
+const quranProgress = {
+  v: 1 as const, id: 'main',
+  currentSurah: _surah,
+  currentAyah: _ayah,
+  dailyAyahTarget: 10,
+  lastReadDate: _lastReadDate,
+  totalAyahsRead: _totalAyahs,
+  updatedAt: tsAtLocal(_lastReadDate, '22:30'),
+};
+
 // ─── VALIDATION ──────────────────────────────────────────────────────────────
 type Counter = { ok: number; fail: number };
 const report: Record<string, Counter> = {};
@@ -882,6 +982,10 @@ validate('waterIntakes',   out.waterIntakes,   migrateWaterIntake);
 validate('scheduleTasks',  out.scheduleTasks,  migrateScheduleTask);
 validate('daySchedules',   out.daySchedules,   migrateDaySchedule);
 validate('weightEntries',  out.weightEntries,  migrateWeightEntry);
+validate('habitDefs',      out.habitDefinitions, migrateHabitDefinition);
+validate('habitOccs',      out.habitOccurrences, migrateHabitOccurrence);
+validate('quranSessions',  out.quranSessions,  migrateQuranSession);
+validate('quranProgress',  [quranProgress],    migrateQuranProgress);
 
 // ─── REPORT ──────────────────────────────────────────────────────────────────
 console.log('\n========== Seed V5 generation report ==========');
@@ -897,9 +1001,9 @@ if (Object.values(report).some(c => c.fail > 0)) {
 // ─── WRITE FILE ──────────────────────────────────────────────────────────────
 const payload = {
   type: 'seed.full' as const,
-  version: '5.0',
+  version: '5.1',
   generatedAt: `${TODAY}T00:00:00Z`,
-  data: out,
+  data: { ...out, quranProgress },
 };
 const outPath = path.join(process.cwd(), 'public/data/seed-demo.json');
 writeFileSync(outPath, JSON.stringify(payload, null, 2), 'utf8');

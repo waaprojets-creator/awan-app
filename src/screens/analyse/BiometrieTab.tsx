@@ -6,6 +6,7 @@ import { useTheme, type AwanTheme } from '../../hooks/useTheme';
 import { FontMono } from '../../constants/typography';
 import { Fs, Fw, Ls } from '../../theme/tokens';
 import { Card } from '../../components/ui/Card';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import { Heading } from '../../components/ui/Heading';
 import type { MeasurementLatest } from '../../data/schemas/anthropo/measurement';
 import { BarChart, EmptyState, LoadingState } from './shared';
@@ -80,8 +81,9 @@ export function BiometrieTab({ weightTrend, history, loading }: BiometrieTabProp
     const sorted = [...history].sort((a, b) => a.date.localeCompare(b.date));
     const series: Record<string, Array<{ label: string; value: number }>> = {};
     for (const m of sorted) {
-      for (const [key, val] of Object.entries(m.measurements)) {
-        if (typeof val !== 'number') continue;
+      for (const [key, triple] of Object.entries(m.circumferences ?? {})) {
+        if (!Array.isArray(triple)) continue;
+        const val = (triple[0] + triple[1] + triple[2]) / 3;
         if (!series[key]) series[key] = [];
         series[key]!.push({ label: m.date.slice(5), value: val });
       }
@@ -96,6 +98,7 @@ export function BiometrieTab({ weightTrend, history, loading }: BiometrieTabProp
 
   return (
     <View style={{ gap: 16 }}>
+      <WidgetInfo id="W5" title="BIOMÉTRIE LONGITUDINALE" content="Évolution du poids et des circonférences dans le temps — suivi de la trajectoire biométrique globale et des séries de mesures par segment corporel." />
       {weightTrend.length > 1 && (
         <Card variant="flat">
           <Heading level={4} mono subtitle="Trajectoire biométrique">COURBE POIDS</Heading>
@@ -131,15 +134,19 @@ export function BiometrieTab({ weightTrend, history, loading }: BiometrieTabProp
               )}
             </View>
             <View style={s.measureWrap}>
-              {Object.entries(latest.measurements).map(([k, v]) => (
-                <View key={k}>
-                  <Text style={[s.labelTitle, { color: theme.mute, marginBottom: 4 }]}>{k}</Text>
-                  <View style={s.row}>
-                    <Text style={[s.bigNum, { color: theme.title }]}>{v}</Text>
-                    <Text style={[s.unit, { color: theme.mute }]}>cm</Text>
+              {Object.entries(latest.circumferences ?? {}).map(([k, triple]) => {
+                const val = Array.isArray(triple) ? Math.round(((triple[0] + triple[1] + triple[2]) / 3) * 10) / 10 : null;
+                if (val === null) return null;
+                return (
+                  <View key={k}>
+                    <Text style={[s.labelTitle, { color: theme.mute, marginBottom: 4 }]}>{k}</Text>
+                    <View style={s.row}>
+                      <Text style={[s.bigNum, { color: theme.title }]}>{val}</Text>
+                      <Text style={[s.unit, { color: theme.mute }]}>cm</Text>
+                    </View>
                   </View>
-                </View>
-              ))}
+                );
+              })}
             </View>
           </Card>
         );

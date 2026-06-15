@@ -4,6 +4,7 @@ import Svg, { Path } from 'react-native-svg';
 import { TrendingUp } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import type { WorkoutSessionLatest } from '../../data/schemas/sport/routine';
 import { computeEAT, buildFluxData, computeFluxDensity, type WeekMacros } from '../../services/analyticsService';
 import { StackedBarChart, GuardCard, LoadingState, loadNutritionProfile, deriveTDEE } from './shared';
@@ -97,6 +98,11 @@ export function FluxDensiteTab({ sessions, weightKg }: FluxDensiteTabProps) {
 
   return (
     <View style={{ gap: 32 }}>
+      <WidgetInfo
+        id="Wn1"
+        title="FLUX DE DENSITÉ"
+        content="Bilan thermodynamique hebdomadaire (fenêtre glissante 7j). Barres empilées : Protéines (×4 kcal/g) + Glucides (×4) + Lipides (×9). Lignes de dépense : BMR+NEAT et BMR+NEAT+EAT (tonnage converti en kcal). Phase maintenance ≈ ligne B, surplus > ligne B, déficit < ligne B."
+      />
       <Card variant="flat">
         <Heading level={4} mono subtitle="P×4 + G×4 + L×9 kcal · 8 semaines">FLUX DE DENSITÉ</Heading>
 

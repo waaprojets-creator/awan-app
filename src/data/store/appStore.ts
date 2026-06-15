@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { safeStorage } from '../../utils/safeStorage';
 
 type Theme = 'dark' | 'light' | 'black';
 
@@ -8,19 +9,19 @@ const NETWORK_BANNER_KEY = 'awan.network-banner';
 
 function savedTheme(): Theme {
   try {
-    const t = localStorage.getItem(THEME_KEY);
-    return t === 'dark' || t === 'light' || t === 'black' ? t : 'light';
-  } catch { return 'light'; }
+    const t = safeStorage.get(THEME_KEY);
+    return t === 'dark' || t === 'light' || t === 'black' ? t : 'black';
+  } catch { return 'black'; }
 }
 
 function savedNetworkBanner(): boolean {
-  try { return localStorage.getItem(NETWORK_BANNER_KEY) === 'true'; }
+  try { return safeStorage.get(NETWORK_BANNER_KEY) === 'true'; }
   catch { return false; }
 }
 
 function savedJitFactor(): number {
   try {
-    const v = parseFloat(localStorage.getItem(JIT_KEY) ?? '1.2');
+    const v = parseFloat(safeStorage.get(JIT_KEY) ?? '1.2');
     return isNaN(v) ? 1.2 : v;
   } catch { return 1.2; }
 }
@@ -36,6 +37,7 @@ interface AppState {
   unlock: () => void;
   lock: () => void;
   setReady: () => void;
+  applyHydratedSettings: () => void;
   toggleTheme: () => void;
   setTheme: (mode: Theme) => void;
   setJitFactor: (v: number) => void;
@@ -46,7 +48,9 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set) => ({
   isUnlocked: false,
-  ready: true,
+  // ready démarre false : on attend l'hydratation durable (safeStorage memCache ← IStorage)
+  // avant le premier rendu, sinon theme/jit s'affichent avec le défaut puis sautent.
+  ready: false,
   theme: savedTheme(),
   jitFactor: savedJitFactor(),
   isOfflineForced: false,
@@ -55,25 +59,33 @@ export const useAppStore = create<AppState>((set) => ({
   unlock: () => set({ isUnlocked: true }),
   lock:   () => set({ isUnlocked: false }),
   setReady: () => set({ ready: true }),
+  // Appelé une fois après hydrateSafeStorage() : relit les prefs désormais durables
+  // depuis le memCache hydraté et débloque le rendu. Toujours passer ready=true (même si défauts).
+  applyHydratedSettings: () => set({
+    theme: savedTheme(),
+    jitFactor: savedJitFactor(),
+    showNetworkBanner: savedNetworkBanner(),
+    ready: true,
+  }),
   bumpDataVersion: () => set((s) => ({ dataVersion: s.dataVersion + 1 })),
   toggleTheme: () => set((s) => {
     const cycle: Theme[] = ['light', 'dark', 'black'];
     const next: Theme = cycle[(cycle.indexOf(s.theme) + 1) % cycle.length] as Theme;
-    try { localStorage.setItem(THEME_KEY, next); } catch { /* ok */ }
+    try { safeStorage.set(THEME_KEY, next); } catch { /* ok */ }
     return { theme: next };
   }),
   setTheme: (mode) => {
-    try { localStorage.setItem(THEME_KEY, mode); } catch { /* ok */ }
+    try { safeStorage.set(THEME_KEY, mode); } catch { /* ok */ }
     set({ theme: mode });
   },
   setJitFactor: (v) => {
-    try { localStorage.setItem(JIT_KEY, String(v)); } catch { /* ok */ }
+    try { safeStorage.set(JIT_KEY, String(v)); } catch { /* ok */ }
     set({ jitFactor: v });
   },
   toggleOffline: () => set((s) => ({ isOfflineForced: !s.isOfflineForced })),
   toggleNetworkBanner: () => set((s) => {
     const next = !s.showNetworkBanner;
-    try { localStorage.setItem(NETWORK_BANNER_KEY, String(next)); } catch { /* ok */ }
+    try { safeStorage.set(NETWORK_BANNER_KEY, String(next)); } catch { /* ok */ }
     return { showNetworkBanner: next };
   }),
 }));

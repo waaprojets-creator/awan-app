@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { ds } from '../../utils/storage';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import type { WorkoutSessionLatest } from '../../data/schemas/sport/routine';
 import type { MeasurementLatest } from '../../data/schemas/anthropo/measurement';
 import type { WeightEntryLatest } from '../../data/schemas/body/weightEntry';
@@ -23,7 +24,7 @@ export function CorrelationTab({ sessions, history, weightEntries, todayKcal }: 
     const str = ds(d);
     const hasWorkout = sessions.some(s => (s.date ?? ds(new Date(s.startTime ?? 0))) === str);
     const wEntry = weightEntries.find(w => w.date === str);
-    return { str, hasWorkout, weight: wEntry?.weightKg ?? null };
+    return { str, hasWorkout, weight: wEntry?.weight ?? null };
   }), [sessions, weightEntries]);
 
   const weightPoints = last30.filter(d => d.weight !== null);
@@ -34,8 +35,8 @@ export function CorrelationTab({ sessions, history, weightEntries, todayKcal }: 
 
   const sortedW = [...weightEntries].sort((a, b) => b.date.localeCompare(a.date));
   const latestW = sortedW[0]; const oldestW = sortedW.at(-1);
-  const weightDelta = (latestW && oldestW && latestW !== oldestW)
-    ? latestW.weightKg - oldestW.weightKg : null;
+  const weightDelta = (latestW && oldestW && latestW !== oldestW && latestW.weight != null && oldestW.weight != null)
+    ? latestW.weight - oldestW.weight : null;
 
   const sessionsPerWeek = (workoutDays / 30) * 7;
 
@@ -46,6 +47,7 @@ export function CorrelationTab({ sessions, history, weightEntries, todayKcal }: 
 
   return (
     <View style={{ gap: 24 }}>
+      <WidgetInfo id="Wx1" title="CORRÉLATIONS INTER-MODULES" content="Croisement Sport × Poids sur 30 jours — fréquence d'entraînement, delta pondéral total, KCAL du jour. Insights automatiques basés sur les seuils OMS (150 min/sem)." />
       <Text style={[s.headerLabel, { color: theme.mute }]}>
         CORRÉLATIONS INTER-MODULES · 30 JOURS
       </Text>

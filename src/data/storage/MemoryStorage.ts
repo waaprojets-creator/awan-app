@@ -26,6 +26,15 @@ export class MemoryStorage implements IStorage {
     return total;
   }
 
+  async getAll<T>(prefix: string, parse: ParseFn<T>): Promise<T[]> {
+    const results: T[] = [];
+    for (const [key, raw] of this.store.entries()) {
+      if (!key.startsWith(prefix)) continue;
+      try { results.push(parse(raw)); } catch { /* skip invalid */ }
+    }
+    return results;
+  }
+
   async delete(key: string): Promise<void> {
     this.store.delete(key);
   }

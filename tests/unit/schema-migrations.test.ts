@@ -77,9 +77,9 @@ describe('WorkoutSession V1 → V3 (chaîne complète)', () => {
   });
 });
 
-// ─── MeasurementEntry V1 → V2 ────────────────────────────────────────────────
+// ─── MeasurementEntry V1 → V3 ────────────────────────────────────────────────
 
-describe('MeasurementEntry V1 → V2 migration', () => {
+describe('MeasurementEntry V1 → V3 migration', () => {
   const makeV1 = () => ({
     v: 1 as const,
     id: '00000000-0000-0000-0000-000000000003',
@@ -92,22 +92,28 @@ describe('MeasurementEntry V1 → V2 migration', () => {
     savedAt: Date.now(),
   });
 
-  it('champs BF% null quand migré sans profil (migration automatique)', () => {
+  it('champs BF% null quand migré sans profil', () => {
     const migrated = migrateMeasurement(makeV1());
-    expect(migrated.v).toBe(2);
+    expect(migrated.v).toBe(3);
     expect(migrated.bf_pct_jp7).toBeNull();
     expect(migrated.bf_pct_dw4).toBeNull();
     expect(migrated.s13_sum).toBeNull();
     expect(migrated.ffmi).toBeNull();
   });
 
-  it('champs V1 préservés après migration', () => {
+  it('champs V1 préservés : date, bpm_rest supprimé (migré dans WeightEntry)', () => {
     const migrated = migrateMeasurement(makeV1());
-    // weight est retiré en V2 (stocké dans WeightEntry)
     expect((migrated as any).weight).toBeUndefined();
+    expect((migrated as any).bpm_rest).toBeUndefined(); // bpm_rest migré dans WeightEntry
     expect(migrated.date).toBe('2026-01-01');
-    expect(migrated.bpm_rest).toBe(60);
     expect(migrated.body_fat_pct).toBe(15);
+  });
+
+  it('measurements plat migré vers circumferences structuré', () => {
+    const v1WithMeasures = { ...makeV1(), measurements: { waist: 82, hips: 95 } };
+    const migrated = migrateMeasurement(v1WithMeasures);
+    expect(migrated.circumferences?.waist).toEqual([82, 82, 82]);
+    expect(migrated.circumferences?.hips).toEqual([95, 95, 95]);
   });
 });
 

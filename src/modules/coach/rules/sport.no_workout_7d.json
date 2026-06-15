@@ -4,7 +4,7 @@
   "domain": "sport",
   "name": "Aucun entraînement depuis 7 jours",
   "signals": [
-    { "type": "count", "source": "sport.workoutLog", "window": { "days": 7 } }
+    { "type": "count", "source": "sport.session", "window": { "days": 7 } }
   ],
   "condition": { "op": "lt", "value": 1 },
   "signalIndex": 0,

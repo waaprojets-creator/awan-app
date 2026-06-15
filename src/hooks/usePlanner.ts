@@ -15,7 +15,7 @@ export function usePlanner() {
     getStorage().then(async storage => {
       const planner = new Planner(storage);
       plannerRef.current = planner;
-      const ts = await planner.getTasks();
+      const ts = await planner.getActiveTasks();
       if (active) setTasks(ts);
     });
     return () => { active = false; };

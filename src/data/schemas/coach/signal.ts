@@ -3,14 +3,18 @@ import { z } from 'zod';
 /**
  * Signal: a query against stored data, producing a numeric value.
  *
- *   type    'count' | 'sum' | 'avg' | 'latest' | 'trend'
- *   source  Storage key prefix (e.g. 'sport.workoutLog')
- *   field   Field name to aggregate (sum/avg/latest/trend) — ignored for count
+ *   type    'count' | 'sum' | 'avg' | 'avgDaily' | 'latest' | 'trend' | 'ratio'
+ *   source  Storage key prefix (e.g. 'sport.session')
+ *   field   Field name to aggregate (sum/avg/avgDaily/latest/trend) — ignored for count
  *   window  Time range relative to the assessment date
  *   filter  Optional equality predicate on the parsed records
+ *
+ * 'avg' divides by the record count (per-entry mean, e.g. mean RPE per session).
+ * 'avgDaily' divides by window.days (per-day mean) — use for sources with several
+ * records per day (e.g. meals) when the threshold is a daily total, not per-entry.
  */
 export const SignalSchema = z.object({
-  type: z.enum(['count', 'sum', 'avg', 'latest', 'trend', 'ratio']),
+  type: z.enum(['count', 'sum', 'avg', 'avgDaily', 'latest', 'trend', 'ratio']),
   source: z.string().min(1),
   field: z.string().optional(),
   window: z.object({

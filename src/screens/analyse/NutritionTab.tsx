@@ -4,6 +4,7 @@ import { Flame, Activity } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import { FontMono } from '../../constants/typography';
 import { Fs, Fw, Ls } from '../../theme/tokens';
 import { BarChart, EmptyState, LoadingState } from './shared';
@@ -33,6 +34,11 @@ export function NutritionTab({ mealsByDay, mealsLoading, todayKcal, todayP, toda
 
   return (
     <View style={{ gap: 32 }}>
+      <WidgetInfo
+        id="Wn3"
+        title="MICRO-DENSITÉ"
+        content="Couverture des AJR en micronutriments : Magnésium, Potassium, Zinc, Fer, Fibres. Calculé via base Ciqual (masse pesée × densité nutritionnelle). Affiché en % des AJR avec seuil à 100%. Lissage sur 7j pour éviter les faux signaux de carence sur journée isolée."
+      />
       <Card variant="flat">
         <Text style={[s.label, { color: theme.mute, marginBottom: 8 }]}>KCAL · AUJOURD'HUI</Text>
         <View style={s.row}>

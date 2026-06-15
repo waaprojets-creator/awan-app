@@ -6,7 +6,7 @@ import { useDaily } from '../context/DailyContext';
 import { DailyCanvas } from '../components/DailyCanvas';
 import { useAppState } from '../context/AppStateContext';
 import { useJournalStore } from '../hooks/useJournalStore';
-import { ds, uid } from '../utils/storage';
+import { ds, dateId } from '../utils/storage';
 import { ModuleType } from '../types/daily';
 import { Heading } from '../components/ui/Heading';
 import { Touch } from '../components/ui/Touch';
@@ -31,7 +31,7 @@ const MODULE_LABELS: Record<string, string> = {
 
 export default function JournalScreen() {
   const { navigate } = useAppState() as any;
-  const { getEntriesByDate, addEntry, moveEntry } = useDaily();
+  const { getEntriesByDate, moveEntry } = useDaily();
   const today = ds(new Date());
 
   const [selectedDate, setSelectedDate] = useState(today);
@@ -47,7 +47,7 @@ export default function JournalScreen() {
   const handleAddEntry = () => {
     if (!inputText.trim()) return;
 
-    const entryId = uid();
+    const entryId = dateId(selectedDate);
 
     journalStore.save({
       v: 1,
@@ -58,17 +58,6 @@ export default function JournalScreen() {
       module: activeModule,
       tags: [activeModule],
       timestamp: Date.now(),
-    });
-
-    addEntry(selectedDate, {
-      id: entryId,
-      timestamp: Date.now(),
-      module: activeModule,
-      rawText: inputText,
-      tokens: [
-        { label: 'SYS', value: activeModule.toUpperCase(), icon: 'radio' },
-        { label: 'LOG', value: inputText.slice(0, 20).toUpperCase(), icon: MODULE_ICON_KEY[activeModule] || 'file' },
-      ]
     });
     setInputText('');
   };
@@ -92,7 +81,7 @@ export default function JournalScreen() {
               onPress={() => setIsFilterOpen(!isFilterOpen)}
               style={[styles.iconBtn, { backgroundColor: isFilterOpen ? theme.selected : Clr.white5 }]}
             >
-              <Filter size={18} color={isFilterOpen ? '#000' : theme.mute} />
+              <Filter size={18} color={isFilterOpen ? theme.bg : theme.mute} />
             </Touch>
           </View>
         </View>
@@ -111,7 +100,7 @@ export default function JournalScreen() {
         </View>
       </View>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }}>
+      <ScrollView style={{ flex: 1, backgroundColor: theme.bg }} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Module Injector */}
         <View style={{ padding: Sp[6] }}>
           {/* INPUT TERMINAL */}
@@ -139,11 +128,11 @@ export default function JournalScreen() {
                       <TokenIcon
                         iconKey={MODULE_ICON_KEY[mod.toLowerCase()] ?? 'file'}
                         size={12}
-                        color={activeModule === mod ? '#000' : theme.mute}
+                        color={activeModule === mod ? theme.bg : theme.mute}
                       />
                       <Text style={[
                         styles.modulePillText,
-                        { color: activeModule === mod ? '#000' : theme.mute },
+                        { color: activeModule === mod ? theme.bg : theme.mute },
                       ]}>
                         {MODULE_LABELS[mod] ?? mod.toUpperCase()}
                       </Text>
@@ -165,7 +154,7 @@ export default function JournalScreen() {
                         : { backgroundColor: Clr.white5, borderColor: Clr.white10 },
                     ]}
                   >
-                    <Text style={[styles.moodBtnText, { color: moodValue === v ? '#000' : theme.mute }]}>
+                    <Text style={[styles.moodBtnText, { color: moodValue === v ? theme.bg : theme.mute }]}>
                       {v}
                     </Text>
                   </Touch>
@@ -189,7 +178,7 @@ export default function JournalScreen() {
                   onPress={handleAddEntry}
                   style={[styles.addBtn, { backgroundColor: theme.selected }]}
                 >
-                  <Plus size={24} color="black" strokeWidth={3} />
+                  <Plus size={24} color={theme.bg} strokeWidth={3} />
                 </Touch>
               </View>
             </View>

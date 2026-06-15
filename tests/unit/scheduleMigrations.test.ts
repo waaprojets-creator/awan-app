@@ -51,87 +51,79 @@ function makeV3(overrides: Partial<ScheduleTaskV3> = {}): ScheduleTaskV3 {
   };
 }
 
-// ─── V1 → V3 ─────────────────────────────────────────────────────────────────
+// ─── V1 → V4 ─────────────────────────────────────────────────────────────────
 
-describe('ScheduleTask V1 → V3', () => {
-  it('migrates to V3 and strips energyLevel', () => {
-    const raw = makeV1();
-    const result = migrateScheduleTask(raw);
-    expect(result.v).toBe(3);
+describe('ScheduleTask V1 → V4', () => {
+  it('migrates to V4 and strips energyLevel', () => {
+    const result = migrateScheduleTask(makeV1());
+    expect(result.v).toBe(4);
     expect('energyLevel' in result).toBe(false);
   });
 
   it('sets timeCategory to null (unclassified)', () => {
-    const result = migrateScheduleTask(makeV1());
-    expect(result.timeCategory).toBeNull();
+    expect(migrateScheduleTask(makeV1()).timeCategory).toBeNull();
   });
 
-  it('preserves core fields', () => {
-    const raw = makeV1({ title: 'Deadlift', durationMin: 45, priority: 4 });
-    const result = migrateScheduleTask(raw);
+  it('preserves core fields and maps enabled → status active', () => {
+    const result = migrateScheduleTask(makeV1({ title: 'Deadlift', durationMin: 45 }));
     expect(result.title).toBe('Deadlift');
     expect(result.durationMin).toBe(45);
-    expect(result.priority).toBe(4);
     expect(result.domain).toBe('sport');
-    expect(result.enabled).toBe(true);
+    expect(result.status).toBe('active');
   });
 
-  it('preserves optional fields (fixedStartMin, dependsOn)', () => {
-    const raw = makeV1({ fixedStartMin: 360, dependsOn: ['task-a'] });
-    const result = migrateScheduleTask(raw);
-    expect(result.fixedStartMin).toBe(360);
+  it('clamps priority into the 1-3 range', () => {
+    expect(migrateScheduleTask(makeV1({ priority: 5 })).priority).toBe(3);
+    expect(migrateScheduleTask(makeV1({ priority: 2 })).priority).toBe(2);
+  });
+
+  it('converts fixedStartMin → timeHHMM and preserves dependsOn', () => {
+    const result = migrateScheduleTask(makeV1({ fixedStartMin: 360, dependsOn: ['task-a'] }));
+    expect(result.timeHHMM).toBe('06:00');
     expect(result.dependsOn).toEqual(['task-a']);
   });
 });
 
-// ─── V2 → V3 ─────────────────────────────────────────────────────────────────
+// ─── V2 → V4 ─────────────────────────────────────────────────────────────────
 
-describe('ScheduleTask V2 → V3', () => {
-  it('migrates to V3', () => {
-    const result = migrateScheduleTask(makeV2());
-    expect(result.v).toBe(3);
+describe('ScheduleTask V2 → V4', () => {
+  it('migrates to V4', () => {
+    expect(migrateScheduleTask(makeV2()).v).toBe(4);
   });
 
   it('sets timeCategory to null', () => {
     expect(migrateScheduleTask(makeV2()).timeCategory).toBeNull();
   });
 
-  it('preserves all V2 fields', () => {
-    const raw = makeV2({ title: 'Rapport mensuel', priority: 5, tags: ['travail', 'rapport'] });
-    const result = migrateScheduleTask(raw);
+  it('preserves title/tags and clamps priority', () => {
+    const result = migrateScheduleTask(makeV2({ title: 'Rapport mensuel', priority: 5, tags: ['travail', 'rapport'] }));
     expect(result.title).toBe('Rapport mensuel');
-    expect(result.priority).toBe(5);
+    expect(result.priority).toBe(3);
     expect(result.tags).toEqual(['travail', 'rapport']);
   });
 });
 
-// ─── V3 idempotence ───────────────────────────────────────────────────────────
+// ─── V3 → V4 ─────────────────────────────────────────────────────────────────
 
-describe('ScheduleTask V3 idempotence', () => {
-  it('V3 with timeCategory=production is unchanged', () => {
-    const raw = makeV3({ timeCategory: 'production' });
-    const result = migrateScheduleTask(raw);
-    expect(result.v).toBe(3);
+describe('ScheduleTask V3 → V4', () => {
+  it('preserves timeCategory=production', () => {
+    const result = migrateScheduleTask(makeV3({ timeCategory: 'production' }));
+    expect(result.v).toBe(4);
     expect(result.timeCategory).toBe('production');
   });
 
-  it('V3 with timeCategory=friction is unchanged', () => {
-    const raw = makeV3({ timeCategory: 'friction' });
-    const result = migrateScheduleTask(raw);
-    expect(result.timeCategory).toBe('friction');
+  it('preserves timeCategory=friction', () => {
+    expect(migrateScheduleTask(makeV3({ timeCategory: 'friction' })).timeCategory).toBe('friction');
   });
 
-  it('V3 with timeCategory=null is unchanged', () => {
-    const raw = makeV3({ timeCategory: null });
-    const result = migrateScheduleTask(raw);
-    expect(result.timeCategory).toBeNull();
+  it('preserves timeCategory=null', () => {
+    expect(migrateScheduleTask(makeV3({ timeCategory: null })).timeCategory).toBeNull();
   });
 
-  it('V3 preserves all optional constraints', () => {
-    const raw = makeV3({ fixedStartMin: 480, notBeforeMin: 420, notAfterMin: 600 });
-    const result = migrateScheduleTask(raw);
-    expect(result.fixedStartMin).toBe(480);
-    expect(result.notBeforeMin).toBe(420);
-    expect(result.notAfterMin).toBe(600);
+  it('converts fixedStartMin → timeHHMM and drops the removed window constraints', () => {
+    const result = migrateScheduleTask(makeV3({ fixedStartMin: 480, notBeforeMin: 420, notAfterMin: 600 }));
+    expect(result.timeHHMM).toBe('08:00');
+    expect('notBeforeMin' in result).toBe(false);
+    expect('notAfterMin' in result).toBe(false);
   });
 });

@@ -6,6 +6,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
 import { InstrumentCard } from '../../components/ui/InstrumentCard';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import { Touch } from '../../components/ui/Touch';
 import type { WorkoutSessionLatest } from '../../data/schemas/sport/routine';
 import {
@@ -20,7 +21,7 @@ import { computeWeeklyTonnage } from '../../services/analyticsService';
 import { PeriodizationService } from '../../services/periodizationService';
 import { BarChart, EmptyState } from './shared';
 import { FontMono } from '../../constants/typography';
-import { Fs, Fw, Ls } from '../../theme/tokens';
+import { Fs, Fw, Ls, Clr } from '../../theme/tokens';
 
 const SvgPath_ = Path as any;
 const SvgCircle_ = Circle as any;
@@ -138,6 +139,11 @@ export function PerformanceTab({ sessions, assessments = [] }: PerformanceTabPro
 
   return (
     <View style={{ gap: 32 }}>
+      <WidgetInfo
+        id="W2"
+        title="PERFORMANCE MÉCANIQUE"
+        content="Tonnage par chaîne cinétique (Push / Pull / Legs). 1RM estimé via formule Brzycki. 3 échelles temporelles : séance (intensité/chaîne), cycle (densité 2 mois), tendance (progression hebdo). SMA_7 par chaîne pour seuils de tolérance."
+      />
       {hasPRthisWeek && (
         <Card variant="flat" style={{ borderColor: theme.selected, backgroundColor: 'rgba(212,175,55,0.1)' }}>
           <View style={s.row}>
@@ -190,7 +196,7 @@ export function PerformanceTab({ sessions, assessments = [] }: PerformanceTabPro
               key={entry.exerciseId}
               onPress={() => setSelectedExercise(selectedExercise === entry.exerciseId ? null : entry.exerciseId)}
               style={[s.exerciseRow, {
-                borderBottomColor: selectedExercise === entry.exerciseId ? theme.selected : 'rgba(255,255,255,0.05)',
+                borderBottomColor: selectedExercise === entry.exerciseId ? theme.selected : Clr.white5,
               }]}
             >
               <View style={s.row}>
@@ -208,7 +214,7 @@ export function PerformanceTab({ sessions, assessments = [] }: PerformanceTabPro
         </View>
 
         {selectedExercise && oneRmTrend[selectedExercise] && (
-          <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingTop: 16 }}>
+          <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: Clr.white5, paddingTop: 16 }}>
             <Text style={[s.sparklineLabel, { color: theme.mute }]}>
               ÉVOLUTION 90J · {top5.find(e => e.exerciseId === selectedExercise)?.name ?? ''}
             </Text>

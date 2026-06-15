@@ -2,17 +2,24 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { subDays } from 'date-fns';
-import { safeStorage } from '../../utils/safeStorage';
 import { BiometricsService } from '../../services/biometricsService';
 import { useMeasurementStore } from '../../hooks/useMeasurementStore';
 import { useWeightStore } from '../../hooks/useWeightStore';
+import { useAnthropoProfileStore } from '../../hooks/useAnthropoProfileStore';
+import { computeAge } from '../../data/schemas/anthropo/userProfile';
 import { Card } from '../../components/ui/Card';
 import { Touch } from '../../components/ui/Touch';
 import { Heading } from '../../components/ui/Heading';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import { ds } from '../../utils/storage';
+import type { SkinfoldKey } from '../../data/schemas/anthropo/measurement';
+
+function median([a, b, c]: [number, number, number]): number {
+  return [a, b, c].sort((x, y) => x - y)[1]!;
+}
 import { useTheme } from '../../hooks/useTheme';
 import { FontMono } from '../../constants/typography';
-import { Fs, Fw, Ls } from '../../theme/tokens';
+import { Fs, Fw, Ls, Clr } from '../../theme/tokens';
 
 const SvgPath_ = Path as any;
 const SvgCircle_ = Circle as any;
@@ -45,18 +52,18 @@ function computeBfSeries(
     .sort((a, b) => a.date.localeCompare(b.date))
     .map(e => {
       const sk = e.skinfolds ?? {};
-      const s13Total = ALL13_SITES.every(k => (sk[k] ?? 0) > 0)
-        ? ALL13_SITES.reduce((sum, k) => sum + (sk[k] ?? 0), 0) : 0;
+      const s13Total = ALL13_SITES.every(k => sk[k as SkinfoldKey] != null)
+        ? ALL13_SITES.reduce((sum, k) => sum + median(sk[k as SkinfoldKey]!), 0) : 0;
       const bf13 = s13Total > 0 ? BiometricsService.skinfolds13(s13Total, age, sex) : null;
-      const bfJP7 = JP7_SITES.every(k => (sk[k] ?? 0) > 0)
+      const bfJP7 = JP7_SITES.every(k => sk[k as SkinfoldKey] != null)
         ? BiometricsService.jacksonPollock7(
-            sk['pectoral'] ?? 0, sk['axillaire'] ?? 0, sk['triceps'] ?? 0,
-            sk['subscapular'] ?? 0, sk['abdominal'] ?? 0, sk['suprailiac'] ?? 0,
-            sk['thigh_anterior'] ?? 0, age, sex)
+            median(sk['pectoral']!), median(sk['axillaire']!), median(sk['triceps']!),
+            median(sk['subscapular']!), median(sk['abdominal']!), median(sk['suprailiac']!),
+            median(sk['thigh_anterior']!), age, sex)
         : null;
-      const bfDW4 = DW4_SITES.every(k => (sk[k] ?? 0) > 0)
+      const bfDW4 = DW4_SITES.every(k => sk[k as SkinfoldKey] != null)
         ? BiometricsService.durninWomersley4(
-            sk['biceps'] ?? 0, sk['triceps'] ?? 0, sk['subscapular'] ?? 0, sk['suprailiac'] ?? 0, age, sex)
+            median(sk['biceps']!), median(sk['triceps']!), median(sk['subscapular']!), median(sk['suprailiac']!), age, sex)
         : null;
       return { date: e.date, bf13, bfJP7, bfDW4 };
     });
@@ -190,25 +197,17 @@ export default function ScanTab() {
   const theme = useTheme();
   const measureStore = useMeasurementStore();
   const weightStore = useWeightStore();
+  const anthropoStore = useAnthropoProfileStore();
   const [scanRange, setScanRange] = useState<ScanRange>(90);
 
-  const profile = useMemo(() => {
-    const raw = safeStorage.get('awan.nutrition.profile');
-    if (!raw) return { age: 30, sex: 'male' as const };
-    try {
-      const p = JSON.parse(raw) as Record<string, unknown>;
-      return {
-        age: typeof p.age === 'number' ? p.age : 30,
-        sex: p.gender === 'woman' ? 'female' as const : 'male' as const,
-      };
-    } catch { return { age: 30, sex: 'male' as const }; }
-  }, []);
+  const profileAge = anthropoStore.latest ? computeAge(anthropoStore.latest.birthDate) : 30;
+  const profileSex: 'male' | 'female' = anthropoStore.latest?.sex ?? 'male';
 
   const cutoff = useMemo(() => subDays(new Date(), scanRange), [scanRange]);
 
   const bfSeries = useMemo(
-    () => computeBfSeries(measureStore.history, profile.age, profile.sex, cutoff),
-    [measureStore.history, profile, cutoff],
+    () => computeBfSeries(measureStore.history, profileAge, profileSex, cutoff),
+    [measureStore.history, profileAge, profileSex, cutoff],
   );
 
   const series13 = useMemo(() => bfSeries.map(p => ({ date: p.date, v: p.bf13 })), [bfSeries]);
@@ -234,6 +233,11 @@ export default function ScanTab() {
 
   return (
     <View style={{ gap: 32 }}>
+      <WidgetInfo
+        id="W1"
+        title="COMPOSITION CORPORELLE"
+        content="Poids journalier + moyenne mobile 7j. Plis cutanés mesurés hebdomadairement (protocole ISAK). Calcul BF% via 3 formules indépendantes : 13 plis, JP7 (athlètes), DW4 (population générale). Vélocité de lipolyse = régression linéaire sur Σplis."
+      />
       {/* Range selector */}
       <View style={s.rangeRow}>
         {SCAN_RANGES.map(r => (
@@ -376,15 +380,15 @@ export default function ScanTab() {
           {history.slice(0, 10).map((m, i) => {
             const w = weightStore.entries.filter(e => e.date <= m.date).sort((a, b) => b.date.localeCompare(a.date))[0];
             const sk = m.skinfolds ?? {};
-            const { age, sex } = profile;
-            const s13Total = ALL13_SITES.every(k => (sk[k] ?? 0) > 0)
-              ? ALL13_SITES.reduce((sum, k) => sum + (sk[k] ?? 0), 0) : 0;
+            const age = profileAge; const sex = profileSex;
+            const s13Total = ALL13_SITES.every(k => sk[k as SkinfoldKey] != null)
+              ? ALL13_SITES.reduce((sum, k) => sum + median(sk[k as SkinfoldKey]!), 0) : 0;
             const bf13 = s13Total > 0 ? BiometricsService.skinfolds13(s13Total, age, sex) : null;
-            const bfJP7 = JP7_SITES.every(k => (sk[k] ?? 0) > 0)
-              ? BiometricsService.jacksonPollock7(sk['pectoral'] ?? 0, sk['axillaire'] ?? 0, sk['triceps'] ?? 0, sk['subscapular'] ?? 0, sk['abdominal'] ?? 0, sk['suprailiac'] ?? 0, sk['thigh_anterior'] ?? 0, age, sex)
+            const bfJP7 = JP7_SITES.every(k => sk[k as SkinfoldKey] != null)
+              ? BiometricsService.jacksonPollock7(median(sk['pectoral']!), median(sk['axillaire']!), median(sk['triceps']!), median(sk['subscapular']!), median(sk['abdominal']!), median(sk['suprailiac']!), median(sk['thigh_anterior']!), age, sex)
               : null;
-            const bfDW4 = DW4_SITES.every(k => (sk[k] ?? 0) > 0)
-              ? BiometricsService.durninWomersley4(sk['biceps'] ?? 0, sk['triceps'] ?? 0, sk['subscapular'] ?? 0, sk['suprailiac'] ?? 0, age, sex)
+            const bfDW4 = DW4_SITES.every(k => sk[k as SkinfoldKey] != null)
+              ? BiometricsService.durninWomersley4(median(sk['biceps']!), median(sk['triceps']!), median(sk['subscapular']!), median(sk['suprailiac']!), age, sex)
               : null;
             return (
               <Card key={i} variant="flat" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
@@ -392,7 +396,7 @@ export default function ScanTab() {
                   <Text style={[s.historyDate, { color: theme.selected }]}>
                     {m.date.slice(5).replace('-', '/')}
                   </Text>
-                  {w && <Text style={[s.historyWeight, { color: theme.mute }]}>{w.weightKg} KG</Text>}
+                  {w?.weight != null && <Text style={[s.historyWeight, { color: theme.mute }]}>{w.weight} KG</Text>}
                 </View>
                 <View style={s.historyValues}>
                   {bf13 !== null && (
@@ -413,7 +417,7 @@ export default function ScanTab() {
                       <Text style={[s.historyVal, { color: theme.mute }]}>{bfDW4}%</Text>
                     </View>
                   )}
-                  {bf13 === null && bfJP7 === null && bfDW4 === null && m.body_fat_pct > 0 && (
+                  {bf13 === null && bfJP7 === null && bfDW4 === null && (m.body_fat_pct ?? 0) > 0 && (
                     <View>
                       <Text style={[s.statLabel, { color: theme.mute }]}>MG</Text>
                       <Text style={[s.historyVal, { color: theme.mute }]}>{m.body_fat_pct}%</Text>
@@ -435,7 +439,7 @@ const s = StyleSheet.create({
   rangeLabelMain: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display, letterSpacing: Ls.sm_02 },
   rangeLabelSub: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02, marginTop: 2 },
   emptyChart: { height: 100, alignItems: 'center', justifyContent: 'center', borderStyle: 'dashed', borderWidth: 1 },
-  legendContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' },
+  legendContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: Clr.white5 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   legendTitle: { fontFamily: FontMono, fontSize: Fs.md, fontWeight: Fw.display, textTransform: 'uppercase', letterSpacing: Ls.sm_02 },
   legendSub: { fontFamily: FontMono, fontSize: Fs.sm },

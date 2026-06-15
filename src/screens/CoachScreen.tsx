@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useTheme, type AwanTheme } from '../hooks/useTheme';
-import { AlertOctagon, AlertTriangle, CalendarClock, CheckCircle2, Info, Zap } from 'lucide-react-native';
+import { AlertOctagon, AlertTriangle, CalendarClock, CheckCircle2, Info, Zap, type LucideIcon } from 'lucide-react-native';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { Touch } from '../components/ui/Touch';
 import { useCoach } from '../hooks/useCoach';
@@ -12,7 +12,7 @@ import type { ForecastLatest } from '../data/schemas/coach/forecast';
 import type { Domain, Severity } from '../data/schemas/coach/rule';
 import type { NavProps } from '../types/nav';
 import { FontSans, FontMono } from '../constants/typography';
-import { Fs, Fw, T } from '../theme/tokens';
+import { Fs, Fw, T, Clr } from '../theme/tokens';
 
 type TabKey = 'sport' | 'nutrition' | 'anthropo' | 'cross';
 
@@ -26,16 +26,16 @@ const TABS: TabDef[] = [
 ];
 
 interface SeverityStyle {
-  Icon: React.ComponentType<{ size?: number; color?: string }>;
+  Icon: LucideIcon;
   color: string;
 }
 
-function getSeverityStyles(t: Pick<AwanTheme, 'selected'>): Record<Severity, SeverityStyle> {
+function getSeverityStyles(t: Pick<AwanTheme, 'selected' | 'statusOk' | 'statusWarn'>): Record<Severity, SeverityStyle> {
   return {
     info:  { Icon: Info,          color: t.selected },
-    good:  { Icon: CheckCircle2,  color: '#22C55E' },
-    warn:  { Icon: AlertTriangle, color: '#FBBF24' },
-    alert: { Icon: AlertOctagon,  color: '#EF4444' },
+    good:  { Icon: CheckCircle2,  color: t.statusOk },
+    warn:  { Icon: AlertTriangle, color: t.statusWarn },
+    alert: { Icon: AlertOctagon,  color: Clr.alert },
   };
 }
 
@@ -112,7 +112,7 @@ function EmptyState({ message }: { message: string }) {
 export default function CoachScreen(_props: NavProps): React.ReactElement {
   const theme = useTheme();
   const today = ds(new Date());
-  const { assessments, loading, runAll } = useCoach(today);
+  const { assessments, loading, error, runAll } = useCoach(today);
   const [activeTab, setActiveTab] = useState<TabKey>('sport');
 
   const filtered: AssessmentLatest[] = useMemo(
@@ -124,18 +124,24 @@ export default function CoachScreen(_props: NavProps): React.ReactElement {
 
   return (
     <ScrollView
-      style={{ flex: 1, width: '100%' }}
+      style={{ flex: 1, width: '100%', backgroundColor: theme.bg }}
       contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}
       showsVerticalScrollIndicator={false}
     >
       <ScreenHeader tag="SYSTÈME · COACH" title="CONSEILLER IA" />
 
-      <Touch onPress={() => void runAll(today)} disabled={loading} style={{ marginBottom: 24 }}>
+      <Touch onPress={() => void runAll(today)} disabled={loading} style={{ marginBottom: error ? 8 : 24 }}>
         <View style={[s.analyzeBtn, { borderColor: `${theme.selected}4D`, backgroundColor: `${theme.selected}0D`, opacity: loading ? 0.5 : 1 }]}>
           <Zap size={16} color={theme.selected} />
           <Text style={[s.mono, { color: theme.selected }]}>{loading ? 'ANALYSE EN COURS…' : 'ANALYSER'}</Text>
         </View>
       </Touch>
+      {error !== null && (
+        <View style={[s.errorBanner, { borderColor: `${Clr.alert}33`, backgroundColor: `${Clr.alert}0D`, marginBottom: 24 }]}>
+          <AlertOctagon size={14} color={Clr.alert} />
+          <Text style={[s.mono, { color: Clr.alert, flex: 1 }]} numberOfLines={2}>{error}</Text>
+        </View>
+      )}
 
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
         {TABS.map(tab => {
@@ -180,10 +186,10 @@ export default function CoachScreen(_props: NavProps): React.ReactElement {
             const triggeredAdvices = assessment.advices;
             if (triggeredAdvices.length === 0) {
               return (
-                <View key={assessment.id} style={[s.card, { borderColor: '#22C55E33', backgroundColor: '#22C55E0D' }]}>
-                  <CheckCircle2 size={20} color="#22C55E" />
+                <View key={assessment.id} style={[s.card, { borderColor: `${theme.statusOk}33`, backgroundColor: `${theme.statusOk}0D` }]}>
+                  <CheckCircle2 size={20} color={theme.statusOk} />
                   <View style={{ flex: 1 }}>
-                    <Text style={[T.label, { color: '#22C55E' }]}>{'RAS · '}{assessment.domain.toUpperCase()}</Text>
+                    <Text style={[T.label, { color: theme.statusOk }]}>{'RAS · '}{assessment.domain.toUpperCase()}</Text>
                     <Text style={{ fontFamily: FontSans, fontSize: Fs.body, color: theme.title, marginTop: 4 }}>Aucune anomalie détectée.</Text>
                   </View>
                 </View>
@@ -212,4 +218,5 @@ const s = StyleSheet.create({
   tab: { borderWidth: 1, padding: 8, alignItems: 'center' },
   emptyState: { borderWidth: 1, padding: 24, alignItems: 'center', gap: 8 },
   mono: { fontFamily: FontMono, fontSize: Fs.sm, fontWeight: Fw.display },
+  errorBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderWidth: 1 },
 });

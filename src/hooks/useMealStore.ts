@@ -3,9 +3,8 @@ import { MealService } from '@/services/mealService';
 import type { MealEntryLatest } from '@/data/schemas/nutrition/mealEntry';
 import { useAppStore } from '@/data/store/appStore';
 import { DbFullError } from '@/data/storage/IStorage';
+import { dispatchDbFull } from '@/utils/dbFullBus';
 import { eventBus } from '@/data/events/bus';
-
-function dispatchDbFull() { window.dispatchEvent(new CustomEvent('awan:db-full')); }
 
 export function useMealStore(date: string) {
   const [meals, setMeals] = useState<MealEntryLatest[]>([]);

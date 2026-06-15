@@ -10,6 +10,8 @@ export interface ITransaction {
 export interface IStorage {
   /** Read and parse (+ migrate) a single keyed value. Returns null if absent. */
   get<T>(key: string, parse: ParseFn<T>): Promise<T | null>;
+  /** Bulk-read all values whose key starts with prefix. Invalid records are skipped. */
+  getAll<T>(prefix: string, parse: ParseFn<T>): Promise<T[]>;
   /** Serialize and write a value (no schema needed — validated on write by caller). */
   set<T>(key: string, value: T): Promise<void>;
   delete(key: string): Promise<void>;

@@ -1,4 +1,4 @@
 import { z } from 'zod';
 
-export const IdSchema = z.string().uuid();
+export const IdSchema = z.string().min(1);
 export type Id = z.infer<typeof IdSchema>;

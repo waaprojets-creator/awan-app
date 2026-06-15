@@ -1,3 +1,8 @@
+// ⚠️ SILO ORPHELIN — aucun service ne lit/écrit `activity.record` (pas d'activityService).
+// Schéma + migrator enregistrés mais jamais câblés. Décision en attente (arbitrage utilisateur) :
+//   soit brancher un service — la lecture par date sera impossible en l'état (id=uuid, pas de date en clé),
+//   soit retirer 'activity.record' du registre de migration et supprimer ce silo.
+// NE PAS câbler avant arbitrage. — audit silos 2026-06-11
 import { z } from 'zod';
 import { IdSchema } from '../common/id';
 import { DateStringSchema, TimestampSchema } from '../common/date';

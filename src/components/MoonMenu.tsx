@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Modal, Pressable, Platform, View, Text, StyleSheet, useWindowDimensions } from 'react-native';
+import { Modal, Pressable, Platform, View, Text, StyleSheet, useWindowDimensions, Vibration } from 'react-native';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Svg, { Circle, Line, G, Text as SvgText, Path } from 'react-native-svg';
 import { L } from '../constants/labels';
 import { safeStorage } from '../utils/safeStorage';
@@ -13,20 +14,23 @@ const n = (k: string): string => nav[k] ?? k;
 
 interface Node { id: string; label: string; x: number; y: number; tier: 0 | 1 | 2; }
 
+// Réglage disposition (2026-06) :
+//  - Planning↔Trajet : écart horizontal réduit de 30% (±19,1 → ±13,4 autour de x=50).
+//  - Enfants de Santé : éventail élargi de 70% (offsets ×1,7, symétriques autour de x=50).
 const NODES: Node[] = [
   { id: 'Dashboard',   label: n('hub'),         x: 50.0, y: 52.0, tier: 0 },
   { id: 'Islam',       label: n('spirit'),       x: 50.0, y: 30.0, tier: 1 },
   { id: 'Reglages',   label: n('reglages'),     x: 69.1, y: 41.0, tier: 1 },
-  { id: 'Planning',    label: n('planning'),     x: 69.1, y: 63.0, tier: 1 },
+  { id: 'Planning',    label: n('planning'),     x: 63.4, y: 63.0, tier: 1 },
   { id: 'Sante',       label: n('sante'),        x: 50.0, y: 74.0, tier: 1 },
-  { id: 'Trajet',      label: n('trajet'),       x: 30.9, y: 63.0, tier: 1 },
+  { id: 'Trajet',      label: n('trajet'),       x: 36.6, y: 63.0, tier: 1 },
   { id: 'Analyse',     label: n('analyse'),      x: 30.9, y: 41.0, tier: 1 },
   { id: 'Journal',     label: n('journal'),      x: 73.5, y: 75.0, tier: 2 },
   { id: 'Tasks',       label: n('tasks'),        x: 79.0, y: 59.5, tier: 2 },
-  { id: 'Sleep',       label: 'SOMMEIL',         x: 59.5, y: 83.5, tier: 2 },
-  { id: 'Mensuration', label: n('mensuration'),  x: 53.5, y: 85.5, tier: 2 },
-  { id: 'Nutrition',   label: n('nutrition'),    x: 46.5, y: 85.5, tier: 2 },
-  { id: 'Sport',       label: n('sport'),        x: 40.5, y: 83.5, tier: 2 },
+  { id: 'Sleep',       label: 'SOMMEIL',         x: 66.2, y: 83.5, tier: 2 },
+  { id: 'Mensuration', label: n('mensuration'),  x: 56.0, y: 85.5, tier: 2 },
+  { id: 'Nutrition',   label: n('nutrition'),    x: 44.0, y: 85.5, tier: 2 },
+  { id: 'Sport',       label: n('sport'),        x: 33.8, y: 83.5, tier: 2 },
   { id: 'Coach',       label: n('coach'),        x: 22.0, y: 34.5, tier: 2 },
 ];
 
@@ -71,6 +75,8 @@ function loadLayout(): NodePositions {
 }
 
 const MARGIN = 14;
+// Diamètre (px) des cibles tactiles natives superposées au SVG.
+const HIT = 56;
 
 interface MoonMenuProps { onNavigate: (route: string) => void; currentRoute: string; }
 
@@ -107,6 +113,11 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
     setTimeout(() => onNavigate(route), 200);
   }, [onNavigate, editMode]);
 
+  const closeMenu = useCallback(() => {
+    if (editMode) { setNodePositions(loadLayout()); setEditMode(false); }
+    else setIsOpen(false);
+  }, [editMode]);
+
   const CH = H * 0.86;
   const orbitCX = W * 0.5;
   const orbitCY = CH * 0.52;
@@ -137,7 +148,8 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
     return { textX: Math.max(MARGIN, cx - gap), textY: cy + 3, anchor: 'end' as const };
   }
 
-  // Drag — web only (mouse/touch events not available on RN SVG elements)
+  // Drag web : événements souris/touch DOM sur les <G> du SVG.
+  // Drag natif : Gesture.Pan (appui long) sur des cibles absolues — voir editDragTargets.
   function onDragStart(nodeId: string, mx: number, my: number) {
     if (!editMode || Platform.OS !== 'web') return;
     const node = resolvedNodes.find(nd => nd.id === nodeId)!;
@@ -146,13 +158,16 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
   }
   function onDragMove(mx: number, my: number) {
     if (!draggingId || !dragStart.current) return;
-    const dx = ((mx - dragStart.current.mx) / W) * 100;
-    const dy = ((my - dragStart.current.my) / CH) * 100;
+    // Capture en local — dragStart.current peut devenir null avant l'exécution
+    // de l'updater ci-dessous (onDragEnd peut s'intercaler entre deux events tactiles).
+    const { mx: startMx, my: startMy, nx: startNx, ny: startNy } = dragStart.current;
+    const dx = ((mx - startMx) / W) * 100;
+    const dy = ((my - startMy) / CH) * 100;
     setNodePositions(prev => ({
       ...prev,
       [draggingId]: {
-        x: Math.max(4, Math.min(96, dragStart.current!.nx + dx)),
-        y: Math.max(4, Math.min(96, dragStart.current!.ny + dy)),
+        x: Math.max(4, Math.min(96, startNx + dx)),
+        y: Math.max(4, Math.min(96, startNy + dy)),
       },
     }));
   }
@@ -183,34 +198,14 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
         animationType="fade"
         onRequestClose={() => { if (editMode) cancelEdit(); else setIsOpen(false); }}
       >
+        {/* Racine gesture-handler dédiée : le Modal Android vit dans une racine
+            native séparée — sans elle, Gesture.Pan ne reçoit aucun événement. */}
+        <GestureHandlerRootView style={{ flex: 1 }}>
         <View
           style={[s.overlay, { backgroundColor: editMode ? theme.overlayDeep : 'rgba(0,0,0,0.88)' }]}
           {...webDragHandlers}
         >
-          {editMode && (
-            <View style={s.editHeader}>
-              <Pressable
-                onPress={saveLayout}
-                style={[s.editBtn, { backgroundColor: theme.selected }]}
-              >
-                <Text style={[s.editBtnText, { color: '#000' }]}>SAUVEGARDER</Text>
-              </Pressable>
-              <Pressable
-                onPress={cancelEdit}
-                style={[s.editBtn, s.editBtnOutline, { borderColor: 'rgba(255,255,255,0.15)' }]}
-              >
-                <Text style={[s.editBtnText, { color: theme.text }]}>ANNULER</Text>
-              </Pressable>
-            </View>
-          )}
-          {editMode && (
-            <View style={s.editHint}>
-              <Text style={[s.editHintText, { color: theme.text }]}>
-                GLISSER LES NŒUDS POUR REPOSITIONNER
-              </Text>
-            </View>
-          )}
-
+          {/* Fond cliquable — ferme le menu (sous le SVG + les cibles tactiles) */}
           <Pressable
             style={StyleSheet.absoluteFillObject}
             onPress={() => { if (editMode) cancelEdit(); else setIsOpen(false); }}
@@ -220,7 +215,8 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
             width={W}
             height={H}
             style={StyleSheet.absoluteFillObject as any}
-            onPress={(e: any) => e.stopPropagation?.()}
+            pointerEvents={Platform.OS === 'web' ? 'auto' : 'none'}
+            {...(Platform.OS === 'web' ? { onPress: (e: any) => e.stopPropagation?.() } : {})}
           >
             {/* Anneaux orbitaux */}
             {!editMode && (
@@ -248,7 +244,7 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
               );
             })}
 
-            {/* Nœuds */}
+            {/* Nœuds (visuel ; sur web le <G> reste interactif pour clic + drag) */}
             {resolvedNodes.map((node, i) => {
               const cx = (node.x/100)*W;
               const cy = (node.y/100)*CH;
@@ -263,8 +259,8 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
 
               return (
                 <G key={node.id}
-                  onPress={() => handleNavigate(node.id)}
                   {...(Platform.OS === 'web' ? {
+                    onPress: () => handleNavigate(node.id),
                     onMouseDown: (e: any) => { e.stopPropagation?.(); onDragStart(node.id, e.clientX, e.clientY); },
                     onTouchStart: (e: any) => { e.stopPropagation?.(); const t = e.touches?.[0]; if (t) onDragStart(node.id, t.clientX, t.clientY); },
                   } : {})}
@@ -299,10 +295,102 @@ export function MoonMenu({ onNavigate, currentRoute }: MoonMenuProps) {
               );
             })}
           </Svg>
+
+          {/* Cibles tactiles natives — onPress fiable sur Android (le onPress des
+              éléments react-native-svg ne déclenche pas sur Android). Superposées
+              au SVG, centrées sur chaque nœud. Web utilise le <G> ci-dessus. */}
+          {Platform.OS !== 'web' && !editMode && resolvedNodes.map(node => {
+            const cx = (node.x / 100) * W;
+            const cy = (node.y / 100) * CH;
+            return (
+              <Pressable
+                key={`hit-${node.id}`}
+                onPress={() => handleNavigate(node.id)}
+                accessibilityLabel={node.label}
+                style={{ position: 'absolute', left: cx - HIT / 2, top: cy - HIT / 2, width: HIT, height: HIT }}
+              />
+            );
+          })}
+
+          {/* Cibles drag natives — mode édition : appui long (vibration) puis glisser.
+              Même pattern que DraggableEvent (Planning) ; translation cumulée depuis
+              le début du geste, position de départ figée dans dragStart. */}
+          {Platform.OS !== 'web' && editMode && resolvedNodes.map(node => {
+            const cx = (node.x / 100) * W;
+            const cy = (node.y / 100) * CH;
+            const pan = Gesture.Pan()
+              .runOnJS(true)
+              .activateAfterLongPress(400)
+              .onStart(() => {
+                Vibration.vibrate(50);
+                dragStart.current = { mx: 0, my: 0, nx: node.x, ny: node.y };
+                setDraggingId(node.id);
+              })
+              .onUpdate((e) => {
+                const st = dragStart.current;
+                if (!st) return;
+                const dx = (e.translationX / W) * 100;
+                const dy = (e.translationY / CH) * 100;
+                setNodePositions(prev => ({
+                  ...prev,
+                  [node.id]: {
+                    x: Math.max(4, Math.min(96, st.nx + dx)),
+                    y: Math.max(4, Math.min(96, st.ny + dy)),
+                  },
+                }));
+              })
+              .onEnd(() => onDragEnd())
+              .onFinalize(() => onDragEnd());
+            return (
+              <GestureDetector key={`drag-${node.id}`} gesture={pan}>
+                <View
+                  accessibilityLabel={`Déplacer ${node.label}`}
+                  style={{ position: 'absolute', left: cx - HIT / 2, top: cy - HIT / 2, width: HIT, height: HIT }}
+                />
+              </GestureDetector>
+            );
+          })}
+
+          {editMode && (
+            <View style={s.editHeader}>
+              <Pressable
+                onPress={saveLayout}
+                style={[s.editBtn, { backgroundColor: theme.selected }]}
+              >
+                <Text style={[s.editBtnText, { color: '#000' }]}>SAUVEGARDER</Text>
+              </Pressable>
+              <Pressable
+                onPress={cancelEdit}
+                style={[s.editBtn, s.editBtnOutline, { borderColor: 'rgba(255,255,255,0.15)' }]}
+              >
+                <Text style={[s.editBtnText, { color: theme.text }]}>ANNULER</Text>
+              </Pressable>
+            </View>
+          )}
+          {editMode && (
+            <View style={s.editHint}>
+              <Text style={[s.editHintText, { color: theme.text }]}>
+                {Platform.OS === 'web' ? 'GLISSER LES NŒUDS POUR REPOSITIONNER' : 'APPUI LONG SUR UN NŒUD PUIS GLISSER'}
+              </Text>
+            </View>
+          )}
+
+          {/* Croissant (fermer) — DANS le Modal pour rester visible/cliquable
+              au-dessus de l'overlay (le trigger externe est masqué par le Modal). */}
+          <Pressable
+            onPress={closeMenu}
+            style={s.trigger}
+            accessibilityLabel="Fermer le menu"
+          >
+            <View style={s.triggerInner}>
+              <CrescentMoon color={theme.selected} />
+            </View>
+          </Pressable>
         </View>
+        </GestureHandlerRootView>
       </Modal>
 
-      {/* Bouton trigger — absolu dans le wrapper MainLayout */}
+      {/* Bouton trigger — absolu dans le wrapper MainLayout (visible menu fermé) */}
       <Pressable
         onPress={toggle}
         style={s.trigger}

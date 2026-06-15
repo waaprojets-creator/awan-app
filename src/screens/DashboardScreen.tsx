@@ -3,7 +3,7 @@ import { ScrollView, View, Text, TextInput as RNTextInput, Modal, TouchableWitho
 import { Upload, X } from 'lucide-react-native';
 import { getAdviceText } from '../constants/coachAdvice';
 import { DEFAULT_KCAL_TARGET } from '../constants/app';
-import { safeStorage } from '../utils/safeStorage';
+import { NutritionProfileService } from '../services/nutritionProfileService';
 import { L, DATE_FORMAT_BANNER, TRANSPORT_OPTIONS } from '../constants/labels';
 import { TRANSPORT_ICONS } from '../constants/icons';
 import { ds } from '../utils/storage';
@@ -23,13 +23,13 @@ import { WorkoutService } from '../services/workoutService';
 import { useHealthScore } from '../hooks/useHealthScore';
 import { useTemporalMode } from '../hooks/useTemporalMode';
 import { useCoach } from '../hooks/useCoach';
-import { useDaily } from '../context/DailyContext';
 import type { Severity } from '../data/schemas/coach/rule';
 import type { Advice } from '../data/schemas/coach/assessment';
 import type { NavProps } from '../types/nav';
 import arabicData from '../assets/data/1.json';
 import { useToast } from '../components/ui/Toast';
 import { useTheme } from '../hooks/useTheme';
+import { Clr } from '../theme/tokens';
 import { FontSans, FontMono, FwMute, FwBody, FwLabel, FwValue } from '../constants/typography';
 
 const KCAL_TARGET_DEFAULT = DEFAULT_KCAL_TARGET;
@@ -57,11 +57,8 @@ export default function DashboardScreen({ navigate }: NavProps) {
   const prayerStore  = usePrayerStore(today);
   const temporal     = useTemporalMode();
 
-  const { getEntriesByDate } = useDaily();
-  const trajetEntries = useMemo(
-    () => (getEntriesByDate(today) as any[]).filter((e: any) => e.module === 'trajet'),
-    [today, getEntriesByDate]
-  );
+  // Timeline trajet débranchée (DailyContext mort) — widget neutre tant que la source n'est pas recâblée.
+  const trajetEntries: unknown[] = [];
 
   const { assessments: coachAssessments } = useCoach(today);
   const topAdvice = useMemo<Advice | null>(() => {
@@ -73,9 +70,9 @@ export default function DashboardScreen({ navigate }: NavProps) {
   const coachAnalyzed = coachAssessments.length > 0;
   const COACH_COLOR: Record<Severity, string> = {
     info:  theme.selected,
-    good:  'rgb(34,197,94)',
-    warn:  'rgb(251,191,36)',
-    alert: 'rgb(239,68,68)',
+    good:  theme.statusOk,
+    warn:  theme.statusWarn,
+    alert: Clr.alert,
   };
 
   const sessionsCount = useMemo(
@@ -84,8 +81,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
   );
 
   const kcalTargetScore = useMemo(() => {
-    try { const p = JSON.parse(safeStorage.get('awan.nutrition.profile') ?? '{}'); return typeof p.targetKcal === 'number' ? p.targetKcal : KCAL_TARGET_DEFAULT; }
-    catch { return KCAL_TARGET_DEFAULT; }
+    return NutritionProfileService.getCached()?.targetKcal ?? KCAL_TARGET_DEFAULT;
   }, []);
 
   const score = useAwanScore({
@@ -134,8 +130,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
 
   // Weekly retrospective computations
   const kcalTarget = useMemo(() => {
-    try { const p = JSON.parse(safeStorage.get('awan.nutrition.profile') ?? '{}'); return p.targetKcal ?? KCAL_TARGET_DEFAULT; }
-    catch { return KCAL_TARGET_DEFAULT; }
+    return NutritionProfileService.getCached()?.targetKcal ?? KCAL_TARGET_DEFAULT;
   }, []);
 
   const weeklyWeightDelta = useMemo(() => {
@@ -146,15 +141,15 @@ export default function DashboardScreen({ navigate }: NavProps) {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const sevenStr = sevenDaysAgo.toISOString().slice(0, 10);
     const baseline = [...sorted].reverse().find(e => e.date <= sevenStr);
-    if (!baseline) return null;
-    return last.weightKg - baseline.weightKg;
+    if (!baseline || last.weight == null || baseline.weight == null) return null;
+    return last.weight - baseline.weight;
   }, [weightStore.entries]);
 
   const isEarlyMorning = useMemo(() => new Date().getHours() < 10, []);
 
   return (
     <ScrollView
-      style={{ flex: 1, width: '100%', maxWidth: '100%' }}
+      style={{ flex: 1, width: '100%', maxWidth: '100%', backgroundColor: theme.bg }}
       contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100, width: '100%', maxWidth: '100%' }}
       showsVerticalScrollIndicator={false}
     >
@@ -355,7 +350,7 @@ export default function DashboardScreen({ navigate }: NavProps) {
       {/* Mesures + Séance */}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
         <View style={{ width: '47%' }}>
-          <InstrumentCard label={dash.biometrics ?? 'POIDS'} value={weightStore.todayEntry?.weightKg ?? weightStore.avg7d?.toFixed(1) ?? '—'} unit={weightStore.entries.length ? 'kg' : ''} status={weightStore.entries.length ? 'ok' : 'mute'} index={5} onPress={() => navigate('Mensuration')} />
+          <InstrumentCard label={dash.biometrics ?? 'POIDS'} value={weightStore.todayEntry?.weight ?? weightStore.avg7d?.toFixed(1) ?? '—'} unit={weightStore.entries.length ? 'kg' : ''} status={weightStore.entries.length ? 'ok' : 'mute'} index={5} onPress={() => navigate('Mensuration')} />
         </View>
         <View style={{ width: '47%' }}>
           <InstrumentCard label={dash.sport?.last ?? 'SÉANCE'} value={lastSession?.name ? lastSession.name.slice(0, 8).toUpperCase() : '—'} status={lastSession ? 'spirit' : 'mute'} index={6} onPress={() => navigate('Sport')} />

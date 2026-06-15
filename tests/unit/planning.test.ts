@@ -7,19 +7,24 @@ import type { ScheduleTaskLatest } from '@/data/schemas/planning/scheduleTask';
 import { eventBus } from '@/data/events/bus';
 import { uuid } from '@/utils/id';
 
+const DATE = '2026-05-10';
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function task(overrides: Partial<ScheduleTaskLatest> = {}): ScheduleTaskLatest {
   return {
-    v: 2,
+    v: 4,
     id: uuid(),
+    date: DATE,
+    scheduledDate: DATE,
     title: 'test task',
     durationMin: 30,
     priority: 3,
     domain: 'general',
     tags: [],
     dependsOn: [],
-    enabled: true,
+    status: 'active',
+    timeCategory: null,
     ...overrides,
   };
 }
@@ -42,12 +47,12 @@ describe('energyModel', () => {
   });
 });
 
-// ── Greedy scheduler ─────────────────────────────────────────────────────────
+// ── Greedy scheduler (V4 : status + scheduledDate + priority 1-3 + timeHHMM) ──
 
 describe('buildSchedule', () => {
   it('schedules a single flexible task', () => {
     const t = task({ title: 'workout', durationMin: 60 });
-    const s = buildSchedule('2026-05-10', [t]);
+    const s = buildSchedule(DATE, [t]);
     expect(s.slots).toHaveLength(1);
     expect(s.unscheduled).toHaveLength(0);
     const slot = s.slots[0]!;
@@ -55,67 +60,61 @@ describe('buildSchedule', () => {
     expect(slot.endMin - slot.startMin).toBe(60);
   });
 
-  it('places a fixed-time task at its exact minute', () => {
-    const t = task({ fixedStartMin: 8 * 60, durationMin: 45 });
-    const s = buildSchedule('2026-05-10', [t]);
+  it('places a priority-1 anchor at its exact timeHHMM', () => {
+    const t = task({ priority: 1, timeHHMM: '08:00', durationMin: 45 });
+    const s = buildSchedule(DATE, [t]);
     expect(s.slots[0]?.startMin).toBe(8 * 60);
     expect(s.slots[0]?.endMin).toBe(8 * 60 + 45);
   });
 
   it('does not overlap two tasks', () => {
     const tasks = [
-      task({ durationMin: 60, priority: 5 }),
-      task({ durationMin: 60, priority: 4 }),
+      task({ durationMin: 60, priority: 1 }),
+      task({ durationMin: 60, priority: 2 }),
       task({ durationMin: 60, priority: 3 }),
     ];
-    const s = buildSchedule('2026-05-10', tasks);
+    const s = buildSchedule(DATE, tasks);
     const slots = s.slots.sort((a, b) => a.startMin - b.startMin);
     for (let i = 1; i < slots.length; i++) {
       expect(slots[i]!.startMin).toBeGreaterThanOrEqual(slots[i - 1]!.endMin);
     }
   });
 
-  it('skips disabled tasks', () => {
-    const t = task({ enabled: false });
-    const s = buildSchedule('2026-05-10', [t]);
+  it('skips non-active tasks (status !== active)', () => {
+    const t = task({ status: 'cancelled' });
+    const s = buildSchedule(DATE, [t]);
     expect(s.slots).toHaveLength(0);
     expect(s.unscheduled).toHaveLength(0);
   });
 
-  it('respects notBeforeMin constraint', () => {
-    const t = task({ notBeforeMin: 12 * 60, durationMin: 30 });
-    const s = buildSchedule('2026-05-10', [t]);
-    expect(s.slots[0]?.startMin).toBeGreaterThanOrEqual(12 * 60);
-  });
-
-  it('respects notAfterMin constraint — puts task in unscheduled when window too tight', () => {
-    const t = task({ notBeforeMin: 21 * 60 + 40, notAfterMin: 22 * 60, durationMin: 30 });
-    const s = buildSchedule('2026-05-10', [t]);
-    expect(s.unscheduled).toContain(t.id);
+  it('only schedules tasks whose scheduledDate matches the target day', () => {
+    const t = task({ scheduledDate: '2026-05-11' });
+    const s = buildSchedule(DATE, [t]);
+    expect(s.slots).toHaveLength(0);
   });
 
   it('respects dependsOn — dependent task starts after dependency ends', () => {
-    const dep = task({ fixedStartMin: 8 * 60, durationMin: 60 });
+    const dep = task({ priority: 1, timeHHMM: '08:00', durationMin: 60 });
     const dependent = task({ dependsOn: [dep.id], durationMin: 30 });
-    const s = buildSchedule('2026-05-10', [dep, dependent]);
+    const s = buildSchedule(DATE, [dep, dependent]);
     const depSlot = s.slots.find((x) => x.taskId === dep.id)!;
     const depSlot2 = s.slots.find((x) => x.taskId === dependent.id)!;
     expect(depSlot2.startMin).toBeGreaterThanOrEqual(depSlot.endMin);
   });
 
-  it('prefers higher-priority tasks for better time slots', () => {
-    const high = task({ priority: 5, durationMin: 60 });
-    const low = task({ priority: 1, durationMin: 60 });
-    const s = buildSchedule('2026-05-10', [low, high]);
+  it('prefers higher-priority tasks (1 < 2 < 3) for earlier slots', () => {
+    const high = task({ priority: 1, durationMin: 60 });
+    const low = task({ priority: 3, durationMin: 60 });
+    const s = buildSchedule(DATE, [low, high]);
     const highSlot = s.slots.find((x) => x.taskId === high.id)!;
     const lowSlot = s.slots.find((x) => x.taskId === low.id)!;
     expect(highSlot.startMin).toBeLessThanOrEqual(lowSlot.startMin);
   });
 
   it('puts in unscheduled when day is full', () => {
-    const fill = task({ fixedStartMin: 6 * 60, durationMin: 16 * 60 });
+    const fill = task({ priority: 1, timeHHMM: '06:00', durationMin: 16 * 60 });
     const extra = task({ durationMin: 30 });
-    const s = buildSchedule('2026-05-10', [fill, extra]);
+    const s = buildSchedule(DATE, [fill, extra]);
     expect(s.unscheduled).toContain(extra.id);
   });
 });
@@ -132,10 +131,10 @@ describe('Planner', () => {
     eventBus.clear();
   });
 
-  it('saves and retrieves tasks', async () => {
+  it('saves and retrieves active tasks', async () => {
     const t = task({ title: 'prière Fajr', domain: 'islam' });
     await planner.saveTask(t);
-    const all = await planner.getTasks();
+    const all = await planner.getActiveTasks();
     expect(all).toHaveLength(1);
     expect(all[0]?.title).toBe('prière Fajr');
   });
@@ -145,19 +144,19 @@ describe('Planner', () => {
     let emitted = false;
     eventBus.on('planning.optimized', () => { emitted = true; });
 
-    const s = await planner.optimize('2026-05-10');
+    const s = await planner.optimize(DATE);
     expect(s.slots).toHaveLength(1);
     expect(emitted).toBe(true);
 
-    const stored = await planner.getSchedule('2026-05-10');
+    const stored = await planner.getSchedule(DATE);
     expect(stored?.id).toBe(s.id);
     eventBus.clear();
   });
 
   it('preview does not persist', async () => {
     const tasks = [task({ durationMin: 30 })];
-    await planner.preview('2026-05-10', tasks);
-    const stored = await planner.getSchedule('2026-05-10');
+    await planner.preview(DATE, tasks);
+    const stored = await planner.getSchedule(DATE);
     expect(stored).toBeNull();
   });
 
@@ -165,14 +164,6 @@ describe('Planner', () => {
     const t = task();
     await planner.saveTask(t);
     await planner.deleteTask(t.id);
-    expect(await planner.getTasks()).toHaveLength(0);
-  });
-
-  it('createSystemTask is idempotent', async () => {
-    const id = uuid();
-    await planner.createSystemTask({ id, title: 'Test', domain: 'general', durationMin: 30 });
-    await planner.createSystemTask({ id, title: 'Test', domain: 'general', durationMin: 30 });
-    const all = await planner.getTasks();
-    expect(all).toHaveLength(1);
+    expect(await planner.getActiveTasks()).toHaveLength(0);
   });
 });

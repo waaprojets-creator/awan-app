@@ -4,7 +4,7 @@
   "domain": "sport",
   "name": "Fatigue accumulée — RPE moyen > 8 sur 5 séances",
   "signals": [
-    { "type": "avg", "source": "sport.workoutLog", "field": "rpe", "window": { "days": 14 } }
+    { "type": "avg", "source": "sport.session", "field": "sessionRPE", "window": { "days": 14 } }
   ],
   "condition": { "op": "gt", "value": 8 },
   "signalIndex": 0,

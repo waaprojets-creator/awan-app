@@ -3,8 +3,7 @@ import { WorkoutService } from '@/services/workoutService';
 import type { RoutineLatest, WorkoutSessionLatest } from '@/data/schemas/sport/routine';
 import { useAppStore } from '@/data/store/appStore';
 import { DbFullError } from '@/data/storage/IStorage';
-
-function dispatchDbFull() { window.dispatchEvent(new CustomEvent('awan:db-full')); }
+import { dispatchDbFull } from '@/utils/dbFullBus';
 
 export function useWorkoutStore() {
   const [routines, setRoutines] = useState<RoutineLatest[]>([]);

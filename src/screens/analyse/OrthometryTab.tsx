@@ -4,8 +4,9 @@ import { useTheme } from '../../hooks/useTheme';
 import { Ruler } from 'lucide-react-native';
 import { Card } from '../../components/ui/Card';
 import { Heading } from '../../components/ui/Heading';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import { FontMono } from '../../constants/typography';
-import { Fs, Fw, Ls } from '../../theme/tokens';
+import { Fs, Fw, Ls, Clr } from '../../theme/tokens';
 import type { MeasurementLatest } from '../../data/schemas/anthropo/measurement';
 import { analyzeSymmetry, asymmetryToHeatmapValue } from '../../services/symmetryService';
 import { BodySvg } from '../../components/BodySvg';
@@ -25,7 +26,14 @@ interface OrthometryTabProps { history: MeasurementLatest[]; loading: boolean }
 export function OrthometryTab({ history, loading }: OrthometryTabProps) {
   const theme = useTheme();
   const latest = useMemo(() => history.slice().sort((a, b) => b.date.localeCompare(a.date))[0] ?? null, [history]);
-  const results = useMemo(() => latest ? analyzeSymmetry(latest.measurements) : [], [latest]);
+  const results = useMemo(() => {
+    if (!latest) return [];
+    const circumFlat: Record<string, number> = {};
+    for (const [k, v] of Object.entries(latest.circumferences ?? {})) {
+      if (v) circumFlat[k] = (v[0] + v[1] + v[2]) / 3;
+    }
+    return analyzeSymmetry(circumFlat);
+  }, [latest]);
   const heatmapValues = useMemo((): Partial<Record<MuscleId, number>> => {
     const map: Partial<Record<MuscleId, number>> = {};
     for (const r of results) {
@@ -57,13 +65,14 @@ export function OrthometryTab({ history, loading }: OrthometryTabProps) {
 
   return (
     <View style={{ gap: 32 }}>
+      <WidgetInfo id="W7" title="ORTHOMÉTRIE" content="Analyse de la symétrie bilatérale à partir des circonférences gauche/droite — détection des asymétries musculaires (seuil > 5% = alert)." />
       <Card variant="flat">
         <Heading level={4} mono subtitle={`Dernière mesure · ${latest?.date ?? ''}`}>SYMÉTRIE CORPORELLE</Heading>
         <View style={s.bodyRow}>
           <BodySvg mode="heatmap" muscleValues={heatmapValues} />
           <View style={{ flex: 1, gap: 8 }}>
             {results.map(r => (
-              <View key={r.muscleKey} style={[s.muscleRow, { borderBottomColor: 'rgba(255,255,255,0.05)' }]}>
+              <View key={r.muscleKey} style={[s.muscleRow, { borderBottomColor: Clr.white5 }]}>
                 <Text style={[s.label, { color: theme.title }]}>{r.muscleKey}</Text>
                 <View style={s.row}>
                   <Text style={[s.mono, { color: theme.mute }]}>{r.leftCm}↔{r.rightCm}</Text>

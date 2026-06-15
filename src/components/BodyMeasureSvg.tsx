@@ -1,5 +1,16 @@
 import React from 'react';
+import { View } from 'react-native';
+import Svg, { Ellipse, Path, G, Line, Circle, Rect, Text as SvgTextEl } from 'react-native-svg';
 import { useTheme } from '../hooks/useTheme';
+import { FontMono } from '../constants/typography';
+
+const SvgEllipse = Ellipse as any;
+const SvgPath = Path as any;
+const SvgG = G as any;
+const SvgLine = Line as any;
+const SvgCircle = Circle as any;
+const SvgRect = Rect as any;
+const SvgText = SvgTextEl as any;
 
 export interface BodyMeasure {
   key: string;
@@ -173,117 +184,115 @@ export function BodyMeasureSvg({ measurements, selectedKey, onSelect }: Props) {
   const BACK_CX  = 255;
 
   return (
-    <svg
-      viewBox="0 0 350 530"
-      width="100%"
-      style={{ display: 'block', maxHeight: 520 }}
-      preserveAspectRatio="xMidYMid meet"
-    >
-      {/* ─── LABELS ─── */}
-      <text x="95" y="510" textAnchor="middle" fontSize="8" fontWeight="900" fontFamily="monospace" fill={DIM} letterSpacing="2">FACE</text>
-      <text x="255" y="510" textAnchor="middle" fontSize="8" fontWeight="900" fontFamily="monospace" fill={DIM} letterSpacing="2">DOS</text>
+    <View style={{ width: '100%', aspectRatio: 350 / 530, maxHeight: 520 }}>
+      <Svg
+        viewBox="0 0 350 530"
+        width="100%"
+        height="100%"
+        preserveAspectRatio="xMidYMid meet"
+      >
+        {/* ─── LABELS ─── */}
+        <SvgText x={95} y={510} textAnchor="middle" fontSize={8} fontWeight="900" fontFamily={FontMono} fill={DIM} letterSpacing={2}>FACE</SvgText>
+        <SvgText x={255} y={510} textAnchor="middle" fontSize={8} fontWeight="900" fontFamily={FontMono} fill={DIM} letterSpacing={2}>DOS</SvgText>
 
-      {/* ─── SILHOUETTES ─── */}
-      {[
-        { cx: FRONT_CX, body: frontBodyPath(FRONT_CX), arms: frontArmsPath(FRONT_CX), spine: SPINE(FRONT_CX) },
-        { cx: BACK_CX,  body: backBodyPath(BACK_CX),   arms: backArmsPath(BACK_CX),   spine: SPINE(BACK_CX) },
-      ].map(({ cx, body, arms, spine }) => (
-        <g key={cx}>
-          {/* Head */}
-          <ellipse cx={cx} cy={32} rx={20} ry={23} fill="none" stroke={DIM} strokeWidth={1.2} />
-          {/* Body */}
-          <path d={body} fill="none" stroke={DIM} strokeWidth={1.2} strokeLinejoin="round" strokeLinecap="round" />
-          {/* Arms */}
-          <path d={arms} fill="none" stroke={DIM} strokeWidth={1.2} strokeLinejoin="round" strokeLinecap="round" />
-          {/* Spine dashed */}
-          <path d={spine} fill="none" stroke={DIM} strokeWidth={0.6} strokeDasharray="3,4" />
-        </g>
-      ))}
+        {/* ─── SILHOUETTES ─── */}
+        {[
+          { cx: FRONT_CX, body: frontBodyPath(FRONT_CX), arms: frontArmsPath(FRONT_CX), spine: SPINE(FRONT_CX) },
+          { cx: BACK_CX,  body: backBodyPath(BACK_CX),   arms: backArmsPath(BACK_CX),   spine: SPINE(BACK_CX) },
+        ].map(({ cx, body, arms, spine }) => (
+          <SvgG key={cx}>
+            {/* Head */}
+            <SvgEllipse cx={cx} cy={32} rx={20} ry={23} fill="none" stroke={DIM} strokeWidth={1.2} />
+            {/* Body */}
+            <SvgPath d={body} fill="none" stroke={DIM} strokeWidth={1.2} strokeLinejoin="round" strokeLinecap="round" />
+            {/* Arms */}
+            <SvgPath d={arms} fill="none" stroke={DIM} strokeWidth={1.2} strokeLinejoin="round" strokeLinecap="round" />
+            {/* Spine dashed */}
+            <SvgPath d={spine} fill="none" stroke={DIM} strokeWidth={0.6} strokeDasharray="3,4" />
+          </SvgG>
+        ))}
 
-      {/* ─── MEASURE LINES ─── */}
-      {BODY_MEASURES.map(({ key, label }) => {
-        const line = MEASURE_LINES[key];
-        if (!line) return null;
-        const isSelected = selectedKey === key;
-        const val = measurements[key];
-        const hasVal = val !== undefined && val > 0;
-        const active = isSelected || hasVal;
-        const color = active ? GOLD : DIM;
-        const labelColor = isSelected ? GOLD : hasVal ? TX : DIM;
-        const strokeW = isSelected ? 1.8 : 1.2;
-        const dashArray = isSelected ? 'none' : '4,3';
+        {/* ─── MEASURE LINES ─── */}
+        {BODY_MEASURES.map(({ key, label }) => {
+          const line = MEASURE_LINES[key];
+          if (!line) return null;
+          const isSelected = selectedKey === key;
+          const val = measurements[key];
+          const hasVal = val !== undefined && val > 0;
+          const active = isSelected || hasVal;
+          const color = active ? GOLD : DIM;
+          const labelColor = isSelected ? GOLD : hasVal ? TX : DIM;
+          const strokeW = isSelected ? 1.8 : 1.2;
+          const dashArray = isSelected ? undefined : '4,3';
 
-        return (
-          <g
-            key={key}
-            style={{ cursor: 'pointer' }}
-            onClick={() => onSelect(key)}
-          >
-            {/* Invisible hit area */}
-            <line
-              x1={line.frontX[0] - 2} y1={line.y}
-              x2={line.backX[1] + 2}  y2={line.y}
-              stroke="transparent" strokeWidth={16}
-            />
-
-            {/* Front line */}
-            <line
-              x1={line.frontX[0]} y1={line.y}
-              x2={line.frontX[1]} y2={line.y}
-              stroke={color} strokeWidth={strokeW}
-              strokeDasharray={dashArray}
-              strokeLinecap="round"
-            />
-            {/* Back line */}
-            <line
-              x1={line.backX[0]} y1={line.y}
-              x2={line.backX[1]} y2={line.y}
-              stroke={color} strokeWidth={strokeW}
-              strokeDasharray={dashArray}
-              strokeLinecap="round"
-            />
-
-            {/* End caps */}
-            <circle cx={line.frontX[0]} cy={line.y} r={isSelected ? 2.5 : 1.5} fill={color} />
-            <circle cx={line.frontX[1]} cy={line.y} r={isSelected ? 2.5 : 1.5} fill={color} />
-            <circle cx={line.backX[0]}  cy={line.y} r={isSelected ? 2.5 : 1.5} fill={color} />
-            <circle cx={line.backX[1]}  cy={line.y} r={isSelected ? 2.5 : 1.5} fill={color} />
-
-            {/* Label + value (center between the two bodies) */}
-            <text
-              x="175" y={line.y + 4}
-              textAnchor="middle"
-              fontSize={isSelected ? 7.5 : 6.5}
-              fontWeight="900"
-              fontFamily="monospace"
-              fill={labelColor}
-              letterSpacing="1"
-            >
-              {hasVal ? `${label} ${val}cm` : label}
-            </text>
-
-            {/* Connector lines from label to body lines */}
-            <line x1={line.frontX[1] + 1} y1={line.y} x2={168} y2={line.y} stroke={color} strokeWidth={0.4} strokeDasharray="2,3" />
-            <line x1={182} y1={line.y} x2={line.backX[0] - 1} y2={line.y} stroke={color} strokeWidth={0.4} strokeDasharray="2,3" />
-
-            {/* Gold highlight bar when selected */}
-            {isSelected && (
-              <rect
-                x={line.frontX[0] - 1} y={line.y - 4}
-                width={line.frontX[1] - line.frontX[0] + 2} height={8}
-                fill={GOLD} fillOpacity={0.15} rx={1}
+          return (
+            <SvgG key={key} onPress={() => onSelect(key)}>
+              {/* Invisible hit area */}
+              <SvgLine
+                x1={line.frontX[0] - 2} y1={line.y}
+                x2={line.backX[1] + 2}  y2={line.y}
+                stroke="transparent" strokeWidth={16}
               />
-            )}
-            {isSelected && (
-              <rect
-                x={line.backX[0] - 1} y={line.y - 4}
-                width={line.backX[1] - line.backX[0] + 2} height={8}
-                fill={GOLD} fillOpacity={0.15} rx={1}
+
+              {/* Front line */}
+              <SvgLine
+                x1={line.frontX[0]} y1={line.y}
+                x2={line.frontX[1]} y2={line.y}
+                stroke={color} strokeWidth={strokeW}
+                strokeDasharray={dashArray}
+                strokeLinecap="round"
               />
-            )}
-          </g>
-        );
-      })}
-    </svg>
+              {/* Back line */}
+              <SvgLine
+                x1={line.backX[0]} y1={line.y}
+                x2={line.backX[1]} y2={line.y}
+                stroke={color} strokeWidth={strokeW}
+                strokeDasharray={dashArray}
+                strokeLinecap="round"
+              />
+
+              {/* End caps */}
+              <SvgCircle cx={line.frontX[0]} cy={line.y} r={isSelected ? 2.5 : 1.5} fill={color} />
+              <SvgCircle cx={line.frontX[1]} cy={line.y} r={isSelected ? 2.5 : 1.5} fill={color} />
+              <SvgCircle cx={line.backX[0]}  cy={line.y} r={isSelected ? 2.5 : 1.5} fill={color} />
+              <SvgCircle cx={line.backX[1]}  cy={line.y} r={isSelected ? 2.5 : 1.5} fill={color} />
+
+              {/* Label + value (center between the two bodies) */}
+              <SvgText
+                x={175} y={line.y + 4}
+                textAnchor="middle"
+                fontSize={isSelected ? 7.5 : 6.5}
+                fontWeight="900"
+                fontFamily={FontMono}
+                fill={labelColor}
+                letterSpacing={1}
+              >
+                {hasVal ? `${label} ${val}cm` : label}
+              </SvgText>
+
+              {/* Connector lines from label to body lines */}
+              <SvgLine x1={line.frontX[1] + 1} y1={line.y} x2={168} y2={line.y} stroke={color} strokeWidth={0.4} strokeDasharray="2,3" />
+              <SvgLine x1={182} y1={line.y} x2={line.backX[0] - 1} y2={line.y} stroke={color} strokeWidth={0.4} strokeDasharray="2,3" />
+
+              {/* Gold highlight bar when selected */}
+              {isSelected && (
+                <SvgRect
+                  x={line.frontX[0] - 1} y={line.y - 4}
+                  width={line.frontX[1] - line.frontX[0] + 2} height={8}
+                  fill={GOLD} fillOpacity={0.15} rx={1}
+                />
+              )}
+              {isSelected && (
+                <SvgRect
+                  x={line.backX[0] - 1} y={line.y - 4}
+                  width={line.backX[1] - line.backX[0] + 2} height={8}
+                  fill={GOLD} fillOpacity={0.15} rx={1}
+                />
+              )}
+            </SvgG>
+          );
+        })}
+      </Svg>
+    </View>
   );
 }

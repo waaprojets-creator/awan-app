@@ -3,8 +3,9 @@ import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useTheme } from '../../hooks/useTheme';
 import { Card } from '../../components/ui/Card';
+import { WidgetInfo } from '../../components/ui/WidgetInfo';
 import { FontMono } from '../../constants/typography';
-import { Fs, Fw, Ls } from '../../theme/tokens';
+import { Fs, Fw, Ls, Clr } from '../../theme/tokens';
 
 const SvgCircle = Circle as any;
 const SvgPath = Path as any;
@@ -21,6 +22,7 @@ export function ActivityTab({ data }: ActivityTabProps) {
 
   return (
     <View style={{ gap: 32 }}>
+      <WidgetInfo id="W8" title="RÉPARTITION TEMPORELLE" content="Distribution des activités en minutes — Flux Actif (catégories productives) vs Veille Système (temps libre non structuré)." />
       <Card style={{ alignItems: 'center', paddingVertical: 40 }}>
         <PieChart data={data} size={220} />
         <View style={{ marginTop: 40, width: '100%' }}>
@@ -83,14 +85,14 @@ function Legend({ data }: { data: ActivityEntry[] }) {
   return (
     <View style={{ gap: 16, paddingHorizontal: 16 }}>
       {data.filter(d => d.value > 0).slice(0, 6).map(d => (
-        <View key={d.key} style={[s.legendRow, { borderBottomColor: 'rgba(255,255,255,0.05)' }]}>
+        <View key={d.key} style={[s.legendRow, { borderBottomColor: Clr.white5 }]}>
           <View style={s.legendLeft}>
             <View style={[s.dot, { backgroundColor: d.color }]} />
             <Text style={[s.label, { color: theme.title }]}>{d.label}</Text>
           </View>
           <View style={s.legendRight}>
             <Text style={[s.labelMono, { color: theme.selected }]}>{Math.round(d.value / 60)}H</Text>
-            <View style={[s.bar, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
+            <View style={[s.bar, { backgroundColor: Clr.white5 }]}>
               <View style={{ height: '100%', width: `${(d.value / total) * 100}%`, backgroundColor: theme.selected, opacity: 0.5 }} />
             </View>
             <Text style={[s.pct, { color: theme.mute }]}>{Math.round((d.value / total) * 100)}%</Text>

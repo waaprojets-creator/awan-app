@@ -4,8 +4,9 @@ import type { SleepEntryLatest } from '@/data/schemas/sleep/sleepEntry';
 
 const SLEEP_PREFIX = 'sleep.entry';
 
-function sleepKey(id: string): string {
-  return `${SLEEP_PREFIX}.${id}`;
+// Clé : sleep.entry.{YYYY-MM-DD}.{ms}  (id = dateId)
+function sleepKey(entry: SleepEntryLatest): string {
+  return `${SLEEP_PREFIX}.${entry.id}`;
 }
 
 export const SleepService = {
@@ -18,9 +19,13 @@ export const SleepService = {
       .sort((a, b) => b.date.localeCompare(a.date));
   },
 
-  async getByDate(date: string): Promise<SleepEntryLatest | null> {
-    const all = await SleepService.getAll();
-    return all.find(e => e.date === date) ?? null;
+  async getByDate(date: string): Promise<SleepEntryLatest[]> {
+    const storage = await getStorage();
+    const keys = await storage.list(`${SLEEP_PREFIX}.${date}`);
+    const all = await Promise.all(keys.map(k => storage.get(k, migrateSleepEntry)));
+    return all
+      .filter((e): e is SleepEntryLatest => e !== null)
+      .sort((a, b) => a.timestamp - b.timestamp);
   },
 
   async getLast7Days(): Promise<SleepEntryLatest[]> {
@@ -33,12 +38,12 @@ export const SleepService = {
 
   async save(entry: SleepEntryLatest): Promise<void> {
     const storage = await getStorage();
-    await storage.set(sleepKey(entry.id), entry);
+    await storage.set(sleepKey(entry), entry);
   },
 
   async delete(id: string): Promise<void> {
     const storage = await getStorage();
-    await storage.delete(sleepKey(id));
+    await storage.delete(`${SLEEP_PREFIX}.${id}`);
   },
 
   avgDurationH(entries: SleepEntryLatest[]): number {

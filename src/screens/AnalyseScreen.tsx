@@ -11,10 +11,11 @@ import {
 import { fr } from 'date-fns/locale';
 import { useTheme } from '../hooks/useTheme';
 import { FontMono } from '../constants/typography';
-import { Fs, Fw, Ls } from '../theme/tokens';
+import { Fs, Fw, Ls, Clr } from '../theme/tokens';
 import { ds } from '../utils/storage';
 import { LocalAIService } from '../services/localAIService';
 import { MealService } from '../services/mealService';
+import { WaterService } from '../services/waterService';
 import { SleepService } from '../services/sleepService';
 import { useWorkoutStore } from '../hooks/useWorkoutStore';
 import { useMeasurementStore } from '../hooks/useMeasurementStore';
@@ -24,7 +25,7 @@ import { usePrayerStore } from '../hooks/usePrayerStore';
 import { useAppStore } from '../data/store/appStore';
 import {
   Activity, Dumbbell, Flame, TrendingUp,
-  Trophy, Heart, BarChart2, Zap, Clock, Star, ScanLine,
+  Trophy, Heart, BarChart2, Zap, Clock, Star, ScanLine, Droplets,
 } from 'lucide-react-native';
 import { Card } from '../components/ui/Card';
 import { Touch } from '../components/ui/Touch';
@@ -45,9 +46,15 @@ const OrthometryTab  = lazy(() => import('./analyse/OrthometryTab').then(m => ({
 const FluxDensiteTab = lazy(() => import('./analyse/FluxDensiteTab').then(m => ({ default: m.FluxDensiteTab })));
 const SynoptiqueTab  = lazy(() => import('./analyse/SynoptiqueTab').then(m => ({ default: m.SynoptiqueTab })));
 const MetaboliqueTab = lazy(() => import('./analyse/MetaboliqueTab').then(m => ({ default: m.MetaboliqueTab })));
+const HydrationTab   = lazy(() => import('./analyse/HydrationTab').then(m => ({ default: m.HydrationTab })));
 const IslamTab       = lazy(() => import('./analyse/IslamTab').then(m => ({ default: m.IslamTab })));
 const BudgetTab      = lazy(() => import('./analyse/BudgetTab').then(m => ({ default: m.BudgetTab })));
-const ReadinessTab   = lazy(() => import('./analyse/ReadinessTab').then(m => ({ default: m.ReadinessTab })));
+const ReadinessTab      = lazy(() => import('./analyse/ReadinessTab').then(m => ({ default: m.ReadinessTab })));
+const PerfStartupTab    = lazy(() => import('./analyse/PerfStartupTab').then(m => ({ default: m.PerfStartupTab })));
+const PerfFluencyTab    = lazy(() => import('./analyse/PerfFluencyTab').then(m => ({ default: m.PerfFluencyTab })));
+const PerfMemoryTab     = lazy(() => import('./analyse/PerfMemoryTab').then(m => ({ default: m.PerfMemoryTab })));
+const PerfIOTab         = lazy(() => import('./analyse/PerfIOTab').then(m => ({ default: m.PerfIOTab })));
+const PerfStabilityTab  = lazy(() => import('./analyse/PerfStabilityTab').then(m => ({ default: m.PerfStabilityTab })));
 
 const FREE_KEY = '_free';
 const FREE_COLOR = 'rgba(212, 175, 55, 0.05)';
@@ -72,18 +79,21 @@ const DOMAINS: Array<{
   {
     id: 'corps', label: 'CORPS', Icon: Dumbbell,
     subs: [
+      { id: 'adiposite',   label: 'ADIPOSITÉ',   Icon: ScanLine },
+      { id: 'performance', label: 'PERFORMANCE', Icon: Trophy },
       { id: 'readiness',   label: 'READINESS',   Icon: Activity },
       { id: 'charge',      label: 'CHARGE',      Icon: Heart },
-      { id: 'performance', label: 'PERFORMANCE', Icon: Trophy },
-      { id: 'volume',      label: 'VOLUME',      Icon: Dumbbell },
       { id: 'morphologie', label: 'MORPHOLOGIE', Icon: BarChart2 },
+      { id: 'volume',      label: 'VOLUME',      Icon: Dumbbell },
       { id: 'symetrie',    label: 'SYMÉTRIE',    Icon: ScanLine },
+      { id: 'activite',    label: 'ACTIVITÉ',    Icon: Activity },
     ],
   },
   {
     id: 'energie', label: 'ÉNERGIE', Icon: Flame,
     subs: [
       { id: 'nutrition',   label: 'NUTRITION',   Icon: Flame },
+      { id: 'hydration',   label: 'HYDRATATION', Icon: Droplets },
       { id: 'disponible',  label: 'DISPONIBLE',  Icon: TrendingUp },
       { id: 'synoptique',  label: 'SYNOPTIQUE',  Icon: BarChart2 },
       { id: 'metabolisme', label: 'MÉTABOLISME', Icon: Zap },
@@ -96,14 +106,17 @@ const DOMAINS: Array<{
   {
     id: 'systeme', label: 'SYSTÈME', Icon: TrendingUp,
     subs: [
-      { id: 'activite',     label: 'ACTIVITÉ',     Icon: Activity },
-      { id: 'correlations', label: 'CORRÉLATIONS', Icon: TrendingUp },
-      { id: 'adiposite',    label: 'ADIPOSITÉ',    Icon: ScanLine },
+      { id: 'correlations',   label: 'CORRÉLATIONS', Icon: TrendingUp },
+      { id: 'perf-startup',   label: 'DÉMARRAGE',    Icon: Zap },
+      { id: 'perf-fluency',   label: 'FLUIDITÉ',     Icon: Activity },
+      { id: 'perf-memory',    label: 'EMPREINTE',    Icon: BarChart2 },
+      { id: 'perf-io',        label: 'E/S SQLITE',   Icon: Clock },
+      { id: 'perf-stability', label: 'STABILITÉ',    Icon: Heart },
     ],
   },
 ];
 
-const RANGE_SUB_TABS = new Set(['nutrition', 'volume', 'morphologie', 'performance', 'charge', 'activite']);
+const RANGE_SUB_TABS = new Set(['nutrition', 'hydration', 'volume', 'morphologie', 'performance', 'charge', 'activite']);
 type RangeId = 'day' | 'week' | 'month' | 'quarter' | 'year';
 
 const RANGES: Array<{ id: RangeId; label: string; sublabel: string }> = [
@@ -216,6 +229,8 @@ export default function AnalyseScreen() {
   const [aiLoading, setAiLoading] = useState(false);
   const [mealsByDay, setMealsByDay] = useState<Array<{ label: string; kcal: number; p: number }>>([]);
   const [mealsLoading, setMealsLoading] = useState(false);
+  const [waterByDay, setWaterByDay] = useState<Array<{ label: string; ml: number }>>([]);
+  const [waterLoading, setWaterLoading] = useState(false);
   const [sleepEntries, setSleepEntries] = useState<SleepEntryLatest[]>([]);
 
   const workoutStore = useWorkoutStore();
@@ -272,6 +287,24 @@ export default function AnalyseScreen() {
     return () => { active = false; };
   }, [interval, subTab]);
 
+  useEffect(() => {
+    if (subTab !== 'hydration') return;
+    let active = true;
+    setWaterLoading(true);
+    const days = eachDayOfInterval(interval);
+    Promise.all(
+      days.map(async day => {
+        const entry = await WaterService.getByDate(ds(day));
+        return { label: format(day, 'dd/MM'), ml: entry?.totalMl ?? 0 };
+      }),
+    ).then(results => {
+      if (!active) return;
+      setWaterByDay(results);
+      setWaterLoading(false);
+    }).catch(() => { if (active) setWaterLoading(false); });
+    return () => { active = false; };
+  }, [interval, subTab]);
+
   const weightTrend = useMemo(() => {
     const sortedWeights = [...weightStore.entries].sort((a, b) => a.date.localeCompare(b.date));
     return measureStore.history
@@ -285,7 +318,7 @@ export default function AnalyseScreen() {
           if (entry && entry.date <= m.date) { w = entry; lo = mid + 1; }
           else hi = mid - 1;
         }
-        return { label: format(parseISO(m.date), 'dd/MM'), weight: w?.weightKg ?? null };
+        return { label: format(parseISO(m.date), 'dd/MM'), weight: w?.weight ?? null };
       });
   }, [measureStore.history, weightStore.entries, interval]);
 
@@ -294,7 +327,7 @@ export default function AnalyseScreen() {
     const latest = sorted.at(-1) ?? null;
     const prev = sorted.at(-2) ?? null;
     const wt = latest && prev
-      ? latest.weightKg > prev.weightKg ? 'up' : latest.weightKg < prev.weightKg ? 'down' : 'stable'
+      ? (latest.weight ?? 0) > (prev.weight ?? 0) ? 'up' : (latest.weight ?? 0) < (prev.weight ?? 0) ? 'down' : 'stable'
       : null;
     setAiLoading(true);
     LocalAIService.generateZenSummary({
@@ -302,17 +335,17 @@ export default function AnalyseScreen() {
       prayersDone: prayerStore.doneCount,
       prayersTotal: prayerStore.total,
       lastWorkoutName: workoutStore.sessions.at(-1)?.name ?? null,
-      weightKg: latest?.weightKg ?? null,
+      weightKg: latest?.weight ?? null,
       weightTrend: wt,
     }).then(s => { setAiSummary(s); setAiLoading(false); });
   }, [weightStore.entries, mealsByDay, workoutStore.sessions, prayerStore.doneCount]);
 
-  const bodyWeightKg = weightStore.avg7d ?? weightStore.entries[0]?.weightKg ?? null;
+  const bodyWeightKg = weightStore.avg7d ?? weightStore.entries[0]?.weight ?? null;
 
   const activityData = useMemo(() => {
     const workoutMins = workoutStore.sessions
       .filter(s => { const d = parseISO(s.date); return d >= interval.start && d <= interval.end; })
-      .reduce((acc, s) => acc + ((s as any).durationMin ?? 60), 0);
+      .reduce((acc, s) => acc + (s.durationMin ?? 0), 0);
     const sleepMins = sleepEntries
       .filter(e => { const d = parseISO(e.date); return d >= interval.start && d <= interval.end; })
       .reduce((acc, e) => acc + Math.round(e.durationH * 60), 0);
@@ -340,20 +373,26 @@ export default function AnalyseScreen() {
       case 'morphologie':  return <BiometrieTab weightTrend={weightTrend} history={measureStore.history} loading={measureStore.loading} />;
       case 'symetrie':     return <OrthometryTab history={measureStore.history} loading={measureStore.loading} />;
       case 'nutrition':    return <NutritionTab mealsByDay={mealsByDay} mealsLoading={mealsLoading} todayKcal={mealStoreToday.totals.kcal} todayP={mealStoreToday.totals.p} todayC={mealStoreToday.totals.c} todayF={mealStoreToday.totals.f} />;
+      case 'hydration':    return <HydrationTab waterByDay={waterByDay} waterLoading={waterLoading} todayMl={waterByDay.at(-1)?.ml ?? 0} targetMl={WaterService.targetMl(bodyWeightKg ?? 70)} />;
       case 'disponible':   return <FluxDensiteTab sessions={workoutStore.sessions} weightKg={bodyWeightKg} />;
       case 'synoptique':   return <SynoptiqueTab sessions={workoutStore.sessions} />;
       case 'metabolisme':  return <MetaboliqueTab />;
       case 'islam':        return <IslamTab />;
       case 'activite':     return <ActivityTab data={activityData} />;
-      case 'correlations': return <CorrelationTab sessions={workoutStore.sessions} history={measureStore.history} weightEntries={weightStore.entries} todayKcal={mealStoreToday.totals.kcal} />;
+      case 'correlations':   return <CorrelationTab sessions={workoutStore.sessions} history={measureStore.history} weightEntries={weightStore.entries} todayKcal={mealStoreToday.totals.kcal} />;
+      case 'perf-startup':   return <PerfStartupTab />;
+      case 'perf-fluency':   return <PerfFluencyTab />;
+      case 'perf-memory':    return <PerfMemoryTab />;
+      case 'perf-io':        return <PerfIOTab />;
+      case 'perf-stability': return <PerfStabilityTab />;
       case 'adiposite':    return <ScanTab />;
       default: return null;
     }
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }}>
+    <View style={{ flex: 1, backgroundColor: theme.bg }}>
+      <ScrollView style={{ flex: 1, backgroundColor: theme.bg }} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Header */}
         <View style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 16 }}>
           <View>
@@ -379,7 +418,7 @@ export default function AnalyseScreen() {
                   prayersDone: prayerStore.doneCount,
                   prayersTotal: prayerStore.total,
                   lastWorkoutName: workoutStore.sessions.at(-1)?.name ?? null,
-                  weightKg: weightStore.entries.at(-1)?.weightKg ?? null,
+                  weightKg: weightStore.entries.at(-1)?.weight ?? null,
                 }).then(s => { setAiSummary(s); setAiLoading(false); });
               }}
             />
@@ -412,7 +451,7 @@ export default function AnalyseScreen() {
 
         {/* L2 — Sub-tab bar */}
         {currentDomain.subs.length > 1 && (
-          <View style={{ borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' }}>
+          <View style={{ borderBottomWidth: 1, borderBottomColor: Clr.white5 }}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 24 }}>
               <View style={{ flexDirection: 'row' }}>
@@ -493,7 +532,7 @@ export default function AnalyseScreen() {
         <Modal visible={showPeriodPicker} transparent animationType="slide">
           <View style={[s.modalOverlay]}>
             <View style={[s.modalSheet, { backgroundColor: theme.surface }]}>
-              <View style={[s.modalHeader, { borderBottomColor: 'rgba(255,255,255,0.05)' }]}>
+              <View style={[s.modalHeader, { borderBottomColor: Clr.white5 }]}>
                 <Text style={[s.modalTitle, { color: theme.title }]}>SÉLECTIONNER LA PÉRIODE</Text>
                 <Touch onPress={() => setShowPeriodPicker(false)} style={[s.modalClose, { borderColor: 'rgba(255,255,255,0.1)' }]}>
                   <Text style={[s.modalCloseLabel, { color: theme.mute }]}>FERMER</Text>
@@ -514,7 +553,7 @@ export default function AnalyseScreen() {
                       }}
                       style={[s.periodOption, {
                         backgroundColor: active ? 'rgba(212,175,55,0.1)' : 'transparent',
-                        borderBottomColor: active ? 'rgba(212,175,55,0.2)' : 'rgba(255,255,255,0.05)',
+                        borderBottomColor: active ? 'rgba(212,175,55,0.2)' : Clr.white5,
                       }]}
                     >
                       <View>

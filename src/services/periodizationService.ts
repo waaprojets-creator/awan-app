@@ -1,14 +1,13 @@
-import { safeStorage } from '@/utils/safeStorage';
+import { getStorage } from '@/data/storage/storageService';
 import { ds } from '@/utils/storage';
+import { migratePeriodization } from '@/data/schemas/sport/periodization';
+import type { PeriodizationLatest } from '@/data/schemas/sport/periodization';
 
-const PERIODIZATION_KEY = 'awan.periodization.current';
+// Silo durable `sport.periodization` avec cache synchrone hydraté au boot
+// (lectures en render : SportScreen, PerformanceTab). Source de vérité = IStorage.
+const KEY = 'sport.periodization';
 
-export interface MesocycleState {
-  phase: 0 | 1 | 2;
-  mesoWeek: number;
-  startDate: string;
-  deloadTriggered: boolean;
-}
+export type MesocycleState = PeriodizationLatest;
 
 const PHASE_LABELS: Record<0 | 1 | 2, string> = {
   0: 'REPRISE NEUROLOGIQUE',
@@ -16,44 +15,48 @@ const PHASE_LABELS: Record<0 | 1 | 2, string> = {
   2: 'PÉRIODISATION AVANCÉE',
 };
 
+let cache: MesocycleState | null = null;
+
+function persist(state: MesocycleState): void {
+  cache = state;
+  getStorage().then(s => s.set(KEY, state)).catch(() => { /* best-effort */ });
+}
+
 export const PeriodizationService = {
-  getCurrent(): MesocycleState | null {
-    const raw = safeStorage.get(PERIODIZATION_KEY);
-    if (!raw) return null;
-    try { return JSON.parse(raw) as MesocycleState; } catch { return null; }
+  /** Hydrate le cache sync depuis le silo. À appeler une fois au boot avant le rendu. */
+  async hydrate(): Promise<void> {
+    const storage = await getStorage();
+    cache = await storage.get(KEY, migratePeriodization);
   },
 
-  save(state: MesocycleState): void {
-    safeStorage.set(PERIODIZATION_KEY, JSON.stringify(state));
+  getCurrent(): MesocycleState | null {
+    return cache;
   },
 
   getOrInit(): MesocycleState {
-    const existing = PeriodizationService.getCurrent();
-    if (existing) return existing;
+    if (cache) return cache;
     const initial: MesocycleState = {
+      v: 1,
       phase: 0,
       mesoWeek: 1,
       startDate: ds(new Date()),
       deloadTriggered: false,
     };
-    PeriodizationService.save(initial);
+    persist(initial);
     return initial;
   },
 
   advanceWeek(): MesocycleState {
     const state = PeriodizationService.getOrInit();
-    const next: MesocycleState = {
-      ...state,
-      mesoWeek: state.mesoWeek + 1,
-    };
-    PeriodizationService.save(next);
+    const next: MesocycleState = { ...state, mesoWeek: state.mesoWeek + 1 };
+    persist(next);
     return next;
   },
 
   triggerDeload(): MesocycleState {
     const state = PeriodizationService.getOrInit();
     const next: MesocycleState = { ...state, deloadTriggered: true };
-    PeriodizationService.save(next);
+    persist(next);
     return next;
   },
 

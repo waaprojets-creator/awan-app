@@ -16,7 +16,7 @@ import { ds } from '../utils/storage';
 import { sessionsThisWeek } from '../hooks/useAwanScore';
 import { getAdviceText } from '../constants/coachAdvice';
 import { DEFAULT_KCAL_TARGET } from '../constants/app';
-import { safeStorage } from '../utils/safeStorage';
+import { NutritionProfileService } from '../services/nutritionProfileService';
 import { Fs, Fw, Clr } from '../theme/tokens';
 import { FontMono } from '../constants/typography';
 import type { Severity } from '../data/schemas/coach/rule';
@@ -58,10 +58,7 @@ export default function SanteScreen({ navigate }: any) {
   const { assessments: coachAssessments } = useCoach(today);
 
   const KCAL_TARGET = useMemo(() => {
-    try {
-      const profile = JSON.parse(safeStorage.get('awan.nutrition.profile') ?? '{}');
-      return typeof profile.targetKcal === 'number' ? profile.targetKcal : DEFAULT_KCAL_TARGET;
-    } catch { return DEFAULT_KCAL_TARGET; }
+    return NutritionProfileService.getCached()?.targetKcal ?? DEFAULT_KCAL_TARGET;
   }, []);
 
   const sessCount = sessionsThisWeek(workoutStore.sessions as Array<{ date?: string; startTime?: number }>);
@@ -101,8 +98,8 @@ export default function SanteScreen({ navigate }: any) {
     const sevenDaysAgo = new Date(last.date); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const sevenStr = sevenDaysAgo.toISOString().slice(0, 10);
     const baseline = [...sorted].reverse().find(e => e.date <= sevenStr);
-    if (!baseline) return null;
-    return last.weightKg - baseline.weightKg;
+    if (!baseline || last.weight == null || baseline.weight == null) return null;
+    return last.weight - baseline.weight;
   }, [weightStore.entries]);
 
   const topAdvice = useMemo<Advice | null>(() => {
@@ -114,7 +111,7 @@ export default function SanteScreen({ navigate }: any) {
 
   return (
     <ScrollView
-      style={{ flex: 1, width: '100%', maxWidth: '100%' }}
+      style={{ flex: 1, width: '100%', maxWidth: '100%', backgroundColor: theme.bg }}
       contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}
       showsVerticalScrollIndicator={false}
     >
@@ -225,7 +222,7 @@ export default function SanteScreen({ navigate }: any) {
                       <Text style={[styles.smallLabel, { color: theme.mute }]}>POIDS</Text>
                       <View style={styles.valueWithDelta}>
                         <Text style={[styles.medNumber, { color: theme.title }]}>
-                          {weightStore.entries.filter(e => e.date <= (latestMeasure?.date ?? '')).sort((a,b)=>b.date.localeCompare(a.date))[0]?.weightKg ?? '—'}
+                          {weightStore.entries.filter(e => e.date <= (latestMeasure?.date ?? '')).sort((a,b)=>b.date.localeCompare(a.date))[0]?.weight ?? '—'}
                           <Text style={{ fontSize: Fs.xs, marginLeft: 4, color: theme.selected }}>kg</Text>
                         </Text>
                         {weightDelta !== null && (
@@ -235,18 +232,18 @@ export default function SanteScreen({ navigate }: any) {
                         )}
                       </View>
                     </View>
-                    {latestMeasure.body_fat_pct > 0 && (
+                    {(latestMeasure.body_fat_pct ?? 0) > 0 && (
                       <View>
                         <Text style={[styles.smallLabel, { color: theme.mute }]}>MASSE GRASSE</Text>
                         <Text style={[styles.medNumber, { color: theme.title }]}>
-                          {latestMeasure.body_fat_pct.toFixed(1)}<Text style={{ fontSize: Fs.xs, marginLeft: 4, color: theme.selected }}>%</Text>
+                          {latestMeasure.body_fat_pct!.toFixed(1)}<Text style={{ fontSize: Fs.xs, marginLeft: 4, color: theme.selected }}>%</Text>
                         </Text>
                       </View>
                     )}
-                    {latestMeasure.bpm_rest > 0 && (
+                    {(weightStore.entries.find(e => e.bpm_rest != null)?.bpm_rest ?? 0) > 0 && (
                       <View>
                         <Text style={[styles.smallLabel, { color: theme.mute }]}>BPM REPOS</Text>
-                        <Text style={[styles.medNumber, { color: theme.title }]}>{latestMeasure.bpm_rest}</Text>
+                        <Text style={[styles.medNumber, { color: theme.title }]}>{weightStore.entries.find(e => e.bpm_rest != null)?.bpm_rest}</Text>
                       </View>
                     )}
                   </>
@@ -394,7 +391,7 @@ const styles = StyleSheet.create({
   progressTrack: {
     marginTop: 12,
     height: 2,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: Clr.white5,
     overflow: 'hidden',
   },
   progressFill: {

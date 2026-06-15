@@ -1,0 +1,387 @@
+\documentclass[11pt, a4paper]{article}
+
+% --- PACKAGES ET CONFIGURATION ---
+\usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm]{geometry}
+\usepackage{fontspec}
+\usepackage[french, bidi=default, provide=*]{babel}
+
+\babelprovide[import, onchar=ids fonts]{french}
+\babelprovide[import, onchar=ids fonts]{english}
+
+% Utilisation de Noto Sans pour une esthétique moderne
+\babelfont{rm}{Noto Sans}
+\babelfont{sf}{Noto Sans}
+\babelfont{tt}{Noto Sans Mono}
+
+\usepackage{enumitem}
+\setlist[itemize]{label=--}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{titlesec}
+\usepackage{setspace}
+
+% Espacement des paragraphes
+\setlength{\parskip}{0.8em}
+\setlength{\parindent}{0pt}
+
+% Formatage des titres
+\titleformat{\section}{\Large\bfseries}{\thesection.}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection.}{1em}{}
+
+% Configuration des liens hypertexte
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!60!black,
+    filecolor=magenta,
+    urlcolor=cyan,
+    pdftitle={Rapport d'Audit Technique AWAN},
+    pdfpagemode=FullScreen,
+}
+
+% Style et en-têtes
+\title{
+    \vspace{2cm}
+    \rule{\textwidth}{2pt}\\[0.5cm]
+    \textbf{\huge Rapport d'Ingénierie Logicielle}\\[0.5cm]
+    \Large \textbf{Analyse Structurelle et Plan de Remédiation Native}\\[0.2cm]
+    \large Migration AWAN -- Expo Bare SDK 52 / React Native 0.76.7\\[0.5cm]
+    \rule{\textwidth}{2pt}
+    \vspace{2cm}
+}
+\author{\textbf{Unité d'Audit et de Performance Système}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\vfill
+
+\begin{abstract}
+\noindent Ce document constitue le rapport d'audit technique consolidé de l'application AWAN, mesuré au jour du cutover J0. Il certifie la conversion intégrale du Document Object Model (DOM) web vers les primitives natives React Native. L'analyse statique du code source révèle cependant une dette technique physique majeure (fichiers monolithes dépassant les 1 000 lignes), des fuites de performance sur le thread de l'interface utilisateur, ainsi qu'une criticité de persistance liée à l'utilisation de mémoires caches volatiles. Ce document détaille exhaustivement l'architecture interne actuelle et prescrit un plan de remédiation modulaire stricte, incluant la ségrégation des composants (Feature Directory), la mémoïsation des graphes de calculs et la standardisation des registres de styles natifs.
+\end{abstract}
+
+\vfill
+\newpage
+
+\tableofcontents
+\thispagestyle{empty}
+\newpage
+
+% ---------------------------------------------------------
+% PAGE 3 : INTRODUCTION & PERIMETRE
+% ---------------------------------------------------------
+\setcounter{page}{1}
+\section{Résumé Exécutif et Périmètre d'Audit}
+
+\subsection{Contexte de la Migration Native}
+Le projet AWAN traverse une transition technologique critique : l'abandon de l'encapsulation web (Capacitor) au profit d'une exécution native stricte via Expo Bare SDK 52 et React Native 0.76.7. Cette transition impose de nouvelles contraintes d'ingénierie, notamment la gestion rigoureuse des threads d'exécution (JavaScript vs Native UI) et l'optimisation des cycles du processeur pour garantir un taux de rafraîchissement stable de 120 Hz.
+
+\subsection{Confirmation de l'éradication du DOM Web}
+L'analyse de l'arborescence et de la syntaxe abstraite (AST) du commit courant certifie la réussite de la phase 1 de la migration. Les marqueurs d'exécution web ont été intégralement purgés du code source de production.
+
+\begin{table}[htbp]
+\centering
+\caption{Mesures statiques post-cutover J0}
+\label{tab:metrics_dom}
+\begin{tabularx}{\textwidth}{@{}lXl@{}}
+\toprule
+\textbf{Composant / Technologie} & \textbf{Statut mesuré} & \textbf{Substitut natif implémenté} \\ \midrule
+Balises \texttt{<div>} et \texttt{<span>} & \textbf{0} occurrence & Primitives \texttt{<View>} (1 103 occurrences) \\
+Classes \texttt{className} Tailwind & \textbf{0} occurrence active & \texttt{StyleSheet.create} et design tokens \\
+Dépendances \texttt{@capacitor/*} & \textbf{0} occurrence & Modules \texttt{expo-*} (sqlite, file-system) \\
+Routage web (\texttt{wouter}) & \textbf{0} occurrence & React Navigation \\
+Animations (\texttt{framer-motion}) & \textbf{0} occurrence & React Native Reanimated \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Objectifs du plan de remédiation}
+Si la conversion syntaxique est acquise, la structure interne du code conserve les stigmates de l'environnement web. L'application souffre d'un encombrement physique, de fuites de cycles processeur et d'instabilités de persistance de données. Les objectifs stricts de ce plan de remédiation sont :
+\begin{itemize}
+    \item L'éclatement des fichiers monolithes (God Files) pour garantir une maintenabilité optimale.
+    \item L'isolation des processus de rendu pour désaturer le thread graphique.
+    \item La sécurisation de l'accès aux bases de données via SQLite en mode Write-Ahead Logging.
+    \item L'éradication de plus de 600 déclarations de styles directes au profit d'un Design System unifié.
+\end{itemize}
+
+\newpage
+
+% ---------------------------------------------------------
+% PAGE 4 : LES GOD FILES
+% ---------------------------------------------------------
+\section{Analyse Structurelle : La Problématique des God Files}
+
+La défaillance architecturale la plus manifeste réside dans la concentration du code au sein de trois fichiers spécifiques. Il est impératif de souligner que ces fichiers ne sont pas des composants fonctionnels uniques (God Components), mais des conteneurs physiques surchargés regroupant de multiples sous-composants, fonctions utilitaires et déclarations de variables.
+
+\subsection{Cartographie de la densité physique}
+Les trois fichiers critiques identifiés concentrent à eux seuls plus de 4 200 lignes de code, entravant les capacités du compilateur TypeScript et augmentant le risque de collisions de versionnement lors du travail collaboratif.
+
+\begin{itemize}
+    \item \textbf{\texttt{SportScreen.tsx}} : 1 980 lignes.
+    \item \textbf{\texttt{NutritionScreen.tsx}} : 1 237 lignes.
+    \item \textbf{\texttt{TempsTab.tsx}} : 1 036 lignes.
+\end{itemize}
+
+\subsection{Distribution interne des responsabilités}
+L'audit du fichier \texttt{SportScreen.tsx} (1 980 lignes) démontre l'hétérogénéité de son contenu. Ce fichier concentre un orchestre complet d'états et de cycles de vie :
+
+\begin{table}[htbp]
+\centering
+\caption{Répartition de la charge dans SportScreen.tsx}
+\label{tab:sportscreen_ratios}
+\begin{tabularx}{\textwidth}{@{}lXl@{}}
+\toprule
+\textbf{Couche d'Abstraction} & \textbf{Volume mesuré} & \textbf{Description Technique} \\ \midrule
+\textbf{Logique Métier} & $\approx$ 35 \% (690 lignes) & 10 \texttt{useState}, 3 \texttt{useEffect}, 23 \texttt{useCallback}. Contient 5 fonctions pures (calcul 1RM, Epley). \\
+\textbf{Rendu Interface (UI)} & $\approx$ 63 \% (1 250 lignes) & 150 \texttt{<View>}, 136 \texttt{<Text>}, 57 \texttt{<Touch>}, 5 Modales. Structure divisée en 20 sous-composants locaux. \\
+\textbf{Styles Dédiés} & $\approx$ 2 \% (40 lignes) & Un unique objet \texttt{StyleSheet} famélique, supplanté par l'injection de 373 propriétés de styles en ligne. \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Diagnostic des dépendances (Props Drilling)}
+L'architecture de flux de données est paradoxalement peu profonde. Les orchestrateurs (ex: \texttt{SportScreen}) détiennent l'état global localement et le transmettent sur une profondeur maximale de 3 niveaux d'arborescence.
+Cependant, le composant \texttt{ActiveWorkout} souffre d'une inflation de propriétés (prop-list bloat), recevant simultanément l'objet de session, le chronomètre, et les rappels (callbacks) d'achèvement de séries. Cette surcharge rend le composant extrêmement rigide et complexe à tester unitairement de manière isolée.
+
+\newpage
+
+% ---------------------------------------------------------
+% PAGE 5 : INSTABILITÉ DU THREAD UI
+% ---------------------------------------------------------
+\section{Analyse des Performances : Instabilité du Thread UI}
+
+L'architecture d'exécution de React Native requiert une vigilance absolue concernant la fréquence des réévaluations d'arbres de composants (re-renders). L'audit révèle deux anomalies critiques impactant directement la consommation de cycles processeur et provoquant des pertes de trames (frame drops).
+
+\subsection{Surcharge asynchrone par chronomètre global}
+Dans \texttt{SportScreen.tsx}, la gestion du temps d'effort de l'utilisateur est implémentée via une fonction asynchrone exécutée de manière périodique :
+
+\begin{verbatim}
+setInterval(() => setTimer(t => t + 1), 1000);
+\end{verbatim}
+
+L'appel à \texttt{setTimer} déclenche l'invalidation de l'état du composant maître. Puisque les composants enfants massifs (tels que \texttt{ActiveWorkout}, \texttt{ChronoOverlay}, et les listes de séries \texttt{SetRow}) ne sont protégés par aucune barrière de mémoïsation (\texttt{React.memo}), l'environnement de rendu réévalue le différentiel de plus de 1 200 lignes de JSX à chaque seconde. Ce processus obstrue le thread JavaScript et retarde les calculs de l'interface graphique native.
+
+\subsection{Complexité spatio-temporelle de la data-visualisation}
+Le fichier \texttt{TempsTab.tsx} gère la projection de graphiques vectoriels scalables (SVG) représentant la distribution temporelle des activités de l'utilisateur.
+La variable maîtresse \texttt{dayLayersList} effectue le calcul des coordonnées de chaque secteur et l'empilement géométrique des périodes.
+
+Toutefois, cette fonction est invoquée de manière brute à la racine du composant fonctionnel. L'équation de complexité algorithmique s'établit comme suit :
+\begin{equation}
+    C = \mathcal{O}(D \times E_{tot})
+\end{equation}
+Où $D$ correspond à l'amplitude de la fenêtre d'analyse (allant jusqu'à 365 jours), et $E_{tot}$ correspond au nombre total d'entrées d'activités, de repas et de périodes enregistrées.
+À chaque interaction mineure de l'utilisateur sur cet écran (comme la pression sur un bouton de légende), ce calcul lourd de plusieurs milliers d'itérations est exécuté de nouveau, de manière strictement synchrone, paralysant l'application pendant plusieurs dizaines de millisecondes.
+
+\newpage
+
+% ---------------------------------------------------------
+% PAGE 6 : PERSISTANCE DES DONNEES
+% ---------------------------------------------------------
+\section{Ingénierie Système : Persistance et Accès Données}
+
+L'application AWAN revendique un fonctionnement totalement autonome, dit "Offline-First", excluant tout appel réseau vers une interface de programmation (API) distante. La fiabilité de la couche d'accès aux données locales (Data Access Layer) est donc la clé de voûte du système.
+
+\subsection{Criticité de la classe \texttt{safeStorage}}
+L'analyse de la centralisation des états montre une utilisation abusive de l'outil \texttt{safeStorage}. Conçu initialement pour des variables éphémères, le module source de cet outil confirme qu'en environnement natif, son implémentation se résume à une variable d'allocation en mémoire vive (\texttt{memCache}).
+
+Pourtant, des flux de données critiques sont actuellement acheminés vers ce gouffre volatil :
+\begin{itemize}
+    \item Le profil nutritionnel complet de l'utilisateur et ses cibles caloriques.
+    \item L'enregistrement persistant des charges maximales validées (Best 1RM).
+    \item La sauvegarde du brouillon de la session d'entraînement en cours.
+\end{itemize}
+En cas de suspension de l'application par le système d'exploitation mobile (OOM kill) ou d'arrêt forcé de l'utilisateur, toutes les données inscrites dans \texttt{safeStorage} sont irréversiblement perdues.
+
+\subsection{Contextes Zombies et Fuites de Mémoire}
+L'architecture conserve deux fournisseurs de contextes (Context Providers) hérités du code web : \texttt{AppStateContext} et \texttt{DailyContext}.
+L'inspection de leurs déclarations montre qu'ils sont désactivés par la directive TypeScript \texttt{@ts-nocheck} et retournent des objets vides.
+
+Malgré cela, les écrans de rendu continuent de faire appel à des fonctions destructurées telles que \texttt{addEntry}. Ces opérations s'exécutent dans le vide absolu. Cette persistance de code mort (dead code) engendre des allocations mémoires inutiles et complexifie artificiellement l'arbre des dépendances.
+
+\subsection{Validation de la configuration SQLite (Mode WAL)}
+Le point positif de cette couche système concerne l'intégration du module natif \texttt{expo-sqlite}. Les requêtes de la base de données s'exécutent au travers d'une interface \texttt{IStorage} rigoureusement encapsulée.
+De plus, l'analyse runtime prouve l'activation des pragmas de sécurité :
+\begin{verbatim}
+PRAGMA journal_mode = WAL;
+PRAGMA busy_timeout = 5000;
+\end{verbatim}
+Le mode Write-Ahead Logging (WAL) assure que les opérations de lecture ne bloquent jamais les opérations d'écriture, ce qui est indispensable pour la fluidité d'une application mobile traitant de grands volumes de métriques d'entraînement.
+
+\newpage
+
+% ---------------------------------------------------------
+% PAGE 7 : SOLUTION 1 - FEATURE DIRECTORY
+% ---------------------------------------------------------
+\section{Plan de Remédiation Phase 1 : Extraction Modulaire}
+
+Pour annihiler l'encombrement physique des fichiers monolithes, nous devons abandonner la structuration par type de fichier (Regroupement des écrans, puis des hooks) au profit du patron de conception \textbf{Feature Directory}. Ce modèle garantit une cohésion forte et un couplage faible en encapsulant toutes les ressources d'une fonctionnalité dans un répertoire unique.
+
+\subsection{Architecture Cible du Module Sport}
+La structure du composant surchargé \texttt{SportScreen.tsx} doit être décomposée strictement selon le schéma d'arborescence suivant :
+
+\begin{verbatim}
+src/modules/sport/
+|-- SportScreen.tsx             # Orchestrateur (Vue pure < 300 lignes)
+|-- useSportLogic.ts            # Extraction globale de la logique métier
+|-- sport.styles.ts             # Registre StyleSheet exclusif
+|-- sport.types.ts              # Interfaces TS (ISession, IWorkout)
+`-- components/                 # Sous-composants locaux
+    |-- session/
+    |   |-- ActiveWorkout.tsx   # Gestion de l'effort et des séries
+    |   `-- ChronoOverlay.tsx   # Chronomètre (isolé pour les performances)
+    |-- editor/
+    |   `-- RoutineEditor.tsx   # Création de protocoles d'entraînement
+    `-- shared/
+        `-- RecoveryPicker.tsx  # Composant UI d'évaluation de la fatigue
+\end{verbatim}
+
+\subsection{Matrice de déplacement des entités}
+L'opération d'extraction est mécanique. Le tableau suivant consigne les actions de découpage physiques requises pour les autres monolithes :
+
+\begin{table}[htbp]
+\centering
+\caption{Matrice d'extraction logicielle}
+\label{tab:extraction_matrix}
+\begin{tabularx}{\textwidth}{@{}lXl@{}}
+\toprule
+\textbf{Source} & \textbf{Sous-composant à isoler} & \textbf{Destination Physique} \\ \midrule
+\texttt{NutritionScreen} & \texttt{AddMealModal} & \texttt{modules/nutrition/components/modals/} \\
+\texttt{NutritionScreen} & \texttt{WaterTracker} & \texttt{modules/nutrition/components/water/} \\
+\texttt{NutritionScreen} & \texttt{ProgressBar} (Macros) & \texttt{modules/nutrition/components/shared/} \\
+\texttt{TempsTab} & \texttt{ClockPie} & \texttt{screens/analyse/temps/components/} \\
+\texttt{TempsTab} & \texttt{StackedBars} & \texttt{screens/analyse/temps/components/} \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+À l'issue de cette phase, aucun fichier d'interface graphique de l'application ne dépassera le seuil critique des 300 lignes de code.
+
+\newpage
+
+% ---------------------------------------------------------
+% PAGE 8 : SOLUTION 2 - PERFORMANCES
+% ---------------------------------------------------------
+\section{Plan de Remédiation Phase 2 : Fiabilité et Cycles CPU}
+
+La restructuration physique étant assurée, les efforts d'ingénierie doivent se concentrer sur la sécurisation des flux de données et la suppression des goulots d'étranglement de l'unité centrale (CPU).
+
+\subsection{Migration des données volatiles vers la couche SQLite}
+Toutes les écritures actuellement adressées au cache mémoire \texttt{safeStorage} doivent être redirigées vers l'adaptateur \texttt{IStorage}.
+
+L'enregistrement du profil nutritionnel, identifié ligne 120 de \texttt{NutritionScreen.tsx}, doit être migré vers une transaction asynchrone sécurisée :
+\begin{verbatim}
+// Refactorisation de la persistance critique
+await SqliteStorage.set('user_nutrition_profile', JSON.stringify(profile));
+\end{verbatim}
+
+La gestion des erreurs doit être harmonisée. L'application utilise déjà un bus d'événements \texttt{dbFullBus} pour intercepter les exceptions d'écriture liées à la saturation de l'espace de stockage (erreur \texttt{SQLITE\_FULL}). Cette logique doit s'appliquer de manière globale à l'ensemble des modules extraits.
+
+\subsection{Neutralisation des réévaluations d'interface (Re-renders)}
+Pour stabiliser l'application à un taux de 120 images par seconde, nous devons bloquer la propagation des mises à jour d'état inutiles.
+
+\textbf{1. Isolation du minuteur :}\\
+Le composant \texttt{ChronoOverlay} encapsulera l'état du temps. Le fichier parent \texttt{SportScreen} ignorera ces itérations, garantissant que les milliers de lignes gérant l'historique d'entraînement ne seront pas recalculées inutilement.
+
+\textbf{2. Mémoïsation algébrique :}\\
+Dans le composant \texttt{TempsTab.tsx}, la complexité $\mathcal{O}(D \times E_{tot})$ doit être neutralisée par la mise en cache de l'opération via l'interface logicielle \texttt{useMemo} :
+
+\begin{verbatim}
+const dayLayersList = useMemo(() => {
+    return period.days.map(computeDayLayers);
+}, [period.days, dataVersion]);
+\end{verbatim}
+
+L'algorithme de transformation des coordonnées polaires SVG ne s'exécutera désormais \textit{exclusivement} que si la plage calendaire ciblée est modifiée, réduisant la consommation du processeur de manière drastique lors de l'utilisation passive de l'écran.
+
+\newpage
+
+% ---------------------------------------------------------
+% PAGE 9 : SOLUTION 3 - STYLES ET DETTE CSS
+% ---------------------------------------------------------
+\section{Plan de Remédiation Phase 3 : Normalisation des Styles}
+
+L'audit anatomique a révélé la présence de 639 définitions de propriétés graphiques écrites directement au sein des attributs des composants (inline styles). Cette dette empêche le moteur de rendu natif Yoga d'optimiser l'allocation des dimensions en amont du cycle d'affichage.
+
+\subsection{Remappage des couleurs brutes (Design Tokens)}
+L'utilisation de codes de couleurs bruts (littéraux hexadécimaux et RGBA) est proscrite par la charte d'architecture du projet. Le fichier central \texttt{src/theme/tokens.ts} doit être étendu pour absorber ces anomalies.
+
+Le tableau de conversion suivant doit être appliqué sur l'intégralité du code source via les expressions régulières de l'environnement de développement :
+
+\begin{table}[htbp]
+\centering
+\caption{Dictionnaire d'unification des littéraux de couleurs}
+\label{tab:color_mapping}
+\begin{tabularx}{\textwidth}{@{}lXl@{}}
+\toprule
+\textbf{Valeur Inline Détectée} & \textbf{Jeton Cible (Token)} & \textbf{Fonctionnalité} \\ \midrule
+\texttt{'\#000'} & \texttt{theme.onAccent} & Texte sur fond actif adaptatif \\
+\texttt{rgba(128,128,128,0.25)} & \texttt{Clr.grey25} & Séparateurs et bordures inactives \\
+\texttt{rgba(0,0,0,0.75)} & \texttt{Clr.overlay75} & Fonds obscurs des modales \\
+\texttt{rgba(212,175,55,0.05)} & \texttt{Clr.gold5} & Mise en évidence premium légère \\
+\texttt{'\#F87171'} & \texttt{theme.danger} & Signaux d'erreur et alertes \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{L'obligation de déclaration en objet natif (StyleSheet)}
+Suite à l'extraction modulaire (Phase 1), chaque nouveau composant (ex: \texttt{ActiveWorkout.tsx}) sera couplé à une feuille de style native locale.
+La transformation des styles en ligne s'effectuera par agrégation au sein de l'API \texttt{StyleSheet.create} de React Native :
+
+\begin{verbatim}
+// Transformation d'un style inline vers l'API Native
+const styles = StyleSheet.create({
+    cardContainer: {
+        width: '100%',
+        backgroundColor: Clr.white5,
+        borderWidth: 1,
+        borderColor: Clr.grey25,
+        padding: Sp.md
+    }
+});
+\end{verbatim}
+
+L'objectif strict fixé par la convention de code est de réduire le nombre de styles déclarés en ligne à moins de 50 occurrences sur l'ensemble de l'application (tolérés uniquement pour le calcul de positions dynamiques à l'exécution).
+
+\newpage
+
+% ---------------------------------------------------------
+% PAGE 10 : DEPLOIEMENT ET KPI
+% ---------------------------------------------------------
+\section{Feuille de Route, Déploiement et Indicateurs Cibles}
+
+L'exécution des recommandations de ce rapport de diagnostic doit suivre un ordonnancement précis pour garantir l'absence de régression. Chaque modification architecturale devra être couverte par une passe de vérification TypeScript.
+
+\subsection{Ordonnancement des opérations de remédiation}
+
+\begin{enumerate}
+    \item \textbf{Étape 1 -- Nettoyage des processus zombies :} Suppression immédiate des appels aux contextes fantômes \texttt{AppStateContext} et \texttt{DailyContext}.
+    \item \textbf{Étape 2 -- Sécurisation de l'infrastructure SQLite :} Remplacement de toutes les occurrences de \texttt{safeStorage} impliquées dans la persistance des données vitales (Profils et Records).
+    \item \textbf{Étape 3 -- Isolation des threads (Mémoïsation) :} Implémentation des mécanismes \texttt{useMemo} et \texttt{React.memo} sur les calculateurs SVG et le séquenceur temporel d'entraînement.
+    \item \textbf{Étape 4 -- Distribution Physique :} Découpage mécanique des fichiers de plus de 1 000 lignes selon le schéma \textit{Feature Directory}.
+    \item \textbf{Étape 5 -- Compilation Esthétique :} Application stricte du dictionnaire de Tokens et factorisation via l'API \texttt{StyleSheet}.
+\end{enumerate}
+
+\subsection{Indicateurs Clés de Performance (KPI) cibles}
+La recette technique de l'application AWAN post-migration ne sera validée qu'à l'obtention conjointe des métriques suivantes :
+
+\begin{table}[htbp]
+\centering
+\caption{Critères stricts de validation de la remédiation}
+\label{tab:kpi_final}
+\begin{tabularx}{\textwidth}{@{}lXX@{}}
+\toprule
+\textbf{Métrique Analysée} & \textbf{Évaluation Actuelle} & \textbf{Exigence Finale Cible} \\ \midrule
+\textbf{Taille maximale de fichier} & 1 980 lignes (Critique) & $\leq$ \textbf{300 lignes} par fichier \\
+\textbf{Styles déclarés en ligne} & 639 occurrences & $<$ \textbf{50 occurrences} résiduelles \\
+\textbf{Performances graphiques} & Chutes asynchrones (frame drops) & \textbf{120 Hz} constants en exécution \\
+\textbf{Persistance système} & Volatile lors d'arrêts forcés & \textbf{100 \%} de conservation locale SQLite \\
+\textbf{Analyse syntaxique} & Non qualifiée hors ligne & \textbf{0 erreur} à la commande \texttt{tsc} \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Conclusion Stratégique}
+La migration vers Expo Bare SDK est un succès d'un point de vue de la syntaxe de rendu. En appliquant la rigueur d'ingénierie détaillée dans ce rapport -- découpage modulaire, protection des processus de calcul et intégrité de la persistance locale -- l'application AWAN obtiendra des performances natives optimales conformes aux standards de l'industrie mobile.
+
+\end{document}

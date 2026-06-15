@@ -66,9 +66,8 @@ describe('Coach.run — sport.no_workout_7d', () => {
   });
 
   it('does not trigger when there is a workout', async () => {
-    await storage.set('sport.workoutLog.abc', {
-      v: 2, id: '550e8400-e29b-41d4-a716-446655440001',
-      date: '2026-05-08', startedAt: 0, sets: [],
+    await storage.set('sport.session.abc', {
+      date: '2026-05-08', sessionRPE: 7,
     });
     const a = await coach.run('sport', '2026-05-10');
     const r = a.ruleResults.find((x) => x.ruleId === 'sport.no_workout_7d');
@@ -117,18 +116,18 @@ describe('Coach.run — nutrition.protein_low', () => {
     coach = new Coach({ storage, resolveSource: resolver });
   });
 
-  it('triggers when proteinG sum < 131 g', async () => {
-    await storage.set('nutrition.meal.1', { date: '2026-05-10', proteinG: 30 });
-    await storage.set('nutrition.meal.2', { date: '2026-05-10', proteinG: 25 });
+  it('triggers when protein sum (field p) < 131 g', async () => {
+    await storage.set('nutrition.meal.1', { date: '2026-05-10', p: 30 });
+    await storage.set('nutrition.meal.2', { date: '2026-05-10', p: 25 });
     const a = await coach.run('nutrition', '2026-05-10');
     const r = a.ruleResults.find((x) => x.ruleId === 'nutrition.protein_low');
     expect(r?.signalValue).toBe(55);
     expect(r?.triggered).toBe(true);
   });
 
-  it('does not trigger when sum >= 131 g', async () => {
-    await storage.set('nutrition.meal.1', { date: '2026-05-10', proteinG: 70 });
-    await storage.set('nutrition.meal.2', { date: '2026-05-10', proteinG: 80 });
+  it('does not trigger when protein sum (field p) >= 131 g', async () => {
+    await storage.set('nutrition.meal.1', { date: '2026-05-10', p: 70 });
+    await storage.set('nutrition.meal.2', { date: '2026-05-10', p: 80 });
     const a = await coach.run('nutrition', '2026-05-10');
     const r = a.ruleResults.find((x) => x.ruleId === 'nutrition.protein_low');
     expect(r?.signalValue).toBe(150);
@@ -165,14 +164,15 @@ describe('Coach.run — nutrition.fat_low', () => {
 });
 
 describe('Coach.run — anthropo.weight_gain_trend', () => {
-  it('detects positive trend in weight series', async () => {
+  it('detects positive trend in the weight.entry series (field: weight)', async () => {
     const storage = new MemoryStorage();
     const coach = new Coach({ storage, resolveSource: resolver });
+    // Weight lives in weight.entry.* (not anthropo.measurement, which dropped weight in V2)
     for (let i = 0; i < 14; i++) {
-      const d = new Date(Date.UTC(2026, 4, 10 - i));
-      await storage.set(`anthropo.measurement.${i}`, {
-        date: d.toISOString().slice(0, 10),
-        weightKg: 80 - i * 0.2, // slope ~0.2/day > threshold 0.15
+      const d = new Date(Date.UTC(2026, 4, 10 - i)).toISOString().slice(0, 10);
+      await storage.set(`weight.entry.${d}`, {
+        date: d,
+        weight: 80 - i * 0.2, // slope ~0.2/day > threshold 0.15
       });
     }
     const a = await coach.run('anthropo', '2026-05-10');

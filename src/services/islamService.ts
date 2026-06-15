@@ -1,4 +1,5 @@
 import { getStorage } from '@/data/storage/storageService';
+import { eventBus } from '@/data/events/bus';
 import {
   migratePrayerLog,
   PRAYER_NAMES_V2,
@@ -19,8 +20,9 @@ function prayerKey(date: string): string {
   return `${PRAYER_LOG_PREFIX}.${date}`;
 }
 
-function quranSessionKey(date: string, id: string): string {
-  return `${QURAN_SESSION_PREFIX}.${date}.${id}`;
+// Clé : islam.quran.session.{YYYY-MM-DD}.{ms}  (id = dateId)
+function quranSessionKey(session: QuranSessionLatest): string {
+  return `${QURAN_SESSION_PREFIX}.${session.id}`;
 }
 
 export const IslamService = {
@@ -33,15 +35,16 @@ export const IslamService = {
   async savePrayerLog(log: PrayerLogLatest): Promise<void> {
     const storage = await getStorage();
     await storage.set(prayerKey(log.date), log);
+    eventBus.emit('prayer.logged', { date: log.date });
   },
 
   /** Toggle une prière et persiste. Crée le log du jour si absent. */
   async togglePrayer(
     date: string,
     prayer: PrayerNameV2,
-    id: string,
     timeHHMM?: string,
   ): Promise<PrayerLogLatest> {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const existing = await this.getPrayerLog(date);
     const currentPrayers = existing?.prayers ?? {};
 
@@ -60,7 +63,7 @@ export const IslamService = {
 
     const updated: PrayerLogLatest = {
       v: 2,
-      id: existing?.id ?? id,
+      timezone: existing?.timezone ?? timezone,
       date,
       prayers,
       savedAt: Date.now(),
@@ -111,7 +114,8 @@ export const IslamService = {
 
   async addQuranSession(session: QuranSessionLatest): Promise<void> {
     const storage = await getStorage();
-    await storage.set(quranSessionKey(session.date, session.id), session);
+    await storage.set(quranSessionKey(session), session);
+    eventBus.emit('quran.logged', { date: session.date });
     // Mettre à jour le progress singleton
     const progress = await this.getQuranProgress();
     if (progress) {
@@ -126,7 +130,7 @@ export const IslamService = {
 
   async getQuranSessionsByDate(date: string): Promise<QuranSessionLatest[]> {
     const storage = await getStorage();
-    const keys = await storage.listFiltered(QURAN_SESSION_PREFIX, { date });
+    const keys = await storage.list(`${QURAN_SESSION_PREFIX}.${date}`);
     const all = await Promise.all(keys.map(k => storage.get(k, migrateQuranSession)));
     return all
       .filter((s): s is QuranSessionLatest => s !== null)

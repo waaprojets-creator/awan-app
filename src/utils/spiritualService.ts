@@ -1,4 +1,5 @@
 import { Coordinates, PrayerTimes, CalculationMethod, Qibla } from 'adhan';
+import { safeStorage } from './safeStorage';
 
 export type PrayerTimesResult = {
   next: string;
@@ -41,7 +42,7 @@ function fallbackTimes(): PrayerTimesResult {
 export const SpiritualService = {
   getCachedLocation(): { lat: number; lon: number } {
     try {
-      const s = localStorage.getItem('awan.user.location');
+      const s = safeStorage.get('awan.user.location');
       if (s) return JSON.parse(s);
     } catch { /* ignore */ }
     return { lat: 45.7640, lon: 4.8357 }; // Lyon (fallback si GPS absent)

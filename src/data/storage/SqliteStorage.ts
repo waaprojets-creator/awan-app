@@ -66,6 +66,17 @@ export class SqliteStorage implements IStorage {
     this.invalidateSizeCache();
   }
 
+  async getAll<T>(prefix: string, parse: ParseFn<T>): Promise<T[]> {
+    const rows = await this.handle.getAllAsync<{ value: string }>(
+      'SELECT value FROM kv WHERE key LIKE ?', [`${prefix}%`],
+    );
+    const results: T[] = [];
+    for (const row of rows) {
+      try { results.push(parse(JSON.parse(row.value))); } catch { /* skip invalid */ }
+    }
+    return results;
+  }
+
   async delete(key: string): Promise<void> {
     await this.handle.runAsync('DELETE FROM kv WHERE key = ?', [key]);
     this.invalidateSizeCache();
@@ -88,6 +99,12 @@ export class SqliteStorage implements IStorage {
     this.cachedSize = pc * ps;
     this.cachedSizeAt = now;
     return this.cachedSize;
+  }
+
+  /** Lit le mode WAL effectif — utilisé par l'écran de diagnostic (preuve runtime J0.3). */
+  async getJournalMode(): Promise<string | null> {
+    const row = await this.handle.getFirstAsync<{ journal_mode: string }>('PRAGMA journal_mode');
+    return row?.journal_mode ?? null;
   }
 
   async list(prefix: string): Promise<string[]> {

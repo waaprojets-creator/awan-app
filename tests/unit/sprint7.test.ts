@@ -33,21 +33,21 @@ describe('IslamService — prayer log', () => {
   });
 
   it('togglePrayer crée un log et coche la prière', async () => {
-    const log = await IslamService.togglePrayer(DATE, 'sobh', UUID1);
+    const log = await IslamService.togglePrayer(DATE, 'sobh');
     expect(log.prayers.sobh).toBe(true);
     expect(log.prayers.dhuhr).toBe(false);
     expect(log.date).toBe(DATE);
   });
 
   it('togglePrayer décoche une prière déjà cochée', async () => {
-    await IslamService.togglePrayer(DATE, 'sobh', UUID1);
-    const log = await IslamService.togglePrayer(DATE, 'sobh', UUID1);
+    await IslamService.togglePrayer(DATE, 'sobh');
+    const log = await IslamService.togglePrayer(DATE, 'sobh');
     expect(log.prayers.sobh).toBe(false);
   });
 
   it('plusieurs prières indépendantes', async () => {
-    await IslamService.togglePrayer(DATE, 'sobh', UUID1);
-    await IslamService.togglePrayer(DATE, 'dhuhr', UUID1);
+    await IslamService.togglePrayer(DATE, 'sobh');
+    await IslamService.togglePrayer(DATE, 'dhuhr');
     const log = await IslamService.getPrayerLog(DATE);
     expect(log?.prayers.sobh).toBe(true);
     expect(log?.prayers.dhuhr).toBe(true);
@@ -55,8 +55,8 @@ describe('IslamService — prayer log', () => {
   });
 
   it('toggle ne touche pas aux prières des autres jours', async () => {
-    await IslamService.togglePrayer(DATE, 'sobh', UUID1);
-    await IslamService.togglePrayer('2026-05-09', 'isha', UUID2);
+    await IslamService.togglePrayer(DATE, 'sobh');
+    await IslamService.togglePrayer('2026-05-09', 'isha');
     const log = await IslamService.getPrayerLog(DATE);
     expect(log?.prayers.isha).toBe(false);
   });
@@ -116,7 +116,7 @@ describe('JournalService', () => {
   });
 
   it('save et getByDate fonctionnent', async () => {
-    const e = makeEntry(UUID1, DATE);
+    const e = makeEntry(`${DATE}.1`, DATE);
     await JournalService.save(e);
     const result = await JournalService.getByDate(DATE);
     expect(result).toHaveLength(1);
@@ -124,8 +124,8 @@ describe('JournalService', () => {
   });
 
   it('getByDate filtre par date', async () => {
-    await JournalService.save(makeEntry(UUID1, DATE, "Aujourd'hui"));
-    await JournalService.save(makeEntry(UUID2, '2026-05-09', 'Hier'));
+    await JournalService.save(makeEntry(`${DATE}.1`, DATE, "Aujourd'hui"));
+    await JournalService.save(makeEntry('2026-05-09.2', '2026-05-09', 'Hier'));
     const today = await JournalService.getByDate(DATE);
     expect(today).toHaveLength(1);
     expect(today[0]?.content).toBe("Aujourd'hui");
@@ -142,9 +142,9 @@ describe('JournalService', () => {
   });
 
   it('delete supprime une entrée', async () => {
-    const e = makeEntry(UUID1, DATE);
+    const e = makeEntry(`${DATE}.1`, DATE);
     await JournalService.save(e);
-    await JournalService.delete(UUID1);
+    await JournalService.delete(`${DATE}.1`);
     const result = await JournalService.getByDate(DATE);
     expect(result).toHaveLength(0);
   });

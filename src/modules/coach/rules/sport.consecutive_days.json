@@ -4,7 +4,7 @@
   "domain": "sport",
   "name": "Séances consécutives — risque de surmenage (NSCA)",
   "signals": [
-    { "type": "count", "source": "sport.workoutLog", "window": { "days": 5 } }
+    { "type": "count", "source": "sport.session", "window": { "days": 5 } }
   ],
   "condition": { "op": "gte", "value": 5 },
   "signalIndex": 0,

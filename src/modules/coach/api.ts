@@ -59,11 +59,16 @@ export class Coach {
   }
 
   /** Run engine for one domain on a given date and persist the assessment. */
-  async run(domain: Domain, date: string): Promise<AssessmentLatest> {
+  async run(
+    domain: Domain,
+    date: string,
+    sourceCache = new Map<string, Record<string, unknown>[]>(),
+  ): Promise<AssessmentLatest> {
     const ctx: CoachContext = {
       storage: this.storage,
       resolveSource: this.resolveSource,
       date,
+      sourceCache,
     };
     const assessment = await runEngine(domain, this.rules, ctx, this.forecastGenerators);
     await this.storage.set(assessmentKey(date, domain), assessment);
@@ -72,9 +77,10 @@ export class Coach {
   }
 
   async runAll(date: string): Promise<AssessmentLatest[]> {
+    const sourceCache = new Map<string, Record<string, unknown>[]>();
     const out: AssessmentLatest[] = [];
     for (const d of ALL_DOMAINS) {
-      out.push(await this.run(d, date));
+      out.push(await this.run(d, date, sourceCache));
     }
     return out;
   }

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "AWAN",
+    "name": "أوان",
     "slug": "awan-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -12,9 +12,25 @@
     "android": {
       "package": "com.awan.app",
       "adaptiveIcon": {
-        "backgroundColor": "#0A0A0A"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundImage": "./assets/adaptive-icon-bg-transparent.png"
+      },
+      "notification": {
+        "icon": "./assets/adaptive-icon.png",
+        "color": "#D4AF37"
       }
     },
-    "plugins": ["expo-sqlite", "expo-notifications", "expo-secure-store"]
+    "plugins": [
+      "expo-sqlite",
+      "expo-notifications",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "AWAN utilise votre position pour calculer la direction de la Qibla et les horaires de prière.",
+          "locationWhenInUsePermission": "AWAN utilise votre position pour calculer la direction de la Qibla et les horaires de prière."
+        }
+      ]
+    ]
   }
 }

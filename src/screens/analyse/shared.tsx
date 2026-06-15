@@ -3,7 +3,9 @@ import { View, Text, ActivityIndicator, Dimensions, StyleSheet } from 'react-nat
 import { FontMono } from '../../constants/typography';
 import { Fs, Fw, Ls } from '../../theme/tokens';
 import Svg, { Line, Rect, G, Text as SvgTextEl } from 'react-native-svg';
+import type { LucideIcon } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
+import { NutritionProfileService } from '../../services/nutritionProfileService';
 
 const SvgLine = Line as any;
 const SvgRect = Rect as any;
@@ -172,7 +174,7 @@ export function StackedBarChart({ data, lineA, lineB, height = 200 }: StackedBar
 
 // ─── Shared UI states ─────────────────────────────────────────────────────────
 
-export function EmptyState({ Icon, label }: { Icon: React.ComponentType<{ size: number; color?: string }>; label: string }) {
+export function EmptyState({ Icon, label }: { Icon: LucideIcon; label: string }) {
   const theme = useTheme();
   return (
     <View style={sh.emptyContainer}>
@@ -238,11 +240,5 @@ export function deriveTDEE(profile: NutritionProfile): number {
 }
 
 export function loadNutritionProfile(): NutritionProfile | null {
-  try {
-    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('awan.nutrition.profile') : null;
-    if (!raw) return null;
-    return JSON.parse(raw) as NutritionProfile;
-  } catch {
-    return null;
-  }
+  return NutritionProfileService.getCached();
 }

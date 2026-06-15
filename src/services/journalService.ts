@@ -1,4 +1,5 @@
 import { getStorage } from '@/data/storage/storageService';
+import { eventBus } from '@/data/events/bus';
 import { migrateJournalEntry } from '@/data/schemas/journal/journalEntry';
 import type { JournalEntryLatest } from '@/data/schemas/journal/journalEntry';
 
@@ -7,10 +8,10 @@ const JOURNAL_PREFIX = 'journal.entry';
 export const JournalService = {
   async getByDate(date: string): Promise<JournalEntryLatest[]> {
     const storage = await getStorage();
-    const keys = await storage.list(JOURNAL_PREFIX);
+    const keys = await storage.list(`${JOURNAL_PREFIX}.${date}`);
     const all = await Promise.all(keys.map(k => storage.get(k, migrateJournalEntry)));
     return all
-      .filter((e): e is JournalEntryLatest => e !== null && e.date === date)
+      .filter((e): e is JournalEntryLatest => e !== null)
       .sort((a, b) => a.timestamp - b.timestamp);
   },
 
@@ -26,6 +27,7 @@ export const JournalService = {
   async save(entry: JournalEntryLatest): Promise<void> {
     const storage = await getStorage();
     await storage.set(`${JOURNAL_PREFIX}.${entry.id}`, entry);
+    eventBus.emit('journal.logged', { date: entry.date });
   },
 
   async delete(id: string): Promise<void> {
