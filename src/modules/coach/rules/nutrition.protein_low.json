@@ -4,7 +4,7 @@
   "domain": "nutrition",
   "name": "Apport protéique journalier insuffisant (< 131 g)",
   "signals": [
-    { "type": "sum", "source": "nutrition.meal", "field": "proteinG", "window": { "days": 1 } }
+    { "type": "sum", "source": "nutrition.meal", "field": "p", "window": { "days": 1 } }
   ],
   "condition": { "op": "lt", "value": 131 },
   "signalIndex": 0,

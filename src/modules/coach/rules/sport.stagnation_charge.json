@@ -4,7 +4,7 @@
   "domain": "sport",
   "name": "Stagnation de la charge moyenne sur 21 jours",
   "signals": [
-    { "type": "trend", "source": "sport.workoutLog", "field": "weightKg", "window": { "days": 21 } }
+    { "type": "trend", "source": "sport.session", "field": "tonnage", "window": { "days": 21 } }
   ],
   "condition": { "op": "lte", "value": 0 },
   "signalIndex": 0,

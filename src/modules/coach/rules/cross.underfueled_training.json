@@ -5,7 +5,7 @@
   "name": "Entraînement sous-alimenté — kcal faibles + séances élevées",
   "signals": [
     { "type": "avg", "source": "nutrition.meal", "field": "kcal", "window": { "days": 7 } },
-    { "type": "count", "source": "sport.workoutLog", "window": { "days": 7 } }
+    { "type": "count", "source": "sport.session", "window": { "days": 7 } }
   ],
   "condition": { "op": "lt", "value": 1500 },
   "signalIndex": 0,
