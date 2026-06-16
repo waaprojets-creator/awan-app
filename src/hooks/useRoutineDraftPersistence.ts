@@ -10,7 +10,7 @@ export function useRoutineDraftPersistence(
   useEffect(() => {
     if (opts?.enabled === false) return;
     const handle = setTimeout(() => {
-      try { safeStorage.set(ROUTINE_DRAFT_KEY, JSON.stringify(draft)); } catch { /* quota */ }
+      try { safeStorage.set(ROUTINE_DRAFT_KEY, JSON.stringify({ ...draft, savedAt: Date.now() })); } catch { /* quota */ }
     }, 1000);
     return () => clearTimeout(handle);
   }, [draft, opts?.enabled]);

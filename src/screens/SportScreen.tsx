@@ -322,7 +322,7 @@ export default function SportScreen() {
  <View style={[ss.sheet, { backgroundColor: theme.surface, padding: 24, paddingBottom: 40 }]}>
  <Text style={[ss.label, { color: theme.selected, marginBottom: 8 }]}>ROUTINE EN COURS D'ÉDITION</Text>
  <Text style={{ fontSize: 18, fontWeight: Fw.value, color: theme.title, textTransform: 'uppercase', marginBottom: 4, fontFamily: FontSans }}>{draftResumeModal.name.trim() || 'SANS NOM'}</Text>
- <Text style={[ss.mdBlack, { color: theme.mute, marginBottom: 24 }]}>{draftResumeModal.exercises.length} EXERCICES · Sauvegardé à {new Date(draftResumeModal.savedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</Text>
+ <Text style={[ss.mdBlack, { color: theme.mute, marginBottom: 24 }]}>{draftResumeModal.exercises.length} EXERCICES · Sauvegardé à {draftResumeModal.savedAt ? new Date(draftResumeModal.savedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—'}</Text>
  <View style={[ss.row, { gap: 12 }]}>
  <Touch style={{ flex: 1, height: 56, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }} onPress={() => {
  const draft = draftResumeModal;

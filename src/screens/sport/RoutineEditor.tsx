@@ -58,7 +58,6 @@ export function RoutineEditor({
     cycleLetter,
     defaultRestSec,
     exercises,
-    savedAt: Date.now(),
   }), [name, cycleLetter, defaultRestSec, exercises, existing?.id]);
 
   useRoutineDraftPersistence(draft, { enabled: true });

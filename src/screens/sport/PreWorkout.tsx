@@ -148,7 +148,7 @@ function PreEditExercises({
         )}
       </ScrollView>
       <View style={{ paddingHorizontal: 24, paddingBottom: 40, paddingTop: 16, borderTopWidth: 1, borderTopColor: Clr.white5, backgroundColor: theme.bg }}>
-        <Touch onPress={() => onDone(exos.map((e, i) => ({ ...e, order: i })))} style={{ height: 64, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }}>
+        <Touch disabled={exos.length === 0} onPress={() => onDone(exos.map((e, i) => ({ ...e, order: i })))} style={{ height: 64, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center', opacity: exos.length === 0 ? 0.35 : 1 }}>
           <Text style={[ss.label, { color: '#000' }]}>CONFIRMER MODIFICATIONS</Text>
         </Touch>
       </View>

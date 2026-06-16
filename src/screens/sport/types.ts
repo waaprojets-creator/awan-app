@@ -7,7 +7,7 @@ export interface RoutineDraft {
   cycleLetter: CycleLetter | null;
   defaultRestSec: number;
   exercises: RoutineExercise[];
-  savedAt: number;
+  savedAt?: number;
 }
 
 export interface ActiveSet {

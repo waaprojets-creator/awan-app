@@ -28,6 +28,13 @@ export function FinishWorkout({
   const [feeling, setFeeling] = useState<number | undefined>(undefined);
   const [sessionRPE, setSessionRPE] = useState<number | undefined>(undefined);
   const [note, setNote] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = (summary: SessionSummary) => {
+    if (saving) return;
+    setSaving(true);
+    onSave(summary);
+  };
 
   const stats = useMemo(() => {
     const workingSets = session.exercises.flatMap(e => e.sets.filter(s => s.completed && s.kind === 'working'));
@@ -155,13 +162,13 @@ export function FinishWorkout({
           <TextInput style={{ backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white5, padding: 20, color: theme.title, fontWeight: Fw.value, fontSize: 14, minHeight: 100, textAlignVertical: 'top', fontFamily: FontSans }} value={note} onChangeText={setNote} placeholder="Ressenti, observations..." placeholderTextColor="#3a3a3a" multiline />
         </View>
 
-        <Touch onPress={() => onSave({ feeling, sessionRPE, note: note.trim() || undefined })} style={{ height: 64, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center' }}>
+        <Touch disabled={saving} onPress={() => handleSave({ feeling, sessionRPE, note: note.trim() || undefined })} style={{ height: 64, backgroundColor: theme.selected, alignItems: 'center', justifyContent: 'center', opacity: saving ? 0.5 : 1 }}>
           <View style={[ss.row, { gap: 12 }]}>
             <CheckCircle2 size={20} color="black" strokeWidth={3} />
             <Text style={[ss.label, { color: '#000' }]}>ENREGISTRER LA SÉANCE</Text>
           </View>
         </Touch>
-        <Touch onPress={() => onSave({ feeling, sessionRPE, note: note.trim() || undefined, exitedAt: Date.now() })} style={{ marginTop: 12, height: 56, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white10, alignItems: 'center', justifyContent: 'center' }}>
+        <Touch disabled={saving} onPress={() => handleSave({ feeling, sessionRPE, note: note.trim() || undefined, exitedAt: Date.now() })} style={{ marginTop: 12, height: 56, backgroundColor: Clr.white5, borderWidth: 1, borderColor: Clr.white10, alignItems: 'center', justifyContent: 'center', opacity: saving ? 0.5 : 1 }}>
           <Text style={[ss.label, { color: theme.mute }]}>QUITTER VESTIAIRE →</Text>
         </Touch>
       </ScrollView>
