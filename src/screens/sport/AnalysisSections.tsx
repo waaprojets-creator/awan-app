@@ -81,7 +81,7 @@ export function VolumeWeekSection({ sessions }: { sessions: WorkoutSessionLatest
     return d;
   })();
   const vol = WorkoutService.getWeeklyVolumeByMuscle(sessions, weekStart);
-  const entries = Object.entries(VOLUME_LANDMARKS).filter(([k]) => (vol[k] ?? 0) > 0 || true).slice(0, 6);
+  const entries = Object.entries(VOLUME_LANDMARKS).filter(([k]) => (vol[k] ?? 0) > 0 || true);
   if (entries.every(([k]) => (vol[k] ?? 0) === 0)) return null;
   return (
     <View style={{ marginBottom: 24 }}>

@@ -107,7 +107,8 @@ export const WorkoutService = {
     weekEnd.setDate(weekEnd.getDate() + 7);
     const volume: Record<string, number> = {};
     for (const session of sessions) {
-      const d = new Date(session.date);
+      const [y, mo, dy] = session.date.split('-').map(Number);
+      const d = new Date(y!, mo! - 1, dy!);
       if (d < weekStart || d >= weekEnd) continue;
       for (const exercise of session.exercises) {
         const workingSets = exercise.sets.filter(s => s.kind === 'working').length;

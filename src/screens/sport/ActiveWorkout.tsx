@@ -152,7 +152,7 @@ export function ActiveWorkout({
         i !== exIdx ? e : { ...e, sets: e.sets.map((st, j) => j !== setIdx ? st : { ...st, completed: true, completedAt: Date.now(), isPR }) },
       );
       const restEndAt = Date.now() + ex.restSec * 1000;
-      return { ...s, exercises, restEndAt, bestOneRMs: newBestOneRMs };
+      return { ...s, exercises, restEndAt, bestOneRMs: newBestOneRMs, currentExerciseIdx: exIdx };
     });
   }, [onUpdate]);
 
