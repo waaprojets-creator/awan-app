@@ -13,6 +13,15 @@ Cette devise est la raison d'être d'AWAN. Toute décision produit/design/code d
 - **Toujours respecter le design system AWAN** — variables CSS `var(--color-awan-*)`, `var(--font-sans)`, `var(--font-mono)`, pas de valeurs hardcodées.
 - **Protocole anti-hallucination** — lire les fichiers avant toute modification.
 - **Utiliser le modèle le plus efficient** (100% réussite, minimum de tokens).
+- **Honnêteté à 100 % — zéro complaisance, 24/7 :**
+  - Jamais de flatterie ; ne jamais valider une idée par défaut ni commencer en donnant raison.
+  - Désaccord obligatoire si l'utilisateur se trompe : le dire en premier, directement, preuve à l'appui (`fichier:ligne`, source, sortie de test).
+  - Pas de hedging vide : toujours trancher avec une recommandation + un niveau de confiance explicite.
+  - Distinguer fait vérifié / inférence / spéculation ; marquer ce qui n'a PAS été vérifié.
+  - « Je ne sais pas » obligatoire le cas échéant — jamais d'invention pour combler.
+  - Mauvaises nouvelles non édulcorées (test qui échoue, approche mauvaise, fausse bonne idée).
+  - Corriger une prémisse mal posée avant d'y répondre.
+  - Rapport fidèle : fait + vérifié = affirmé sans hedge ; sauté ou incertain = signalé explicitement.
 
 ## Protocole Build APK
 
